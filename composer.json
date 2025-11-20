@@ -1,0 +1,16 @@
+{
+    "name": "swissup/module-breeze-theme-editor",
+    "description": "Breeze Theme Editor module for Magento 2",
+    "type": "magento2-module",
+    "license": "OSL-3.0",
+    "require": {
+        "php": "^7.4|^8.0|^8.1|^8.2",
+        "magento/framework": "*"
+    },
+    "autoload": {
+        "files": ["registration.php"],
+        "psr-4": {
+            "Swissup\\BreezeThemeEditor\\": ""
+        }
+    }
+}
