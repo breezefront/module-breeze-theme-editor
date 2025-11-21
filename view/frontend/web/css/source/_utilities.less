@@ -2,12 +2,12 @@
 // Breeze Theme Editor - Utilities
 // _____________________________________________
 
-// CSS Custom Property for dynamic toolbar height
 :root {
-    --breeze-toolbar-height: 56px; // Default fallback
+    --breeze-toolbar-height: 56px;
+    --device-frame-width: 100%;
 }
 
-// Body padding - uses CSS custom property set by JavaScript
+// Body padding
 body.breeze-theme-editor-active {
     padding-top: var(--breeze-toolbar-height) !important;
     transition: padding-top 0.3s ease;
@@ -30,13 +30,28 @@ body.breeze-theme-editor-active {
     }
 }
 
-// Device preview modes
-.device-tablet {
-    max-width: 768px;
-    margin: 0 auto;
+// Device preview mode - БЕЗ wrap, просто стилізуємо .page-wrapper
+body.breeze-device-mode {
+    background: #e0e0e0;
+
+    .page-wrapper {
+        max-width: var(--device-frame-width);
+        margin: 20px auto;
+        background: #fff;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        min-height: calc(100vh - var(--breeze-toolbar-height) - 40px);
+        transition: max-width 0.3s ease;
+    }
 }
 
-.device-mobile {
-    max-width: 375px;
-    margin: 0 auto;
+// Toolbar z-index
+#breeze-theme-editor-toolbar {
+    position: fixed !important;
+    z-index: 10001 !important;
+}
+
+.toolbar-compact-toggle {
+    position: fixed !important;
+    z-index: 10000 !important;
 }

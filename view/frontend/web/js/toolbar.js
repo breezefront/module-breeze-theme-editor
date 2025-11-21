@@ -37,6 +37,28 @@ define([
         $body.addClass('breeze-theme-editor-active');
 
         /**
+         * Detect actual viewport width and apply responsive class
+         * ← НОВИЙ МЕТОД
+         */
+        function detectViewportSize() {
+            var width = window.innerWidth;
+
+            // Remove previous viewport classes
+            $body.removeClass('breeze-viewport-mobile breeze-viewport-tablet breeze-viewport-desktop');
+
+            if (width <= 480) {
+                $body.addClass('breeze-viewport-mobile');
+                console.log('Viewport detected: mobile (' + width + 'px)');
+            } else if (width <= 768) {
+                $body.addClass('breeze-viewport-tablet');
+                console.log('Viewport detected: tablet (' + width + 'px)');
+            } else {
+                $body.addClass('breeze-viewport-desktop');
+                console.log('Viewport detected: desktop (' + width + 'px)');
+            }
+        }
+
+        /**
          * Update toolbar height CSS custom property
          */
         function updateToolbarHeight() {
@@ -44,6 +66,9 @@ define([
             document.documentElement.style.setProperty('--breeze-toolbar-height', toolbarHeight + 'px');
             console.log('Toolbar height updated:', toolbarHeight + 'px');
         }
+
+        // Detect viewport on init ← ДОДАНО
+        detectViewportSize();
 
         // Initialize all components
         var components = config.components || {};
@@ -119,12 +144,23 @@ define([
         var resizeTimer;
         $(window).on('resize', function() {
             clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(updateToolbarHeight, 250);
+            resizeTimer = setTimeout(function() {
+                detectViewportSize(); // ← ДОДАНО
+                updateToolbarHeight();
+            }, 250);
         });
 
         // Listen to toolbar toggle events
         $(document).on('toolbarShown toolbarHidden', function() {
             setTimeout(updateToolbarHeight, 350);
+        });
+
+        $(document).on('deviceChanged', function(event, device) {
+            console.log('Device changed, updating toolbar height');
+            setTimeout(function() {
+                detectViewportSize(); // ← ДОДАНО
+                updateToolbarHeight();
+            }, 100);
         });
 
         console.log('Breeze Theme Editor Toolbar initialized successfully');

@@ -34,7 +34,7 @@
         }
     }
 
-    // Responsive
+    // Responsive для Desktop
     .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__l) {
         .nav-text,
         .button-text,
@@ -43,6 +43,7 @@
         }
     }
 
+    // Responsive для Tablet/Mobile
     .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__m) {
         .toolbar-container {
             padding: 0 @breeze-toolbar-padding-h-mobile;
@@ -56,6 +57,141 @@
 
         .admin-username {
             display: none;
+        }
+    }
+}
+
+// ========================================
+// НОВИЙ ПІДХІД: Реальний viewport має пріоритет
+// ========================================
+
+// Реальний tablet viewport (Chrome DevTools або вузький екран)
+body.breeze-viewport-tablet {
+    .breeze-theme-editor-toolbar {
+        .toolbar-container {
+            padding: 0 10px;
+            gap: 10px;
+            height: 48px;
+        }
+
+        .nav-text,
+        .button-text,
+        .admin-username,
+        .devices-label,
+        .select-label-small {
+            display: none;
+        }
+
+        .toolbar-select {
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+
+        .device-button,
+        .toolbar-button,
+        .nav-item {
+            padding: 6px 8px;
+        }
+    }
+}
+
+// Реальний mobile viewport (Chrome DevTools Mobile Mode)
+body.breeze-viewport-mobile {
+    .breeze-theme-editor-toolbar {
+        .toolbar-container {
+            padding: 0 5px;
+            gap: 5px;
+            height: 44px;
+            flex-wrap: nowrap; // Не переносити
+        }
+
+        // Ховати все крім devices + toggle + exit
+        .toolbar-left,
+        .toolbar-center {
+            display: none;
+        }
+
+        .toolbar-right {
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .nav-text,
+        .button-text,
+        .admin-username,
+        .devices-label {
+            display: none;
+        }
+
+        .device-button,
+        .toolbar-button {
+            padding: 4px 6px;
+            min-width: 32px;
+        }
+    }
+}
+
+// Toolbar в режимі tablet preview (тільки якщо реальний viewport ШИРОКИЙ)
+body.breeze-device-tablet:not(.breeze-viewport-mobile):not(.breeze-viewport-tablet) {
+    .breeze-theme-editor-toolbar {
+        .toolbar-container {
+            padding: 0 10px;
+            gap: 10px;
+            height: 48px;
+        }
+
+        .nav-text,
+        .button-text,
+        .admin-username,
+        .devices-label,
+        .select-label-small {
+            display: none;
+        }
+
+        .toolbar-select {
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+
+        .device-button,
+        .toolbar-button,
+        .nav-item {
+            padding: 6px 8px;
+        }
+    }
+}
+
+// Toolbar в режимі mobile preview (тільки якщо реальний viewport ШИРОКИЙ)
+body.breeze-device-mobile:not(.breeze-viewport-mobile):not(.breeze-viewport-tablet) {
+    .breeze-theme-editor-toolbar {
+        .toolbar-container {
+            padding: 0 5px;
+            gap: 5px;
+            height: 44px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-left,
+        .toolbar-center {
+            display: none;
+        }
+
+        .toolbar-right {
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .nav-text,
+        .button-text,
+        .admin-username,
+        .devices-label {
+            display: none;
+        }
+
+        .device-button,
+        .toolbar-button {
+            padding: 4px 6px;
+            min-width: 32px;
         }
     }
 }

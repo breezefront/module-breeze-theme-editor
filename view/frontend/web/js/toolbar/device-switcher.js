@@ -15,23 +15,30 @@ define([
                 desktop: {
                     icon: 'Swissup_BreezeThemeEditor/images/device-desktop.svg',
                     width: 20,
-                    height: 16
+                    height: 16,
+                    frameWidth: '100%',
+                    viewport: 'width=device-width, initial-scale=1' // ← ДОДАНО
                 },
                 tablet: {
                     icon: 'Swissup_BreezeThemeEditor/images/device-tablet.svg',
                     width: 18,
-                    height: 20
+                    height: 20,
+                    frameWidth: '768px',
+                    viewport: 'width=768' // ← ДОДАНО
                 },
                 mobile: {
                     icon: 'Swissup_BreezeThemeEditor/images/device-mobile.svg',
                     width: 10,
-                    height: 18
+                    height: 18,
+                    frameWidth: '375px',
+                    viewport: 'width=375' // ← ДОДАНО
                 }
             }
         },
 
         _create: function () {
             this.currentDevice = this.options.activeDevice;
+            this.originalViewport = null; // ← ДОДАНО
             this.template = mageTemplate(deviceSwitcherTemplate);
             this._render();
             this._bind();
@@ -76,17 +83,64 @@ define([
             this.currentDevice = device;
 
             // Update buttons
-            this.element.find('.device-button')
-                .removeClass(this.options.activeClass);
+            this.element.find('.device-button').removeClass(this.options.activeClass);
             $button.addClass(this.options.activeClass);
 
-            // Update body classes (OLD FORMAT for CSS compatibility)
-            $('body')
-                .removeClass('device-desktop device-tablet device-mobile')
-                .addClass('device-' + device);
+            // Apply device mode
+            this._applyDeviceMode(device);
 
             this.element.trigger('deviceChanged', [device]);
-            console.log('Device switched to:', device);
+            console.log('Device switched to:', device); // ← ДОДАНО лог
+        },
+
+        _applyDeviceMode: function(device) {
+            var config = this.options.deviceConfig[device];
+            var $body = $('body');
+            var isDesktop = device === 'desktop';
+
+            // Update viewport meta tag для media queries ← ДОДАНО
+            this._setViewport(config.viewport);
+
+            // Update body class
+            $body
+                .removeClass('breeze-device-mode breeze-device-desktop breeze-device-tablet breeze-device-mobile')
+                .addClass('breeze-device-' + device);
+
+            if (!isDesktop) {
+                $body.addClass('breeze-device-mode');
+            }
+
+            // Set CSS variable for frame width
+            document.documentElement.style.setProperty('--device-frame-width', config.frameWidth);
+
+            console.log('Applied device mode:', device, '| Frame width:', config.frameWidth, '| Viewport:', config.viewport); // ← ДОДАНО
+        },
+
+        // ← ДОДАНО метод
+        _setViewport: function(content) {
+            var $viewport = $('meta[name="viewport"]');
+
+            // Save original viewport on first change
+            if (!this.originalViewport && $viewport.length) {
+                this.originalViewport = $viewport.attr('content');
+            }
+
+            if (!$viewport.length) {
+                $('head').append('<meta name="viewport" content="' + content + '">');
+            } else {
+                $viewport.attr('content', content);
+            }
+
+            console.log('Viewport changed to:', content);
+        },
+
+        // ← ДОДАНО destroy для cleanup
+        _destroy: function() {
+            // Restore original viewport
+            if (this.originalViewport) {
+                $('meta[name="viewport"]').attr('content', this.originalViewport);
+            }
+            this._super();
         }
     });
 
