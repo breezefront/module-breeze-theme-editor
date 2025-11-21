@@ -6,7 +6,6 @@ $elementId = $block->getElementHtmlId();
 $isEnabled = $block->isCurrentlyEnabled();
 $frontendUrl = $block->getFrontendUrl();
 $buttonClass = $isEnabled ? 'action-default scalable' : 'action-default scalable disabled';
-$buttonDisabled = $isEnabled ? '' : 'disabled="disabled"';
 $buttonStyle = $isEnabled ? '' : 'opacity: 0.5; pointer-events: none;';
 ?>
 
@@ -18,7 +17,7 @@ $buttonStyle = $isEnabled ? '' : 'opacity: 0.5; pointer-events: none;';
        target="_blank"
        class="<?= $block->escapeHtmlAttr($buttonClass) ?>"
        id="<?= $block->escapeHtmlAttr($elementId) ?>_button"
-       <?= $buttonDisabled ?>
+       <?php if (!$isEnabled): ?>disabled="disabled"<?php endif; ?>
        style="margin-top: 5px; <?= $block->escapeHtmlAttr($buttonStyle) ?>">
         <span><?= $block->escapeHtml(__('Open Frontend in Theme Editor Mode')) ?></span>
     </a>
