@@ -1,0 +1,53 @@
+<?php
+/**
+ * @var $block \Swissup\BreezeThemeEditor\Block\Adminhtml\System\Config\Form\Field\EnabledWithLink
+ */
+$elementId = $block->getElementHtmlId();
+$isEnabled = $block->isCurrentlyEnabled();
+$frontendUrl = $block->getFrontendUrl();
+$buttonClass = $isEnabled ? 'action-default scalable' : 'action-default scalable disabled';
+$buttonDisabled = $isEnabled ? '' : 'disabled="disabled"';
+$buttonStyle = $isEnabled ? '' : 'opacity: 0.5; pointer-events: none;';
+?>
+
+<?= $block->getSelectHtml() ?>
+
+<div id="<?= $block->escapeHtmlAttr($elementId) ?>_frontend_link" style="margin-top: 10px;">
+
+    <a href="<?= $block->escapeUrl($frontendUrl) ?>"
+       target="_blank"
+       class="<?= $block->escapeHtmlAttr($buttonClass) ?>"
+       id="<?= $block->escapeHtmlAttr($elementId) ?>_button"
+       <?= $buttonDisabled ?>
+       style="margin-top: 5px; <?= $block->escapeHtmlAttr($buttonStyle) ?>">
+        <span><?= $block->escapeHtml(__('Open Frontend in Theme Editor Mode')) ?></span>
+    </a>
+
+    <?php if (!$isEnabled): ?>
+    <div class="message message-notice"
+         id="<?= $block->escapeHtmlAttr($elementId) ?>_notice"
+         style="margin-top: 10px;">
+        <span><?= $block->escapeHtml(__('Please select "Yes" and save the configuration to enable the frontend link.')) ?></span>
+    </div>
+    <?php endif; ?>
+
+    <div class="note"
+         id="<?= $block->escapeHtmlAttr($elementId) ?>_url_info"
+         style="margin-top: 10px;<?= !$isEnabled ? ' display: none;' : '' ?>">
+        <?= $block->escapeHtml(__('Frontend Link: ')) ?>
+        <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">
+            <?= $block->escapeHtml($frontendUrl) ?>
+        </code>
+    </div>
+
+</div>
+<script type="text/x-magento-init">
+{
+    "*": {
+        "Swissup_BreezeThemeEditor/js/system/config/enabled-with-link": {
+            "selectId": "<?= $block->escapeJs($elementId) ?>",
+            "isSaved": <?= $isEnabled ? 'true' : 'false' ?>
+        }
+    }
+}
+</script>

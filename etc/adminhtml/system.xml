@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="breeze_theme_editor" translate="label" type="text" sortOrder="321" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top swissup-breeze-theme-editor-config-item</class>
+            <label>Breeze Theme Editor</label>
+            <tab>swissup</tab>
+            <resource>Swissup_BreezeThemeEditor::config</resource>
+
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General Settings</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Theme Editor</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <frontend_model>Swissup\BreezeThemeEditor\Block\Adminhtml\System\Config\Form\Field\EnabledWithLink</frontend_model>
+                    <comment>Enable or disable Breeze Theme Editor mode. When enabled, use the link below to access frontend.</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
