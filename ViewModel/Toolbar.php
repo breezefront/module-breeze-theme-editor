@@ -67,7 +67,7 @@ class Toolbar implements ArgumentInterface
      */
     public function canShow()
     {
-//        return true;
+        return true;
         if (!$this->helper->isEnabled()) {
             return false;
         }

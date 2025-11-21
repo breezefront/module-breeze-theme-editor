@@ -125,3 +125,13 @@ if (!$viewModel->canShow()) {
     <span class="compact-icon">▼</span>
     <span class="compact-text"><?= $block->escapeHtml(__('Breeze Editor')) ?></span>
 </button>
+
+<script type="text/x-magento-init">
+{
+    "*": {
+        "Swissup_BreezeThemeEditor/js/toolbar": {
+            "currentUser": "<?= $block->escapeJs($viewModel->getAdminUsername()) ?>"
+        }
+    }
+}
+</script>

@@ -50,6 +50,10 @@ define([
         _hide: function () {
             this.$toolbar.addClass(this.options.collapsedClass);
             $('body').addClass(this.options.bodyHiddenClass);
+
+            // Reset CSS custom property to 0
+            document.documentElement.style.setProperty('--breeze-toolbar-height', '0px');
+
             this.$compactToggle.fadeIn(300);
 
             // Update button text and icon
@@ -62,6 +66,11 @@ define([
         _show: function () {
             this.$toolbar.removeClass(this.options.collapsedClass);
             $('body').removeClass(this.options.bodyHiddenClass);
+
+            // Restore CSS custom property
+            var toolbarHeight = this.$toolbar.outerHeight();
+            document.documentElement.style.setProperty('--breeze-toolbar-height', toolbarHeight + 'px');
+
             this.$compactToggle.fadeOut(300);
 
             // Update button text and icon

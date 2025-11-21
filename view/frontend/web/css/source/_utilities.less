@@ -2,9 +2,14 @@
 // Breeze Theme Editor - Utilities
 // _____________________________________________
 
-// Body padding
+// CSS Custom Property for dynamic toolbar height
+:root {
+    --breeze-toolbar-height: 56px; // Default fallback
+}
+
+// Body padding - uses CSS custom property set by JavaScript
 body.breeze-theme-editor-active {
-    padding-top: @breeze-toolbar-height !important;
+    padding-top: var(--breeze-toolbar-height) !important;
     transition: padding-top 0.3s ease;
 
     &.toolbar-hidden {
