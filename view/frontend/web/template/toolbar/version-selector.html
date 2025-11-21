@@ -1,0 +1,9 @@
+<div class="toolbar-select-group">
+    <button type="button" class="toolbar-select" id="version-selector">
+        <span class="select-label"><%= data.label %></span>
+        <% if (!data.published) { %>
+            <span class="select-status not-published"><%= data.statusText %></span>
+        <% } %>
+        <span class="select-arrow">▼</span>
+    </button>
+</div>

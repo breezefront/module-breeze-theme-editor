@@ -1,0 +1,14 @@
+<div class="toolbar-nav">
+    <% _.each(data.items, function(item) { %>
+        <button type="button"
+            class="nav-item <%= item.active ? 'active' : '' %> <%= item.disabled ? 'disabled' : '' %>"
+            <%= item.disabled ? 'disabled' : '' %>
+            data-id="<%= item.id %>">
+            <span class="nav-icon"><%= item.icon %></span>
+            <span class="nav-text"><%= item.label %></span>
+            <% if (item.badge) { %>
+                <span class="badge-pro"><%= item.badge %></span>
+            <% } %>
+        </button>
+    <% }); %>
+</div>

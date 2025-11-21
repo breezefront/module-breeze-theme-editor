@@ -1,36 +1,41 @@
 define([
     'jquery',
-    'jquery-ui-modules/widget'
-], function ($) {
+    'jquery-ui-modules/widget',
+    'mage/template',
+    'text!Swissup_BreezeThemeEditor/template/toolbar/highlight-toggle.html'
+], function ($, widget, mageTemplate, highlightToggleTemplate) {
     'use strict';
 
     $.widget('swissup.breezeHighlightToggle', {
-        options: {
-            activeClass: 'active',
-            highlightClass: 'breeze-editor-highlight-mode'
-        },
-
         _create: function () {
-            this.isActive = false;
+            this.template = mageTemplate(highlightToggleTemplate);
+            this._render();
             this._bind();
         },
 
-        _bind: function () {
-            this.element.on('click', $.proxy(this._toggle, this));
+        _render: function () {
+            var html = this.template({
+                data: {
+                    label: $.mage.__('Highlight')
+                }
+            });
+
+            this.element.html(html);
+            this.$button = this.element.find('#breeze-editor-toggle-highlight');
         },
 
-        _toggle: function () {
-            this.isActive = !this.isActive;
+        _bind: function () {
+            this.$button.on('click', $.proxy(this._toggleHighlight, this));
+        },
 
-            if (this.isActive) {
-                $('body').addClass(this.options.highlightClass);
-                this.element.addClass(this.options.activeClass);
-            } else {
-                $('body').removeClass(this.options.highlightClass);
-                this.element.removeClass(this.options.activeClass);
-            }
+        _toggleHighlight: function () {
+            var isActive = this.$button.hasClass('active');
 
-            this.element.trigger('highlightToggled', [this.isActive]);
+            this.$button.toggleClass('active');
+            $('body').toggleClass('breeze-editor-highlight-mode');  // ← додати!
+
+            console.log('Highlight mode:', !isActive ? 'enabled' : 'disabled');
+            this.element.trigger('highlightToggled', [!isActive]);
         }
     });
 

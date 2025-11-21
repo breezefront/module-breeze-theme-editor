@@ -1,147 +1,99 @@
 define([
     'jquery',
-    'jquery-ui-modules/widget'
-], function ($) {
+    'jquery-ui-modules/widget',
+    'mage/template',
+    'text!Swissup_BreezeThemeEditor/template/toolbar/main-toggle-button.html',
+    'text!Swissup_BreezeThemeEditor/template/toolbar/compact-toggle-button.html'
+], function ($, widget, mageTemplate, mainButtonTemplate, compactButtonTemplate) {
     'use strict';
 
     $.widget('swissup.breezeToolbarToggle', {
         options: {
-            collapsedClass: 'toolbar-collapsed',
-            bodyHiddenClass: 'toolbar-hidden',
+            compactSelector: '#toolbar-compact-toggle',
             toolbarSelector: '#breeze-theme-editor-toolbar',
-            compactToggleSelector: '#breeze-editor-toolbar-compact-toggle',
-            cookieName: 'breeze_toolbar_state',
-            cookieLifetime: 365, // days
-            hideText: 'Hide',
-            showText: 'Show',
-            hideIcon: '▲',
-            showIcon: '▼'
+            storageKey: 'breeze-editor-toolbar-visible'
         },
 
         _create: function () {
-            this.$toolbar = $(this.options.toolbarSelector);
-            this.$compactToggle = $(this.options.compactToggleSelector);
-            this.isCollapsed = false;
-
-            this._restoreState();
+            this.mainButtonTemplate = mageTemplate(mainButtonTemplate);
+            this.compactButtonTemplate = mageTemplate(compactButtonTemplate);
+            this._render();
             this._bind();
+            this._restoreState();
+        },
+
+        _render: function () {
+            // Render main toggle button
+            var mainHtml = this.mainButtonTemplate({
+                data: {
+                    hideTitle: $.mage.__('Hide Toolbar'),
+                    hideLabel: $.mage.__('Hide')
+                }
+            });
+            this.element.html(mainHtml);
+            this.$mainButton = this.element.find('#breeze-editor-toolbar-toggle');
+
+            // Render compact toggle button
+            var compactHtml = this.compactButtonTemplate({
+                data: {
+                    showTitle: $.mage.__('Show Toolbar'),
+                    label: $.mage.__('Breeze Editor')
+                }
+            });
+            $(this.options.compactSelector).html(compactHtml);
+            this.$compactButton = $('#breeze-editor-toolbar-compact-toggle');
+            this.$toolbar = $(this.options.toolbarSelector);
         },
 
         _bind: function () {
-            // Main toggle button
-            this.element.on('click', $.proxy(this._toggle, this));
-
-            // Compact toggle button
-            this.$compactToggle.on('click', $.proxy(this._toggle, this));
+            this.$mainButton.on('click', $.proxy(this._hideToolbar, this));
+            this.$compactButton.on('click', $.proxy(this._showToolbar, this));
         },
 
-        _toggle: function () {
-            this.isCollapsed = !this.isCollapsed;
-
-            if (this.isCollapsed) {
-                this._hide();
-            } else {
-                this._show();
-            }
-
-            this._saveState();
-        },
-
-        _hide: function () {
-            this.$toolbar.addClass(this.options.collapsedClass);
-            $('body').addClass(this.options.bodyHiddenClass);
+        _hideToolbar: function () {
+            this.$toolbar.addClass('toolbar-collapsed');
+            $('body').addClass('toolbar-hidden');
 
             // Reset CSS custom property to 0
             document.documentElement.style.setProperty('--breeze-toolbar-height', '0px');
 
-            this.$compactToggle.fadeIn(300);
-
-            // Update button text and icon
-            this.element.find('.button-text').text($.mage.__(this.options.showText));
-            this.element.attr('title', $.mage.__('Show Toolbar'));
-
-            this.element.trigger('toolbarHidden');
+            this.$compactButton.fadeIn(200);
+            this._saveState(false);
+            $(document).trigger('toolbarHidden');
+            console.log('Toolbar hidden');
         },
 
-        _show: function () {
-            this.$toolbar.removeClass(this.options.collapsedClass);
-            $('body').removeClass(this.options.bodyHiddenClass);
+        _showToolbar: function () {
+            this.$toolbar.removeClass('toolbar-collapsed');
+            $('body').removeClass('toolbar-hidden');
 
             // Restore CSS custom property
             var toolbarHeight = this.$toolbar.outerHeight();
             document.documentElement.style.setProperty('--breeze-toolbar-height', toolbarHeight + 'px');
 
-            this.$compactToggle.fadeOut(300);
-
-            // Update button text and icon
-            this.element.find('.button-text').text($.mage.__(this.options.hideText));
-            this.element.attr('title', $.mage.__('Hide Toolbar'));
-
-            this.element.trigger('toolbarShown');
+            this.$compactButton.fadeOut(200);
+            this._saveState(true);
+            $(document).trigger('toolbarShown');
+            console.log('Toolbar shown');
         },
 
-        _saveState: function () {
-            this._setCookie(
-                this.options.cookieName,
-                this.isCollapsed ? '1' : '0',
-                this.options.cookieLifetime
-            );
+        _saveState: function (isVisible) {
+            try {
+                localStorage.setItem(this.options.storageKey, isVisible ? '1' : '0');
+            } catch (e) {
+                console.warn('Could not save toolbar state:', e);
+            }
         },
 
         _restoreState: function () {
-            var savedState = this._getCookie(this.options.cookieName);
-
-            if (savedState === '1') {
-                this.isCollapsed = true;
-                // Delay hide to allow DOM to be ready
-                setTimeout($.proxy(this._hide, this), 100);
-            }
-        },
-
-        /**
-         * Set cookie using native JavaScript
-         * @param {string} name
-         * @param {string} value
-         * @param {number} days
-         * @private
-         */
-        _setCookie: function (name, value, days) {
-            var expires = '';
-
-            if (days) {
-                var date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                expires = '; expires=' + date.toUTCString();
-            }
-
-            document.cookie = name + '=' + (value || '') + expires + '; path=/';
-        },
-
-        /**
-         * Get cookie using native JavaScript
-         * @param {string} name
-         * @returns {string|null}
-         * @private
-         */
-        _getCookie: function (name) {
-            var nameEQ = name + '=';
-            var ca = document.cookie.split(';');
-
-            for (var i = 0; i < ca.length; i++) {
-                var c = ca[i];
-                while (c.charAt(0) === ' ') {
-                    c = c.substring(1, c.length);
+            try {
+                var state = localStorage.getItem(this.options.storageKey);
+                if (state === '0') {
+                    setTimeout($.proxy(this._hideToolbar, this), 100);
                 }
-                if (c.indexOf(nameEQ) === 0) {
-                    return c.substring(nameEQ.length, c.length);
-                }
+            } catch (e) {
+                console.warn('Could not restore toolbar state:', e);
             }
-
-            return null;
-        },
-
-        getState: function () {
-            return this.isCollapsed;
         }
     });
 

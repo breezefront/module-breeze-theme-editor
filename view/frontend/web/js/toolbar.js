@@ -1,20 +1,39 @@
 define([
     'jquery',
+    'mage/template',
+    'text!Swissup_BreezeThemeEditor/template/toolbar.html',
+    'Swissup_BreezeThemeEditor/js/toolbar/admin-link',
+    'Swissup_BreezeThemeEditor/js/toolbar/navigation',
+    'Swissup_BreezeThemeEditor/js/toolbar/version-selector',
+    'Swissup_BreezeThemeEditor/js/toolbar/scope-selector',
+    'Swissup_BreezeThemeEditor/js/toolbar/page-selector',
+    'Swissup_BreezeThemeEditor/js/toolbar/device-switcher',
+    'Swissup_BreezeThemeEditor/js/toolbar/highlight-toggle',
     'Swissup_BreezeThemeEditor/js/toolbar/toolbar-toggle',
+    'Swissup_BreezeThemeEditor/js/toolbar/exit-button',
     'domReady!'
-], function ($) {
+], function ($, mageTemplate, toolbarTemplate) {
     'use strict';
 
-    // Auto-initialize when DOM is ready
-    $(function() {
-        var $toolbar = $('#breeze-theme-editor-toolbar');
+    return function (config, element) {
+        var $root = $(element);
         var $body = $('body');
 
+        console.log('Initializing Breeze Theme Editor Toolbar for', config.currentUser);
+
+        // Render main toolbar HTML from template
+        var template = mageTemplate(toolbarTemplate);
+        var html = template({ data: {} });
+        $root.html(html);
+
+        var $toolbar = $('#breeze-theme-editor-toolbar');
+
         if (!$toolbar.length) {
+            console.error('Breeze Toolbar: toolbar element not found after rendering');
             return;
         }
 
-        // Add body class immediately
+        // Add body class
         $body.addClass('breeze-theme-editor-active');
 
         /**
@@ -26,8 +45,75 @@ define([
             console.log('Toolbar height updated:', toolbarHeight + 'px');
         }
 
-        // Set initial height
-        updateToolbarHeight();
+        // Initialize all components
+        var components = config.components || {};
+
+        // Admin Link
+        if (components.adminLink) {
+            $(components.adminLink.selector).breezeAdminLink({
+                adminUrl: components.adminLink.adminUrl,
+                adminUsername: components.adminLink.adminUsername
+            });
+        }
+
+        // Navigation
+        if (components.navigation) {
+            $(components.navigation.selector).breezeNavigation({
+                items: components.navigation.items
+            });
+        }
+
+        // Version Selector
+        if (components.versionSelector) {
+            $(components.versionSelector.selector).breezeVersionSelector({
+                currentVersion: components.versionSelector.currentVersion,
+                published: components.versionSelector.published
+            });
+        }
+
+        // Scope Selector
+        if (components.scopeSelector) {
+            $(components.scopeSelector.selector).breezeScopeSelector({
+                currentScope: components.scopeSelector.currentScope
+            });
+        }
+
+        // Page Selector
+        if (components.pageSelector) {
+            $(components.pageSelector.selector).breezePageSelector({
+                currentPage: components.pageSelector.currentPage
+            });
+        }
+
+        // Device Switcher
+        if (components.deviceSwitcher) {
+            $(components.deviceSwitcher.selector).breezeDeviceSwitcher({
+                devices: components.deviceSwitcher.devices,
+                activeDevice: components.deviceSwitcher.activeDevice
+            });
+        }
+
+        // Highlight Toggle
+        if (components.highlightToggle) {
+            $(components.highlightToggle.selector).breezeHighlightToggle();
+        }
+
+        // Toolbar Toggle
+        if (components.toolbarToggle) {
+            $(components.toolbarToggle.selector).breezeToolbarToggle({
+                compactSelector: components.toolbarToggle.compactSelector
+            });
+        }
+
+        // Exit Button
+        if (components.exitButton) {
+            $(components.exitButton.selector).breezeExitButton({
+                exitUrl: components.exitButton.exitUrl
+            });
+        }
+
+        // Set initial height after all components rendered
+        setTimeout(updateToolbarHeight, 100);
 
         // Update on window resize
         var resizeTimer;
@@ -37,18 +123,10 @@ define([
         });
 
         // Listen to toolbar toggle events
-        $(document).on('toolbarShown toolbarHidden', function(event) {
-            setTimeout(updateToolbarHeight, 350); // After animation
+        $(document).on('toolbarShown toolbarHidden', function() {
+            setTimeout(updateToolbarHeight, 350);
         });
 
-        // Initialize compact toggle button
-        $('#breeze-editor-toolbar-compact-toggle').breezeToolbarToggle();
-
-        console.log('Breeze Theme Editor Toolbar initialized');
-    });
-
-    // Also return function for manual init if needed
-    return function (config, element) {
-        console.log('Manual toolbar init called with config:', config);
+        console.log('Breeze Theme Editor Toolbar initialized successfully');
     };
 });
