@@ -1,0 +1,83 @@
+//
+// Breeze Theme Editor - Toolbar Right Section
+// _____________________________________________
+
+.breeze-theme-editor-toolbar {
+    .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .toolbar-devices {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .devices-label {
+        font-size: @breeze-toolbar-font-size-tiny;
+        opacity: 0.8;
+        margin-right: 4px;
+    }
+
+    .device-button {
+        .breeze-flex-center();
+        width: 36px;
+        height: 36px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid @breeze-toolbar-button-border;
+        border-radius: @breeze-toolbar-border-radius;
+        cursor: pointer;
+        transition: @breeze-toolbar-transition;
+        padding: 0;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        &.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+    }
+
+    .device-icon {
+        .breeze-flex-center();
+        line-height: 0;
+
+        // For img tags
+        img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            filter: brightness(0) invert(1); // Make white
+            opacity: 0.9;
+        }
+    }
+
+    .toolbar-button {
+        .breeze-toolbar-button();
+        text-decoration: none;
+
+        &.toolbar-button-exit {
+            .breeze-toolbar-button(@breeze-toolbar-exit-bg, @breeze-toolbar-exit-bg-hover);
+            border-color: @breeze-toolbar-exit-bg;
+        }
+
+        &.toolbar-button-toggle {
+            .button-icon {
+                transition: @breeze-toolbar-transform-transition;
+            }
+        }
+
+        &.active {
+            .breeze-toolbar-button(@breeze-toolbar-active-bg, @breeze-toolbar-active-bg-hover);
+            border-color: @breeze-toolbar-active-bg;
+        }
+    }
+
+    .button-icon {
+        font-size: 16px;
+    }
+}

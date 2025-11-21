@@ -1,0 +1,43 @@
+//
+// Breeze Theme Editor - Mixins
+// _____________________________________________
+
+// Button mixin
+.breeze-toolbar-button(@bg: @breeze-toolbar-button-bg, @bg-hover: @breeze-toolbar-button-bg-hover) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: @breeze-toolbar-button-padding;
+    background: @bg;
+    border: 1px solid @breeze-toolbar-button-border;
+    border-radius: @breeze-toolbar-border-radius;
+    color: @breeze-toolbar-text;
+    cursor: pointer;
+    transition: @breeze-toolbar-transition;
+    font-size: @breeze-toolbar-font-size;
+    font-weight: 500;
+
+    &:hover {
+        background: @bg-hover;
+    }
+}
+
+// Hover overlay
+.breeze-toolbar-hover-overlay(@opacity: 0.1) {
+    &:hover {
+        background: rgba(255, 255, 255, @opacity);
+    }
+}
+
+// Flex center
+.breeze-flex-center() {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+// Icon size
+.breeze-icon-size(@width: 20px, @height: 24px) {
+    width: @width;
+    height: @height;
+}

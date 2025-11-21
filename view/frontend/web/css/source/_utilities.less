@@ -1,0 +1,37 @@
+//
+// Breeze Theme Editor - Utilities
+// _____________________________________________
+
+// Body padding
+body.breeze-theme-editor-active {
+    padding-top: @breeze-toolbar-height !important;
+    transition: padding-top 0.3s ease;
+
+    &.toolbar-hidden {
+        padding-top: 0 !important;
+    }
+}
+
+// Highlight mode
+.breeze-editor-highlight-mode {
+    * {
+        outline: 1px solid @breeze-toolbar-highlight !important;
+
+        &:hover {
+            outline: 2px solid @breeze-toolbar-highlight-hover !important;
+            background: @breeze-toolbar-highlight-bg !important;
+            cursor: pointer !important;
+        }
+    }
+}
+
+// Device preview modes
+.device-tablet {
+    max-width: 768px;
+    margin: 0 auto;
+}
+
+.device-mobile {
+    max-width: 375px;
+    margin: 0 auto;
+}

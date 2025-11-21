@@ -1,0 +1,46 @@
+//
+// Breeze Theme Editor - Compact Toggle
+// _____________________________________________
+
+.toolbar-compact-toggle {
+    position: fixed;
+    top: 0;
+    right: 20px; // Вирівнювання з правим padding toolbar
+    left: auto;
+    transform: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: @breeze-toolbar-bg;
+    border: none;
+    border-radius: 0 0 @breeze-toolbar-border-radius-large @breeze-toolbar-border-radius-large;
+    color: @breeze-toolbar-text;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: @breeze-toolbar-compact-z-index;
+    transition: @breeze-toolbar-transition-slow;
+    font-family: @breeze-toolbar-font-family;
+    font-size: @breeze-toolbar-font-size;
+    font-weight: 500;
+
+    &:hover {
+        padding-bottom: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        background: @breeze-toolbar-bg-hover;
+    }
+
+    .compact-icon {
+        font-size: @breeze-toolbar-font-size;
+        transition: @breeze-toolbar-transform-transition;
+    }
+
+    &:hover .compact-icon {
+        transform: translateY(2px);
+    }
+
+    // Responsive
+    .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__m) {
+        right: @breeze-toolbar-padding-h-mobile;
+    }
+}

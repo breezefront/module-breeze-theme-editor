@@ -1,0 +1,102 @@
+//
+// Breeze Theme Editor - Toolbar Left Section
+// _____________________________________________
+
+.breeze-theme-editor-toolbar {
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .toolbar-admin-link {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: @breeze-toolbar-text;
+        text-decoration: none;
+        padding: 8px 12px;
+        border-radius: @breeze-toolbar-border-radius;
+        transition: @breeze-toolbar-transition;
+
+        .breeze-toolbar-hover-overlay(0.1);
+    }
+
+    .admin-icon {
+        .breeze-flex-center();
+        .breeze-icon-size(20px, 24px);
+
+        &.admin-icon-svg {
+            svg {
+                .breeze-icon-size(20px, 24px);
+
+                g {
+                    fill: currentColor;
+                }
+            }
+        }
+
+        img {
+            .breeze-icon-size(20px, 24px);
+            filter: brightness(0) invert(1);
+        }
+    }
+
+    .admin-username {
+        font-weight: 600;
+        font-size: @breeze-toolbar-font-size;
+    }
+
+    .toolbar-divider {
+        width: 1px;
+        height: 30px;
+        background: @breeze-toolbar-divider;
+    }
+
+    .toolbar-nav {
+        display: flex;
+        gap: 5px;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: @breeze-toolbar-button-padding;
+        background: transparent;
+        border: none;
+        border-radius: @breeze-toolbar-border-radius;
+        color: @breeze-toolbar-text-muted;
+        cursor: pointer;
+        transition: @breeze-toolbar-transition;
+        font-size: @breeze-toolbar-font-size;
+        position: relative;
+
+        &.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: @breeze-toolbar-text;
+        }
+
+        &.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        &:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+    }
+
+    .nav-icon {
+        font-size: 16px;
+    }
+
+    .badge-pro {
+        font-size: 9px;
+        background: @breeze-toolbar-badge-pro;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-weight: 700;
+        margin-left: 4px;
+    }
+}
