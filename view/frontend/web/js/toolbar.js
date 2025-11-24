@@ -16,14 +16,14 @@ define([
     'use strict';
 
     return function (config, element) {
-        var $body = $(element); // element = body тепер
+        var $body = $(element); // element = body
 
         console.log('Initializing Breeze Theme Editor Toolbar for', config.currentUser);
 
         // Render toolbar HTML та додати ОДРАЗУ в body
         var template = mageTemplate(toolbarTemplate);
         var html = template({ data: {} });
-        $body.prepend(html); // ← Додати на початок body
+        $body.prepend(html);
 
         var $toolbar = $('#breeze-theme-editor-toolbar');
 
@@ -55,17 +55,6 @@ define([
                 $body.addClass('breeze-viewport-desktop');
                 console.log('Viewport detected: desktop (' + width + 'px)');
             }
-        }
-
-        /**
-         * Apply toolbar styles based on device mode (for iframe preview)
-         */
-        function applyToolbarDeviceMode(device) {
-            $body
-                .removeClass('breeze-toolbar-mobile breeze-toolbar-tablet breeze-toolbar-desktop')
-                .addClass('breeze-toolbar-' + device);
-
-            console.log('Toolbar mode set to:', device);
         }
 
         /**
@@ -168,12 +157,8 @@ define([
         // Listen to device changed events
         $(document).on('deviceChanged', function(event, device) {
             console.log('Device changed to:', device);
-
-            // Apply toolbar device mode
-            applyToolbarDeviceMode(device);
-
+            // Оновити тільки висоту, БЕЗ зміни toolbar classes
             setTimeout(function() {
-                detectViewportSize();
                 updateToolbarHeight();
             }, 100);
         });

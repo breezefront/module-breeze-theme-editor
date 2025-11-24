@@ -62,85 +62,12 @@
 }
 
 // ========================================
-// TOOLBAR DEVICE MODES (для iframe preview)
-// Ці стилі застосовуються коли користувач перемикає device switcher
+// АДАПТАЦІЯ TOOLBAR ПО РЕАЛЬНОМУ VIEWPORT
+// Toolbar завжди адаптується до реальної ширини екрану,
+// незалежно від device preview mode
 // ========================================
 
-// Toolbar в tablet mode
-body.breeze-toolbar-tablet {
-    .breeze-theme-editor-toolbar {
-        .toolbar-container {
-            padding: 0 10px;
-            gap: 10px;
-            height: 48px;
-        }
-
-        .nav-text,
-        .button-text,
-        .admin-username,
-        .devices-label,
-        .select-label-small {
-            display: none;
-        }
-
-        .toolbar-select {
-            padding: 6px 8px;
-            font-size: 12px;
-        }
-
-        .device-button,
-        .toolbar-button,
-        .nav-item {
-            padding: 6px 8px;
-        }
-    }
-
-    --breeze-toolbar-height: 48px;
-}
-
-// Toolbar в mobile mode
-body.breeze-toolbar-mobile {
-    .breeze-theme-editor-toolbar {
-        .toolbar-container {
-            padding: 0 5px;
-            gap: 5px;
-            height: 44px;
-            flex-wrap: nowrap;
-        }
-
-        .toolbar-left,
-        .toolbar-center {
-            display: none;
-        }
-
-        .toolbar-right {
-            flex: 1;
-            justify-content: space-between;
-        }
-
-        .nav-text,
-        .button-text,
-        .admin-username,
-        .devices-label {
-            display: none;
-        }
-
-        .device-button,
-        .toolbar-button {
-            padding: 4px 6px;
-            min-width: 32px;
-        }
-    }
-
-    --breeze-toolbar-height: 44px;
-}
-
-// ========================================
-// РЕАЛЬНИЙ VIEWPORT має НАЙВИЩИЙ пріоритет (Chrome DevTools)
-// Ці стилі перевизначають device modes коли браузер фізично вузький
-// ========================================
-
-// Якщо реальний viewport tablet - завжди compact toolbar
+// Якщо реальний viewport tablet - compact toolbar
 body.breeze-viewport-tablet {
     .breeze-theme-editor-toolbar {
         .toolbar-container {
@@ -172,7 +99,7 @@ body.breeze-viewport-tablet {
     --breeze-toolbar-height: 48px !important;
 }
 
-// Якщо реальний viewport mobile - завжди mini toolbar
+// Якщо реальний viewport mobile - mini toolbar
 body.breeze-viewport-mobile {
     .breeze-theme-editor-toolbar {
         .toolbar-container {
