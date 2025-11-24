@@ -105,7 +105,8 @@ define([
         // Page Selector
         if (components.pageSelector) {
             $(components.pageSelector.selector).breezePageSelector({
-                currentPage: components.pageSelector.currentPage
+                currentPage: components.pageSelector.currentPage,
+                pages: components.pageSelector.pages || []  // ← ДОДАТИ ЦЕЙ РЯДОК!
             });
         }
 

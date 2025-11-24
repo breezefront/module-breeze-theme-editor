@@ -1,6 +1,24 @@
-<div class="toolbar-select-group">
-    <button type="button" class="toolbar-select" id="page-selector">
-        <span class="select-value"><%= data.currentPage %></span>
+<div class="toolbar-selector toolbar-page-selector">
+<!--    <span class="select-label-small"><%= data.label %>:</span>-->
+    <button type="button" class="toolbar-select" data-toggle="dropdown">
+        <span class="select-text"><%= data.currentPage %></span>
         <span class="select-arrow">▼</span>
     </button>
+    <div class="toolbar-dropdown" style="display: none;">
+        <div class="dropdown-header">
+            <span><%= data.dropdownTitle %></span>
+        </div>
+        <div class="dropdown-content">
+            <% _.each(data.pages, function(page) { %>
+                <a href="<%= page.url %>"
+                   class="dropdown-item <%= page.active ? 'active' : '' %>"
+                   data-page-id="<%= page.id %>">
+                    <span class="item-text"><%= page.title %></span>
+                    <% if (page.active) { %>
+                        <span class="item-check">✓</span>
+                    <% } %>
+                </a>
+            <% }); %>
+        </div>
+    </div>
 </div>

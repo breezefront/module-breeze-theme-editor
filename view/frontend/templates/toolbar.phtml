@@ -50,7 +50,8 @@ if (!$viewModel->canShow()) {
                 },
                 "pageSelector": {
                     "selector": "#toolbar-page-selector",
-                    "currentPage": "<?= $block->escapeJs($viewModel->getCurrentPageName()) ?>"
+                    "currentPage": "<?= $block->escapeJs($viewModel->getCurrentPageName()) ?>",
+                    "pages": <?= /* @noEscape */ $viewModel->getPagesJsonData() ?>
                 },
                 "deviceSwitcher": {
                     "selector": "#toolbar-device-switcher",

@@ -3,6 +3,7 @@
 namespace Swissup\BreezeThemeEditor\ViewModel;
 
 use Magento\Framework\View\Element\Block\ArgumentInterface;
+use Magento\Framework\Serialize\Serializer\Json;
 
 class Toolbar implements ArgumentInterface
 {
@@ -37,12 +38,24 @@ class Toolbar implements ArgumentInterface
     private $storeManager;
 
     /**
+     * @var \Swissup\BreezeThemeEditor\Model\PageUrlProvider
+     */
+    private $pageUrlProvider;
+
+    /**
+     * @var Json
+     */
+    private $jsonSerializer;
+
+    /**
      * @param \Swissup\BreezeThemeEditor\Helper\Data $helper
      * @param \Swissup\BreezeThemeEditor\Model\Data\AccessToken $accessToken
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param \Magento\Backend\Model\Auth\Session $authSession
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Swissup\BreezeThemeEditor\Model\PageUrlProvider $pageUrlProvider
+     * @param Json $jsonSerializer
      */
     public function __construct(
         \Swissup\BreezeThemeEditor\Helper\Data $helper,
@@ -50,7 +63,9 @@ class Toolbar implements ArgumentInterface
         \Magento\Framework\App\RequestInterface $request,
         \Magento\Framework\UrlInterface $urlBuilder,
         \Magento\Backend\Model\Auth\Session $authSession,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Swissup\BreezeThemeEditor\Model\PageUrlProvider $pageUrlProvider,
+        Json $jsonSerializer
     ) {
         $this->helper = $helper;
         $this->accessToken = $accessToken;
@@ -58,6 +73,8 @@ class Toolbar implements ArgumentInterface
         $this->urlBuilder = $urlBuilder;
         $this->authSession = $authSession;
         $this->storeManager = $storeManager;
+        $this->pageUrlProvider = $pageUrlProvider;
+        $this->jsonSerializer = $jsonSerializer;
     }
 
     /**
@@ -67,7 +84,8 @@ class Toolbar implements ArgumentInterface
      */
     public function canShow()
     {
-        return true;
+        return true; // For development
+
         if (!$this->helper->isEnabled()) {
             return false;
         }
@@ -112,24 +130,52 @@ class Toolbar implements ArgumentInterface
     }
 
     /**
+     * Get page selector data with URLs
+     *
+     * @return array
+     */
+    public function getPageSelectorData()
+    {
+        $currentFullActionName = $this->request->getFullActionName();
+        $pages = $this->pageUrlProvider->getAvailablePages();
+
+        $result = [];
+        foreach ($pages as $actionName => $data) {
+            $result[] = [
+                'id' => $actionName,
+                'title' => (string)$data['title'],
+                'url' => $data['url'],
+                'active' => $actionName === $currentFullActionName
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get page selector data as JSON
+     *
+     * @return string
+     */
+    public function getPagesJsonData()
+    {
+//        consoleLog($this->getPageSelectorData());
+        return $this->jsonSerializer->serialize($this->getPageSelectorData());
+    }
+
+    /**
      * Get current page name
      *
      * @return string
      */
     public function getCurrentPageName()
     {
-        $fullActionName = $this->request->getFullActionName();
+        $currentFullActionName = $this->request->getFullActionName();
+        $pages = $this->pageUrlProvider->getAvailablePages();
 
-        $pageNames = [
-            'cms_index_index' => __('Home Page'),
-            'catalog_category_view' => __('Category Page'),
-            'catalog_product_view' => __('Product Page'),
-            'checkout_cart_index' => __('Shopping Cart'),
-            'checkout_index_index' => __('Checkout'),
-            'customer_account_index' => __('My Account'),
-        ];
-
-        return $pageNames[$fullActionName] ?? __('Current Page');
+        return isset($pages[$currentFullActionName])
+            ? (string)$pages[$currentFullActionName]['title']
+            : __('Current Page');
     }
 
     /**
