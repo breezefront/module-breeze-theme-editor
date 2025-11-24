@@ -58,7 +58,7 @@ define(['jquery'], function($) {
             // Знайти всі елементи крім toolbar та iframe
             var $content = $('body > *')
                 .not($toolbar)
-                .not('#toolbar-compact-toggle') // додати
+                .not('#toolbar-compact-toggle')
                 .not('#breeze-device-frame')
                 .not('script')
                 .not('link[rel="stylesheet"]')
@@ -72,13 +72,7 @@ define(['jquery'], function($) {
             });
 
             // Copy body classes (без toolbar classes)
-            var bodyClasses = $('body').attr('class').split(' ').filter(function(cls) {
-                return !cls.startsWith('breeze-theme-editor') &&
-                       !cls.startsWith('breeze-device') &&
-                       !cls.startsWith('breeze-viewport') &&
-                       !cls.startsWith('breeze-toolbar');
-            });
-            $iframeBody.addClass(bodyClasses.join(' '));
+            this._syncBodyClasses();
 
             // Стилізувати основний body
             $('body').css({
@@ -135,6 +129,70 @@ define(['jquery'], function($) {
             }
 
             console.log('📋 Copied <head> to iframe');
+        },
+
+        /**
+         * Синхронізувати класи body (копіювати з основного в iframe)
+         * Виключає toolbar/editor класи
+         */
+        _syncBodyClasses: function() {
+            if (!iframeDocument) return;
+
+            var bodyClasses = $('body').attr('class');
+            if (!bodyClasses) return;
+
+            var filteredClasses = bodyClasses.split(' ').filter(function(cls) {
+                return !cls.startsWith('breeze-theme-editor') &&
+                       !cls.startsWith('breeze-device') &&
+                       !cls.startsWith('breeze-viewport') &&
+                       !cls.startsWith('breeze-toolbar');
+            });
+
+            $(iframeDocument.body).attr('class', filteredClasses.join(' '));
+        },
+
+        /**
+         * Додати клас до iframe body
+         */
+        addBodyClass: function(className) {
+            if (!iframeDocument) {
+                console.warn('Iframe document not available');
+                return false;
+            }
+
+            $(iframeDocument.body).addClass(className);
+            console.log('Added class to iframe body:', className);
+            return true;
+        },
+
+        /**
+         * Видалити клас з iframe body
+         */
+        removeBodyClass: function(className) {
+            if (!iframeDocument) {
+                console.warn('Iframe document not available');
+                return false;
+            }
+
+            $(iframeDocument.body).removeClass(className);
+            console.log('Removed class from iframe body:', className);
+            return true;
+        },
+
+        /**
+         * Toggle клас в iframe body
+         */
+        toggleBodyClass: function(className) {
+            if (!iframeDocument) {
+                console.warn('Iframe document not available');
+                return false;
+            }
+
+            var $body = $(iframeDocument.body);
+            $body.toggleClass(className);
+            var hasClass = $body.hasClass(className);
+            console.log('Toggled class in iframe body:', className, '→', hasClass);
+            return hasClass;
         },
 
         setWidth: function(width, device) {
