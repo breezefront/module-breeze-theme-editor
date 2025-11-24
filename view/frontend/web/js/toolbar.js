@@ -16,15 +16,14 @@ define([
     'use strict';
 
     return function (config, element) {
-        var $root = $(element);
-        var $body = $('body');
+        var $body = $(element); // element = body тепер
 
         console.log('Initializing Breeze Theme Editor Toolbar for', config.currentUser);
 
-        // Render main toolbar HTML from template
+        // Render toolbar HTML та додати ОДРАЗУ в body
         var template = mageTemplate(toolbarTemplate);
         var html = template({ data: {} });
-        $root.html(html);
+        $body.prepend(html); // ← Додати на початок body
 
         var $toolbar = $('#breeze-theme-editor-toolbar');
 
@@ -33,17 +32,17 @@ define([
             return;
         }
 
+        console.log('✅ Toolbar rendered on body top-level');
+
         // Add body class
         $body.addClass('breeze-theme-editor-active');
 
         /**
          * Detect actual viewport width and apply responsive class
-         * ← НОВИЙ МЕТОД
          */
         function detectViewportSize() {
             var width = window.innerWidth;
 
-            // Remove previous viewport classes
             $body.removeClass('breeze-viewport-mobile breeze-viewport-tablet breeze-viewport-desktop');
 
             if (width <= 480) {
@@ -59,6 +58,17 @@ define([
         }
 
         /**
+         * Apply toolbar styles based on device mode (for iframe preview)
+         */
+        function applyToolbarDeviceMode(device) {
+            $body
+                .removeClass('breeze-toolbar-mobile breeze-toolbar-tablet breeze-toolbar-desktop')
+                .addClass('breeze-toolbar-' + device);
+
+            console.log('Toolbar mode set to:', device);
+        }
+
+        /**
          * Update toolbar height CSS custom property
          */
         function updateToolbarHeight() {
@@ -67,7 +77,7 @@ define([
             console.log('Toolbar height updated:', toolbarHeight + 'px');
         }
 
-        // Detect viewport on init ← ДОДАНО
+        // Detect viewport on init
         detectViewportSize();
 
         // Initialize all components
@@ -145,7 +155,7 @@ define([
         $(window).on('resize', function() {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(function() {
-                detectViewportSize(); // ← ДОДАНО
+                detectViewportSize();
                 updateToolbarHeight();
             }, 250);
         });
@@ -155,10 +165,15 @@ define([
             setTimeout(updateToolbarHeight, 350);
         });
 
+        // Listen to device changed events
         $(document).on('deviceChanged', function(event, device) {
-            console.log('Device changed, updating toolbar height');
+            console.log('Device changed to:', device);
+
+            // Apply toolbar device mode
+            applyToolbarDeviceMode(device);
+
             setTimeout(function() {
-                detectViewportSize(); // ← ДОДАНО
+                detectViewportSize();
                 updateToolbarHeight();
             }, 100);
         });

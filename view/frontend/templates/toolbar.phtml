@@ -10,12 +10,9 @@ if (!$viewModel->canShow()) {
 }
 ?>
 
-<!-- Toolbar will be rendered here by JavaScript -->
-<div id="breeze-toolbar-root"></div>
-
 <script type="text/x-magento-init">
 {
-    "#breeze-toolbar-root": {
+    "body": {
         "Swissup_BreezeThemeEditor/js/toolbar": {
             "currentUser": "<?= $block->escapeJs($viewModel->getAdminUsername()) ?>",
             "components": {
@@ -44,7 +41,7 @@ if (!$viewModel->canShow()) {
                 },
                 "versionSelector": {
                     "selector": "#toolbar-version-selector",
-                    "currentVersion": "1.1.",
+                    "currentVersion": "1.1.0",
                     "published": false
                 },
                 "scopeSelector": {

@@ -1,0 +1,33 @@
+//
+// Breeze Theme Editor - Device Frame (iframe)
+// _____________________________________________
+
+// Body в device mode (завжди сірий фон)
+body.breeze-theme-editor-active {
+    background: #e5e5e5;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+// Iframe
+#breeze-device-frame {
+    display: block;
+    border: none;
+    background: #fff;
+}
+
+// Desktop mode - повна ширина без декорацій
+body.breeze-device-desktop {
+    #breeze-device-frame {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+}
+
+// Mobile/Tablet mode - з декораціями
+body.breeze-device-mode {
+    #breeze-device-frame {
+        // Стилі вже є в JS
+    }
+}

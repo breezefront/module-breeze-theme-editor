@@ -62,16 +62,91 @@
 }
 
 // ========================================
-// НОВИЙ ПІДХІД: Реальний viewport має пріоритет
+// TOOLBAR DEVICE MODES (для iframe preview)
+// Ці стилі застосовуються коли користувач перемикає device switcher
 // ========================================
 
-// Реальний tablet viewport (Chrome DevTools або вузький екран)
+// Toolbar в tablet mode
+body.breeze-toolbar-tablet {
+    .breeze-theme-editor-toolbar {
+        .toolbar-container {
+            padding: 0 10px;
+            gap: 10px;
+            height: 48px;
+        }
+
+        .nav-text,
+        .button-text,
+        .admin-username,
+        .devices-label,
+        .select-label-small {
+            display: none;
+        }
+
+        .toolbar-select {
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+
+        .device-button,
+        .toolbar-button,
+        .nav-item {
+            padding: 6px 8px;
+        }
+    }
+
+    --breeze-toolbar-height: 48px;
+}
+
+// Toolbar в mobile mode
+body.breeze-toolbar-mobile {
+    .breeze-theme-editor-toolbar {
+        .toolbar-container {
+            padding: 0 5px;
+            gap: 5px;
+            height: 44px;
+            flex-wrap: nowrap;
+        }
+
+        .toolbar-left,
+        .toolbar-center {
+            display: none;
+        }
+
+        .toolbar-right {
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .nav-text,
+        .button-text,
+        .admin-username,
+        .devices-label {
+            display: none;
+        }
+
+        .device-button,
+        .toolbar-button {
+            padding: 4px 6px;
+            min-width: 32px;
+        }
+    }
+
+    --breeze-toolbar-height: 44px;
+}
+
+// ========================================
+// РЕАЛЬНИЙ VIEWPORT має НАЙВИЩИЙ пріоритет (Chrome DevTools)
+// Ці стилі перевизначають device modes коли браузер фізично вузький
+// ========================================
+
+// Якщо реальний viewport tablet - завжди compact toolbar
 body.breeze-viewport-tablet {
     .breeze-theme-editor-toolbar {
         .toolbar-container {
-            padding: 0 10px;
-            gap: 10px;
-            height: 48px;
+            padding: 0 10px !important;
+            gap: 10px !important;
+            height: 48px !important;
         }
 
         .nav-text,
@@ -79,36 +154,37 @@ body.breeze-viewport-tablet {
         .admin-username,
         .devices-label,
         .select-label-small {
-            display: none;
+            display: none !important;
         }
 
         .toolbar-select {
-            padding: 6px 8px;
-            font-size: 12px;
+            padding: 6px 8px !important;
+            font-size: 12px !important;
         }
 
         .device-button,
         .toolbar-button,
         .nav-item {
-            padding: 6px 8px;
+            padding: 6px 8px !important;
         }
     }
+
+    --breeze-toolbar-height: 48px !important;
 }
 
-// Реальний mobile viewport (Chrome DevTools Mobile Mode)
+// Якщо реальний viewport mobile - завжди mini toolbar
 body.breeze-viewport-mobile {
     .breeze-theme-editor-toolbar {
         .toolbar-container {
-            padding: 0 5px;
-            gap: 5px;
-            height: 44px;
-            flex-wrap: nowrap; // Не переносити
+            padding: 0 5px !important;
+            gap: 5px !important;
+            height: 44px !important;
+            flex-wrap: nowrap !important;
         }
 
-        // Ховати все крім devices + toggle + exit
         .toolbar-left,
         .toolbar-center {
-            display: none;
+            display: none !important;
         }
 
         .toolbar-right {
@@ -120,78 +196,15 @@ body.breeze-viewport-mobile {
         .button-text,
         .admin-username,
         .devices-label {
-            display: none;
+            display: none !important;
         }
 
         .device-button,
         .toolbar-button {
-            padding: 4px 6px;
-            min-width: 32px;
+            padding: 4px 6px !important;
+            min-width: 32px !important;
         }
     }
-}
 
-// Toolbar в режимі tablet preview (тільки якщо реальний viewport ШИРОКИЙ)
-body.breeze-device-tablet:not(.breeze-viewport-mobile):not(.breeze-viewport-tablet) {
-    .breeze-theme-editor-toolbar {
-        .toolbar-container {
-            padding: 0 10px;
-            gap: 10px;
-            height: 48px;
-        }
-
-        .nav-text,
-        .button-text,
-        .admin-username,
-        .devices-label,
-        .select-label-small {
-            display: none;
-        }
-
-        .toolbar-select {
-            padding: 6px 8px;
-            font-size: 12px;
-        }
-
-        .device-button,
-        .toolbar-button,
-        .nav-item {
-            padding: 6px 8px;
-        }
-    }
-}
-
-// Toolbar в режимі mobile preview (тільки якщо реальний viewport ШИРОКИЙ)
-body.breeze-device-mobile:not(.breeze-viewport-mobile):not(.breeze-viewport-tablet) {
-    .breeze-theme-editor-toolbar {
-        .toolbar-container {
-            padding: 0 5px;
-            gap: 5px;
-            height: 44px;
-            flex-wrap: wrap;
-        }
-
-        .toolbar-left,
-        .toolbar-center {
-            display: none;
-        }
-
-        .toolbar-right {
-            flex: 1;
-            justify-content: space-between;
-        }
-
-        .nav-text,
-        .button-text,
-        .admin-username,
-        .devices-label {
-            display: none;
-        }
-
-        .device-button,
-        .toolbar-button {
-            padding: 4px 6px;
-            min-width: 32px;
-        }
-    }
+    --breeze-toolbar-height: 44px !important;
 }

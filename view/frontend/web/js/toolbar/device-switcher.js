@@ -2,8 +2,9 @@ define([
     'jquery',
     'jquery-ui-modules/widget',
     'mage/template',
-    'text!Swissup_BreezeThemeEditor/template/toolbar/device-switcher.html'
-], function ($, widget, mageTemplate, deviceSwitcherTemplate) {
+    'text!Swissup_BreezeThemeEditor/template/toolbar/device-switcher.html',
+    'Swissup_BreezeThemeEditor/js/toolbar/device-frame'
+], function ($, widget, mageTemplate, deviceSwitcherTemplate, DeviceFrame) {
     'use strict';
 
     $.widget('swissup.breezeDeviceSwitcher', {
@@ -16,32 +17,34 @@ define([
                     icon: 'Swissup_BreezeThemeEditor/images/device-desktop.svg',
                     width: 20,
                     height: 16,
-                    frameWidth: '100%',
-                    viewport: 'width=device-width, initial-scale=1' // ← ДОДАНО
+                    frameWidth: '100%'
                 },
                 tablet: {
                     icon: 'Swissup_BreezeThemeEditor/images/device-tablet.svg',
                     width: 18,
                     height: 20,
-                    frameWidth: '768px',
-                    viewport: 'width=768' // ← ДОДАНО
+                    frameWidth: '768px'
                 },
                 mobile: {
                     icon: 'Swissup_BreezeThemeEditor/images/device-mobile.svg',
                     width: 10,
                     height: 18,
-                    frameWidth: '375px',
-                    viewport: 'width=375' // ← ДОДАНО
+                    frameWidth: '375px'
                 }
             }
         },
 
         _create: function () {
             this.currentDevice = this.options.activeDevice;
-            this.originalViewport = null; // ← ДОДАНО
             this.template = mageTemplate(deviceSwitcherTemplate);
             this._render();
             this._bind();
+
+            // Ініціалізувати iframe ПІСЛЯ рендерингу
+            var self = this;
+            setTimeout(function() {
+                self._initFrame();
+            }, 200); // Збільшити затримку
         },
 
         _render: function () {
@@ -72,6 +75,20 @@ define([
             this.element.on('click', '.device-button', $.proxy(this._switchDevice, this));
         },
 
+        /**
+         * Ініціалізувати iframe один раз при створенні widget
+         */
+        _initFrame: function() {
+            var config = this.options.deviceConfig[this.currentDevice];
+
+            console.log('🖼️ Initializing device frame...');
+
+            DeviceFrame.init();
+            DeviceFrame.setWidth(config.frameWidth, this.currentDevice);
+
+            console.log('✅ Frame initialized with device:', this.currentDevice);
+        },
+
         _switchDevice: function (event) {
             var $button = $(event.currentTarget);
             var device = $button.data('device');
@@ -89,57 +106,34 @@ define([
             // Apply device mode
             this._applyDeviceMode(device);
 
-            this.element.trigger('deviceChanged', [device]);
-            console.log('Device switched to:', device); // ← ДОДАНО лог
+            console.log('📱 Device switched to:', device);
         },
 
         _applyDeviceMode: function(device) {
             var config = this.options.deviceConfig[device];
             var $body = $('body');
-            var isDesktop = device === 'desktop';
 
-            // Update viewport meta tag для media queries ← ДОДАНО
-            this._setViewport(config.viewport);
+            // Змінити ширину frame
+            DeviceFrame.setWidth(config.frameWidth, device);
 
-            // Update body class
+            // Update body classes
             $body
                 .removeClass('breeze-device-mode breeze-device-desktop breeze-device-tablet breeze-device-mobile')
                 .addClass('breeze-device-' + device);
 
-            if (!isDesktop) {
+            if (device !== 'desktop') {
                 $body.addClass('breeze-device-mode');
             }
 
-            // Set CSS variable for frame width
-            document.documentElement.style.setProperty('--device-frame-width', config.frameWidth);
+            // Тригерити подію на document
+            $(document).trigger('deviceChanged', [device]);
 
-            console.log('Applied device mode:', device, '| Frame width:', config.frameWidth, '| Viewport:', config.viewport); // ← ДОДАНО
+            console.log('Applied device mode:', device, '| Frame:', config.frameWidth);
         },
 
-        // ← ДОДАНО метод
-        _setViewport: function(content) {
-            var $viewport = $('meta[name="viewport"]');
-
-            // Save original viewport on first change
-            if (!this.originalViewport && $viewport.length) {
-                this.originalViewport = $viewport.attr('content');
-            }
-
-            if (!$viewport.length) {
-                $('head').append('<meta name="viewport" content="' + content + '">');
-            } else {
-                $viewport.attr('content', content);
-            }
-
-            console.log('Viewport changed to:', content);
-        },
-
-        // ← ДОДАНО destroy для cleanup
         _destroy: function() {
-            // Restore original viewport
-            if (this.originalViewport) {
-                $('meta[name="viewport"]').attr('content', this.originalViewport);
-            }
+            // Знищити device frame
+            DeviceFrame.destroy();
             this._super();
         }
     });
