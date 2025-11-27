@@ -98,7 +98,9 @@ define([
         // Scope Selector
         if (components.scopeSelector) {
             $(components.scopeSelector.selector).breezeScopeSelector({
-                currentScope: components.scopeSelector.currentScope
+                currentScope: components.scopeSelector.currentScope,
+                scopes: components.scopeSelector.scopes || [],
+                hasMultiple: components.scopeSelector.hasMultiple || false
             });
         }
 

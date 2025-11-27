@@ -1,7 +1,27 @@
-<div class="toolbar-select-group">
-    <button type="button" class="toolbar-select" id="scope-selector">
-        <span class="select-label-small"><%= data.label %></span>
-        <span class="select-value"><%= data.currentScope %></span>
-        <span class="select-arrow">▼</span>
-    </button>
+<div class="toolbar-selector toolbar-scope-selector">
+    <% if (data.hasMultiple) { %>
+        <button type="button" class="toolbar-select" data-toggle="dropdown">
+            <span class="select-text"><%= data.currentScope %></span>
+            <span class="select-arrow">▼</span>
+        </button>
+        <div class="toolbar-dropdown">
+            <div class="dropdown-header">
+                <span><%= data.dropdownTitle %></span>
+            </div>
+            <div class="dropdown-content">
+                <% _.each(data.scopes, function(scope) { %>
+                    <a href="<%= scope.url %>"
+                       class="dropdown-item <%= scope.active ? 'active' : '' %>"
+                       data-scope-id="<%= scope.id %>">
+                        <span class="item-text"><%= scope.name %></span>
+                        <% if (scope.active) { %>
+                            <span class="item-check">✓</span>
+                        <% } %>
+                    </a>
+                <% }); %>
+            </div>
+        </div>
+    <% } else { %>
+        <span class="toolbar-scope-text"><%= data.currentScope %></span>
+    <% } %>
 </div>

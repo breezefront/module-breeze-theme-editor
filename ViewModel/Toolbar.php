@@ -43,6 +43,11 @@ class Toolbar implements ArgumentInterface
     private $pageUrlProvider;
 
     /**
+     * @var \Swissup\BreezeThemeEditor\Model\StoreDataProvider
+     */
+    private $storeDataProvider;
+
+    /**
      * @var Json
      */
     private $jsonSerializer;
@@ -65,6 +70,7 @@ class Toolbar implements ArgumentInterface
         \Magento\Backend\Model\Auth\Session $authSession,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Swissup\BreezeThemeEditor\Model\PageUrlProvider $pageUrlProvider,
+        \Swissup\BreezeThemeEditor\Model\StoreDataProvider $storeDataProvider,
         Json $jsonSerializer
     ) {
         $this->helper = $helper;
@@ -74,6 +80,7 @@ class Toolbar implements ArgumentInterface
         $this->authSession = $authSession;
         $this->storeManager = $storeManager;
         $this->pageUrlProvider = $pageUrlProvider;
+        $this->storeDataProvider = $storeDataProvider;
         $this->jsonSerializer = $jsonSerializer;
     }
 
@@ -115,6 +122,32 @@ class Toolbar implements ArgumentInterface
     }
 
     /**
+     * Get scope selector data
+     *
+     * @return array
+     */
+    public function getScopeSelectorData()
+    {
+        $mode = $this->storeDataProvider->getSwitchMode();
+
+        if ($mode === 'groups') {
+            return $this->storeDataProvider->getAvailableGroups();
+        }
+
+        return $this->storeDataProvider->getAvailableStores();
+    }
+
+    /**
+     * Get scope selector data as JSON
+     *
+     * @return string
+     */
+    public function getScopesJsonData()
+    {
+        return $this->jsonSerializer->serialize($this->getScopeSelectorData());
+    }
+
+    /**
      * Get current scope name
      *
      * @return string
@@ -127,6 +160,16 @@ class Toolbar implements ArgumentInterface
         } catch (\Exception $e) {
             return __('All Store Views');
         }
+    }
+
+    /**
+     * Has multiple stores/scopes
+     *
+     * @return bool
+     */
+    public function hasMultipleScopes()
+    {
+        return $this->storeDataProvider->hasMultipleStores();
     }
 
     /**

@@ -53,10 +53,11 @@ define([
             e.preventDefault();
             e.stopPropagation();
 
-            var isVisible = this.$dropdown.is(':visible');
+            var isVisible = this.$dropdown.hasClass('active');//this.$dropdown.is(':visible');
 
             // Close all other dropdowns
-            $('.toolbar-dropdown').hide();
+            // $('.toolbar-dropdown').hide();
+            $('.toolbar-dropdown').removeClass('active');
 
             if (!isVisible) {
                 this._openDropdown();
@@ -66,14 +67,14 @@ define([
         },
 
         _openDropdown: function () {
-            this.$dropdown.slideDown(200);
+            this.$dropdown.addClass('active');
             this.$button.addClass('active');
             this.element.trigger('pageSelectorOpened');
             console.log('Page selector opened');
         },
 
         _closeDropdown: function () {
-            this.$dropdown.slideUp(200);
+            this.$dropdown.removeClass('active');
             this.$button.removeClass('active');
             this.element.trigger('pageSelectorClosed');
         },

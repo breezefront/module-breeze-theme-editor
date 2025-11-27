@@ -11,7 +11,8 @@
         justify-content: center;
     }
 
-    .toolbar-select-group {
+    // Спільні стилі для селекторів (version, scope, page)
+    .toolbar-selector {
         position: relative;
     }
 
@@ -32,6 +33,31 @@
         &:hover {
             background: rgba(255, 255, 255, 0.15);
         }
+
+        &.active {
+            background: rgba(255, 255, 255, 0.15);
+        }
+    }
+
+    .select-text,
+    .select-value {
+        font-weight: 500;
+    }
+
+    .select-arrow {
+        margin-left: 4px;
+        font-size: 10px;
+        opacity: 0.7;
+        transition: transform 0.2s ease;
+    }
+
+    .toolbar-select.active .select-arrow {
+        transform: rotate(180deg);
+    }
+
+    .select-label-small {
+        font-size: 11px;
+        opacity: 0.8;
     }
 
     .select-label {
@@ -45,19 +71,5 @@
         &.not-published {
             color: @breeze-toolbar-status-unpublished;
         }
-    }
-
-    .select-label-small {
-        font-size: 11px;
-        opacity: 0.8;
-    }
-
-    .select-value {
-        font-weight: 500;
-    }
-
-    .select-arrow {
-        font-size: 10px;
-        opacity: 0.7;
     }
 }

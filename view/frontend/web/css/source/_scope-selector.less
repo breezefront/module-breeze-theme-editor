@@ -1,0 +1,22 @@
+//
+// Breeze Theme Editor - Scope Selector
+// _____________________________________________
+
+.breeze-theme-editor-toolbar {
+    .toolbar-scope-selector {
+        position: relative;
+    }
+
+    // Якщо тільки один store - показати як текст
+    .toolbar-scope-text {
+        padding: @breeze-toolbar-select-padding;
+        font-size: @breeze-toolbar-font-size-small;
+        color: @breeze-toolbar-text;
+        opacity: 0.9;
+    }
+
+    // Dropdown стилі
+    .toolbar-scope-selector .toolbar-dropdown {
+        .breeze-toolbar-dropdown();
+    }
+}
