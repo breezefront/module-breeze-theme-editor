@@ -16,26 +16,44 @@ define([
     'use strict';
 
     return function (config, element) {
-        var $body = $(element); // element = body
-
-        console.log('Initializing Breeze Theme Editor Toolbar for', config.currentUser);
-
-        // Render toolbar HTML та додати ОДРАЗУ в body
-        var template = mageTemplate(toolbarTemplate);
-        var html = template({ data: {} });
-        $body.prepend(html);
-
-        var $toolbar = $('#breeze-theme-editor-toolbar');
-
-        if (!$toolbar.length) {
-            console.error('Breeze Toolbar: toolbar element not found after rendering');
+        var $mainBody = $(window.top.document.body);
+        if (window.self !== window.top) {
+            console.warn('⚠️ Skipping toolbar init inside iframe');
             return;
         }
 
-        console.log('✅ Toolbar rendered on body top-level');
+        if ($mainBody.data('breeze-toolbar-initialized')) {
+            console.warn('⚠️ Toolbar already initialized');
+            return;
+        }
+
+        console.log('✅ Initializing Breeze Theme Editor Toolbar for', config.currentUser);
+
+        $mainBody.find('.breeze-theme-editor-toolbar').remove();
+        $mainBody.find('#toolbar-compact-toggle').remove();
+        $mainBody.find('#breeze-device-frame').remove();
+
+        // Render toolbar HTML
+        var template = mageTemplate(toolbarTemplate);
+        var html = template({ data: {} });
+
+        // Додати в TOP window body
+        $mainBody.prepend(html);
+
+        var $toolbar = $mainBody.find('#breeze-theme-editor-toolbar');
+
+        if (!$toolbar.length) {
+            console.error('❌ Toolbar element not found after rendering');
+            return;
+        }
+
+        console.log('✅ Toolbar rendered in top window');
+
+        // Позначити як ініціалізовано
+        $mainBody.data('breeze-toolbar-initialized', true);
 
         // Add body class
-        $body.addClass('breeze-theme-editor-active');
+        $mainBody.addClass('breeze-theme-editor-active');
 
         /**
          * Detect actual viewport width and apply responsive class
@@ -43,16 +61,16 @@ define([
         function detectViewportSize() {
             var width = window.innerWidth;
 
-            $body.removeClass('breeze-viewport-mobile breeze-viewport-tablet breeze-viewport-desktop');
+            $mainBody.removeClass('breeze-viewport-mobile breeze-viewport-tablet breeze-viewport-desktop');
 
             if (width <= 480) {
-                $body.addClass('breeze-viewport-mobile');
+                $mainBody.addClass('breeze-viewport-mobile');
                 console.log('Viewport detected: mobile (' + width + 'px)');
             } else if (width <= 768) {
-                $body.addClass('breeze-viewport-tablet');
+                $mainBody.addClass('breeze-viewport-tablet');
                 console.log('Viewport detected: tablet (' + width + 'px)');
             } else {
-                $body.addClass('breeze-viewport-desktop');
+                $mainBody.addClass('breeze-viewport-desktop');
                 console.log('Viewport detected: desktop (' + width + 'px)');
             }
         }
@@ -108,7 +126,7 @@ define([
         if (components.pageSelector) {
             $(components.pageSelector.selector).breezePageSelector({
                 currentPage: components.pageSelector.currentPage,
-                pages: components.pageSelector.pages || []  // ← ДОДАТИ ЦЕЙ РЯДОК!
+                pages: components.pageSelector.pages || []
             });
         }
 
@@ -160,12 +178,11 @@ define([
         // Listen to device changed events
         $(document).on('deviceChanged', function(event, device) {
             console.log('Device changed to:', device);
-            // Оновити тільки висоту, БЕЗ зміни toolbar classes
             setTimeout(function() {
                 updateToolbarHeight();
             }, 100);
         });
 
-        console.log('Breeze Theme Editor Toolbar initialized successfully');
+        console.log('✅ Breeze Theme Editor Toolbar initialized successfully');
     };
 });

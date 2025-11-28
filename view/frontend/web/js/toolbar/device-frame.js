@@ -6,22 +6,31 @@ define(['jquery'], function($) {
     var iframeWindow = null;
 
     return {
-        /**
-         * Створити iframe і перемістити контент
-         */
         init: function() {
-            if ($iframe) {
-                console.warn('Device frame already initialized');
-                return;
+            // 🔥 Перевірки ВСЕРЕДИНІ методу init!
+
+            // Перевірка чи ми в iframe
+            if (window.self !== window.top) {
+                console.warn('⚠️ Device Frame: Already inside iframe, skipping');
+                return false;
             }
+
+            // Перевірка чи вже ініціалізовано
+            if ($iframe) {
+                console.warn('⚠️ Device frame already initialized');
+                return $iframe;
+            }
+
+            // Очистити існуючі frames в DOM
+            $('#breeze-device-frame').remove();
 
             console.log('🖼️ Initializing device frame...');
 
-            // Перевірити що toolbar існує (ID!)
+            // Перевірити що toolbar існує
             var $toolbar = $('#breeze-theme-editor-toolbar');
 
             if (!$toolbar.length) {
-                console.error('❌ Toolbar not found! Cannot initialize device frame.');
+                console.error('❌ Toolbar not found!  Cannot initialize device frame.');
                 return false;
             }
 
@@ -34,7 +43,7 @@ define(['jquery'], function($) {
                 scrolling: 'yes'
             }).css({
                 position: 'absolute',
-                top: 'var(--breeze-toolbar-height, 56px)', // fallback
+                top: 'var(--breeze-toolbar-height, 56px)',
                 left: '50%',
                 transform: 'translateX(-50%)',
                 width: '100%',
@@ -55,26 +64,44 @@ define(['jquery'], function($) {
 
             this._copyHead();
 
-            // Знайти всі елементи крім toolbar та iframe
-            var $content = $('body > *')
-                .not($toolbar)
-                .not('#toolbar-compact-toggle')
-                .not('#breeze-device-frame')
-                .not('script')
-                .not('link[rel="stylesheet"]')
-                .not('style');
+            // 🔥 КРИТИЧНЕ: Переміщувати БЕЗ toolbar
+            var $allBodyChildren = $('body').children();
+
+            var $content = $allBodyChildren.filter(function() {
+                var $el = $(this);
+
+                if ($el.is('#breeze-theme-editor-toolbar')) {
+                    console.log('⛔ Skipping toolbar');
+                    return false;
+                }
+
+                if ($el.is('#toolbar-compact-toggle')) {
+                    console.log('⛔ Skipping compact toggle');
+                    return false;
+                }
+
+                if ($el.is('#breeze-device-frame')) {
+                    console.log('⛔ Skipping iframe');
+                    return false;
+                }
+
+                if ($el.is('script, link[rel="stylesheet"], style')) {
+                    return false;
+                }
+
+                return true;
+            });
 
             console.log('📦 Moving', $content.length, 'elements to iframe');
+            console.log('✅ Toolbar remains in main body');
 
             var $iframeBody = $(iframeDocument.body);
             $content.each(function() {
                 $iframeBody.append(this);
             });
 
-            // Copy body classes (без toolbar classes)
             this._syncBodyClasses();
 
-            // Стилізувати основний body
             $('body').css({
                 margin: 0,
                 padding: 0,
@@ -91,7 +118,6 @@ define(['jquery'], function($) {
             var $mainHead = $('head');
             var $iframeHead = $(iframeDocument.head);
 
-            // Copy meta (крім viewport)
             $mainHead.find('meta').each(function() {
                 var $meta = $(this).clone();
                 if ($meta.attr('name') !== 'viewport') {
@@ -99,17 +125,14 @@ define(['jquery'], function($) {
                 }
             });
 
-            // Copy stylesheets
             $mainHead.find('link[rel="stylesheet"]').each(function() {
                 $iframeHead.append($(this).clone());
             });
 
-            // Copy styles
             $mainHead.find('style').each(function() {
                 $iframeHead.append($(this).clone());
             });
 
-            // Copy base scripts
             $mainHead.find('script').each(function() {
                 var $script = $(this);
                 if (!$script.attr('src') || $script.attr('src').includes('requirejs-config')) {
@@ -117,10 +140,8 @@ define(['jquery'], function($) {
                 }
             });
 
-            // Copy title
             iframeDocument.title = document.title;
 
-            // Add base
             var $base = $mainHead.find('base');
             if ($base.length) {
                 $iframeHead.prepend($base.clone());
@@ -131,10 +152,6 @@ define(['jquery'], function($) {
             console.log('📋 Copied <head> to iframe');
         },
 
-        /**
-         * Синхронізувати класи body (копіювати з основного в iframe)
-         * Виключає toolbar/editor класи
-         */
         _syncBodyClasses: function() {
             if (!iframeDocument) return;
 
@@ -151,9 +168,6 @@ define(['jquery'], function($) {
             $(iframeDocument.body).attr('class', filteredClasses.join(' '));
         },
 
-        /**
-         * Додати клас до iframe body
-         */
         addBodyClass: function(className) {
             if (!iframeDocument) {
                 console.warn('Iframe document not available');
@@ -165,9 +179,6 @@ define(['jquery'], function($) {
             return true;
         },
 
-        /**
-         * Видалити клас з iframe body
-         */
         removeBodyClass: function(className) {
             if (!iframeDocument) {
                 console.warn('Iframe document not available');
@@ -179,9 +190,6 @@ define(['jquery'], function($) {
             return true;
         },
 
-        /**
-         * Toggle клас в iframe body
-         */
         toggleBodyClass: function(className) {
             if (!iframeDocument) {
                 console.warn('Iframe document not available');
@@ -222,7 +230,6 @@ define(['jquery'], function($) {
 
             console.log('📐 Frame width:', width, '| Device:', device);
 
-            // Trigger resize в iframe
             if (iframeWindow) {
                 setTimeout(function() {
                     iframeWindow.dispatchEvent(new Event('resize'));
@@ -257,7 +264,6 @@ define(['jquery'], function($) {
 
             console.log('🗑️ Destroying device frame...');
 
-            // Повернути контент назад
             var $iframeBody = $(iframeDocument.body);
             var $mainBody = $('body');
 

@@ -9,7 +9,8 @@ define([
     $.widget('swissup.breezePageSelector', {
         options: {
             currentPage: 'Home',
-            pages: []
+            _isNavigating: false,
+            pages: [],
         },
 
         _create: function () {
@@ -81,12 +82,22 @@ define([
 
         _selectPage: function (e) {
             e.preventDefault();
+
+            // 🔥 Захист від подвійного кліку
+            if (this._isNavigating) {
+                console.warn('⚠️ Navigation already in progress');
+                return;
+            }
+
+            this._isNavigating = true;
+            this.$button.prop('disabled', true).css('opacity', '0.6');
+
             var $item = $(e.currentTarget);
             var pageId = $item.data('page-id');
             var pageTitle = $item.find('.item-text').text();
             var pageUrl = $item.attr('href');
 
-            console.log('Switching to page:', pageTitle, '(' + pageId + ')');
+            console.log('🔄 Switching to page:', pageTitle, '(' + pageId + ')');
 
             this.element.trigger('pageChanged', [{
                 id: pageId,
@@ -96,8 +107,12 @@ define([
 
             // Redirect with access token
             var urlWithToken = this._addAccessToken(pageUrl);
-            console.log('Redirecting to:', urlWithToken);
-            window.location.href = urlWithToken;
+            console.log('➡️ Redirecting to:', urlWithToken);
+
+            // Додати невелику затримку для відображення стану
+            setTimeout(function() {
+                window.location.href = urlWithToken;
+            }, 100);
         },
 
         /**
