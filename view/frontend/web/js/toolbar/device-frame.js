@@ -26,7 +26,7 @@ define([
             var $toolbar = $('#breeze-theme-editor-toolbar');
 
             if (!$toolbar.length) {
-                console.error('❌ Toolbar not found!  Cannot initialize device frame.');
+                console.error('❌ Toolbar not found! Cannot initialize device frame.');
                 return false;
             }
 
@@ -40,13 +40,13 @@ define([
             }).css({
                 position: 'absolute',
                 top: 'var(--breeze-toolbar-height, 56px)',
-                left: 'var(--bte-sidebar-width, 0px)',  // ✅
-                transform: 'none',  // ✅
-                width: 'calc(100% - var(--bte-sidebar-width, 0px))',  // ✅
+                left: 'var(--bte-sidebar-width, 0px)',
+                transform: 'none',
+                width: 'calc(100% - var(--bte-sidebar-width, 0px))',
                 height: 'calc(100vh - var(--breeze-toolbar-height, 56px))',
                 border: 'none',
                 background: '#fff',
-                transition: 'width 0.3s ease, left 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease'  // ✅
+                transition: 'width 0.3s ease, left 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease'
             });
 
             $('body').append($iframe);
@@ -80,7 +80,6 @@ define([
                     return false;
                 }
 
-                // 🔥 НЕ ПЕРЕМІЩАТИ panels container!
                 if ($el.is('#bte-panels-container')) {
                     console.log('⛔ Skipping panels container');
                     return false;
@@ -116,7 +115,7 @@ define([
         },
 
         /**
-         * 🔥 Встановити ширину iframe залежно від пристрою
+         * Встановити ширину iframe залежно від пристрою
          */
         setWidth: function(width, device) {
             if (!$iframe) {
@@ -125,7 +124,6 @@ define([
             }
 
             if (device === 'desktop') {
-                // Desktop - враховувати sidebar
                 $iframe.css({
                     left: 'var(--bte-sidebar-width, 0px)',
                     transform: 'none',
@@ -136,7 +134,6 @@ define([
 
                 console.log('📐 Desktop mode: full width minus sidebar');
             } else {
-                // Tablet/Mobile - центрувати з фіксованою шириною
                 $iframe.css({
                     left: '50%',
                     transform: 'translateX(-50%)',
@@ -148,8 +145,66 @@ define([
                 console.log('📐 ' + device + ' mode: width =', width);
             }
 
-            // Update CSS variable
             document.documentElement.style.setProperty('--device-frame-width', width);
+        },
+
+        /**
+         * Додати клас до body в iframe
+         */
+        addBodyClass: function(className) {
+            if (!iframeDocument) {
+                console.warn('⚠️ Cannot add class: iframe not initialized');
+                return false;
+            }
+
+            $(iframeDocument.body).addClass(className);
+            console.log('✅ Added class to iframe body:', className);
+            return true;
+        },
+
+        /**
+         * Видалити клас з body в iframe
+         */
+        removeBodyClass: function(className) {
+            if (!iframeDocument) {
+                console.warn('⚠️ Cannot remove class: iframe not initialized');
+                return false;
+            }
+
+            $(iframeDocument.body).removeClass(className);
+            console.log('✅ Removed class from iframe body:', className);
+            return true;
+        },
+
+        /**
+         * Toggle клас на body в iframe
+         */
+        toggleBodyClass: function(className) {
+            if (!iframeDocument) {
+                console.warn('⚠️ Cannot toggle class: iframe not initialized');
+                return false;
+            }
+
+            var $body = $(iframeDocument.body);
+            $body.toggleClass(className);
+            var hasClass = $body.hasClass(className);
+
+            console.log('🔄 Toggled class in iframe body:', className, '→', hasClass);
+            return hasClass;
+        },
+
+        /**
+         * Отримати iframe window
+         */
+        getWindow: function() {
+            return iframeWindow || null;
+        },
+
+        /**
+         * Отримати iframe document
+         */
+        getDocument: function() {
+            return iframeDocument || null;
         },
 
         _copyHead: function() {
@@ -167,13 +222,12 @@ define([
         },
 
         _syncBodyClasses: function() {
-            if (!iframeDocument) {
+            if (iframeDocument) {
                 return;
             }
 
             var mainBodyClasses = $('body').attr('class') || '';
 
-            // Видалити класи toolbar з iframe body
             mainBodyClasses = mainBodyClasses
                 .replace(/breeze-theme-editor-active/g, '')
                 .replace(/bte-panel-active/g, '')
