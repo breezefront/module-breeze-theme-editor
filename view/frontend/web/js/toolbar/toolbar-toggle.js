@@ -11,6 +11,7 @@ define([
         options: {
             compactSelector: '#toolbar-compact-toggle',
             toolbarSelector: '#breeze-theme-editor-toolbar',
+            panelsSelector: '#bte-panels-container',
             storageKey: 'breeze-editor-toolbar-visible'
         },
 
@@ -43,6 +44,7 @@ define([
             $(this.options.compactSelector).html(compactHtml);
             this.$compactButton = $('#breeze-editor-toolbar-compact-toggle');
             this.$toolbar = $(this.options.toolbarSelector);
+            this.$panels = $(this.options.panelsSelector);  // 🔥 ДОДАТИ
         },
 
         _bind: function () {
@@ -54,32 +56,46 @@ define([
             this.$toolbar.addClass('toolbar-collapsed');
             $('body').addClass('toolbar-hidden');
 
-            // Reset CSS custom property to 0
+            // 🔥 Сховати всі панелі
+            this.$panels.find('.bte-panel').removeClass('active').hide();
+            $('body').removeClass('bte-panel-active');
+
+            // 🔥 Деактивувати всі navigation таби
+            $('#toolbar-navigation .nav-item').removeClass('active');
+
+            // Reset CSS custom properties
             document.documentElement.style.setProperty('--breeze-toolbar-height', '0px');
+            document.documentElement.style.setProperty('--bte-sidebar-width', '0px');  // 🔥 ДОДАТИ
 
             this.$compactButton.fadeIn(200);
             this._saveState(false);
             $(document).trigger('toolbarHidden');
-            console.log('Toolbar hidden');
+
+            console.log('🙈 Toolbar and panels hidden');
         },
 
         _showToolbar: function () {
             this.$toolbar.removeClass('toolbar-collapsed');
             $('body').removeClass('toolbar-hidden');
 
-            // Restore CSS custom property
+            // Restore CSS custom properties
             var toolbarHeight = this.$toolbar.outerHeight();
             document.documentElement.style.setProperty('--breeze-toolbar-height', toolbarHeight + 'px');
+
+            // 🔥 НЕ відновлювати sidebar (панелі залишаються закритими)
+            // Користувач сам відкриє потрібну панель
+            document.documentElement.style.setProperty('--bte-sidebar-width', '0px');
 
             this.$compactButton.fadeOut(200);
             this._saveState(true);
             $(document).trigger('toolbarShown');
-            console.log('Toolbar shown');
+
+            console.log('👁️ Toolbar shown (panels remain closed)');
         },
 
         _saveState: function (isVisible) {
             try {
-                localStorage.setItem(this.options.storageKey, isVisible ? '1' : '0');
+                localStorage.setItem(this.options.storageKey, isVisible ?  '1' : '0');
             } catch (e) {
                 console.warn('Could not save toolbar state:', e);
             }
