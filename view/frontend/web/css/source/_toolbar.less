@@ -7,27 +7,27 @@
     top: 0;
     left: 0;
     right: 0;
-    background: @breeze-toolbar-bg;
-    color: @breeze-toolbar-text;
+    background: @bte-toolbar-bg;
+    color: @bte-toolbar-text;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    z-index: @breeze-toolbar-z-index;
-    font-family: @breeze-toolbar-font-family;
+    z-index: @bte-toolbar-z-index;
+    font-family: @bte-toolbar-font-family;
 
     .toolbar-container {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 @breeze-toolbar-padding-h;
-        height: @breeze-toolbar-height;
+        padding: 0 @bte-toolbar-padding-h;
+        height: @bte-toolbar-height;
         max-width: 100%;
         margin: 0 auto;
-        gap: @breeze-toolbar-gap;
+        gap: @bte-toolbar-gap;
     }
 
     // Collapsed state
     &.toolbar-collapsed {
         transform: translateY(-100%);
-        transition: @breeze-toolbar-transform-transition;
+        transition: @bte-toolbar-transform-transition;
 
         .toolbar-button-toggle .button-icon {
             transform: rotate(180deg);
@@ -46,8 +46,8 @@
     // Responsive для Tablet/Mobile
     .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__m) {
         .toolbar-container {
-            padding: 0 @breeze-toolbar-padding-h-mobile;
-            gap: @breeze-toolbar-gap-small;
+            padding: 0 @bte-toolbar-padding-h-mobile;
+            gap: @bte-toolbar-gap-small;
         }
 
         .toolbar-center {

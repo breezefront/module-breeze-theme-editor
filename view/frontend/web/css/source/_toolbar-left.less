@@ -13,22 +13,22 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        color: @breeze-toolbar-text;
+        color: @bte-toolbar-text;
         text-decoration: none;
         padding: 8px 12px;
-        border-radius: @breeze-toolbar-border-radius;
-        transition: @breeze-toolbar-transition;
+        border-radius: @bte-toolbar-border-radius;
+        transition: @bte-toolbar-transition;
 
-        .breeze-toolbar-hover-overlay(0.1);
+        .bte-toolbar-hover-overlay(0.1);
     }
 
     .admin-icon {
-        .breeze-flex-center();
-        .breeze-icon-size(20px, 24px);
+        .bte-flex-center();
+        .bte-icon-size(20px, 24px);
 
         &.admin-icon-svg {
             svg {
-                .breeze-icon-size(20px, 24px);
+                .bte-icon-size(20px, 24px);
 
                 g {
                     fill: currentColor;
@@ -37,20 +37,20 @@
         }
 
         img {
-            .breeze-icon-size(20px, 24px);
+            .bte-icon-size(20px, 24px);
             filter: brightness(0) invert(1);
         }
     }
 
     .admin-username {
         font-weight: 600;
-        font-size: @breeze-toolbar-font-size;
+        font-size: @bte-toolbar-font-size;
     }
 
     .toolbar-divider {
         width: 1px;
         height: 30px;
-        background: @breeze-toolbar-divider;
+        background: @bte-toolbar-divider;
     }
 
     .toolbar-nav {
@@ -62,19 +62,19 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        padding: @breeze-toolbar-button-padding;
+        padding: @bte-toolbar-button-padding;
         background: transparent;
         border: none;
-        border-radius: @breeze-toolbar-border-radius;
-        color: @breeze-toolbar-text-muted;
+        border-radius: @bte-toolbar-border-radius;
+        color: @bte-toolbar-text-muted;
         cursor: pointer;
-        transition: @breeze-toolbar-transition;
-        font-size: @breeze-toolbar-font-size;
+        transition: @bte-toolbar-transition;
+        font-size: @bte-toolbar-font-size;
         position: relative;
 
         &.active {
             background: rgba(255, 255, 255, 0.15);
-            color: @breeze-toolbar-text;
+            color: @bte-toolbar-text;
         }
 
         &.disabled {
@@ -93,7 +93,7 @@
 
     .badge-pro {
         font-size: 9px;
-        background: @breeze-toolbar-badge-pro;
+        background: @bte-toolbar-badge-pro;
         padding: 2px 6px;
         border-radius: 10px;
         font-weight: 700;

@@ -10,23 +10,23 @@
     }
 
     .toolbar-button {
-        .breeze-toolbar-button();
+        .bte-toolbar-button();
         text-decoration: none;
 
         &.toolbar-button-exit {
-            .breeze-toolbar-button(@breeze-toolbar-exit-bg, @breeze-toolbar-exit-bg-hover);
-            border-color: @breeze-toolbar-exit-bg;
+            .bte-toolbar-button(@bte-toolbar-exit-bg, @bte-toolbar-exit-bg-hover);
+            border-color: @bte-toolbar-exit-bg;
         }
 
         &.toolbar-button-toggle {
             .button-icon {
-                transition: @breeze-toolbar-transform-transition;
+                transition: @bte-toolbar-transform-transition;
             }
         }
 
         &.active {
-            .breeze-toolbar-button(@breeze-toolbar-active-bg, @breeze-toolbar-active-bg-hover);
-            border-color: @breeze-toolbar-active-bg;
+            .bte-toolbar-button(@bte-toolbar-active-bg, @bte-toolbar-active-bg-hover);
+            border-color: @bte-toolbar-active-bg;
         }
     }
 

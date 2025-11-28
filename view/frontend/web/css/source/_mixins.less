@@ -3,18 +3,18 @@
 // _____________________________________________
 
 // Button mixin
-.breeze-toolbar-button(@bg: @breeze-toolbar-button-bg, @bg-hover: @breeze-toolbar-button-bg-hover) {
+.bte-toolbar-button(@bg: @bte-toolbar-button-bg, @bg-hover: @bte-toolbar-button-bg-hover) {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: @breeze-toolbar-button-padding;
+    padding: @bte-toolbar-button-padding;
     background: @bg;
-    border: 1px solid @breeze-toolbar-button-border;
-    border-radius: @breeze-toolbar-border-radius;
-    color: @breeze-toolbar-text;
+    border: 1px solid @bte-toolbar-button-border;
+    border-radius: @bte-toolbar-border-radius;
+    color: @bte-toolbar-text;
     cursor: pointer;
-    transition: @breeze-toolbar-transition;
-    font-size: @breeze-toolbar-font-size;
+    transition: @bte-toolbar-transition;
+    font-size: @bte-toolbar-font-size;
     font-weight: 500;
 
     &:hover {
@@ -23,37 +23,37 @@
 }
 
 // Hover overlay
-.breeze-toolbar-hover-overlay(@opacity: 0.1) {
+.bte-toolbar-hover-overlay(@opacity: 0.1) {
     &:hover {
         background: rgba(255, 255, 255, @opacity);
     }
 }
 
 // Flex center
-.breeze-flex-center() {
+.bte-flex-center() {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 // Icon size
-.breeze-icon-size(@width: 20px, @height: 24px) {
+.bte-icon-size(@width: 20px, @height: 24px) {
     width: @width;
     height: @height;
 }
 
 // Dropdown mixin з комбінованим підходом (interpolate-size + fallback)
-.breeze-toolbar-dropdown() {
+.bte-toolbar-dropdown() {
     position: absolute;
     top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
     min-width: 220px;
-    background: @breeze-toolbar-dropdown-bg;
-    border: 1px solid @breeze-toolbar-dropdown-border;
-    border-radius: @breeze-toolbar-border-radius;
+    background: @bte-toolbar-dropdown-bg;
+    border: 1px solid @bte-toolbar-dropdown-border;
+    border-radius: @bte-toolbar-border-radius;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: @breeze-toolbar-z-index + 10;
+    z-index: @bte-toolbar-z-index + 10;
     display: block;
 
     // Fallback для всіх браузерів (max-height)
@@ -101,9 +101,9 @@
     .dropdown-header {
         padding: 10px 12px;
         background: rgba(0, 0, 0, 0.2);
-        font-size: @breeze-toolbar-font-size-small;
+        font-size: @bte-toolbar-font-size-small;
         font-weight: 600;
-        border-bottom: 1px solid @breeze-toolbar-dropdown-border;
+        border-bottom: 1px solid @bte-toolbar-dropdown-border;
     }
 
     .dropdown-content {
@@ -135,7 +135,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 10px 12px;
-        color: @breeze-toolbar-text;
+        color: @bte-toolbar-text;
         text-decoration: none;
         transition: background 0.15s ease;
         cursor: pointer;

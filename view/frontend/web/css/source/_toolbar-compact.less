@@ -12,27 +12,27 @@
     align-items: center;
     gap: 8px;
     padding: 8px 20px;
-    background: @breeze-toolbar-bg;
+    background: @bte-toolbar-bg;
     border: none;
-    border-radius: 0 0 @breeze-toolbar-border-radius-large @breeze-toolbar-border-radius-large;
-    color: @breeze-toolbar-text;
+    border-radius: 0 0 @bte-toolbar-border-radius-large @bte-toolbar-border-radius-large;
+    color: @bte-toolbar-text;
     cursor: pointer;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    z-index: @breeze-toolbar-compact-z-index;
-    transition: @breeze-toolbar-transition-slow;
-    font-family: @breeze-toolbar-font-family;
-    font-size: @breeze-toolbar-font-size;
+    z-index: @bte-toolbar-compact-z-index;
+    transition: @bte-toolbar-transition-slow;
+    font-family: @bte-toolbar-font-family;
+    font-size: @bte-toolbar-font-size;
     font-weight: 500;
 
     &:hover {
         padding-bottom: 12px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        background: @breeze-toolbar-bg-hover;
+        background: @bte-toolbar-bg-hover;
     }
 
     .compact-icon {
-        font-size: @breeze-toolbar-font-size;
-        transition: @breeze-toolbar-transform-transition;
+        font-size: @bte-toolbar-font-size;
+        transition: @bte-toolbar-transform-transition;
     }
 
     &:hover .compact-icon {
@@ -41,6 +41,6 @@
 
     // Responsive
     .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__m) {
-        right: @breeze-toolbar-padding-h-mobile;
+        right: @bte-toolbar-padding-h-mobile;
     }
 }
