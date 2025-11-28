@@ -2,14 +2,33 @@ define([
     'jquery',
     'jquery-ui-modules/widget',
     'mage/template',
-    'text!Swissup_BreezeThemeEditor/template/toolbar/navigation.html'
+    'text!Swissup_BreezeThemeEditor/template/toolbar/navigation.html',
+    'Swissup_BreezeThemeEditor/js/theme-editor/panel'
 ], function ($, widget, mageTemplate, navigationTemplate) {
     'use strict';
 
     $.widget('swissup.breezeNavigation', {
         options: {
             items: [],
-            panelSelector: null
+            panelSelector: null,
+            // 🔥 ДОДАТИ: Конфігурація панелей
+            panelWidgets: {
+                'theme-editor': {
+                    selector: '#theme-editor-panel',
+                    widget: 'themeEditorPanel',
+                    config: {
+                        title: 'Theme Editor',
+                        closeTitle: 'Close Panel',
+                        presetsLabel: 'Presets:'
+                    }
+                }
+                // Можна додати інші панелі:
+                // 'content-builder': {
+                //     selector: '#content-builder-panel',
+                //     widget: 'contentBuilderPanel',
+                //     config: { ... }
+                // }
+            }
         },
 
         _create: function () {
@@ -151,9 +170,11 @@ define([
                 return i.id === itemId;
             });
 
-            if (! item) {
+            if (!item) {
                 return;
             }
+
+            this._initializePanel(itemId);
 
             var panelId = item.panelId || itemId + '-panel';
             var $panel = $('#' + panelId);
@@ -218,6 +239,43 @@ define([
             $('body').removeClass('bte-panel-active');
 
             console.log('🙈 All panels hidden');
+        },
+
+        /**
+         * Ініціалізувати панель при першому відкритті (lazy loading)
+         */
+        _initializePanel: function(itemId) {
+            var panelConfig = this.options.panelWidgets[itemId];
+
+            if (!panelConfig) {
+                console.warn('⚠️ No panel widget config for:', itemId);
+                return false;
+            }
+
+            var $panel = $(panelConfig.selector);
+
+            if (!$panel.length) {
+                console.error('❌ Panel element not found:', panelConfig.selector);
+                return false;
+            }
+
+            // Перевірити чи вже ініціалізовано
+            if ($panel.data('panel-initialized')) {
+                console.log('ℹ️ Panel already initialized:', itemId);
+                return true;
+            }
+
+            try {
+                // Ініціалізувати widget
+                $panel[panelConfig.widget](panelConfig.config);
+                $panel.data('panel-initialized', true);
+
+                console.log('✅ Panel initialized:', itemId, '→', panelConfig.widget);
+                return true;
+            } catch (e) {
+                console.error('❌ Failed to initialize panel:', itemId, e);
+                return false;
+            }
         },
 
         _showDisabledMessage: function (itemId) {
