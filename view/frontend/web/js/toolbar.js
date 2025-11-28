@@ -82,6 +82,12 @@ define([
             var toolbarHeight = $toolbar.outerHeight();
             document.documentElement.style.setProperty('--breeze-toolbar-height', toolbarHeight + 'px');
             console.log('Toolbar height updated:', toolbarHeight + 'px');
+
+            // 🔥 Також встановити ширину sidebar (для випадку кастомізації)
+            var sidebarWidth = $('#bte-panels-container').outerWidth() || 360;
+            // Можна додати динамічну зміну, але поки статично
+            console.log('📏 Toolbar height:', toolbarHeight + 'px');
+            document.documentElement.style.setProperty('--bte-sidebar-width', sidebarWidth + 'px');
         }
 
         // Detect viewport on init
@@ -101,7 +107,32 @@ define([
         // Navigation
         if (components.navigation) {
             $(components.navigation.selector).breezeNavigation({
-                items: components.navigation.items
+                items: components.navigation.items || [],
+                panelSelector: components.navigation.panelSelector || '#bte-panels-container'
+            });
+
+            // Listen to navigation changes
+            $(components.navigation.selector).on('navigationChanged', function(event, data) {
+                if (data.active) {
+                    console.log('📍 Navigation activated:', data.id, '→', data.panelId);
+                } else {
+                    console.log('📍 Navigation deactivated:', data.id);
+                }
+            });
+
+            // Listen to panel shown
+            $(components.navigation.selector).on('panelShown', function(event, data) {
+                console.log('👁️ Panel shown:', data.panelId);
+            });
+
+            // Listen to panel hidden
+            $(components.navigation.selector).on('panelHidden', function(event, data) {
+                console.log('🙈 Panel hidden:', data.panelId);
+            });
+
+            // Listen to disabled clicks
+            $(components.navigation.selector).on('navigationDisabledClick', function(event, data) {
+                console.warn('⚠️ Disabled navigation clicked:', data.message);
             });
         }
 

@@ -23,19 +23,27 @@ if (!$viewModel->canShow()) {
                 },
                 "navigation": {
                     "selector": "#toolbar-navigation",
+                    "panelSelector": "#bte-panels-container",
                     "items": [
                         {
                             "id": "theme-editor",
                             "label": "<?= $block->escapeJs(__('Theme Editor')) ?>",
                             "icon": "🎨",
-                            "active": true
+                            "active": false,
+                            "disabled": false,
+                            "panelId": "theme-editor-panel"
                         },
                         {
                             "id": "content-builder",
                             "label": "<?= $block->escapeJs(__('Content Builder')) ?>",
                             "icon": "🧱",
+                            "active": false,
                             "disabled": true,
-                            "badge": "PRO"
+                            "panelId": "content-builder-panel",
+                            "badge": {
+                                "type": "pro",
+                                "text": "PRO"
+                            }
                         }
                     ]
                 },

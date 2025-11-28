@@ -1,32 +1,28 @@
-define(['jquery'], function($) {
+define([
+    'jquery'
+], function ($) {
     'use strict';
 
-    var $iframe = null;
-    var iframeDocument = null;
-    var iframeWindow = null;
+    var $iframe;
+    var iframeDocument;
+    var iframeWindow;
 
     return {
         init: function() {
-            // 🔥 Перевірки ВСЕРЕДИНІ методу init!
-
-            // Перевірка чи ми в iframe
             if (window.self !== window.top) {
                 console.warn('⚠️ Device Frame: Already inside iframe, skipping');
                 return false;
             }
 
-            // Перевірка чи вже ініціалізовано
             if ($iframe) {
                 console.warn('⚠️ Device frame already initialized');
                 return $iframe;
             }
 
-            // Очистити існуючі frames в DOM
             $('#breeze-device-frame').remove();
 
             console.log('🖼️ Initializing device frame...');
 
-            // Перевірити що toolbar існує
             var $toolbar = $('#breeze-theme-editor-toolbar');
 
             if (!$toolbar.length) {
@@ -44,13 +40,13 @@ define(['jquery'], function($) {
             }).css({
                 position: 'absolute',
                 top: 'var(--breeze-toolbar-height, 56px)',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '100%',
+                left: 'var(--bte-sidebar-width, 0px)',  // ✅
+                transform: 'none',  // ✅
+                width: 'calc(100% - var(--bte-sidebar-width, 0px))',  // ✅
                 height: 'calc(100vh - var(--breeze-toolbar-height, 56px))',
                 border: 'none',
                 background: '#fff',
-                transition: 'width 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease'
+                transition: 'width 0.3s ease, left 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease'  // ✅
             });
 
             $('body').append($iframe);
@@ -64,7 +60,6 @@ define(['jquery'], function($) {
 
             this._copyHead();
 
-            // 🔥 КРИТИЧНЕ: Переміщувати БЕЗ toolbar
             var $allBodyChildren = $('body').children();
 
             var $content = $allBodyChildren.filter(function() {
@@ -85,6 +80,12 @@ define(['jquery'], function($) {
                     return false;
                 }
 
+                // 🔥 НЕ ПЕРЕМІЩАТИ panels container!
+                if ($el.is('#bte-panels-container')) {
+                    console.log('⛔ Skipping panels container');
+                    return false;
+                }
+
                 if ($el.is('script, link[rel="stylesheet"], style')) {
                     return false;
                 }
@@ -93,7 +94,7 @@ define(['jquery'], function($) {
             });
 
             console.log('📦 Moving', $content.length, 'elements to iframe');
-            console.log('✅ Toolbar remains in main body');
+            console.log('✅ Toolbar and panels remain in main body');
 
             var $iframeBody = $(iframeDocument.body);
             $content.each(function() {
@@ -114,171 +115,85 @@ define(['jquery'], function($) {
             return $iframe;
         },
 
-        _copyHead: function() {
-            var $mainHead = $('head');
-            var $iframeHead = $(iframeDocument.head);
-
-            $mainHead.find('meta').each(function() {
-                var $meta = $(this).clone();
-                if ($meta.attr('name') !== 'viewport') {
-                    $iframeHead.append($meta);
-                }
-            });
-
-            $mainHead.find('link[rel="stylesheet"]').each(function() {
-                $iframeHead.append($(this).clone());
-            });
-
-            $mainHead.find('style').each(function() {
-                $iframeHead.append($(this).clone());
-            });
-
-            $mainHead.find('script').each(function() {
-                var $script = $(this);
-                if (!$script.attr('src') || $script.attr('src').includes('requirejs-config')) {
-                    $iframeHead.append($script.clone());
-                }
-            });
-
-            iframeDocument.title = document.title;
-
-            var $base = $mainHead.find('base');
-            if ($base.length) {
-                $iframeHead.prepend($base.clone());
-            } else {
-                $iframeHead.prepend('<base href="' + window.location.origin + '">');
-            }
-
-            console.log('📋 Copied <head> to iframe');
-        },
-
-        _syncBodyClasses: function() {
-            if (!iframeDocument) return;
-
-            var bodyClasses = $('body').attr('class');
-            if (!bodyClasses) return;
-
-            var filteredClasses = bodyClasses.split(' ').filter(function(cls) {
-                return !cls.startsWith('breeze-theme-editor') &&
-                       !cls.startsWith('breeze-device') &&
-                       !cls.startsWith('breeze-viewport') &&
-                       !cls.startsWith('breeze-toolbar');
-            });
-
-            $(iframeDocument.body).attr('class', filteredClasses.join(' '));
-        },
-
-        addBodyClass: function(className) {
-            if (!iframeDocument) {
-                console.warn('Iframe document not available');
-                return false;
-            }
-
-            $(iframeDocument.body).addClass(className);
-            console.log('Added class to iframe body:', className);
-            return true;
-        },
-
-        removeBodyClass: function(className) {
-            if (!iframeDocument) {
-                console.warn('Iframe document not available');
-                return false;
-            }
-
-            $(iframeDocument.body).removeClass(className);
-            console.log('Removed class from iframe body:', className);
-            return true;
-        },
-
-        toggleBodyClass: function(className) {
-            if (!iframeDocument) {
-                console.warn('Iframe document not available');
-                return false;
-            }
-
-            var $body = $(iframeDocument.body);
-            $body.toggleClass(className);
-            var hasClass = $body.hasClass(className);
-            console.log('Toggled class in iframe body:', className, '→', hasClass);
-            return hasClass;
-        },
-
+        /**
+         * 🔥 Встановити ширину iframe залежно від пристрою
+         */
         setWidth: function(width, device) {
             if (!$iframe) {
-                console.error('Device frame not initialized');
+                console.warn('⚠️ Cannot set width: iframe not initialized');
                 return;
             }
 
-            var isDesktop = width === '100%' || device === 'desktop';
-
-            if (isDesktop) {
+            if (device === 'desktop') {
+                // Desktop - враховувати sidebar
                 $iframe.css({
-                    width: '100%',
+                    left: 'var(--bte-sidebar-width, 0px)',
+                    transform: 'none',
+                    width: 'calc(100% - var(--bte-sidebar-width, 0px))',
                     boxShadow: 'none',
                     borderRadius: '0'
                 });
-                this._setIframeViewport('width=device-width, initial-scale=1');
+
+                console.log('📐 Desktop mode: full width minus sidebar');
             } else {
-                var pixelWidth = parseInt(width);
+                // Tablet/Mobile - центрувати з фіксованою шириною
                 $iframe.css({
-                    width: pixelWidth + 'px',
-                    boxShadow: '0 0 50px rgba(0,0,0,0.3)',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: width,
+                    boxShadow: '0 0 40px rgba(0, 0, 0, 0.3)',
                     borderRadius: '8px'
                 });
-                this._setIframeViewport('width=' + pixelWidth);
+
+                console.log('📐 ' + device + ' mode: width =', width);
             }
 
-            console.log('📐 Frame width:', width, '| Device:', device);
-
-            if (iframeWindow) {
-                setTimeout(function() {
-                    iframeWindow.dispatchEvent(new Event('resize'));
-                }, 100);
-            }
+            // Update CSS variable
+            document.documentElement.style.setProperty('--device-frame-width', width);
         },
 
-        _setIframeViewport: function(content) {
-            if (!iframeDocument) return;
-
-            var $viewport = $(iframeDocument).find('meta[name="viewport"]');
-
-            if ($viewport.length) {
-                $viewport.attr('content', content);
-            } else {
-                $(iframeDocument.head).append('<meta name="viewport" content="' + content + '">');
+        _copyHead: function() {
+            if (!iframeDocument) {
+                return;
             }
 
-            console.log('📱 Iframe viewport:', content);
+            var $iframeHead = $(iframeDocument.head);
+
+            $('head link[rel="stylesheet"], head style').each(function() {
+                $iframeHead.append($(this).clone());
+            });
+
+            console.log('📄 Copied stylesheets to iframe');
         },
 
-        getWindow: function() {
-            return iframeWindow;
-        },
+        _syncBodyClasses: function() {
+            if (!iframeDocument) {
+                return;
+            }
 
-        getDocument: function() {
-            return iframeDocument;
+            var mainBodyClasses = $('body').attr('class') || '';
+
+            // Видалити класи toolbar з iframe body
+            mainBodyClasses = mainBodyClasses
+                .replace(/breeze-theme-editor-active/g, '')
+                .replace(/bte-panel-active/g, '')
+                .replace(/breeze-device-mode/g, '')
+                .replace(/breeze-device-\w+/g, '')
+                .trim();
+
+            $(iframeDocument.body).attr('class', mainBodyClasses);
+
+            console.log('🔄 Synced body classes to iframe');
         },
 
         destroy: function() {
-            if (!$iframe) return;
-
-            console.log('🗑️ Destroying device frame...');
-
-            var $iframeBody = $(iframeDocument.body);
-            var $mainBody = $('body');
-
-            $iframeBody.children().each(function() {
-                $mainBody.append(this);
-            });
-
-            $iframe.remove();
-            $iframe = null;
-            iframeDocument = null;
-            iframeWindow = null;
-
-            $mainBody.removeAttr('style');
-
-            console.log('✅ Device frame destroyed');
+            if ($iframe) {
+                $iframe.remove();
+                $iframe = null;
+                iframeDocument = null;
+                iframeWindow = null;
+                console.log('🗑️ Device frame destroyed');
+            }
         }
     };
 });
