@@ -42,7 +42,7 @@
     height: @height;
 }
 
-// Dropdown mixin для селекторів
+// Dropdown mixin з комбінованим підходом (interpolate-size + fallback)
 .breeze-toolbar-dropdown() {
     position: absolute;
     top: calc(100% + 8px);
@@ -54,7 +54,49 @@
     border-radius: @breeze-toolbar-border-radius;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     z-index: @breeze-toolbar-z-index + 10;
+    display: block;
+
+    // Fallback для всіх браузерів (max-height)
+    max-height: 0;
     overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.25s ease,
+        visibility 0s 0.3s;
+
+    &.active {
+        max-height: 75vh;
+        opacity: 1;
+        visibility: visible;
+        overflow: visible;
+        transition:
+            max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            opacity 0.25s ease,
+            visibility 0s 0s;
+    }
+
+    // Progressive enhancement для Chrome/Edge 129+
+    @supports (interpolate-size: allow-keywords) {
+        interpolate-size: allow-keywords;
+        height: 0;
+        max-height: none;
+        transition:
+            height 0.5s ease,
+            opacity 0.25s ease,
+            visibility 0s 0.3s;
+
+        &.active {
+            height: auto;
+            max-height: none;
+            overflow: clip;
+            transition:
+                height 0.5s ease,
+                opacity 0.25s ease,
+                visibility 0s 0s;
+        }
+    }
 
     .dropdown-header {
         padding: 10px 12px;
@@ -65,8 +107,27 @@
     }
 
     .dropdown-content {
-        max-height: 300px;
+        max-height: calc(75vh - 100px);
         overflow-y: auto;
+        overflow-x: hidden;
+
+        // Кастомний scrollbar
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.5);
+            }
+        }
     }
 
     .dropdown-item {
@@ -76,7 +137,7 @@
         padding: 10px 12px;
         color: @breeze-toolbar-text;
         text-decoration: none;
-        transition: @breeze-toolbar-transition;
+        transition: background 0.15s ease;
         cursor: pointer;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 
@@ -107,12 +168,14 @@
         }
     }
 
-    // Dropdown animation
-    transition: height .2s;
-    height: 0;
-    display: block;
+    // Responsive - зменшуємо на мобільних
+    .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__m) {
+        &.active {
+            max-height: 60vh;
+        }
 
-    &.active {
-        height: 220px; // or auto, if managed by JS
+        .dropdown-content {
+            max-height: calc(60vh - 80px);
+        }
     }
 }
