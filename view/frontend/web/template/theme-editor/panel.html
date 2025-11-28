@@ -33,15 +33,43 @@
                 <div class="bte-accordion-content" data-section="colors">
                     <div class="bte-control-group">
                         <label>Primary Color</label>
-                        <input type="color" value="#1979c3" class="bte-color-picker">
+                        <input type="color"
+                               value="#1979c3"
+                               class="bte-color-picker"
+                               data-css-var="--brand-color"
+                               data-format="color-rgb">
                     </div>
                     <div class="bte-control-group">
                         <label>Secondary Color</label>
-                        <input type="color" value="#006bb4" class="bte-color-picker">
+                        <input type="color"
+                               value="#006bb4"
+                               class="bte-color-picker"
+                               data-css-var="--info-color"
+                               data-format="color-rgb">
                     </div>
                     <div class="bte-control-group">
                         <label>Background Color</label>
-                        <input type="color" value="#ffffff" class="bte-color-picker">
+                        <input type="color"
+                               value="#ffffff"
+                               class="bte-color-picker"
+                               data-css-var="--base-bg"
+                               data-format="color-rgb">
+                    </div>
+                    <div class="bte-control-group">
+                        <label>Link Color</label>
+                        <input type="color"
+                               value="#1979c3"
+                               class="bte-color-picker"
+                               data-css-var="--link-color"
+                               data-format="color-rgb">
+                    </div>
+                    <div class="bte-control-group">
+                        <label>Heading Color</label>
+                        <input type="color"
+                               value="#000000"
+                               class="bte-color-picker"
+                               data-css-var="--headings-color"
+                               data-format="color-rgb">
                     </div>
                 </div>
             </div>
@@ -56,15 +84,25 @@
                 <div class="bte-accordion-content" data-section="typography">
                     <div class="bte-control-group">
                         <label>Base Font Family</label>
-                        <select class="bte-font-picker">
+                        <select class="bte-font-picker"
+                                data-css-var="font-family">
                             <option value="'Open Sans', sans-serif">Open Sans</option>
-                            <option value="Roboto, sans-serif">Roboto</option>
+                            <option value="'Roboto', sans-serif">Roboto</option>
+                            <option value="'Lato', sans-serif">Lato</option>
+                            <option value="'Montserrat', sans-serif">Montserrat</option>
                             <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Georgia', serif">Georgia</option>
                         </select>
                     </div>
                     <div class="bte-control-group">
                         <label>Base Font Size</label>
-                        <input type="range" min="12" max="20" value="14" class="bte-range-slider">
+                        <input type="range"
+                               min="12"
+                               max="20"
+                               value="14"
+                               class="bte-range-slider"
+                               data-css-var="font-size"
+                               data-format="size">
                         <output class="bte-range-value">14px</output>
                     </div>
                 </div>
@@ -79,13 +117,39 @@
                 </button>
                 <div class="bte-accordion-content" data-section="layout">
                     <div class="bte-control-group">
-                        <label>Container Width</label>
-                        <input type="range" min="960" max="1440" value="1280" step="20" class="bte-range-slider">
+                        <label>Container Max Width</label>
+                        <input type="range"
+                               min="960"
+                               max="1920"
+                               value="1280"
+                               step="20"
+                               class="bte-range-slider"
+                               data-css-var="--container-max-width"
+                               data-format="size">
                         <output class="bte-range-value">1280px</output>
                     </div>
                     <div class="bte-control-group">
+                        <label>Sidebar Width</label>
+                        <input type="range"
+                               min="200"
+                               max="400"
+                               value="280"
+                               step="10"
+                               class="bte-range-slider"
+                               data-css-var="--sidebar-width"
+                               data-format="size">
+                        <output class="bte-range-value">280px</output>
+                    </div>
+                    <div class="bte-control-group">
                         <label>Spacing Scale</label>
-                        <input type="range" min="0. 5" max="2" value="1" step="0.1" class="bte-range-slider">
+                        <input type="range"
+                               min="0. 5"
+                               max="2"
+                               value="1"
+                               step="0.1"
+                               class="bte-range-slider"
+                               data-css-var="--spacing-scale"
+                               data-format="number">
                         <output class="bte-range-value">1</output>
                     </div>
                 </div>
@@ -101,7 +165,10 @@
                 <div class="bte-accordion-content" data-section="custom-css">
                     <div class="bte-control-group">
                         <label>Additional CSS</label>
-                        <textarea class="bte-code-editor" rows="10" placeholder="/* Your custom CSS */"></textarea>
+                        <textarea class="bte-code-editor"
+                                  rows="10"
+                                  placeholder="/* Your custom CSS */"
+                                  data-css-var="custom-css"></textarea>
                     </div>
                 </div>
             </div>

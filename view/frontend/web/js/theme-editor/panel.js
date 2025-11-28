@@ -2,8 +2,9 @@ define([
     'jquery',
     'jquery-ui-modules/widget',
     'mage/template',
-    'text!Swissup_BreezeThemeEditor/template/theme-editor/panel.html'
-], function ($, widget, mageTemplate, panelTemplate) {
+    'text!Swissup_BreezeThemeEditor/template/theme-editor/panel.html',
+    'Swissup_BreezeThemeEditor/js/theme-editor/css-preview-manager'
+], function ($, widget, mageTemplate, panelTemplate, CssPreviewManager) {
     'use strict';
 
     $.widget('swissup.themeEditorPanel', {
@@ -20,6 +21,7 @@ define([
             this._render();
             this._bind();
             this._initAccordion();
+            this._initPreview();  // ← ДОДАТИ
         },
 
         _render: function () {
@@ -62,57 +64,105 @@ define([
             this.$accordionContents.first().addClass('active').show();
         },
 
+        /**
+         * 🔥 NEW: Ініціалізувати CSS Preview Manager
+         */
+        _initPreview: function() {
+            // Затримка щоб iframe встиг завантажитись
+            setTimeout(function() {
+                CssPreviewManager.init();
+            }, 500);
+        },
+
         _toggleSection: function (e) {
             var $header = $(e.currentTarget);
             var section = $header.data('section');
-            var $content = this.element.find('.bte-accordion-content[data-section="' + section + '"]');
+            var $content = this. element.find('.bte-accordion-content[data-section="' + section + '"]');
 
             var isActive = $header.hasClass('active');
 
             if (isActive) {
                 // Закрити секцію
                 $header.removeClass('active');
-                $content.removeClass('active').slideUp(200);
+                $content.removeClass('active');
+
+                // ✅ Використати CSS transition замість slideUp
+                $content.css('max-height', '0');
+
+                // Сховати після анімації
+                setTimeout(function() {
+                    if (!$content.hasClass('active')) {
+                        $content.hide();
+                    }
+                }, 200);
             } else {
-                // Відкрити секцію (можна закрити інші або залишити відкритими)
+                // Відкрити секцію
                 $header.addClass('active');
-                $content.addClass('active').slideDown(200);
+                $content.show();
+
+                // ✅ Trigger reflow для CSS transition
+                var scrollHeight = $content[0].scrollHeight;
+
+                // Додати active клас для transition
+                setTimeout(function() {
+                    $content.addClass('active');
+                    $content.css('max-height', scrollHeight + 'px');
+                }, 10);
             }
 
             console.log('🔄 Accordion section toggled:', section, '→', ! isActive);
         },
 
+        /**
+         * 🔥 UPDATED: Live preview для color picker
+         */
         _onColorChange: function (e) {
             var $input = $(e.currentTarget);
             var color = $input.val();
+            var cssVar = $input.data('css-var');
+            var format = $input.data('format') || 'color-hex';
 
-            console.log('🎨 Color changed:', color);
+            console.log('🎨 Color changed:', cssVar, '=', color);
 
-            // TODO: Apply to live preview
-            // $(iframeDocument.documentElement).css('--primary-color', color);
+            if (cssVar) {
+                CssPreviewManager.setVariable(cssVar, color, format);
+            }
         },
 
+        /**
+         * 🔥 UPDATED: Live preview для range slider
+         */
         _onRangeChange: function (e) {
             var $input = $(e.currentTarget);
             var value = $input.val();
             var $output = $input.siblings('.bte-range-value');
+            var cssVar = $input.data('css-var');
+            var format = $input.data('format') || 'size';
 
             // Оновити output
-            var unit = $input.attr('max') > 100 ? 'px' : ($input.attr('step') === '0.1' ? '' : 'px');
+            var unit = format === 'number' ? '' : 'px';
             $output.text(value + unit);
 
-            console.log('📏 Range changed:', value);
+            console.log('📏 Range changed:', cssVar, '=', value);
 
-            // TODO: Apply to live preview
+            if (cssVar) {
+                CssPreviewManager.setVariable(cssVar, value, format);
+            }
         },
 
+        /**
+         * 🔥 UPDATED: Live preview для font picker
+         */
         _onFontChange: function (e) {
             var $select = $(e.currentTarget);
             var font = $select.val();
+            var cssVar = $select.data('css-var');
 
-            console.log('🔤 Font changed:', font);
+            console.log('🔤 Font changed:', cssVar, '=', font);
 
-            // TODO: Apply to live preview
+            if (cssVar) {
+                CssPreviewManager.setVariable(cssVar, font);
+            }
         },
 
         _close: function () {
@@ -122,18 +172,39 @@ define([
             $('#toolbar-navigation .nav-item[data-id="theme-editor"]').click();
         },
 
+        /**
+         * 🔥 UPDATED: Reset з preview manager
+         */
         _reset: function () {
             console.log('↺ Resetting theme settings');
 
-            // TODO: Reset to default values
-            alert('Reset functionality will be implemented next');
+            if (! CssPreviewManager.hasChanges()) {
+                alert('No changes to reset');
+                return;
+            }
+
+            if (confirm('Reset all changes to default values?')) {
+                CssPreviewManager.reset();
+                console.log('✅ Settings reset');
+            }
         },
 
+        /**
+         * 🔥 UPDATED: Save з preview manager
+         */
         _save: function () {
             console.log('💾 Saving theme settings');
 
-            // TODO: Save to backend
-            alert('Save functionality will be implemented next');
+            if (!CssPreviewManager.hasChanges()) {
+                alert('No changes to save');
+                return;
+            }
+
+            var changes = CssPreviewManager.getChanges();
+            console.log('📦 Changes to save:', changes);
+
+            // TODO: Save to backend via AJAX
+            alert('Save functionality will be implemented next.\n\nChanges:\n' + JSON.stringify(changes, null, 2));
         },
 
         _destroy: function () {
@@ -142,6 +213,10 @@ define([
             this.$saveButton.off('click');
             this.$accordionHeaders.off('click');
             this.element.off('input change');
+
+            // Знищити preview manager
+            CssPreviewManager.destroy();
+
             this._super();
         }
     });
