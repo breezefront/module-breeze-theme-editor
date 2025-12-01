@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<!--
+    Breeze Theme Editor - DB Schema (Magento 2 db_schema.xml)
+-->
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+
+    <!-- 1. Status Table -->
+    <table name="breeze_theme_editor_status" resource="default" engine="innodb" comment="Status system (draft/published/archived)">
+        <column xsi:type="smallint" name="status_id" unsigned="true" nullable="false" identity="true" comment="Status ID"/>
+        <column xsi:type="varchar" name="code" length="50" nullable="false" comment="Unique status code"/>
+        <column xsi:type="varchar" name="label" length="100" nullable="false" comment="Display label"/>
+        <column xsi:type="smallint" name="sort_order" unsigned="true" nullable="true" default="0" comment="Order"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="status_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="UNQ_CODE">
+            <column name="code"/>
+        </constraint>
+    </table>
+
+    <!-- 2. Values Table -->
+    <table name="breeze_theme_editor_value" resource="default" engine="innodb" comment="Theme settings values (draft and published)">
+        <column xsi:type="int" name="value_id" unsigned="true" nullable="false" identity="true" comment="Value ID"/>
+        <column xsi:type="int" name="theme_id" unsigned="true" nullable="false" comment="Theme ID"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" comment="Store ID"/>
+        <column xsi:type="smallint" name="status_id" unsigned="true" nullable="false" comment="Status ID"/>
+        <column xsi:type="int" name="user_id" unsigned="true" nullable="false" default="0" comment="Owner (0=published)"/>
+        <column xsi:type="varchar" name="section_code" length="100" nullable="false" comment="Section Code"/>
+        <column xsi:type="varchar" name="setting_code" length="100" nullable="false" comment="Setting Code"/>
+        <column xsi:type="text" name="value" nullable="true" comment="Flexible value (JSON format)"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" on_update="false" default="CURRENT_TIMESTAMP" comment="Created"/>
+        <column xsi:type="timestamp" name="updated_at" nullable="false" on_update="true" default="CURRENT_TIMESTAMP" comment="Updated"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="value_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="UNQ_ALL">
+            <column name="theme_id"/>
+            <column name="store_id"/>
+            <column name="status_id"/>
+            <column name="user_id"/>
+            <column name="section_code"/>
+            <column name="setting_code"/>
+        </constraint>
+        <index referenceId="IDX_THEME_STORE_STATUS">
+            <column name="theme_id"/>
+            <column name="store_id"/>
+            <column name="status_id"/>
+        </index>
+        <index referenceId="IDX_USER_STATUS">
+            <column name="user_id"/>
+            <column name="status_id"/>
+        </index>
+        <index referenceId="IDX_SECTION">
+            <column name="section_code"/>
+        </index>
+        <index referenceId="IDX_UPDATED">
+            <column name="updated_at"/>
+        </index>
+        <constraint xsi:type="foreign" referenceId="FK_VALUE_STATUS" table="breeze_theme_editor_status" column="status_id" referenceTable="breeze_theme_editor_status" referenceColumn="status_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="FK_VALUE_STORE" table="store" column="store_id" referenceTable="store" referenceColumn="store_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="FK_VALUE_USER" table="admin_user" column="user_id" referenceTable="admin_user" referenceColumn="user_id" onDelete="CASCADE"/>
+    </table>
+
+    <!-- 3. Publications Table -->
+    <table name="breeze_theme_editor_publication" resource="default" engine="innodb" comment="Publication history with titles (e.g. Black Friday)">
+        <column xsi:type="int" name="publication_id" unsigned="true" nullable="false" identity="true" comment="Publication ID"/>
+        <column xsi:type="int" name="theme_id" unsigned="true" nullable="false" comment="Theme ID"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" comment="Store ID"/>
+        <column xsi:type="varchar" name="title" length="255" nullable="false" comment="Title"/>
+        <column xsi:type="text" name="description" nullable="true" comment="Publication Description"/>
+        <column xsi:type="timestamp" name="published_at" nullable="false" on_update="false" default="CURRENT_TIMESTAMP" comment="Published"/>
+        <column xsi:type="int" name="published_by" unsigned="true" nullable="false" comment="Admin ID"/>
+        <column xsi:type="tinyint" name="is_rollback" unsigned="false" nullable="true" default="0" comment="Was rollback?"/>
+        <column xsi:type="int" name="rollback_from" unsigned="true" nullable="true" comment="Rollback from publication"/>
+        <column xsi:type="int" name="changes_count" unsigned="true" nullable="true" default="0" comment="Number of settings changed"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="publication_id"/>
+        </constraint>
+        <index referenceId="IDX_THEME_STORE">
+            <column name="theme_id"/>
+            <column name="store_id"/>
+        </index>
+        <index referenceId="IDX_PUBLISHED_AT">
+            <column name="published_at"/>
+        </index>
+        <index referenceId="IDX_PUBLISHED_BY">
+            <column name="published_by"/>
+        </index>
+        <index referenceId="IDX_TITLE">
+            <column name="title"/>
+        </index>
+        <constraint xsi:type="foreign" referenceId="FK_PUBLICATION_STORE" table="store" column="store_id" referenceTable="store" referenceColumn="store_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="FK_PUBLICATION_USER" table="admin_user" column="published_by" referenceTable="admin_user" referenceColumn="user_id" onDelete="NO ACTION"/>
+        <constraint xsi:type="foreign" referenceId="FK_PUBLICATION_ROLLBACK" table="breeze_theme_editor_publication" column="rollback_from" referenceTable="breeze_theme_editor_publication" referenceColumn="publication_id" onDelete="SET NULL"/>
+    </table>
+
+    <!-- 4. Changelog Table -->
+    <table name="breeze_theme_editor_changelog" resource="default" engine="innodb" comment="Detailed change log (linked to publications)">
+        <column xsi:type="int" name="change_id" unsigned="true" nullable="false" identity="true" comment="Change ID"/>
+        <column xsi:type="int" name="publication_id" unsigned="true" nullable="false" comment="Publication ID"/>
+        <column xsi:type="varchar" name="section_code" length="100" nullable="false" comment="Section Code"/>
+        <column xsi:type="varchar" name="setting_code" length="100" nullable="false" comment="Setting Code"/>
+        <column xsi:type="text" name="old_value" nullable="true" comment="Old Value (JSON)"/>
+        <column xsi:type="text" name="new_value" nullable="true" comment="New Value (JSON)"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="change_id"/>
+        </constraint>
+        <index referenceId="IDX_PUBLICATION">
+            <column name="publication_id"/>
+        </index>
+        <index referenceId="IDX_SETTING">
+            <column name="section_code"/>
+            <column name="setting_code"/>
+        </index>
+        <constraint xsi:type="foreign" referenceId="FK_CHANGELOG_PUBLICATION" table="breeze_theme_editor_publication" column="publication_id" referenceTable="breeze_theme_editor_publication" referenceColumn="publication_id" onDelete="CASCADE"/>
+    </table>
+
+</schema>
