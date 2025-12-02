@@ -33,7 +33,7 @@ class PublicationRepository implements PublicationRepositoryInterface
 
         if (!$publication->getPublicationId()) {
             throw new NoSuchEntityException(
-                __('Publication with id "%1" does not exist. ', $publicationId)
+                __('Publication with id "%1" does not exist.', $publicationId)
             );
         }
 
