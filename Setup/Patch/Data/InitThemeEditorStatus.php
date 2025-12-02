@@ -35,6 +35,8 @@ class InitThemeEditorStatus implements DataPatchInterface
                 $connection->insert($table, $status);
             }
         }
+
+        return $this;
     }
 
     public static function getDependencies()
