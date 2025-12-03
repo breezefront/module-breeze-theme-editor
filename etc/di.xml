@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <preference for="Swissup\BreezeThemeEditor\Api\AccessTokenInterface"
+                type="Swissup\BreezeThemeEditor\Model\Data\AccessToken"/>
+
+    <!-- Repository Preferences -->
+    <preference for="Swissup\BreezeThemeEditor\Api\StatusRepositoryInterface"
+                type="Swissup\BreezeThemeEditor\Model\StatusRepository"/>
+
+    <preference for="Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface"
+                type="Swissup\BreezeThemeEditor\Model\PublicationRepository"/>
+
+    <preference for="Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface"
+                type="Swissup\BreezeThemeEditor\Model\ChangelogRepository"/>
+
+</config>

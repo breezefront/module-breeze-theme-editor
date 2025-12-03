@@ -8,34 +8,32 @@ use Magento\Framework\Exception\LocalizedException;
 class AccessToken implements \Swissup\BreezeThemeEditor\Api\AccessTokenInterface
 {
     const CACHE_ID = 'swissup_breeze_theme_editor_3h_access_token';
+    const CACHE_ID_META = 'swissup_breeze_theme_editor_3h_access_token_meta';
     const CACHE_TAG = 'swissup_breeze_theme_editor_client';
     const LIFETIME = 10800; // 3 hours
     const PARAM_NAME = 'breeze_theme_editor_access_token';
 
-    /**
-     * @var \Magento\Framework\Math\Random
-     */
     private $mathRandom;
-
-    /**
-     * @var \Magento\Framework\Cache\FrontendInterface
-     */
     private $cacheFrontend;
+    private $serializer;
 
     /**
      * @param \Magento\Framework\Math\Random $mathRandom
      * @param \Magento\Framework\App\Cache\Frontend\Pool $cacheFrontendPool
+     * @param \Magento\Framework\Serialize\SerializerInterface $serializer
      */
     public function __construct(
         \Magento\Framework\Math\Random $mathRandom,
-        \Magento\Framework\App\Cache\Frontend\Pool $cacheFrontendPool
+        \Magento\Framework\App\Cache\Frontend\Pool $cacheFrontendPool,
+        \Magento\Framework\Serialize\SerializerInterface $serializer
     ) {
         $this->mathRandom = $mathRandom;
         $this->cacheFrontend = $cacheFrontendPool->get(\Magento\Framework\App\Cache\Frontend\Pool::DEFAULT_FRONTEND_ID);
+        $this->serializer = $serializer;
     }
 
     /**
-     * Retrieve State Token
+     * Retrieve State Token (без metadata - для backward compatibility)
      *
      * @return string A 16 bit unique key
      * @throws \Magento\Framework\Exception\LocalizedException
@@ -43,9 +41,25 @@ class AccessToken implements \Swissup\BreezeThemeEditor\Api\AccessTokenInterface
     public function getToken()
     {
         if (!$this->isPresent()) {
-            $this->set($this->mathRandom->getRandomString(16));
+            $token = $this->mathRandom->getRandomString(16);
+            $this->set($token);
         }
         return $this->cacheFrontend->load(self::CACHE_ID);
+    }
+
+    /**
+     * Створити токен з metadata
+     *
+     * @param array $metadata ['user_id' => int, 'username' => string, 'email' => string, ...]
+     * @return string
+     * @throws LocalizedException
+     */
+    public function createToken(array $metadata): string
+    {
+        $token = $this->mathRandom->getRandomString(16);
+        $this->set($token);
+        $this->setMetadata($token, $metadata);
+        return $token;
     }
 
     /**
@@ -66,7 +80,79 @@ class AccessToken implements \Swissup\BreezeThemeEditor\Api\AccessTokenInterface
      */
     private function set($value)
     {
-        $this->cacheFrontend->save((string) $value, self::CACHE_ID, [self::CACHE_TAG], self::LIFETIME);
+        $this->cacheFrontend->save(
+            (string) $value,
+            self::CACHE_ID, [self::CACHE_TAG],
+            self::LIFETIME
+        );
+    }
+
+    /**
+     * Зберегти metadata для токена
+     *
+     * @param string $token
+     * @param array $metadata
+     * @return void
+     */
+    private function setMetadata(string $token, array $metadata)
+    {
+        // Додати токен і timestamp до metadata
+        $metadata['token'] = $token;
+        $metadata['created_at'] = $metadata['created_at'] ?? time();
+
+        $serialized = $this->serializer->serialize($metadata);
+
+        $this->cacheFrontend->save(
+            $serialized,
+            self::CACHE_ID_META,
+            [self::CACHE_TAG],
+            self::LIFETIME
+        );
+    }
+
+    /**
+     * Отримати metadata по токену
+     *
+     * @param string $token
+     * @return array|null
+     */
+    public function getMetadata(string $token): ?array
+    {
+        // Перевірити що токен валідний
+        if (!$this->validate($token)) {
+            return null;
+        }
+
+        $serialized = $this->cacheFrontend->load(self::CACHE_ID_META);
+
+        if (!$serialized) {
+            return null;
+        }
+
+        try {
+            $metadata = $this->serializer->unserialize($serialized);
+
+            // Додаткова перевірка: токен в metadata має співпадати
+            if (!isset($metadata['token']) || !Security::compareStrings($metadata['token'], $token)) {
+                return null;
+            }
+
+            return $metadata;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Отримати User ID по токену
+     *
+     * @param string $token
+     * @return int|null
+     */
+    public function getUserId(string $token): ?int
+    {
+        $metadata = $this->getMetadata($token);
+        return isset($metadata['user_id']) ?  (int)$metadata['user_id'] : null;
     }
 
     /**
@@ -78,7 +164,17 @@ class AccessToken implements \Swissup\BreezeThemeEditor\Api\AccessTokenInterface
      */
     public function validate($token)
     {
-        return $token && Security::compareStrings($token, $this->getToken());
+        if (!$token) {
+            return false;
+        }
+
+        $currentToken = $this->cacheFrontend->load(self::CACHE_ID);
+
+        if (!$currentToken) {
+            return false;
+        }
+
+        return Security::compareStrings($token, $currentToken);
     }
 
     /**
@@ -101,5 +197,16 @@ class AccessToken implements \Swissup\BreezeThemeEditor\Api\AccessTokenInterface
     {
         $token = $request->getParam($this->getParamName(), null);
         return $this->validate($token);
+    }
+
+    /**
+     * Invalidate token (logout)
+     *
+     * @return void
+     */
+    public function invalidate()
+    {
+        $this->cacheFrontend->remove(self::CACHE_ID);
+        $this->cacheFrontend->remove(self::CACHE_ID_META);
     }
 }

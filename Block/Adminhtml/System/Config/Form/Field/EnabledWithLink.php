@@ -26,9 +26,9 @@ class EnabledWithLink extends Field
     private $storeManager;
 
     /**
-     * @var \Swissup\BreezeThemeEditor\Model\Data\AccessToken
+     * @var \Swissup\BreezeThemeEditor\Model\TokenManager
      */
-    private $accessToken;
+    private $tokenManager;
 
     /**
      * @var \Swissup\BreezeThemeEditor\Helper\Data
@@ -39,7 +39,7 @@ class EnabledWithLink extends Field
      * @param \Magento\Backend\Block\Template\Context $context
      * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Swissup\BreezeThemeEditor\Model\Data\AccessToken $accessToken
+     * @param \Swissup\BreezeThemeEditor\Model\TokenManager $tokenManager
      * @param \Swissup\BreezeThemeEditor\Helper\Data $helper
      * @param array $data
      */
@@ -47,14 +47,14 @@ class EnabledWithLink extends Field
         \Magento\Backend\Block\Template\Context $context,
         \Magento\Framework\UrlInterface $urlBuilder,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Swissup\BreezeThemeEditor\Model\Data\AccessToken $accessToken,
+        \Swissup\BreezeThemeEditor\Model\TokenManager $tokenManager,
         \Swissup\BreezeThemeEditor\Helper\Data $helper,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->urlBuilder = $urlBuilder;
         $this->storeManager = $storeManager;
-        $this->accessToken = $accessToken;
+        $this->tokenManager = $tokenManager;
         $this->helper = $helper;
     }
 
@@ -108,8 +108,11 @@ class EnabledWithLink extends Field
             $baseUrl = $this->urlBuilder->getBaseUrl();
         }
 
+        // Отримати або створити токен з user metadata
+        $token = $this->tokenManager->getOrCreateToken();
+
         $params = [
-            $this->accessToken->getParamName() => $this->accessToken->getToken(),
+            $this->tokenManager->getParamName() => $token,
         ];
 
         return $baseUrl . '?' . http_build_query($params);

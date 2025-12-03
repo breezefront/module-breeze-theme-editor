@@ -7,9 +7,9 @@ use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem;
-use Magento\Framework\Filesystem\Directory\ReadInterface;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory as ThemeCollectionFactory;
+use Magento\Framework\Component\ComponentRegistrar;
 
 class ConfigProvider
 {
@@ -20,7 +20,8 @@ class ConfigProvider
     public function __construct(
         private Filesystem $filesystem,
         private SerializerInterface $serializer,
-        private ThemeCollectionFactory $themeCollectionFactory
+        private ThemeCollectionFactory $themeCollectionFactory,
+        private ComponentRegistrar $componentRegistrar
     ) {}
 
     /**
@@ -32,8 +33,8 @@ class ConfigProvider
             return $this->configCache[$themeId];
         }
 
-        $themePath = $this->getThemePath($themeId);
-        $config = $this->loadConfigFile($themePath);
+        $theme = $this->getTheme($themeId);
+        $config = $this->loadConfigFile($theme);
 
         $this->configCache[$themeId] = $config;
 
@@ -140,9 +141,9 @@ class ConfigProvider
     }
 
     /**
-     * Отримати шлях до теми
+     * Отримати theme object
      */
-    private function getThemePath(int $themeId): string
+    private function getTheme(int $themeId)
     {
         $themeCollection = $this->themeCollectionFactory->create();
         $theme = $themeCollection->getItemById($themeId);
@@ -151,36 +152,71 @@ class ConfigProvider
             throw new LocalizedException(__('Theme with ID %1 not found', $themeId));
         }
 
-        return $theme->getFullPath();
+        return $theme;
     }
 
     /**
      * Завантажити config файл
      */
-    private function loadConfigFile(string $themePath): array
+    private function loadConfigFile($theme): array
     {
+        $configPath = $this->findConfigFile($theme);
+
+        if (!$configPath) {
+            throw new LocalizedException(
+                __('Theme editor configuration file not found for theme: %1', $theme->getThemeTitle())
+            );
+        }
+
         try {
-            $directory = $this->filesystem->getDirectoryRead(DirectoryList::APP);
-            $configPath = 'design/' . $themePath . '/' . self::CONFIG_FILE;
-
-            if (!$directory->isFile($configPath)) {
-                throw new LocalizedException(
-                    __('Theme editor configuration file not found: %1', $configPath)
-                );
-            }
-
-            $content = $directory->readFile($configPath);
+            $content = file_get_contents($configPath);
             $config = $this->serializer->unserialize($content);
 
             $this->validateConfig($config);
 
             return $config;
 
-        } catch (FileSystemException $e) {
+        } catch (\Exception $e) {
             throw new LocalizedException(
                 __('Error reading theme configuration: %1', $e->getMessage())
             );
         }
+    }
+
+    /**
+     * Знайти config файл в можливих локаціях
+     */
+    private function findConfigFile($theme): ?string
+    {
+        $themePath = $theme->getFullPath(); // e.g.  "frontend/Vendor/theme"
+
+        // Варіант 1: app/design/frontend/Vendor/theme/etc/theme_editor/settings.json
+        $appDesignPath = BP .  '/app/design/' . $themePath .  '/' . self::CONFIG_FILE;
+        if (file_exists($appDesignPath)) {
+            return $appDesignPath;
+        }
+
+        // Варіант 2: Через ComponentRegistrar (для composer тем)
+        // Theme code format: "frontend/Vendor/theme" -> "Vendor/theme"
+        $parts = explode('/', $themePath);
+        if (count($parts) >= 2) {
+            $area = $parts[0]; // frontend/adminhtml
+            $themeCode = implode('/', array_slice($parts, 1)); // Vendor/theme
+
+            $themePath = $this->componentRegistrar->getPath(
+                ComponentRegistrar::THEME,
+                $area .  '/' . $themeCode
+            );
+
+            if ($themePath) {
+                $composerPath = $themePath . '/' . self::CONFIG_FILE;
+                if (file_exists($composerPath)) {
+                    return $composerPath;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

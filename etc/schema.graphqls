@@ -1,0 +1,454 @@
+enum BreezeThemeEditorStatusCode {
+    DRAFT
+    PUBLISHED
+}
+
+enum BreezeThemeEditorFieldType {
+    COLOR
+    TEXT
+    TEXTAREA
+    NUMBER
+    RANGE
+    SELECT
+    CHECKBOX
+    TOGGLE
+    FONT_PICKER
+    COLOR_SCHEME
+    ICON_SET_PICKER
+    IMAGE_UPLOAD
+    CODE
+    SOCIAL_LINKS
+    SPACING
+    REPEATER @doc(description: "For repeated fields like social links")
+}
+
+enum BreezeThemeEditorDependencyOperator {
+    EQUALS
+    NOT_EQUALS
+    CONTAINS
+    GREATER_THAN
+    LESS_THAN
+}
+
+enum BreezeThemeEditorChangeType {
+    ADDED
+    MODIFIED
+    DELETED
+}
+
+type Query {
+    breezeThemeEditorConfig(
+        storeId: Int!
+        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        status: BreezeThemeEditorStatusCode = PUBLISHED
+    ): BreezeThemeEditorConfig!  @doc(description: "Get theme configuration with current values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Config")
+
+    breezeThemeEditorValues(
+        storeId: Int!
+        themeId: Int
+        status: BreezeThemeEditorStatusCode = PUBLISHED
+        sectionCodes: [String! ] @doc(description: "Filter by specific sections")
+    ): [BreezeThemeEditorValue!]! @doc(description: "Get only values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Values")
+
+    breezeThemeEditorCompare(
+        themeId: Int!
+        storeId: Int!
+        userId: Int
+    ): BreezeThemeEditorComparison @doc(description: "Compare draft vs published changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Compare")
+
+    breezeThemeEditorStatuses: [BreezeThemeEditorStatus!]! @doc(description: "Get available statuses") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Statuses")
+
+    breezeThemeEditorPublications(
+        themeId: Int!
+        storeId: Int!
+        pageSize: Int = 20
+        currentPage: Int = 1
+        search: String @doc(description: "Search by title")
+    ): BreezeThemeEditorPublicationList @doc(description: "Get publication history") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Publications")
+
+    breezeThemeEditorPublication(
+        publicationId: Int!
+    ): BreezeThemeEditorPublication @doc(description: "Get publication details with changelog") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Publication")
+
+    # Отримати presets з JSON
+    breezeThemeEditorPresets(
+        themeId: Int!
+    ): [BreezeThemeEditorPreset!]! @doc(description: "Get available presets from theme config") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Presets")
+}
+
+# ============================================================================
+# Mutations
+# ============================================================================
+
+type Mutation {
+    # Зберегти значення (batch update)
+    saveBreezeThemeEditorValues(
+        input: SaveBreezeThemeEditorValuesInput!
+    ): SaveBreezeThemeEditorValuesOutput @doc(description: "Save multiple values at once") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\SaveValues")
+
+    # Зберегти одне значення (для live preview)
+    saveBreezeThemeEditorValue(
+        input: SaveBreezeThemeEditorValueInput!
+    ): SaveBreezeThemeEditorValueOutput @doc(description: "Save single value (for live preview)") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\SaveValue")
+
+    # Опублікувати draft
+    publishBreezeThemeEditor(
+        input: PublishBreezeThemeEditorInput!
+    ): PublishBreezeThemeEditorOutput @doc(description: "Publish draft to production") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Publish")
+
+    # Скинути draft
+    discardBreezeThemeEditorDraft(
+        themeId: Int!
+        storeId: Int!
+        sectionCodes: [String!] @doc(description: "Optional: discard only specific sections")
+    ): DiscardBreezeThemeEditorDraftOutput @doc(description: "Discard draft changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\DiscardDraft")
+
+    # Rollback
+    rollbackBreezeThemeEditor(
+        input: RollbackBreezeThemeEditorInput!
+    ): RollbackBreezeThemeEditorOutput @doc(description: "Rollback to previous publication") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Rollback")
+
+    # Застосувати preset
+    applyBreezeThemeEditorPreset(
+        input: ApplyBreezeThemeEditorPresetInput!
+    ): ApplyBreezeThemeEditorPresetOutput @doc(description: "Apply preset to draft") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ApplyPreset")
+
+    # Скинути до дефолтів
+    resetBreezeThemeEditorToDefaults(
+        input: ResetBreezeThemeEditorToDefaultsInput!
+    ): ResetBreezeThemeEditorOutput @doc(description: "Reset to default values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ResetToDefaults")
+
+    # Копіювати з іншого store
+    copyBreezeThemeEditorFromStore(
+        input: CopyBreezeThemeEditorFromStoreInput!
+    ): CopyBreezeThemeEditorFromStoreOutput @doc(description: "Copy settings from another store") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\CopyFromStore")
+
+    # Експорт/Імпорт
+    exportBreezeThemeEditorSettings(
+        themeId: Int!
+        storeId: Int!
+        status: BreezeThemeEditorStatusCode = PUBLISHED
+    ): ExportBreezeThemeEditorSettingsOutput @doc(description: "Export settings as JSON") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ExportSettings")
+
+    importBreezeThemeEditorSettings(
+        input: ImportBreezeThemeEditorSettingsInput!
+    ): ImportBreezeThemeEditorSettingsOutput @doc(description: "Import settings from JSON") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ImportSettings")
+}
+
+type BreezeThemeEditorConfig {
+    version: String!
+    sections: [BreezeThemeEditorSection! ]!
+    presets: [BreezeThemeEditorPreset!]!
+    metadata: BreezeThemeEditorMetadata @doc(description: "Theme metadata")
+}
+
+type BreezeThemeEditorMetadata {
+    themeName: String
+    themeVersion: String
+    themeId: Int!
+    lastPublished: String @doc(description: "Last publication date")
+    hasUnpublishedChanges: Boolean!   @doc(description: "Has draft changes")
+    draftChangesCount: Int @doc(description: "Number of changed settings in draft")
+}
+
+type BreezeThemeEditorSection {
+    code: String!
+    label: String!
+    icon: String
+    description: String
+    fields: [BreezeThemeEditorField!]!
+    order: Int @doc(description: "Sort order")
+}
+
+type BreezeThemeEditorField {
+    code: String!
+    label: String!
+    type: BreezeThemeEditorFieldType!
+    description: String
+
+    # Значення
+    value: String @doc(description: "Current value (JSON)")
+    default: String @doc(description: "Default value (JSON)")
+    isModified: Boolean! @doc(description: "Is different from default")
+
+    # CSS
+    cssVar: String
+
+    # Валідація
+    required: Boolean
+    validation: BreezeThemeEditorFieldValidation
+
+    # UI параметри
+    placeholder: String
+    helpText: String
+
+    # Тип-специфічні параметри
+    params: BreezeThemeEditorFieldParams @doc(description: "Type-specific parameters")
+
+    # Залежності (conditional fields)
+    dependsOn: BreezeThemeEditorFieldDependency @doc(description: "Show only if condition met")
+}
+
+type BreezeThemeEditorFieldValidation {
+    minLength: Int
+    maxLength: Int
+    min: Float
+    max: Float
+    pattern: String @doc(description: "Regex pattern")
+    message: String @doc(description: "Error message")
+}
+
+type BreezeThemeEditorFieldParams {
+    # For range/number
+    min: Float
+    max: Float
+    step: Float
+    unit: String
+
+    # For select/color_scheme/icon_set
+    options: [BreezeThemeEditorFieldOption!]
+
+    # For code
+    language: String
+
+    # For font_picker
+    fallback: String
+    fontWeights: [String!]
+
+    # For social_links/repeater
+    platforms: [String!]
+    maxItems: Int
+
+    # For image_upload
+    allowedExtensions: [String!]
+    maxFileSize: Int @doc(description: "In KB")
+
+    # For spacing (top, right, bottom, left)
+    sides: [String!]
+}
+
+type BreezeThemeEditorFieldOption {
+    label: String!
+    value: String!
+    icon: String @doc(description: "Optional icon for visual select")
+    preview: String @doc(description: "Optional preview image URL")
+}
+
+type BreezeThemeEditorFieldDependency {
+    fieldCode: String!  @doc(description: "Depends on this field")
+    value: String!  @doc(description: "Show when field equals this value")
+    operator: BreezeThemeEditorDependencyOperator @doc(description: "Comparison operator")
+}
+
+type BreezeThemeEditorValue {
+    sectionCode: String!
+    fieldCode: String!
+    value: String!  @doc(description: "JSON encoded")
+    isModified: Boolean!
+    updatedAt: String
+}
+
+type BreezeThemeEditorPreset {
+    id: String!
+    name: String!
+    description: String
+    preview: String @doc(description: "Preview image URL")
+    settings: [BreezeThemeEditorValue!]!   @doc(description: "Preset values")
+}
+
+type BreezeThemeEditorComparison {
+    hasChanges: Boolean!
+    changesCount: Int!
+    changes: [BreezeThemeEditorValueComparison!]!
+}
+
+type BreezeThemeEditorValueComparison {
+    sectionCode: String!
+    sectionLabel: String!
+    fieldCode: String!
+    fieldLabel: String!
+    publishedValue: String
+    draftValue: String
+    changeType: BreezeThemeEditorChangeType!
+}
+
+type BreezeThemeEditorPublicationList {
+    items: [BreezeThemeEditorPublication!]!
+    page_info: SearchResultPageInfo
+    total_count: Int
+}
+
+type BreezeThemeEditorPublication {
+    publicationId: Int!
+    themeId: Int!
+    storeId: Int!
+    title: String!
+    description: String
+    publishedAt: String!
+    publishedBy: Int!
+    publishedByName: String
+    publishedByEmail: String
+    isRollback: Boolean!
+    rollbackFrom: Int
+    changesCount: Int!
+    changes: [BreezeThemeEditorChange!]
+    canRollback: Boolean!  @doc(description: "Can current user rollback to this")
+}
+
+type BreezeThemeEditorChange {
+    changeId: Int!
+    sectionCode: String!
+    sectionLabel: String!
+    fieldCode: String!
+    fieldLabel: String!
+    oldValue: String
+    newValue: String
+    changeType: BreezeThemeEditorChangeType!
+}
+
+type BreezeThemeEditorStatus {
+    code: String!
+    label: String!
+    sortOrder: Int
+}
+
+input SaveBreezeThemeEditorValuesInput {
+    themeId: Int!
+    storeId: Int!
+    status: BreezeThemeEditorStatusCode!
+    values: [BreezeThemeEditorValueInput!]!
+    autoPublish: Boolean @doc(description: "Publish immediately after save")
+    publicationTitle: String @doc(description: "Required if autoPublish=true")
+}
+
+input SaveBreezeThemeEditorValueInput {
+    themeId: Int!
+    storeId: Int!
+    status: BreezeThemeEditorStatusCode!
+    sectionCode: String!
+    fieldCode: String!
+    value: String!
+}
+
+input BreezeThemeEditorValueInput {
+    sectionCode: String!
+    fieldCode: String!
+    value: String!
+}
+
+input PublishBreezeThemeEditorInput {
+    themeId: Int!
+    storeId: Int!
+    title: String!
+    description: String
+    notifyUsers: Boolean @doc(description: "Send notification to other admins")
+}
+
+input RollbackBreezeThemeEditorInput {
+    publicationId: Int!
+    title: String!
+    description: String
+}
+
+input ApplyBreezeThemeEditorPresetInput {
+    themeId: Int!
+    storeId: Int!
+    presetId: String!
+    status: BreezeThemeEditorStatusCode = DRAFT
+    overwriteExisting: Boolean @doc(description: "Overwrite existing values")
+}
+
+input ResetBreezeThemeEditorToDefaultsInput {
+    themeId: Int!
+    storeId: Int!
+    status: BreezeThemeEditorStatusCode = DRAFT
+    sectionCodes: [String! ] @doc(description: "Reset only specific sections")
+    fieldCodes: [String!] @doc(description: "Reset only specific fields")
+}
+
+input CopyBreezeThemeEditorFromStoreInput {
+    fromStoreId: Int!
+    toStoreId: Int!
+    themeId: Int!
+    status: BreezeThemeEditorStatusCode = DRAFT
+    sectionCodes: [String! ] @doc(description: "Copy only specific sections")
+}
+
+input ImportBreezeThemeEditorSettingsInput {
+    themeId: Int!
+    storeId: Int!
+    status: BreezeThemeEditorStatusCode = DRAFT
+    jsonData: String!  @doc(description: "JSON string with settings")
+    overwriteExisting: Boolean
+}
+
+type SaveBreezeThemeEditorValuesOutput {
+    success: Boolean!
+    message: String
+    values: [BreezeThemeEditorValue!]
+    validation_errors: [BreezeThemeEditorValidationError!] @doc(description: "Field validation errors")
+}
+
+type SaveBreezeThemeEditorValueOutput {
+    success: Boolean!
+    message: String
+    value: BreezeThemeEditorValue
+}
+
+type BreezeThemeEditorValidationError {
+    fieldCode: String!
+    message: String!
+}
+
+type PublishBreezeThemeEditorOutput {
+    success: Boolean!
+    message: String
+    publication: BreezeThemeEditorPublication
+}
+
+type DiscardBreezeThemeEditorDraftOutput {
+    success: Boolean!
+    message: String
+    discardedCount: Int @doc(description: "Number of discarded values")
+}
+
+type RollbackBreezeThemeEditorOutput {
+    success: Boolean!
+    message: String
+    publication: BreezeThemeEditorPublication
+}
+
+type ApplyBreezeThemeEditorPresetOutput {
+    success: Boolean!
+    message: String
+    values: [BreezeThemeEditorValue!]
+    appliedCount: Int
+}
+
+type ResetBreezeThemeEditorOutput {
+    success: Boolean!
+    message: String
+    values: [BreezeThemeEditorValue!]
+    resetCount: Int
+}
+
+type CopyBreezeThemeEditorFromStoreOutput {
+    success: Boolean!
+    message: String
+    copiedCount: Int
+}
+
+type ExportBreezeThemeEditorSettingsOutput {
+    success: Boolean!
+    message: String
+    jsonData: String @doc(description: "Exported settings as JSON")
+    filename: String @doc(description: "Suggested filename")
+}
+
+type ImportBreezeThemeEditorSettingsOutput {
+    success: Boolean!
+    message: String
+    importedCount: Int
+    skippedCount: Int
+    errors: [String!]
+}
