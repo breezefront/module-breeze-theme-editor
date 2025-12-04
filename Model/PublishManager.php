@@ -76,7 +76,7 @@ class PublishManager
             $themeId,
             $storeId,
             $publishedStatusId,
-            0, // published завжди user_id = 0
+            $userId,
             $formatted
         );
 
@@ -150,7 +150,7 @@ class PublishManager
                 $themeId,
                 $storeId,
                 $publishedStatusId,
-                0,
+                $userId,
                 $values
             );
         }

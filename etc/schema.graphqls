@@ -45,22 +45,21 @@ type Query {
 
     breezeThemeEditorValues(
         storeId: Int!
-        themeId: Int
+        themeId: Int @doc(description: "Optional: override auto-detected theme")
         status: BreezeThemeEditorStatusCode = PUBLISHED
         sectionCodes: [String! ] @doc(description: "Filter by specific sections")
     ): [BreezeThemeEditorValue!]! @doc(description: "Get only values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Values")
 
     breezeThemeEditorCompare(
-        themeId: Int!
         storeId: Int!
-        userId: Int
+        themeId: Int @doc(description: "Optional: override auto-detected theme")
     ): BreezeThemeEditorComparison @doc(description: "Compare draft vs published changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Compare")
 
     breezeThemeEditorStatuses: [BreezeThemeEditorStatus!]! @doc(description: "Get available statuses") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Statuses")
 
     breezeThemeEditorPublications(
-        themeId: Int!
         storeId: Int!
+        themeId: Int @doc(description: "Optional: override auto-detected theme")
         pageSize: Int = 20
         currentPage: Int = 1
         search: String @doc(description: "Search by title")
@@ -70,9 +69,9 @@ type Query {
         publicationId: Int!
     ): BreezeThemeEditorPublication @doc(description: "Get publication details with changelog") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Publication")
 
-    # Отримати presets з JSON
     breezeThemeEditorPresets(
-        themeId: Int!
+        storeId: Int!
+        themeId: Int @doc(description: "Optional: override auto-detected theme")
     ): [BreezeThemeEditorPreset!]! @doc(description: "Get available presets from theme config") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Presets")
 }
 
@@ -81,52 +80,43 @@ type Query {
 # ============================================================================
 
 type Mutation {
-    # Зберегти значення (batch update)
     saveBreezeThemeEditorValues(
         input: SaveBreezeThemeEditorValuesInput!
     ): SaveBreezeThemeEditorValuesOutput @doc(description: "Save multiple values at once") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\SaveValues")
 
-    # Зберегти одне значення (для live preview)
     saveBreezeThemeEditorValue(
         input: SaveBreezeThemeEditorValueInput!
     ): SaveBreezeThemeEditorValueOutput @doc(description: "Save single value (for live preview)") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\SaveValue")
 
-    # Опублікувати draft
     publishBreezeThemeEditor(
         input: PublishBreezeThemeEditorInput!
     ): PublishBreezeThemeEditorOutput @doc(description: "Publish draft to production") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Publish")
 
-    # Скинути draft
     discardBreezeThemeEditorDraft(
-        themeId: Int!
         storeId: Int!
+        themeId: Int @doc(description: "Optional: override auto-detected theme")
         sectionCodes: [String!] @doc(description: "Optional: discard only specific sections")
     ): DiscardBreezeThemeEditorDraftOutput @doc(description: "Discard draft changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\DiscardDraft")
 
-    # Rollback
     rollbackBreezeThemeEditor(
         input: RollbackBreezeThemeEditorInput!
     ): RollbackBreezeThemeEditorOutput @doc(description: "Rollback to previous publication") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Rollback")
 
-    # Застосувати preset
     applyBreezeThemeEditorPreset(
         input: ApplyBreezeThemeEditorPresetInput!
     ): ApplyBreezeThemeEditorPresetOutput @doc(description: "Apply preset to draft") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ApplyPreset")
 
-    # Скинути до дефолтів
     resetBreezeThemeEditorToDefaults(
         input: ResetBreezeThemeEditorToDefaultsInput!
     ): ResetBreezeThemeEditorOutput @doc(description: "Reset to default values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ResetToDefaults")
 
-    # Копіювати з іншого store
     copyBreezeThemeEditorFromStore(
         input: CopyBreezeThemeEditorFromStoreInput!
     ): CopyBreezeThemeEditorFromStoreOutput @doc(description: "Copy settings from another store") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\CopyFromStore")
 
-    # Експорт/Імпорт
     exportBreezeThemeEditorSettings(
-        themeId: Int!
         storeId: Int!
+        themeId: Int @doc(description: "Optional: override auto-detected theme")
         status: BreezeThemeEditorStatusCode = PUBLISHED
     ): ExportBreezeThemeEditorSettingsOutput @doc(description: "Export settings as JSON") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ExportSettings")
 
@@ -137,7 +127,7 @@ type Mutation {
 
 type BreezeThemeEditorConfig {
     version: String!
-    sections: [BreezeThemeEditorSection! ]!
+    sections: [BreezeThemeEditorSection!]!
     presets: [BreezeThemeEditorPreset!]!
     metadata: BreezeThemeEditorMetadata @doc(description: "Theme metadata")
 }
@@ -147,7 +137,7 @@ type BreezeThemeEditorMetadata {
     themeVersion: String
     themeId: Int!
     lastPublished: String @doc(description: "Last publication date")
-    hasUnpublishedChanges: Boolean!   @doc(description: "Has draft changes")
+    hasUnpublishedChanges: Boolean!  @doc(description: "Has draft changes")
     draftChangesCount: Int @doc(description: "Number of changed settings in draft")
 }
 
@@ -165,27 +155,15 @@ type BreezeThemeEditorField {
     label: String!
     type: BreezeThemeEditorFieldType!
     description: String
-
-    # Значення
     value: String @doc(description: "Current value (JSON)")
     default: String @doc(description: "Default value (JSON)")
     isModified: Boolean! @doc(description: "Is different from default")
-
-    # CSS
     cssVar: String
-
-    # Валідація
     required: Boolean
     validation: BreezeThemeEditorFieldValidation
-
-    # UI параметри
     placeholder: String
     helpText: String
-
-    # Тип-специфічні параметри
     params: BreezeThemeEditorFieldParams @doc(description: "Type-specific parameters")
-
-    # Залежності (conditional fields)
     dependsOn: BreezeThemeEditorFieldDependency @doc(description: "Show only if condition met")
 }
 
@@ -199,31 +177,18 @@ type BreezeThemeEditorFieldValidation {
 }
 
 type BreezeThemeEditorFieldParams {
-    # For range/number
     min: Float
     max: Float
     step: Float
     unit: String
-
-    # For select/color_scheme/icon_set
     options: [BreezeThemeEditorFieldOption!]
-
-    # For code
     language: String
-
-    # For font_picker
     fallback: String
     fontWeights: [String!]
-
-    # For social_links/repeater
     platforms: [String!]
     maxItems: Int
-
-    # For image_upload
     allowedExtensions: [String!]
     maxFileSize: Int @doc(description: "In KB")
-
-    # For spacing (top, right, bottom, left)
     sides: [String!]
 }
 
@@ -236,7 +201,7 @@ type BreezeThemeEditorFieldOption {
 
 type BreezeThemeEditorFieldDependency {
     fieldCode: String!  @doc(description: "Depends on this field")
-    value: String!  @doc(description: "Show when field equals this value")
+    value: String! @doc(description: "Show when field equals this value")
     operator: BreezeThemeEditorDependencyOperator @doc(description: "Comparison operator")
 }
 
@@ -253,7 +218,7 @@ type BreezeThemeEditorPreset {
     name: String!
     description: String
     preview: String @doc(description: "Preview image URL")
-    settings: [BreezeThemeEditorValue!]!   @doc(description: "Preset values")
+    settings: [BreezeThemeEditorValue!]!  @doc(description: "Preset values")
 }
 
 type BreezeThemeEditorComparison {
@@ -313,8 +278,8 @@ type BreezeThemeEditorStatus {
 }
 
 input SaveBreezeThemeEditorValuesInput {
-    themeId: Int!
     storeId: Int!
+    themeId: Int @doc(description: "Optional: override auto-detected theme")
     status: BreezeThemeEditorStatusCode!
     values: [BreezeThemeEditorValueInput!]!
     autoPublish: Boolean @doc(description: "Publish immediately after save")
@@ -322,8 +287,8 @@ input SaveBreezeThemeEditorValuesInput {
 }
 
 input SaveBreezeThemeEditorValueInput {
-    themeId: Int!
     storeId: Int!
+    themeId: Int @doc(description: "Optional: override auto-detected theme")
     status: BreezeThemeEditorStatusCode!
     sectionCode: String!
     fieldCode: String!
@@ -337,8 +302,8 @@ input BreezeThemeEditorValueInput {
 }
 
 input PublishBreezeThemeEditorInput {
-    themeId: Int!
     storeId: Int!
+    themeId: Int @doc(description: "Optional: override auto-detected theme")
     title: String!
     description: String
     notifyUsers: Boolean @doc(description: "Send notification to other admins")
@@ -351,32 +316,32 @@ input RollbackBreezeThemeEditorInput {
 }
 
 input ApplyBreezeThemeEditorPresetInput {
-    themeId: Int!
     storeId: Int!
+    themeId: Int @doc(description: "Optional: override auto-detected theme")
     presetId: String!
     status: BreezeThemeEditorStatusCode = DRAFT
     overwriteExisting: Boolean @doc(description: "Overwrite existing values")
 }
 
 input ResetBreezeThemeEditorToDefaultsInput {
-    themeId: Int!
     storeId: Int!
+    themeId: Int @doc(description: "Optional: override auto-detected theme")
     status: BreezeThemeEditorStatusCode = DRAFT
-    sectionCodes: [String! ] @doc(description: "Reset only specific sections")
+    sectionCodes: [String!] @doc(description: "Reset only specific sections")
     fieldCodes: [String!] @doc(description: "Reset only specific fields")
 }
 
 input CopyBreezeThemeEditorFromStoreInput {
     fromStoreId: Int!
     toStoreId: Int!
-    themeId: Int!
+    themeId: Int @doc(description: "Optional: override auto-detected theme")
     status: BreezeThemeEditorStatusCode = DRAFT
     sectionCodes: [String! ] @doc(description: "Copy only specific sections")
 }
 
 input ImportBreezeThemeEditorSettingsInput {
-    themeId: Int!
     storeId: Int!
+    themeId: Int @doc(description: "Optional: override auto-detected theme")
     status: BreezeThemeEditorStatusCode = DRAFT
     jsonData: String!  @doc(description: "JSON string with settings")
     overwriteExisting: Boolean
@@ -421,7 +386,7 @@ type RollbackBreezeThemeEditorOutput {
 type ApplyBreezeThemeEditorPresetOutput {
     success: Boolean!
     message: String
-    values: [BreezeThemeEditorValue!]
+    values: [BreezeThemeEditorValue! ]
     appliedCount: Int
 }
 

@@ -10,13 +10,17 @@ use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
 use Swissup\BreezeThemeEditor\Model\ValueRepository;
 use Swissup\BreezeThemeEditor\Model\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\UserResolver;
+use Swissup\BreezeThemeEditor\Model\ThemeResolver;
 
 class Values implements ResolverInterface
 {
     public function __construct(
         private ValueRepository $valueRepository,
         private StatusProvider $statusProvider,
-        private ConfigProvider $configProvider
+        private ConfigProvider $configProvider,
+        private UserResolver $userResolver,
+        private ThemeResolver $themeResolver
     ) {}
 
     public function resolve(
@@ -26,11 +30,18 @@ class Values implements ResolverInterface
         array $value = null,
         array $args = null
     ) {
-        $themeId = (int)$args['themeId'];
         $storeId = (int)$args['storeId'];
+
+        // Auto-detect themeId
+        $themeId = isset($args['themeId']) && $args['themeId']
+            ? (int)$args['themeId']
+            : $this->themeResolver->getThemeIdByStoreId($storeId);
+
         $statusCode = $args['status'] ?? 'PUBLISHED';
-        $userId = $args['userId'] ?? $context->getUserId();
         $sectionCodes = $args['sectionCodes'] ?? null;
+
+        // Отримати userId з токена
+        $userId = $this->userResolver->getCurrentUserId();
 
         if ($statusCode === 'DRAFT' && !$userId) {
             throw new GraphQlAuthorizationException(__('Authorization required'));
@@ -56,7 +67,7 @@ class Values implements ResolverInterface
 
         $result = [];
         foreach ($values as $val) {
-            $key = $val['section_code'] . '.' . $val['setting_code'];
+            $key = $val['section_code'] .  '.' . $val['setting_code'];
             $defaultValue = $defaults[$key] ?? null;
 
             $result[] = [

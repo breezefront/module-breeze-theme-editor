@@ -21,7 +21,8 @@ class ValueRepository
     {
         $statusId = $this->statusProvider->getStatusId('PUBLISHED');
 
-        return $this->getValuesByStatus($themeId, $storeId, $statusId, 0);
+        // Published не прив'язані до конкретного user_id
+        return $this->getValuesByStatus($themeId, $storeId, $statusId, null);
     }
 
     /**
@@ -37,7 +38,7 @@ class ValueRepository
     /**
      * Отримати значення по статусу
      */
-    private function getValuesByStatus(int $themeId, int $storeId, int $statusId, int $userId): array
+    private function getValuesByStatus(int $themeId, int $storeId, int $statusId, ? int $userId = null): array
     {
         $connection = $this->getConnection();
         $table = $this->resource->getTableName('breeze_theme_editor_value');
@@ -50,11 +51,16 @@ class ValueRepository
                 ValueInterface::UPDATED_AT
             ])
             ->where(ValueInterface::THEME_ID . ' = ?', $themeId)
-            ->where(ValueInterface::STORE_ID . ' = ? ', $storeId)
-            ->where(ValueInterface::STATUS_ID . ' = ?', $statusId)
-            ->where(ValueInterface::USER_ID . ' = ?', $userId)
-            ->order(ValueInterface::SECTION_CODE . ' ASC')
-            ->order(ValueInterface::SETTING_CODE . ' ASC');
+            ->where(ValueInterface::STORE_ID .  ' = ?', $storeId)
+            ->where(ValueInterface::STATUS_ID . ' = ? ', $statusId);
+
+        // Додати фільтр по userId тільки якщо переданий
+        if ($userId !== null) {
+            $select->where(ValueInterface::USER_ID . ' = ?', $userId);
+        }
+
+        $select->order(ValueInterface::SECTION_CODE . ' ASC')
+               ->order(ValueInterface::SETTING_CODE . ' ASC');
 
         return $connection->fetchAll($select);
     }
@@ -160,33 +166,6 @@ class ValueRepository
     }
 
     /**
-     * Видалити значення
-     */
-    public function deleteValues(
-        int $themeId,
-        int $storeId,
-        int $statusId,
-        int $userId,
-        ? array $sectionCodes = null
-    ): int {
-        $connection = $this->getConnection();
-        $table = $this->resource->getTableName('breeze_theme_editor_value');
-
-        $where = [
-            ValueInterface::THEME_ID . ' = ?' => $themeId,
-            ValueInterface::STORE_ID . ' = ?' => $storeId,
-            ValueInterface::STATUS_ID . ' = ?' => $statusId,
-            ValueInterface::USER_ID . ' = ?' => $userId
-        ];
-
-        if ($sectionCodes) {
-            $where[ValueInterface::SECTION_CODE .  ' IN (?)'] = $sectionCodes;
-        }
-
-        return $connection->delete($table, $where);
-    }
-
-    /**
      * Копіювати значення
      */
     public function copyValues(
@@ -240,6 +219,52 @@ class ValueRepository
             ->where(ValueInterface::USER_ID .  ' = ?', $userId);
 
         return (int)$connection->fetchOne($select);
+    }
+
+    /**
+     * Видалити значення
+     */
+    public function deleteValues(
+        int $themeId,
+        int $storeId,
+        int $statusId,
+        int $userId
+    ): int {
+        $connection = $this->getConnection();
+        $table = $this->resource->getTableName('breeze_theme_editor_value');
+
+        $deleted = $connection->delete($table, [
+            ValueInterface::THEME_ID .  ' = ?' => $themeId,
+            ValueInterface::STORE_ID . ' = ?' => $storeId,
+            ValueInterface::STATUS_ID . ' = ?' => $statusId,
+            ValueInterface::USER_ID . ' = ?' => $userId
+        ]);
+
+        return (int)$deleted;
+    }
+
+    /**
+     * Видалити значення по конкретних секціях
+     */
+    public function deleteValuesBySections(
+        int $themeId,
+        int $storeId,
+        int $statusId,
+        int $userId,
+        array $sectionCodes
+    ): int {
+        $connection = $this->getConnection();
+        $table = $this->resource->getTableName('breeze_theme_editor_value');
+
+        $deleted = $connection->delete($table, [
+            ValueInterface::THEME_ID . ' = ?' => $themeId,
+            ValueInterface::STORE_ID . ' = ?' => $storeId,
+            ValueInterface::STATUS_ID . ' = ?' => $statusId,
+            ValueInterface::USER_ID . ' = ?' => $userId,
+            ValueInterface::SECTION_CODE . ' IN (?)' => $sectionCodes
+        ]);
+
+        return (int)$deleted;
     }
 
     /**
