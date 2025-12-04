@@ -104,4 +104,72 @@ class PresetManager
 
         throw new LocalizedException(__('Field "%1" not found in configuration', $fieldCode));
     }
+
+    /**
+     * Отримати значення preset
+     */
+    public function getPresetValues(int $themeId, string $presetId): array
+    {
+        $config = $this->configProvider->getConfiguration($themeId);
+        $presets = $config['presets'] ?? [];
+
+        // Знайти preset
+        $preset = null;
+        foreach ($presets as $p) {
+            if ($p['id'] === $presetId) {
+                $preset = $p;
+                break;
+            }
+        }
+
+        if (!$preset) {
+            throw new \Exception("Preset {$presetId} not found");
+        }
+
+        $settings = $preset['settings'] ?? [];
+
+        if (empty($settings)) {
+            return [];
+        }
+
+        // Preset settings = flat object {"primary_color": "#007bff"}
+        // Треба знайти section_code для кожного setting
+        $sectionMap = $this->buildSettingSectionMap($config);
+
+        $values = [];
+        foreach ($settings as $settingCode => $value) {
+            $sectionCode = $sectionMap[$settingCode] ?? null;
+
+            if (! $sectionCode) {
+                continue; // Skip unknown settings
+            }
+
+            $values[] = [
+                'sectionCode' => $sectionCode,
+                'fieldCode' => $settingCode,
+                'value' => $value
+            ];
+        }
+
+        return $values;
+    }
+
+    /**
+     * Побудувати мапу setting_code => section_code
+     */
+    private function buildSettingSectionMap(array $config): array
+    {
+        $map = [];
+
+        foreach ($config['sections'] ??  [] as $section) {
+            $sectionCode = $section['id'];
+
+            foreach ($section['settings'] ?? [] as $setting) {
+                $settingCode = $setting['id'];
+                $map[$settingCode] = $sectionCode;
+            }
+        }
+
+        return $map;
+    }
 }
