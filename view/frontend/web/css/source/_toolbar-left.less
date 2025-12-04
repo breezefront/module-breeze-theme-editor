@@ -14,12 +14,24 @@
         align-items: center;
         gap: 8px;
         color: @bte-toolbar-text;
+        text-transform: uppercase;
         text-decoration: none;
         padding: 8px 12px;
         border-radius: @bte-toolbar-border-radius;
         transition: @bte-toolbar-transition;
 
         .bte-toolbar-hover-overlay(0.1);
+
+        img {
+            color: @bte-toolbar-icon;
+        }
+    }
+
+    button {
+        font-weight: 400;
+        .select-status {
+            text-transform: uppercase;
+        }
     }
 
     .admin-icon {
@@ -56,6 +68,11 @@
     .toolbar-nav {
         display: flex;
         gap: 5px;
+        button {
+            .nav-text{
+                font-weight: 400;
+            }
+        }
     }
 
     .nav-item {
@@ -71,6 +88,7 @@
         transition: @bte-toolbar-transition;
         font-size: @bte-toolbar-font-size;
         position: relative;
+        background: linear-gradient(143.03deg, #982CE5 -10.01%, #1D6799 135.82%);
 
         &.active {
             background: rgba(255, 255, 255, 0.15);
@@ -80,6 +98,7 @@
         &.disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            background: none;
         }
 
         &:hover:not(.disabled) {
@@ -89,6 +108,19 @@
 
     .nav-icon {
         font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+            display: block;
+            width: 13px;
+            height: 13px;
+
+            path {
+                stroke: currentColor;
+            }
+        }
     }
 
     .badge-pro {
@@ -98,5 +130,7 @@
         border-radius: 10px;
         font-weight: 700;
         margin-left: 4px;
+        color: #000;
+        text-transform: uppercase;
     }
 }

@@ -14,20 +14,20 @@ define([
             activeDevice: 'desktop',
             deviceConfig: {
                 desktop: {
-                    icon: 'Swissup_BreezeThemeEditor/images/device-desktop.svg',
+                    icon: 'Swissup_BreezeThemeEditor/images/Desktop.svg',
                     width: 20,
                     height: 16,
                     frameWidth: '100%'
                 },
                 tablet: {
-                    icon: 'Swissup_BreezeThemeEditor/images/device-tablet.svg',
+                    icon: 'Swissup_BreezeThemeEditor/images/Tablet.svg',
                     width: 18,
                     height: 20,
                     frameWidth: '768px'
                 },
                 mobile: {
-                    icon: 'Swissup_BreezeThemeEditor/images/device-mobile.svg',
-                    width: 10,
+                    icon: 'Swissup_BreezeThemeEditor/images/Phone.svg',
+                    width: 18,
                     height: 18,
                     frameWidth: '375px'
                 }
