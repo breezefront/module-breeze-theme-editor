@@ -172,25 +172,44 @@ class ValueRepository
         int $fromThemeId,
         int $fromStoreId,
         int $fromStatusId,
-        int $fromUserId,
+        ? int $fromUserId,
         int $toThemeId,
         int $toStoreId,
         int $toStatusId,
         int $toUserId,
         ? array $sectionCodes = null
     ): int {
-        $values = $this->getValuesByStatus($fromThemeId, $fromStoreId, $fromStatusId, $fromUserId);
+        // Отримати values з source
+        $connection = $this->getConnection();
+        $table = $this->resource->getTableName('breeze_theme_editor_value');
 
-        if ($sectionCodes) {
-            $values = array_filter($values, function($val) use ($sectionCodes) {
-                return in_array($val[ValueInterface::SECTION_CODE], $sectionCodes);
-            });
+        $select = $connection->select()
+            ->from($table, [
+                ValueInterface::SECTION_CODE,
+                ValueInterface::SETTING_CODE,
+                ValueInterface::VALUE
+            ])
+            ->where(ValueInterface::THEME_ID .  ' = ? ', $fromThemeId)
+            ->where(ValueInterface::STORE_ID . ' = ?', $fromStoreId)
+            ->where(ValueInterface::STATUS_ID . ' = ?', $fromStatusId);
+
+        // Фільтр по userId ТІЛЬКИ якщо це DRAFT (published не має userId)
+        if ($fromUserId !== null && $fromUserId > 0) {
+            $select->where(ValueInterface::USER_ID . ' = ?', $fromUserId);
         }
+
+        // Фільтр по sections
+        if ($sectionCodes) {
+            $select->where(ValueInterface::SECTION_CODE .  ' IN (?)', $sectionCodes);
+        }
+
+        $values = $connection->fetchAll($select);
 
         if (empty($values)) {
             return 0;
         }
 
+        // Форматувати для saveValues
         $formatted = [];
         foreach ($values as $val) {
             $formatted[] = [

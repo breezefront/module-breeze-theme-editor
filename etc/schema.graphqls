@@ -40,15 +40,15 @@ type Query {
     breezeThemeEditorConfig(
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
-        status: BreezeThemeEditorStatusCode = PUBLISHED
+        status: BreezeThemeEditorStatusCode
     ): BreezeThemeEditorConfig!  @doc(description: "Get theme configuration with current values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Config")
 
     breezeThemeEditorValues(
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
-        status: BreezeThemeEditorStatusCode = PUBLISHED
-        sectionCodes: [String! ] @doc(description: "Filter by specific sections")
-    ): [BreezeThemeEditorValue!]! @doc(description: "Get only values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Values")
+        status: BreezeThemeEditorStatusCode
+        sectionCodes: [String!] @doc(description: "Filter by specific sections")
+    ): [BreezeThemeEditorValue!]!  @doc(description: "Get only values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Values")
 
     breezeThemeEditorCompare(
         storeId: Int!
@@ -117,7 +117,7 @@ type Mutation {
     exportBreezeThemeEditorSettings(
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
-        status: BreezeThemeEditorStatusCode = PUBLISHED
+        status: BreezeThemeEditorStatusCode
     ): ExportBreezeThemeEditorSettingsOutput @doc(description: "Export settings as JSON") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ExportSettings")
 
     importBreezeThemeEditorSettings(
@@ -127,7 +127,7 @@ type Mutation {
 
 type BreezeThemeEditorConfig {
     version: String!
-    sections: [BreezeThemeEditorSection!]!
+    sections: [BreezeThemeEditorSection! ]!
     presets: [BreezeThemeEditorPreset!]!
     metadata: BreezeThemeEditorMetadata @doc(description: "Theme metadata")
 }
@@ -319,14 +319,14 @@ input ApplyBreezeThemeEditorPresetInput {
     storeId: Int!
     themeId: Int @doc(description: "Optional: override auto-detected theme")
     presetId: String!
-    status: BreezeThemeEditorStatusCode = DRAFT
+    status: BreezeThemeEditorStatusCode
     overwriteExisting: Boolean @doc(description: "Overwrite existing values")
 }
 
 input ResetBreezeThemeEditorToDefaultsInput {
     storeId: Int!
     themeId: Int @doc(description: "Optional: override auto-detected theme")
-    status: BreezeThemeEditorStatusCode = DRAFT
+    status: BreezeThemeEditorStatusCode
     sectionCodes: [String!] @doc(description: "Reset only specific sections")
     fieldCodes: [String!] @doc(description: "Reset only specific fields")
 }
@@ -334,15 +334,15 @@ input ResetBreezeThemeEditorToDefaultsInput {
 input CopyBreezeThemeEditorFromStoreInput {
     fromStoreId: Int!
     toStoreId: Int!
-    themeId: Int @doc(description: "Optional: override auto-detected theme")
-    status: BreezeThemeEditorStatusCode = DRAFT
-    sectionCodes: [String! ] @doc(description: "Copy only specific sections")
+    status: BreezeThemeEditorStatusCode
+    sectionCodes: [String!]
+    overwriteExisting: Boolean
 }
 
 input ImportBreezeThemeEditorSettingsInput {
     storeId: Int!
     themeId: Int @doc(description: "Optional: override auto-detected theme")
-    status: BreezeThemeEditorStatusCode = DRAFT
+    status: BreezeThemeEditorStatusCode
     jsonData: String!  @doc(description: "JSON string with settings")
     overwriteExisting: Boolean
 }
@@ -386,7 +386,7 @@ type RollbackBreezeThemeEditorOutput {
 type ApplyBreezeThemeEditorPresetOutput {
     success: Boolean!
     message: String
-    values: [BreezeThemeEditorValue! ]
+    values: [BreezeThemeEditorValue!]
     appliedCount: Int
 }
 
@@ -400,7 +400,8 @@ type ResetBreezeThemeEditorOutput {
 type CopyBreezeThemeEditorFromStoreOutput {
     success: Boolean!
     message: String
-    copiedCount: Int
+    copiedCount: Int!
+    values: [BreezeThemeEditorValue!]
 }
 
 type ExportBreezeThemeEditorSettingsOutput {
