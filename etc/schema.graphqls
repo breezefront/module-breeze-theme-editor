@@ -41,21 +41,21 @@ type Query {
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
         status: BreezeThemeEditorStatusCode
-    ): BreezeThemeEditorConfig!  @doc(description: "Get theme configuration with current values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Config")
+    ): BreezeThemeEditorConfig!  @doc(description: "Get theme configuration with current values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Config")
 
     breezeThemeEditorValues(
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
         status: BreezeThemeEditorStatusCode
         sectionCodes: [String!] @doc(description: "Filter by specific sections")
-    ): [BreezeThemeEditorValue!]!  @doc(description: "Get only values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Values")
+    ): [BreezeThemeEditorValue!]!  @doc(description: "Get only values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Values")
 
     breezeThemeEditorCompare(
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
-    ): BreezeThemeEditorComparison @doc(description: "Compare draft vs published changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Compare")
+    ): BreezeThemeEditorComparison @doc(description: "Compare draft vs published changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Compare")
 
-    breezeThemeEditorStatuses: [BreezeThemeEditorStatus!]! @doc(description: "Get available statuses") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Statuses")
+    breezeThemeEditorStatuses: [BreezeThemeEditorStatus!]! @doc(description: "Get available statuses") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Statuses")
 
     breezeThemeEditorPublications(
         storeId: Int!
@@ -63,16 +63,16 @@ type Query {
         pageSize: Int = 20
         currentPage: Int = 1
         search: String @doc(description: "Search by title")
-    ): BreezeThemeEditorPublicationList @doc(description: "Get publication history") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Publications")
+    ): BreezeThemeEditorPublicationList @doc(description: "Get publication history") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Publications")
 
     breezeThemeEditorPublication(
         publicationId: Int!
-    ): BreezeThemeEditorPublication @doc(description: "Get publication details with changelog") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Publication")
+    ): BreezeThemeEditorPublication @doc(description: "Get publication details with changelog") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Publication")
 
     breezeThemeEditorPresets(
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
-    ): [BreezeThemeEditorPreset!]! @doc(description: "Get available presets from theme config") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Presets")
+    ): [BreezeThemeEditorPreset!]! @doc(description: "Get available presets from theme config") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Presets")
 }
 
 # ============================================================================
@@ -82,37 +82,37 @@ type Query {
 type Mutation {
     saveBreezeThemeEditorValues(
         input: SaveBreezeThemeEditorValuesInput!
-    ): SaveBreezeThemeEditorValuesOutput @doc(description: "Save multiple values at once") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\SaveValues")
+    ): SaveBreezeThemeEditorValuesOutput @doc(description: "Save multiple values at once") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\SaveValues")
 
     saveBreezeThemeEditorValue(
         input: SaveBreezeThemeEditorValueInput!
-    ): SaveBreezeThemeEditorValueOutput @doc(description: "Save single value (for live preview)") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\SaveValue")
+    ): SaveBreezeThemeEditorValueOutput @doc(description: "Save single value (for live preview)") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\SaveValue")
 
     publishBreezeThemeEditor(
         input: PublishBreezeThemeEditorInput!
-    ): PublishBreezeThemeEditorOutput @doc(description: "Publish draft to production") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Publish")
+    ): PublishBreezeThemeEditorOutput @doc(description: "Publish draft to production") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\Publish")
 
     discardBreezeThemeEditorDraft(
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
         sectionCodes: [String!] @doc(description: "Optional: discard only specific sections")
-    ): DiscardBreezeThemeEditorDraftOutput @doc(description: "Discard draft changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\DiscardDraft")
+    ): DiscardBreezeThemeEditorDraftOutput @doc(description: "Discard draft changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\DiscardDraft")
 
     rollbackBreezeThemeEditor(
         input: RollbackBreezeThemeEditorInput!
-    ): RollbackBreezeThemeEditorOutput @doc(description: "Rollback to previous publication") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Rollback")
+    ): RollbackBreezeThemeEditorOutput @doc(description: "Rollback to previous publication") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\Rollback")
 
     applyBreezeThemeEditorPreset(
         input: ApplyBreezeThemeEditorPresetInput!
-    ): ApplyBreezeThemeEditorPresetOutput @doc(description: "Apply preset to draft") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ApplyPreset")
+    ): ApplyBreezeThemeEditorPresetOutput @doc(description: "Apply preset to draft") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\ApplyPreset")
 
     resetBreezeThemeEditorToDefaults(
         input: ResetBreezeThemeEditorToDefaultsInput!
-    ): ResetBreezeThemeEditorOutput @doc(description: "Reset to default values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ResetToDefaults")
+    ): ResetBreezeThemeEditorOutput @doc(description: "Reset to default values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\ResetToDefaults")
 
     copyBreezeThemeEditorFromStore(
         input: CopyBreezeThemeEditorFromStoreInput!
-    ): CopyBreezeThemeEditorFromStoreOutput @doc(description: "Copy settings from another store") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\CopyFromStore")
+    ): CopyBreezeThemeEditorFromStoreOutput @doc(description: "Copy settings from another store") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\CopyFromStore")
 
     exportBreezeThemeEditorSettings(
         storeId: Int!

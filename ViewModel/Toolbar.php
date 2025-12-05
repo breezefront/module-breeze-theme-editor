@@ -38,12 +38,12 @@ class Toolbar implements ArgumentInterface
     private $storeManager;
 
     /**
-     * @var \Swissup\BreezeThemeEditor\Model\PageUrlProvider
+     * @var \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider
      */
     private $pageUrlProvider;
 
     /**
-     * @var \Swissup\BreezeThemeEditor\Model\StoreDataProvider
+     * @var \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider
      */
     private $storeDataProvider;
 
@@ -60,6 +60,7 @@ class Toolbar implements ArgumentInterface
      * @param \Magento\Backend\Model\Auth\Session $authSession
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Swissup\BreezeThemeEditor\Model\PageUrlProvider $pageUrlProvider
+     * @param \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider
      * @param Json $jsonSerializer
      */
     public function __construct(
@@ -69,8 +70,8 @@ class Toolbar implements ArgumentInterface
         \Magento\Framework\UrlInterface $urlBuilder,
         \Magento\Backend\Model\Auth\Session $authSession,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Swissup\BreezeThemeEditor\Model\PageUrlProvider $pageUrlProvider,
-        \Swissup\BreezeThemeEditor\Model\StoreDataProvider $storeDataProvider,
+        \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider $pageUrlProvider,
+        \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider,
         Json $jsonSerializer
     ) {
         $this->helper = $helper;

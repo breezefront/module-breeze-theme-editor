@@ -6,6 +6,7 @@ namespace Swissup\BreezeThemeEditor\Model;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
+use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 
 class ValueRepository
 {

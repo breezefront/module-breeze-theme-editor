@@ -26,7 +26,7 @@ class EnabledWithLink extends Field
     private $storeManager;
 
     /**
-     * @var \Swissup\BreezeThemeEditor\Model\TokenManager
+     * @var \Swissup\BreezeThemeEditor\Model\Utility\TokenManager
      */
     private $tokenManager;
 
@@ -39,7 +39,7 @@ class EnabledWithLink extends Field
      * @param \Magento\Backend\Block\Template\Context $context
      * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Swissup\BreezeThemeEditor\Model\TokenManager $tokenManager
+     * @param \Swissup\BreezeThemeEditor\Model\Utility\TokenManager $tokenManager
      * @param \Swissup\BreezeThemeEditor\Helper\Data $helper
      * @param array $data
      */
@@ -47,7 +47,7 @@ class EnabledWithLink extends Field
         \Magento\Backend\Block\Template\Context $context,
         \Magento\Framework\UrlInterface $urlBuilder,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Swissup\BreezeThemeEditor\Model\TokenManager $tokenManager,
+        \Swissup\BreezeThemeEditor\Model\Utility\TokenManager $tokenManager,
         \Swissup\BreezeThemeEditor\Helper\Data $helper,
         array $data = []
     ) {
