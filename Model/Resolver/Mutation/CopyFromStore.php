@@ -4,23 +4,11 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
-use Swissup\BreezeThemeEditor\Model\ValueRepository;
-use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
-use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
-use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 
-class CopyFromStore implements ResolverInterface
+class CopyFromStore extends AbstractSaveMutation
 {
-    public function __construct(
-        private ValueRepository $valueRepository,
-        private StatusProvider $statusProvider,
-        private UserResolver $userResolver,
-        private ThemeResolver $themeResolver
-    ) {}
-
     public function resolve(
         Field $field,
         $context,
@@ -32,7 +20,6 @@ class CopyFromStore implements ResolverInterface
 
         $fromStoreId = (int)$input['fromStoreId'];
         $toStoreId = (int)$input['toStoreId'];
-        $statusCode = $input['status'] ?? 'DRAFT';
         $sectionCodes = $input['sectionCodes'] ?? null;
         $overwriteExisting = $input['overwriteExisting'] ?? true;
 
@@ -42,12 +29,15 @@ class CopyFromStore implements ResolverInterface
             );
         }
 
-        $userId = $this->userResolver->getCurrentUserId();
-        $statusId = $this->statusProvider->getStatusId($statusCode);
+        // ✅ Використати базовий метод для target store
+        $params = $this->prepareBaseParams([
+            'storeId' => $toStoreId,
+            'themeId' => $input['themeId'] ?? null,
+            'status' => $input['status'] ??  'DRAFT'
+        ]);
 
-        // Визначити themeId для обох stores
+        // Визначити themeId для source store
         $fromThemeId = $this->themeResolver->getThemeIdByStoreId($fromStoreId);
-        $toThemeId = $this->themeResolver->getThemeIdByStoreId($toStoreId);
 
         // Копіювати published values з source store
         $fromStatusId = $this->statusProvider->getStatusId('PUBLISHED');
@@ -57,21 +47,22 @@ class CopyFromStore implements ResolverInterface
             $fromStoreId,
             $fromStatusId,
             null, // Published values не мають userId
-            $toThemeId,
+            $params['themeId'],
             $toStoreId,
-            $statusId,
-            $userId,
+            $params['statusId'],
+            $params['statusCode'] === 'DRAFT' ? $params['userId'] : 0,
             $sectionCodes
         );
 
-        // Отримати скопійовані values
-        $copiedValues = [];
-        if ($statusCode === 'DRAFT') {
-            $values = $this->valueRepository->getDraftValues($toThemeId, $toStoreId, $userId);
-        } else {
-            $values = $this->valueRepository->getPublishedValues($toThemeId, $toStoreId);
-        }
+        // ✅ Отримати скопійовані values (без inheritance - тільки з цієї теми!)
+        $values = $this->valueRepository->getValuesByTheme(
+            $params['themeId'],
+            $toStoreId,
+            $params['statusId'],
+            $params['statusCode'] === 'DRAFT' ? $params['userId'] : null
+        );
 
+        $copiedValues = [];
         foreach ($values as $val) {
             if ($sectionCodes && !in_array($val['section_code'], $sectionCodes)) {
                 continue;

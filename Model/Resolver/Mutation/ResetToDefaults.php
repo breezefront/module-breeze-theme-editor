@@ -4,24 +4,10 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Swissup\BreezeThemeEditor\Model\ValueRepository;
-use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
-use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
-use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
-use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 
-class ResetToDefaults implements ResolverInterface
+class ResetToDefaults extends AbstractSaveMutation
 {
-    public function __construct(
-        private ValueRepository $valueRepository,
-        private StatusProvider $statusProvider,
-        private UserResolver $userResolver,
-        private ThemeResolver $themeResolver,
-        private ConfigProvider $configProvider
-    ) {}
-
     public function resolve(
         Field $field,
         $context,
@@ -30,20 +16,15 @@ class ResetToDefaults implements ResolverInterface
         array $args = null
     ) {
         $input = $args['input'];
-        $storeId = (int)$input['storeId'];
-        $themeId = isset($input['themeId']) && $input['themeId']
-            ? (int)$input['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
 
-        $statusCode = $input['status'] ??  'DRAFT';
+        // ✅ Використати базовий метод
+        $params = $this->prepareBaseParams($input);
+
         $sectionCodes = $input['sectionCodes'] ?? null;
-        $fieldCodes = $input['fieldCodes'] ??  null;
-
-        $userId = $this->userResolver->getCurrentUserId();
-        $statusId = $this->statusProvider->getStatusId($statusCode);
+        $fieldCodes = $input['fieldCodes'] ??   null;
 
         // Отримати defaults
-        $defaults = $this->configProvider->getAllDefaults($themeId);
+        $defaults = $this->configProvider->getAllDefaults($params['themeId']);
 
         // Фільтр по sections/fields
         $resettingValues = [];
@@ -54,7 +35,7 @@ class ResetToDefaults implements ResolverInterface
             if ($sectionCodes && !in_array($sectionCode, $sectionCodes)) {
                 continue;
             }
-            if ($fieldCodes && ! in_array($fieldCode, $fieldCodes)) {
+            if ($fieldCodes && !   in_array($fieldCode, $fieldCodes)) {
                 continue;
             }
 
@@ -67,21 +48,22 @@ class ResetToDefaults implements ResolverInterface
 
         // Зберегти default значення
         $resetCount = $this->valueRepository->saveValues(
-            $themeId,
-            $storeId,
-            $statusId,
-            $userId,
+            $params['themeId'],
+            $params['storeId'],
+            $params['statusId'],
+            $params['statusCode'] === 'DRAFT' ? $params['userId'] : 0,
             $resettingValues
         );
 
-        // Отримати збережені значення
-        $savedValues = [];
-        if ($statusCode === 'DRAFT') {
-            $values = $this->valueRepository->getDraftValues($themeId, $storeId, $userId);
-        } else {
-            $values = $this->valueRepository->getPublishedValues($themeId, $storeId);
-        }
+        // ✅ Отримати збережені значення (без inheritance - тільки з цієї теми!)
+        $values = $this->valueRepository->getValuesByTheme(
+            $params['themeId'],
+            $params['storeId'],
+            $params['statusId'],
+            $params['statusCode'] === 'DRAFT' ? $params['userId'] : null
+        );
 
+        $savedValues = [];
         foreach ($values as $val) {
             $savedValues[] = [
                 'sectionCode' => $val['section_code'],

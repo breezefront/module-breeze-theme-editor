@@ -8,7 +8,7 @@ use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
-use Swissup\BreezeThemeEditor\Model\ValueRepository;
+use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
@@ -18,7 +18,7 @@ class Config implements ResolverInterface
 {
     public function __construct(
         private ConfigProvider $configProvider,
-        private ValueRepository $valueRepository,
+        private ValueInheritanceResolver $valueInheritanceResolver,
         private StatusProvider $statusProvider,
         private CompareProvider $compareProvider,
         private ThemeResolver $themeResolver,
@@ -44,18 +44,18 @@ class Config implements ResolverInterface
             ? (int)$args['themeId']
             : $this->themeResolver->getThemeIdByStoreId($storeId);
 
-        // 4.  Визначити статус
+        // 4.   Визначити статус
         $statusCode = $args['status'] ?? 'PUBLISHED';
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
         // ✅ Отримати конфігурацію з inheritance
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
 
-        // ✅ Отримати збережені значення з inheritance
+        // ✅ Отримати збережені значення через InheritanceResolver
         if ($statusCode === 'PUBLISHED') {
-            $savedValues = $this->valueRepository->getAllValuesWithInheritance($themeId, $storeId, $statusId, null);
+            $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $storeId, $statusId, null);
         } else {
-            $savedValues = $this->valueRepository->getAllValuesWithInheritance($themeId, $storeId, $statusId, $userId);
+            $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $storeId, $statusId, $userId);
         }
 
         // Змержити конфіг + значення
@@ -103,7 +103,7 @@ class Config implements ResolverInterface
         foreach ($sections as $section) {
             $fields = [];
 
-            foreach ($section['settings'] ??  [] as $setting) {
+            foreach ($section['settings'] ??   [] as $setting) {
                 $key = $section['id'] . '.' . $setting['id'];
                 $currentValue = $valuesMap[$key] ?? null;
                 $defaultValue = $defaults[$key] ?? ($setting['default'] ?? null);
@@ -112,7 +112,7 @@ class Config implements ResolverInterface
                     'code' => $setting['id'],
                     'label' => $setting['label'],
                     'type' => strtoupper($setting['type']),
-                    'description' => $setting['description'] ??  null,
+                    'description' => $setting['description'] ??   null,
                     'value' => $currentValue,
                     'default' => $this->encodeValue($defaultValue),
                     'isModified' => $currentValue !== null && $currentValue !== $defaultValue,
@@ -120,7 +120,7 @@ class Config implements ResolverInterface
                     'required' => $setting['required'] ??  false,
                     'validation' => $this->formatValidation($setting),
                     'placeholder' => $setting['placeholder'] ??  null,
-                    'helpText' => $setting['help_text'] ?? null,
+                    'helpText' => $setting['help_text'] ??  null,
                     'params' => $this->formatParams($setting),
                     'dependsOn' => $this->formatDependency($setting)
                 ];
@@ -132,14 +132,14 @@ class Config implements ResolverInterface
                 'icon' => $section['icon'] ??  null,
                 'description' => $section['description'] ??  null,
                 'fields' => $fields,
-                'order' => $section['order'] ?? $order++
+                'order' => $section['order'] ??  $order++
             ];
         }
 
         return $result;
     }
 
-    private function formatValidation(array $setting): ?  array
+    private function formatValidation(array $setting): ?   array
     {
         $validation = [];
 
@@ -165,7 +165,7 @@ class Config implements ResolverInterface
         return empty($validation) ? null : $validation;
     }
 
-    private function formatParams(array $setting): ?  array
+    private function formatParams(array $setting): ?   array
     {
         $params = [];
 
@@ -220,7 +220,7 @@ class Config implements ResolverInterface
                 'label' => $option['label'],
                 'value' => $option['value'],
                 'icon' => $option['icon'] ??  null,
-                'preview' => $option['preview'] ?? null
+                'preview' => $option['preview'] ??  null
             ];
         }
         return $result;
@@ -228,7 +228,7 @@ class Config implements ResolverInterface
 
     private function formatDependency(array $setting): ?  array
     {
-        if (! isset($setting['dependsOn'])) {
+        if (!  isset($setting['dependsOn'])) {
             return null;
         }
 
@@ -237,7 +237,7 @@ class Config implements ResolverInterface
         return [
             'fieldCode' => $dep['field'],
             'value' => $dep['value'],
-            'operator' => strtoupper($dep['operator'] ?? 'EQUALS')
+            'operator' => strtoupper($dep['operator'] ??  'EQUALS')
         ];
     }
 
@@ -248,8 +248,8 @@ class Config implements ResolverInterface
             $result[] = [
                 'id' => $preset['id'],
                 'name' => $preset['name'],
-                'description' => $preset['description'] ?? null,
-                'preview' => $preset['preview'] ?? null,
+                'description' => $preset['description'] ??  null,
+                'preview' => $preset['preview'] ??  null,
                 'settings' => $this->formatPresetSettings($preset['settings'] ??  [])
             ];
         }
@@ -260,7 +260,7 @@ class Config implements ResolverInterface
     {
         $result = [];
         foreach ($settings as $key => $value) {
-            if (strpos($key, '. ') !== false) {
+            if (strpos($key, '.') !== false) {
                 [$sectionCode, $fieldCode] = explode('.', $key, 2);
                 $result[] = [
                     'sectionCode' => $sectionCode,
@@ -274,7 +274,7 @@ class Config implements ResolverInterface
         return $result;
     }
 
-    private function encodeValue($value): ? string
+    private function encodeValue($value): ?  string
     {
         if ($value === null) {
             return null;

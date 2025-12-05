@@ -6,68 +6,34 @@ namespace Swissup\BreezeThemeEditor\Model;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
-use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
-use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
-use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 
 class ValueRepository
 {
     public function __construct(
-        private ResourceConnection $resource,
-        private StatusProvider $statusProvider,
-        private ThemeResolver $themeResolver,
-        private ConfigProvider $configProvider
+        private ResourceConnection $resource
     ) {}
 
     /**
-     * ✅ Отримати значення з fallback до батьківських тем
+     * ✅ Отримати всі values для конкретної теми (без inheritance)
      */
-    public function getValueWithInheritance(
+    public function getValuesByTheme(
         int $themeId,
         int $storeId,
         int $statusId,
-        string $sectionCode,
-        string $fieldCode,
         ?   int $userId = null
     ): array {
-        $hierarchy = $this->themeResolver->getThemeHierarchy($themeId);
+        $select = $this->buildValuesQuery($themeId, $storeId, $statusId, $userId);
 
-        // Шукаємо value в кожній темі (від child до parent)
-        foreach ($hierarchy as $index => $themeInfo) {
-            $value = $this->getValueFromTheme(
-                $themeInfo['theme_id'],
-                $storeId,
-                $statusId,
-                $sectionCode,
-                $fieldCode,
-                $userId
-            );
+        $select->order(ValueInterface::SECTION_CODE . ' ASC')
+               ->order(ValueInterface::SETTING_CODE . ' ASC');
 
-            if ($value !== null) {
-                return [
-                    'value' => $value,
-                    'isInherited' => $index > 0,
-                    'inheritedFrom' => $index > 0 ? $themeInfo : null,
-                    'inheritanceLevel' => $index
-                ];
-            }
-        }
-
-        // Fallback до default з config
-        $default = $this->configProvider->getFieldDefault($themeId, $sectionCode, $fieldCode);
-
-        return [
-            'value' => $default,
-            'isInherited' => false,
-            'inheritedFrom' => null,
-            'inheritanceLevel' => -1
-        ];
+        return $this->getConnection()->fetchAll($select);
     }
 
     /**
-     * ✅ Отримати value тільки з конкретної теми (без inheritance)
+     * ✅ Отримати одне значення для конкретної теми (без inheritance)
      */
-    private function getValueFromTheme(
+    public function getSingleValue(
         int $themeId,
         int $storeId,
         int $statusId,
@@ -80,10 +46,10 @@ class ValueRepository
 
         $select = $connection->select()
             ->from($table, ['value'])
-            ->where(ValueInterface::THEME_ID .  ' = ? ', $themeId)
-            ->where(ValueInterface::STORE_ID . ' = ?', $storeId)
-            ->where(ValueInterface::STATUS_ID .  ' = ?', $statusId)
-            ->where(ValueInterface::SECTION_CODE . ' = ? ', $sectionCode)
+            ->where(ValueInterface::THEME_ID .     ' = ?   ', $themeId)
+            ->where(ValueInterface::STORE_ID .  ' = ?  ', $storeId)
+            ->where(ValueInterface::STATUS_ID .     ' = ?', $statusId)
+            ->where(ValueInterface::SECTION_CODE . ' = ?   ', $sectionCode)
             ->where(ValueInterface::SETTING_CODE . ' = ?', $fieldCode);
 
         if ($userId !== null) {
@@ -91,142 +57,6 @@ class ValueRepository
         }
 
         $result = $connection->fetchOne($select);
-
-        return $result ?: null;
-    }
-
-    /**
-     * ✅ Отримати всі values з inheritance для теми
-     */
-    public function getAllValuesWithInheritance(
-        int $themeId,
-        int $storeId,
-        int $statusId,
-        ?   int $userId = null
-    ): array {
-        $hierarchy = $this->themeResolver->getThemeHierarchy($themeId);
-        $mergedValues = [];
-
-        // Merge values від прабабусі до дитини
-        foreach (array_reverse($hierarchy) as $themeInfo) {
-            $values = $this->getValuesByStatusFromTheme(
-                $themeInfo['theme_id'],
-                $storeId,
-                $statusId,
-                $userId
-            );
-
-            foreach ($values as $value) {
-                $key = $value[ValueInterface::SECTION_CODE] . '.' . $value[ValueInterface::SETTING_CODE];
-                $mergedValues[$key] = $value;
-            }
-        }
-
-        return array_values($mergedValues);
-    }
-
-    /**
-     * ✅ Отримати values тільки з конкретної теми
-     */
-    private function getValuesByStatusFromTheme(
-        int $themeId,
-        int $storeId,
-        int $statusId,
-        ?  int $userId = null
-    ): array {
-        $connection = $this->getConnection();
-        $table = $this->resource->getTableName('breeze_theme_editor_value');
-
-        $select = $connection->select()
-            ->from($table, [
-                ValueInterface::SECTION_CODE,
-                ValueInterface::SETTING_CODE,
-                ValueInterface::VALUE,
-                ValueInterface::UPDATED_AT
-            ])
-            ->where(ValueInterface::THEME_ID . ' = ?', $themeId)
-            ->where(ValueInterface::STORE_ID .  ' = ?', $storeId)
-            ->where(ValueInterface::STATUS_ID . ' = ? ', $statusId);
-
-        if ($userId !== null) {
-            $select->where(ValueInterface::USER_ID . ' = ?', $userId);
-        }
-
-        return $connection->fetchAll($select);
-    }
-
-    /**
-     * Отримати published значення
-     */
-    public function getPublishedValues(int $themeId, int $storeId): array
-    {
-        $statusId = $this->statusProvider->getStatusId('PUBLISHED');
-        return $this->getValuesByStatus($themeId, $storeId, $statusId, null);
-    }
-
-    /**
-     * Отримати draft значення для користувача
-     */
-    public function getDraftValues(int $themeId, int $storeId, int $userId): array
-    {
-        $statusId = $this->statusProvider->getStatusId('DRAFT');
-        return $this->getValuesByStatus($themeId, $storeId, $statusId, $userId);
-    }
-
-    /**
-     * Отримати значення по статусу
-     */
-    private function getValuesByStatus(int $themeId, int $storeId, int $statusId, ?  int $userId = null): array
-    {
-        $connection = $this->getConnection();
-        $table = $this->resource->getTableName('breeze_theme_editor_value');
-
-        $select = $connection->select()
-            ->from($table, [
-                ValueInterface::SECTION_CODE,
-                ValueInterface::SETTING_CODE,
-                ValueInterface::VALUE,
-                ValueInterface::UPDATED_AT
-            ])
-            ->where(ValueInterface::THEME_ID . ' = ?', $themeId)
-            ->where(ValueInterface::STORE_ID .  ' = ?', $storeId)
-            ->where(ValueInterface::STATUS_ID . ' = ? ', $statusId);
-
-        if ($userId !== null) {
-            $select->where(ValueInterface::USER_ID . ' = ?', $userId);
-        }
-
-        $select->order(ValueInterface::SECTION_CODE . ' ASC')
-               ->order(ValueInterface::SETTING_CODE . ' ASC');
-
-        return $connection->fetchAll($select);
-    }
-
-    /**
-     * Отримати конкретне значення
-     */
-    public function getValue(
-        int $themeId,
-        int $storeId,
-        int $statusId,
-        int $userId,
-        string $sectionCode,
-        string $fieldCode
-    ): ?array {
-        $connection = $this->getConnection();
-        $table = $this->resource->getTableName('breeze_theme_editor_value');
-
-        $select = $connection->select()
-            ->from($table)
-            ->where(ValueInterface::THEME_ID . ' = ? ', $themeId)
-            ->where(ValueInterface::STORE_ID . ' = ?', $storeId)
-            ->where(ValueInterface::STATUS_ID .  ' = ?', $statusId)
-            ->where(ValueInterface::USER_ID . ' = ?', $userId)
-            ->where(ValueInterface::SECTION_CODE . ' = ?', $sectionCode)
-            ->where(ValueInterface::SETTING_CODE . ' = ? ', $fieldCode)
-            ->limit(1);
-
-        $result = $connection->fetchRow($select);
 
         return $result ?: null;
     }
@@ -309,12 +139,12 @@ class ValueRepository
         int $fromThemeId,
         int $fromStoreId,
         int $fromStatusId,
-        ?  int $fromUserId,
+        ?     int $fromUserId,
         int $toThemeId,
         int $toStoreId,
         int $toStatusId,
         int $toUserId,
-        ?  array $sectionCodes = null
+        ?     array $sectionCodes = null
     ): int {
         $connection = $this->getConnection();
         $table = $this->resource->getTableName('breeze_theme_editor_value');
@@ -330,11 +160,11 @@ class ValueRepository
             ->where(ValueInterface::STATUS_ID . ' = ?', $fromStatusId);
 
         if ($fromUserId !== null && $fromUserId > 0) {
-            $select->where(ValueInterface::USER_ID . ' = ?', $fromUserId);
+            $select->where(ValueInterface::USER_ID . ' = ? ', $fromUserId);
         }
 
         if ($sectionCodes) {
-            $select->where(ValueInterface::SECTION_CODE .  ' IN (?)', $sectionCodes);
+            $select->where(ValueInterface::SECTION_CODE .   ' IN (?)', $sectionCodes);
         }
 
         $values = $connection->fetchAll($select);
@@ -365,10 +195,10 @@ class ValueRepository
 
         $select = $connection->select()
             ->from($table, ['COUNT(*)'])
-            ->where(ValueInterface::THEME_ID . ' = ?', $themeId)
+            ->where(ValueInterface::THEME_ID .  ' = ?', $themeId)
             ->where(ValueInterface::STORE_ID . ' = ?', $storeId)
             ->where(ValueInterface::STATUS_ID . ' = ?', $statusId)
-            ->where(ValueInterface::USER_ID . ' = ? ', $userId);
+            ->where(ValueInterface::USER_ID .   ' = ?  ', $userId);
 
         return (int)$connection->fetchOne($select);
     }
@@ -380,43 +210,56 @@ class ValueRepository
         int $themeId,
         int $storeId,
         int $statusId,
-        int $userId
+        int $userId,
+        ?  array $sectionCodes = null
     ): int {
         $connection = $this->getConnection();
         $table = $this->resource->getTableName('breeze_theme_editor_value');
 
-        $deleted = $connection->delete($table, [
+        $where = [
             ValueInterface::THEME_ID . ' = ?' => $themeId,
             ValueInterface::STORE_ID . ' = ?' => $storeId,
-            ValueInterface::STATUS_ID . ' = ?' => $statusId,
-            ValueInterface::USER_ID . ' = ?' => $userId
-        ]);
+            ValueInterface::STATUS_ID .   ' = ?' => $statusId,
+            ValueInterface::USER_ID .  ' = ?' => $userId
+        ];
+
+        if ($sectionCodes !== null) {
+            $where[ValueInterface::SECTION_CODE .  ' IN (?)'] = $sectionCodes;
+        }
+
+        $deleted = $connection->delete($table, $where);
 
         return (int)$deleted;
     }
 
     /**
-     * Видалити значення по конкретних секціях
+     * ✅ Побудувати базовий SELECT для values (DRY)
      */
-    public function deleteValuesBySections(
+    private function buildValuesQuery(
         int $themeId,
         int $storeId,
         int $statusId,
-        int $userId,
-        array $sectionCodes
-    ): int {
+        ?    int $userId = null
+    ): \Magento\Framework\DB\Select {
         $connection = $this->getConnection();
         $table = $this->resource->getTableName('breeze_theme_editor_value');
 
-        $deleted = $connection->delete($table, [
-            ValueInterface::THEME_ID . ' = ?' => $themeId,
-            ValueInterface::STORE_ID . ' = ?' => $storeId,
-            ValueInterface::STATUS_ID . ' = ?' => $statusId,
-            ValueInterface::USER_ID .  ' = ?' => $userId,
-            ValueInterface::SECTION_CODE . ' IN (?)' => $sectionCodes
-        ]);
+        $select = $connection->select()
+            ->from($table, [
+                ValueInterface::SECTION_CODE,
+                ValueInterface::SETTING_CODE,
+                ValueInterface::VALUE,
+                ValueInterface::UPDATED_AT
+            ])
+            ->where(ValueInterface::THEME_ID . ' = ?', $themeId)
+            ->where(ValueInterface::STORE_ID .     ' = ?', $storeId)
+            ->where(ValueInterface::STATUS_ID .  ' = ?   ', $statusId);
 
-        return (int)$deleted;
+        if ($userId !== null) {
+            $select->where(ValueInterface::USER_ID . ' = ?', $userId);
+        }
+
+        return $select;
     }
 
     /**

@@ -24,15 +24,16 @@ class ImportExportService
     public function export(
         int $themeId,
         int $storeId,
-        string $statusCode
+        string $statusCode,
+        ? int $userId = null
     ): array {
         $statusId = $this->statusProvider->getStatusId($statusCode);
-        $userId = ($statusCode === 'PUBLISHED') ? 0 : 0; // TODO: get current user
 
+        // ✅ Використати getValuesByTheme (без inheritance - тільки з цієї теми!)
         if ($statusCode === 'PUBLISHED') {
-            $values = $this->valueRepository->getPublishedValues($themeId, $storeId);
+            $values = $this->valueRepository->getValuesByTheme($themeId, $storeId, $statusId, null);
         } else {
-            $values = $this->valueRepository->getDraftValues($themeId, $storeId, $userId);
+            $values = $this->valueRepository->getValuesByTheme($themeId, $storeId, $statusId, $userId);
         }
 
         // Форматувати для експорту
@@ -79,7 +80,7 @@ class ImportExportService
         }
 
         $statusId = $this->statusProvider->getStatusId($statusCode);
-        $userIdForSave = ($statusCode === 'PUBLISHED') ?  0 : $userId;
+        $userIdForSave = ($statusCode === 'PUBLISHED') ?    0 : $userId;
 
         // Конвертувати в формат для збереження
         $values = [];
@@ -96,7 +97,7 @@ class ImportExportService
             $values[] = [
                 'sectionCode' => $sectionCode,
                 'fieldCode' => $fieldCode,
-                'value' => is_string($value) ? $value : $this->serializer->serialize($value)
+                'value' => is_string($value) ?  $value : $this->serializer->serialize($value)
             ];
         }
 
@@ -111,7 +112,7 @@ class ImportExportService
         $imported = 0;
         $skipped = count($errors);
 
-        if (! empty($values) && empty($errors)) {
+        if (!   empty($values) && empty($errors)) {
             // Видалити існуючі якщо потрібно
             if (!$overwriteExisting) {
                 $this->valueRepository->deleteValues(

@@ -7,7 +7,7 @@ use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
-use Swissup\BreezeThemeEditor\Model\ValueRepository;
+use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
@@ -16,7 +16,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 class Values implements ResolverInterface
 {
     public function __construct(
-        private ValueRepository $valueRepository,
+        private ValueInheritanceResolver $valueInheritanceResolver,
         private StatusProvider $statusProvider,
         private ConfigProvider $configProvider,
         private UserResolver $userResolver,
@@ -49,10 +49,11 @@ class Values implements ResolverInterface
 
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
+        // ✅ Використати ValueInheritanceResolver
         if ($statusCode === 'PUBLISHED') {
-            $values = $this->valueRepository->getPublishedValues($themeId, $storeId);
+            $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $storeId, $statusId, null);
         } else {
-            $values = $this->valueRepository->getDraftValues($themeId, $storeId, $userId);
+            $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $storeId, $statusId, $userId);
         }
 
         // Фільтр по секціях
@@ -67,7 +68,7 @@ class Values implements ResolverInterface
 
         $result = [];
         foreach ($values as $val) {
-            $key = $val['section_code'] .  '.' . $val['setting_code'];
+            $key = $val['section_code'] .   '.' . $val['setting_code'];
             $defaultValue = $defaults[$key] ?? null;
 
             $result[] = [

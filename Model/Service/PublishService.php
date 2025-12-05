@@ -32,20 +32,20 @@ class PublishService
         int $storeId,
         int $userId,
         string $title,
-        ? string $description = null
+        ?  string $description = null
     ): array {
         // Порівняти draft vs published
         $comparison = $this->compareProvider->compare($themeId, $storeId, $userId);
 
-        if (! $comparison['hasChanges']) {
+        if (!   $comparison['hasChanges']) {
             throw new LocalizedException(__('No changes to publish'));
         }
 
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
-        // Отримати всі draft значення
-        $draftValues = $this->valueRepository->getDraftValues($themeId, $storeId, $userId);
+        // ✅ Отримати всі draft значення (без inheritance - тільки з цієї теми!)
+        $draftValues = $this->valueRepository->getValuesByTheme($themeId, $storeId, $draftStatusId, $userId);
 
         // Створити publication запис
         $publication = $this->publicationFactory->create();
@@ -62,7 +62,7 @@ class PublishService
         // Зберегти changelog
         $this->saveChangelog($publication->getPublicationId(), $comparison['changes']);
 
-        // Скопіювати draft -> published
+        // Скопіювати draft -> published (user_id = 0 для published)
         $formatted = [];
         foreach ($draftValues as $val) {
             $formatted[] = [
@@ -76,7 +76,7 @@ class PublishService
             $themeId,
             $storeId,
             $publishedStatusId,
-            $userId,
+            0, // ✅ published завжди user_id = 0
             $formatted
         );
 
@@ -109,7 +109,7 @@ class PublishService
         int $publicationId,
         int $userId,
         string $title,
-        ?string $description = null
+        ?  string $description = null
     ): array {
         // Отримати стару публікацію
         $oldPublication = $this->publicationRepository->getById($publicationId);
@@ -150,7 +150,7 @@ class PublishService
                 $themeId,
                 $storeId,
                 $publishedStatusId,
-                $userId,
+                0, // ✅ published завжди user_id = 0
                 $values
             );
         }
