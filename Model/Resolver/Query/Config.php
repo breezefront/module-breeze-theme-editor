@@ -44,17 +44,18 @@ class Config implements ResolverInterface
             ? (int)$args['themeId']
             : $this->themeResolver->getThemeIdByStoreId($storeId);
 
-        // 4. Визначити статус
+        // 4.  Визначити статус
         $statusCode = $args['status'] ?? 'PUBLISHED';
+        $statusId = $this->statusProvider->getStatusId($statusCode);
 
-        // Отримати конфігурацію
-        $config = $this->configProvider->getConfiguration($themeId);
+        // ✅ Отримати конфігурацію з inheritance
+        $config = $this->configProvider->getConfigurationWithInheritance($themeId);
 
-        // Отримати збережені значення
+        // ✅ Отримати збережені значення з inheritance
         if ($statusCode === 'PUBLISHED') {
-            $savedValues = $this->valueRepository->getPublishedValues($themeId, $storeId);
+            $savedValues = $this->valueRepository->getAllValuesWithInheritance($themeId, $storeId, $statusId, null);
         } else {
-            $savedValues = $this->valueRepository->getDraftValues($themeId, $storeId, $userId);
+            $savedValues = $this->valueRepository->getAllValuesWithInheritance($themeId, $storeId, $statusId, $userId);
         }
 
         // Змержити конфіг + значення
@@ -64,10 +65,10 @@ class Config implements ResolverInterface
             $themeId
         );
 
-        // ✅ Metadata з ConfigProvider
+        // Metadata з ConfigProvider
         $metadata = $this->configProvider->getMetadata($themeId);
         $metadata['themeVersion'] = $config['version'] ?? null;
-        $metadata['lastPublished'] = null; // TODO
+        $metadata['lastPublished'] = null;
         $metadata['hasUnpublishedChanges'] = false;
         $metadata['draftChangesCount'] = 0;
 
@@ -115,11 +116,11 @@ class Config implements ResolverInterface
                     'value' => $currentValue,
                     'default' => $this->encodeValue($defaultValue),
                     'isModified' => $currentValue !== null && $currentValue !== $defaultValue,
-                    'cssVar' => $setting['css_var'] ??  null,
+                    'cssVar' => $setting['css_var'] ?? null,
                     'required' => $setting['required'] ??  false,
                     'validation' => $this->formatValidation($setting),
                     'placeholder' => $setting['placeholder'] ??  null,
-                    'helpText' => $setting['help_text'] ??  null,
+                    'helpText' => $setting['help_text'] ?? null,
                     'params' => $this->formatParams($setting),
                     'dependsOn' => $this->formatDependency($setting)
                 ];
@@ -131,7 +132,7 @@ class Config implements ResolverInterface
                 'icon' => $section['icon'] ??  null,
                 'description' => $section['description'] ??  null,
                 'fields' => $fields,
-                'order' => $section['order'] ??  $order++
+                'order' => $section['order'] ?? $order++
             ];
         }
 
@@ -218,14 +219,14 @@ class Config implements ResolverInterface
             $result[] = [
                 'label' => $option['label'],
                 'value' => $option['value'],
-                'icon' => $option['icon'] ??   null,
+                'icon' => $option['icon'] ??  null,
                 'preview' => $option['preview'] ?? null
             ];
         }
         return $result;
     }
 
-    private function formatDependency(array $setting): ?array
+    private function formatDependency(array $setting): ?  array
     {
         if (! isset($setting['dependsOn'])) {
             return null;

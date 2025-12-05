@@ -3,13 +3,11 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Provider;
 
-use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Filesystem;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory as ThemeCollectionFactory;
 use Magento\Framework\Component\ComponentRegistrar;
+use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 
 class ConfigProvider
 {
@@ -18,14 +16,141 @@ class ConfigProvider
     private array $configCache = [];
 
     public function __construct(
-        private Filesystem $filesystem,
         private SerializerInterface $serializer,
         private ThemeCollectionFactory $themeCollectionFactory,
-        private ComponentRegistrar $componentRegistrar
+        private ComponentRegistrar $componentRegistrar,
+        private ThemeResolver $themeResolver
     ) {}
 
     /**
-     * Отримати повну конфігурацію теми
+     * ✅ Отримати конфіг з inheritance (merge з батьківськими темами)
+     */
+    public function getConfigurationWithInheritance(int $themeId): array
+    {
+        $cacheKey = 'inherited_' . $themeId;
+
+        if (isset($this->configCache[$cacheKey])) {
+            return $this->configCache[$cacheKey];
+        }
+
+        $hierarchy = $this->themeResolver->getThemeHierarchy($themeId);
+
+        // Починаємо з порожнього конфігу
+        $mergedConfig = [
+            'version' => '1.0',
+            'sections' => [],
+            'presets' => [],
+            'metadata' => []
+        ];
+
+        // Merge від найстарішої теми до найновішої
+        foreach (array_reverse($hierarchy) as $themeInfo) {
+            try {
+                $themeConfig = $this->getConfiguration($themeInfo['theme_id']);
+                $mergedConfig = $this->deepMerge($mergedConfig, $themeConfig);
+            } catch (\Exception $e) {
+                // Тема може не мати config файл - skip
+                continue;
+            }
+        }
+
+        $this->configCache[$cacheKey] = $mergedConfig;
+
+        return $mergedConfig;
+    }
+
+    /**
+     * ✅ Deep merge двох конфігів
+     */
+    private function deepMerge(array $base, array $override): array
+    {
+        foreach ($override as $key => $value) {
+            if (is_array($value) && isset($base[$key]) && is_array($base[$key])) {
+                // Для sections робимо спеціальний merge по 'id'
+                if ($key === 'sections') {
+                    $base[$key] = $this->mergeSections($base[$key], $value);
+                } else {
+                    $base[$key] = $this->deepMerge($base[$key], $value);
+                }
+            } else {
+                $base[$key] = $value;
+            }
+        }
+
+        return $base;
+    }
+
+    /**
+     * ✅ Merge sections по їх ID
+     */
+    private function mergeSections(array $baseSections, array $overrideSections): array
+    {
+        $merged = $baseSections;
+
+        foreach ($overrideSections as $overrideSection) {
+            $found = false;
+
+            foreach ($merged as &$baseSection) {
+                if ($baseSection['id'] === $overrideSection['id']) {
+                    // Merge settings всередині секції
+                    if (isset($overrideSection['settings'])) {
+                        $baseSection['settings'] = $this->mergeSettings(
+                            $baseSection['settings'] ?? [],
+                            $overrideSection['settings']
+                        );
+                    }
+
+                    // Override інші поля
+                    foreach (['name', 'description', 'icon', 'order'] as $field) {
+                        if (isset($overrideSection[$field])) {
+                            $baseSection[$field] = $overrideSection[$field];
+                        }
+                    }
+
+                    $found = true;
+                    break;
+                }
+            }
+
+            // Якщо секція нова - додати
+            if (!$found) {
+                $merged[] = $overrideSection;
+            }
+        }
+
+        return $merged;
+    }
+
+    /**
+     * ✅ Merge settings по їх ID
+     */
+    private function mergeSettings(array $baseSettings, array $overrideSettings): array
+    {
+        $merged = $baseSettings;
+
+        foreach ($overrideSettings as $overrideSetting) {
+            $found = false;
+
+            foreach ($merged as &$baseSetting) {
+                if ($baseSetting['id'] === $overrideSetting['id']) {
+                    // Override всі поля setting
+                    $baseSetting = array_merge($baseSetting, $overrideSetting);
+                    $found = true;
+                    break;
+                }
+            }
+
+            // Якщо setting нове - додати
+            if (!$found) {
+                $merged[] = $overrideSetting;
+            }
+        }
+
+        return $merged;
+    }
+
+    /**
+     * Отримати повну конфігурацію теми (без inheritance)
      */
     public function getConfiguration(int $themeId): array
     {
@@ -36,8 +161,8 @@ class ConfigProvider
         $theme = $this->getTheme($themeId);
         $config = $this->loadConfigFile($theme);
 
-        // ✅ Додати metadata якщо її немає
-        if (!isset($config['metadata'])) {
+        // Додати metadata якщо її немає
+        if (! isset($config['metadata'])) {
             $config['metadata'] = $this->buildMetadata($theme);
         }
 
@@ -47,7 +172,7 @@ class ConfigProvider
     }
 
     /**
-     * ✅ Побудувати metadata для теми
+     * Побудувати metadata для теми
      */
     private function buildMetadata($theme): array
     {
@@ -56,7 +181,7 @@ class ConfigProvider
             'themeName' => $theme->getThemeTitle(),
             'themeCode' => $theme->getCode(),
             'themePath' => $theme->getThemePath(),
-            'parentId' => $theme->getParentId() ? (int)$theme->getParentId() : null,
+            'parentId' => $theme->getParentId() ?  (int)$theme->getParentId() : null,
         ];
     }
 
@@ -70,7 +195,7 @@ class ConfigProvider
     }
 
     /**
-     * ✅ Отримати metadata
+     * Отримати metadata
      */
     public function getMetadata(int $themeId): array
     {
@@ -81,7 +206,7 @@ class ConfigProvider
     /**
      * Отримати конкретну секцію
      */
-    public function getSection(int $themeId, string $sectionCode): ?  array
+    public function getSection(int $themeId, string $sectionCode): ? array
     {
         $sections = $this->getSections($themeId);
 
@@ -97,7 +222,7 @@ class ConfigProvider
     /**
      * Отримати конкретне поле
      */
-    public function getField(int $themeId, string $sectionCode, string $fieldCode): ? array
+    public function getField(int $themeId, string $sectionCode, string $fieldCode): ?array
     {
         $section = $this->getSection($themeId, $sectionCode);
 
@@ -145,7 +270,7 @@ class ConfigProvider
     public function getFieldDefault(int $themeId, string $sectionCode, string $fieldCode)
     {
         $field = $this->getField($themeId, $sectionCode, $fieldCode);
-        return $field['default'] ??  null;
+        return $field['default'] ?? null;
     }
 
     /**
@@ -159,7 +284,7 @@ class ConfigProvider
         foreach ($sections as $section) {
             foreach ($section['settings'] as $setting) {
                 if (isset($setting['default'])) {
-                    $key = $section['id'] . '.' .  $setting['id'];
+                    $key = $section['id'] . '.' . $setting['id'];
                     $defaults[$key] = $setting['default'];
                 }
             }
@@ -216,20 +341,19 @@ class ConfigProvider
      */
     private function findConfigFile($theme): ?string
     {
-        $themePath = $theme->getFullPath(); // e.g.   "frontend/Vendor/theme"
+        $themePath = $theme->getFullPath();
 
         // Варіант 1: app/design/frontend/Vendor/theme/etc/theme_editor/settings.json
-        $appDesignPath = BP .  '/app/design/' .  $themePath .  '/' .  self::CONFIG_FILE;
+        $appDesignPath = BP .  '/app/design/' . $themePath . '/' . self::CONFIG_FILE;
         if (file_exists($appDesignPath)) {
             return $appDesignPath;
         }
 
         // Варіант 2: Через ComponentRegistrar (для composer тем)
-        // Theme code format: "frontend/Vendor/theme" -> "Vendor/theme"
         $parts = explode('/', $themePath);
         if (count($parts) >= 2) {
-            $area = $parts[0]; // frontend/adminhtml
-            $themeCode = implode('/', array_slice($parts, 1)); // Vendor/theme
+            $area = $parts[0];
+            $themeCode = implode('/', array_slice($parts, 1));
 
             $themePath = $this->componentRegistrar->getPath(
                 ComponentRegistrar::THEME,
@@ -256,7 +380,7 @@ class ConfigProvider
             throw new LocalizedException(__('Missing "version" in theme configuration'));
         }
 
-        if (!isset($config['sections']) || !is_array($config['sections'])) {
+        if (! isset($config['sections']) || ! is_array($config['sections'])) {
             throw new LocalizedException(__('Missing or invalid "sections" in theme configuration'));
         }
     }
@@ -268,6 +392,7 @@ class ConfigProvider
     {
         if ($themeId) {
             unset($this->configCache[$themeId]);
+            unset($this->configCache['inherited_' . $themeId]);
         } else {
             $this->configCache = [];
         }
