@@ -118,11 +118,11 @@ type Mutation {
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
         status: BreezeThemeEditorStatusCode
-    ): ExportBreezeThemeEditorSettingsOutput @doc(description: "Export settings as JSON") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ExportSettings")
+    ): ExportBreezeThemeEditorSettingsOutput @doc(description: "Export settings as JSON") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\ExportSettings")
 
     importBreezeThemeEditorSettings(
         input: ImportBreezeThemeEditorSettingsInput!
-    ): ImportBreezeThemeEditorSettingsOutput @doc(description: "Import settings from JSON") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\ImportSettings")
+    ): ImportBreezeThemeEditorSettingsOutput @doc(description: "Import settings from JSON") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\ImportSettings")
 }
 
 type BreezeThemeEditorConfig {
