@@ -33,7 +33,7 @@ class Config implements ResolverInterface
         array $value = null,
         array $args = null
     ) {
-        // 1. Отримати userId (автоматично валідує токен)
+        // 1. Отримати userId
         $userId = $this->userResolver->getCurrentUserId();
 
         // 2. Отримати store ID
@@ -64,15 +64,12 @@ class Config implements ResolverInterface
             $themeId
         );
 
-        // Metadata
-        $metadata = [
-            'themeName' => $config['name'] ?? null,
-            'themeVersion' => $config['version'] ??   null,
-            'themeId' => $themeId,
-            'lastPublished' => null,
-            'hasUnpublishedChanges' => false,
-            'draftChangesCount' => 0
-        ];
+        // ✅ Metadata з ConfigProvider
+        $metadata = $this->configProvider->getMetadata($themeId);
+        $metadata['themeVersion'] = $config['version'] ?? null;
+        $metadata['lastPublished'] = null; // TODO
+        $metadata['hasUnpublishedChanges'] = false;
+        $metadata['draftChangesCount'] = 0;
 
         // Якщо draft - перевірити зміни
         if ($statusCode === 'DRAFT') {

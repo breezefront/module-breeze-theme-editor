@@ -136,8 +136,11 @@ type BreezeThemeEditorMetadata {
     themeName: String
     themeVersion: String
     themeId: Int!
+    themeCode: String
+    themePath: String
+    parentId: Int
     lastPublished: String @doc(description: "Last publication date")
-    hasUnpublishedChanges: Boolean!  @doc(description: "Has draft changes")
+    hasUnpublishedChanges: Boolean!
     draftChangesCount: Int @doc(description: "Number of changed settings in draft")
 }
 

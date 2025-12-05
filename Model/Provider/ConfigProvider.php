@@ -36,9 +36,28 @@ class ConfigProvider
         $theme = $this->getTheme($themeId);
         $config = $this->loadConfigFile($theme);
 
+        // ✅ Додати metadata якщо її немає
+        if (!isset($config['metadata'])) {
+            $config['metadata'] = $this->buildMetadata($theme);
+        }
+
         $this->configCache[$themeId] = $config;
 
         return $config;
+    }
+
+    /**
+     * ✅ Побудувати metadata для теми
+     */
+    private function buildMetadata($theme): array
+    {
+        return [
+            'themeId' => (int)$theme->getId(),
+            'themeName' => $theme->getThemeTitle(),
+            'themeCode' => $theme->getCode(),
+            'themePath' => $theme->getThemePath(),
+            'parentId' => $theme->getParentId() ? (int)$theme->getParentId() : null,
+        ];
     }
 
     /**
@@ -51,9 +70,18 @@ class ConfigProvider
     }
 
     /**
+     * ✅ Отримати metadata
+     */
+    public function getMetadata(int $themeId): array
+    {
+        $config = $this->getConfiguration($themeId);
+        return $config['metadata'] ?? [];
+    }
+
+    /**
      * Отримати конкретну секцію
      */
-    public function getSection(int $themeId, string $sectionCode): ? array
+    public function getSection(int $themeId, string $sectionCode): ?  array
     {
         $sections = $this->getSections($themeId);
 
@@ -69,7 +97,7 @@ class ConfigProvider
     /**
      * Отримати конкретне поле
      */
-    public function getField(int $themeId, string $sectionCode, string $fieldCode): ?array
+    public function getField(int $themeId, string $sectionCode, string $fieldCode): ? array
     {
         $section = $this->getSection($themeId, $sectionCode);
 
@@ -117,7 +145,7 @@ class ConfigProvider
     public function getFieldDefault(int $themeId, string $sectionCode, string $fieldCode)
     {
         $field = $this->getField($themeId, $sectionCode, $fieldCode);
-        return $field['default'] ?? null;
+        return $field['default'] ??  null;
     }
 
     /**
@@ -131,7 +159,7 @@ class ConfigProvider
         foreach ($sections as $section) {
             foreach ($section['settings'] as $setting) {
                 if (isset($setting['default'])) {
-                    $key = $section['id'] . '.' . $setting['id'];
+                    $key = $section['id'] . '.' .  $setting['id'];
                     $defaults[$key] = $setting['default'];
                 }
             }
@@ -188,10 +216,10 @@ class ConfigProvider
      */
     private function findConfigFile($theme): ?string
     {
-        $themePath = $theme->getFullPath(); // e.g.  "frontend/Vendor/theme"
+        $themePath = $theme->getFullPath(); // e.g.   "frontend/Vendor/theme"
 
         // Варіант 1: app/design/frontend/Vendor/theme/etc/theme_editor/settings.json
-        $appDesignPath = BP .  '/app/design/' . $themePath .  '/' . self::CONFIG_FILE;
+        $appDesignPath = BP .  '/app/design/' .  $themePath .  '/' .  self::CONFIG_FILE;
         if (file_exists($appDesignPath)) {
             return $appDesignPath;
         }
