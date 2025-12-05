@@ -77,8 +77,8 @@ class PresetService
             $themeId,
             $storeId,
             $statusId,
-            $userIdForSave,
-            $values
+            $values,
+            $userIdForSave
         );
 
         return [

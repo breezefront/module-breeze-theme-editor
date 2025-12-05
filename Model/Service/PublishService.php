@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Service;
 
 use Magento\Framework\Exception\LocalizedException;
-use Swissup\BreezeThemeEditor\Model\ValueRepository;
+use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
@@ -15,7 +15,7 @@ use Swissup\BreezeThemeEditor\Model\ChangelogFactory;
 class PublishService
 {
     public function __construct(
-        private ValueRepository $valueRepository,
+        private ValueRepositoryInterface $valueRepository,
         private StatusProvider $statusProvider,
         private CompareProvider $compareProvider,
         private PublicationRepositoryInterface $publicationRepository,
@@ -32,12 +32,12 @@ class PublishService
         int $storeId,
         int $userId,
         string $title,
-        ?  string $description = null
+        ?string $description = null
     ): array {
         // Порівняти draft vs published
         $comparison = $this->compareProvider->compare($themeId, $storeId, $userId);
 
-        if (!   $comparison['hasChanges']) {
+        if (! $comparison['hasChanges']) {
             throw new LocalizedException(__('No changes to publish'));
         }
 
@@ -62,7 +62,7 @@ class PublishService
         // Зберегти changelog
         $this->saveChangelog($publication->getPublicationId(), $comparison['changes']);
 
-        // Скопіювати draft -> published (user_id = 0 для published)
+        // ✅ Скопіювати draft -> published (зберігаємо user_id того хто публікує)
         $formatted = [];
         foreach ($draftValues as $val) {
             $formatted[] = [
@@ -76,8 +76,8 @@ class PublishService
             $themeId,
             $storeId,
             $publishedStatusId,
-            0, // ✅ published завжди user_id = 0
-            $formatted
+            $formatted,
+            $userId // ✅ Зберігаємо user_id того хто робить publish
         );
 
         // Видалити draft
@@ -109,7 +109,7 @@ class PublishService
         int $publicationId,
         int $userId,
         string $title,
-        ?  string $description = null
+        ?string $description = null
     ): array {
         // Отримати стару публікацію
         $oldPublication = $this->publicationRepository->getById($publicationId);
@@ -150,8 +150,8 @@ class PublishService
                 $themeId,
                 $storeId,
                 $publishedStatusId,
-                0, // ✅ published завжди user_id = 0
-                $values
+                $values,
+                $userId // ✅ Зберігаємо user_id того хто робить rollback
             );
         }
 

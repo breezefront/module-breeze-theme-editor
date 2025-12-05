@@ -17,9 +17,9 @@ interface ValueInterface
     public const UPDATED_AT = 'updated_at';
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function getValueId(): int;
+    public function getValueId(): ?int;
 
     /**
      * @param int $valueId
@@ -61,15 +61,15 @@ interface ValueInterface
     public function setStatusId(int $statusId): self;
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function getUserId(): int;
+    public function getUserId(): ?int;
 
     /**
-     * @param int $userId
+     * @param int|null $userId
      * @return $this
      */
-    public function setUserId(int $userId): self;
+    public function setUserId(?int $userId): self;
 
     /**
      * @return string
@@ -105,9 +105,9 @@ interface ValueInterface
     public function setValue(?string $value): self;
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getCreatedAt(): string;
+    public function getCreatedAt(): ?string;
 
     /**
      * @param string $createdAt
@@ -116,9 +116,9 @@ interface ValueInterface
     public function setCreatedAt(string $createdAt): self;
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getUpdatedAt(): string;
+    public function getUpdatedAt(): ?string;
 
     /**
      * @param string $updatedAt
