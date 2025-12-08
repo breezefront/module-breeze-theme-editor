@@ -84,17 +84,6 @@ class ChangelogRepository implements ChangelogRepositoryInterface
         return $changelog;
     }
 
-    /**
-     * @deprecated Use getList() with SearchCriteria instead
-     */
-    public function getByPublicationId(int $publicationId): array
-    {
-        $collection = $this->collectionFactory->create();
-        $collection->addPublicationFilter($publicationId);
-
-        return $collection->getItems();
-    }
-
     public function getList(SearchCriteriaInterface $searchCriteria): ChangelogSearchResultsInterface
     {
         $collection = $this->collectionFactory->create();
@@ -108,6 +97,11 @@ class ChangelogRepository implements ChangelogRepositoryInterface
         return $searchResults;
     }
 
+    /**
+     * @param ChangelogInterface $changelog
+     * @return bool
+     * @throws CouldNotDeleteException
+     */
     public function delete(ChangelogInterface $changelog): bool
     {
         try {
@@ -124,22 +118,11 @@ class ChangelogRepository implements ChangelogRepositoryInterface
     }
 
     /**
-     * @deprecated Use getList() + delete() instead
+     * @param int $changeId
+     * @return bool
+     * @throws CouldNotDeleteException
+     * @throws NoSuchEntityException
      */
-    public function deleteByPublicationId(int $publicationId): int
-    {
-        $collection = $this->collectionFactory->create();
-        $collection->addPublicationFilter($publicationId);
-
-        $count = 0;
-        foreach ($collection as $changelog) {
-            $this->delete($changelog);
-            $count++;
-        }
-
-        return $count;
-    }
-
     public function deleteById(int $changeId): bool
     {
         return $this->delete($this->getById($changeId));

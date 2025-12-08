@@ -10,13 +10,15 @@ use Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Magento\Framework\Api\SearchCriteriaBuilder;
 
 class Publication implements ResolverInterface
 {
     public function __construct(
         private PublicationRepositoryInterface $publicationRepository,
         private ChangelogRepositoryInterface $changelogRepository,
-        private ConfigProvider $configProvider
+        private ConfigProvider $configProvider,
+        private SearchCriteriaBuilder $searchCriteriaBuilder
     ) {}
 
     public function resolve(
@@ -36,8 +38,12 @@ class Publication implements ResolverInterface
             );
         }
 
-        // Отримати changelog
-        $changelog = $this->changelogRepository->getByPublicationId($publicationId);
+        // Отримати changelog через SearchCriteria
+        $criteria = $this->searchCriteriaBuilder
+            ->addFilter('publication_id', $publicationId)
+            ->create();
+        $searchResults = $this->changelogRepository->getList($criteria);
+        $changelog = $searchResults->getItems();
 
         // Отримати labels з config
         $themeId = $publication->getThemeId();
@@ -66,20 +72,20 @@ class Publication implements ResolverInterface
         }
 
         return [
-            'publicationId' => $publication->getPublicationId(),
-            'themeId' => $publication->getThemeId(),
-            'storeId' => $publication->getStoreId(),
-            'title' => $publication->getTitle(),
-            'description' => $publication->getDescription(),
-            'publishedAt' => $publication->getPublishedAt(),
-            'publishedBy' => $publication->getPublishedBy(),
+            'publicationId'   => $publication->getPublicationId(),
+            'themeId'         => $publication->getThemeId(),
+            'storeId'         => $publication->getStoreId(),
+            'title'           => $publication->getTitle(),
+            'description'     => $publication->getDescription(),
+            'publishedAt'     => $publication->getPublishedAt(),
+            'publishedBy'     => $publication->getPublishedBy(),
             'publishedByName' => null, // TODO
-            'publishedByEmail' => null, // TODO
-            'isRollback' => (bool)$publication->getIsRollback(),
-            'rollbackFrom' => $publication->getRollbackFrom(),
-            'changesCount' => $publication->getChangesCount(),
-            'changes' => $changes,
-            'canRollback' => true
+            'publishedByEmail'=> null, // TODO
+            'isRollback'      => (bool)$publication->getIsRollback(),
+            'rollbackFrom'    => $publication->getRollbackFrom(),
+            'changesCount'    => $publication->getChangesCount(),
+            'changes'         => $changes,
+            'canRollback'     => true
         ];
     }
 

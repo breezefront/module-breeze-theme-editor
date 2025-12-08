@@ -11,6 +11,7 @@ use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\PublicationFactory;
 use Swissup\BreezeThemeEditor\Model\ChangelogFactory;
+use Magento\Framework\Api\SearchCriteriaBuilder;
 
 class PublishService
 {
@@ -21,7 +22,8 @@ class PublishService
         private PublicationRepositoryInterface $publicationRepository,
         private ChangelogRepositoryInterface $changelogRepository,
         private PublicationFactory $publicationFactory,
-        private ChangelogFactory $changelogFactory
+        private ChangelogFactory $changelogFactory,
+        private SearchCriteriaBuilder $searchCriteriaBuilder
     ) {}
 
     public function publish(
@@ -40,7 +42,7 @@ class PublishService
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
-        // ✅ Отримати всі draft значення (legacy-масиви)
+        // Отримати всі draft значення (legacy-масиви)
         $draftValues = $this->valueRepository->getValuesByTheme($themeId, $storeId, $draftStatusId, $userId);
 
         // Створити publication запис
@@ -58,7 +60,7 @@ class PublishService
         // Зберегти changelog
         $this->saveChangelog($publication->getPublicationId(), $comparison['changes']);
 
-        // ✅ Сучасний підхід: draftValues → ValueInterface моделі → saveMultiple
+        // Сучасний підхід: draftValues → ValueInterface моделі → saveMultiple
         $models = [];
         foreach ($draftValues as $val) {
             $model = $this->valueRepository->create();
@@ -108,7 +110,12 @@ class PublishService
         $themeId = $oldPublication->getThemeId();
         $storeId = $oldPublication->getStoreId();
 
-        $oldChanges = $this->changelogRepository->getByPublicationId($publicationId);
+        // Новий підхід: отримати changelog через SearchCriteria + getList()
+        $criteria = $this->searchCriteriaBuilder
+            ->addFilter('publication_id', $publicationId)
+            ->create();
+        $searchResults = $this->changelogRepository->getList($criteria);
+        $oldChanges = $searchResults->getItems();
 
         // Створити нову publication (rollback)
         $publication = $this->publicationFactory->create();
@@ -156,9 +163,6 @@ class PublishService
         ];
     }
 
-    /**
-     * Зберегти changelog
-     */
     private function saveChangelog(int $publicationId, array $changes): void
     {
         foreach ($changes as $change) {
@@ -168,14 +172,10 @@ class PublishService
             $changelog->setSettingCode($change['fieldCode']);
             $changelog->setOldValue($change['publishedValue']);
             $changelog->setNewValue($change['draftValue']);
-
             $this->changelogRepository->save($changelog);
         }
     }
 
-    /**
-     * Зберегти changelog з старого (для rollback)
-     */
     private function saveChangelogFromOld(int $newPublicationId, array $oldChanges): void
     {
         foreach ($oldChanges as $oldChange) {
@@ -185,7 +185,6 @@ class PublishService
             $changelog->setSettingCode($oldChange->getSettingCode());
             $changelog->setOldValue($oldChange->getOldValue());
             $changelog->setNewValue($oldChange->getNewValue());
-
             $this->changelogRepository->save($changelog);
         }
     }

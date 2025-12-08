@@ -56,14 +56,6 @@ interface ChangelogRepositoryInterface
     public function getById(int $changeId): ChangelogInterface;
 
     /**
-     * Get changelog items by publication ID
-     * @deprecated Use getList() with SearchCriteria instead
-     * @param int $publicationId
-     * @return ChangelogInterface[]
-     */
-    public function getByPublicationId(int $publicationId): array;
-
-    /**
      * Retrieve changelogs matching specified criteria.
      *
      * @param SearchCriteriaInterface $searchCriteria
@@ -79,14 +71,6 @@ interface ChangelogRepositoryInterface
      * @throws CouldNotDeleteException
      */
     public function delete(ChangelogInterface $changelog): bool;
-
-    /**
-     * Delete all changelog items for publication
-     * @deprecated Use getList() + delete() instead
-     * @param int $publicationId
-     * @return int Number of deleted items
-     */
-    public function deleteByPublicationId(int $publicationId): int;
 
     /**
      * Delete changelog item by ID
