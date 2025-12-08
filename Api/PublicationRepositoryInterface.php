@@ -43,12 +43,6 @@ interface PublicationRepositoryInterface
     public function getList(SearchCriteriaInterface $searchCriteria): PublicationSearchResultsInterface;
 
     /**
-     * Get latest publication for theme/store
-     * @deprecated Use getList() with sort & page size 1 instead
-     */
-    public function getLatest(int $themeId, int $storeId): ?PublicationInterface;
-
-    /**
      * Delete publication
      */
     public function delete(PublicationInterface $publication): bool;
@@ -57,16 +51,4 @@ interface PublicationRepositoryInterface
      * Delete publication by ID
      */
     public function deleteById(int $publicationId): bool;
-
-    /**
-     * Legacy: get publications with custom filters/pagination
-     * @deprecated Use getList() with SearchCriteria instead
-     */
-    public function getLegacyList(
-        int $themeId,
-        int $storeId,
-        int $pageSize = 20,
-        int $currentPage = 1,
-        ?string $search = null
-    ): array;
 }

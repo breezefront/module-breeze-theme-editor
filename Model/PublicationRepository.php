@@ -97,21 +97,6 @@ class PublicationRepository implements PublicationRepositoryInterface
         return $searchResults;
     }
 
-    /**
-     * @deprecated Use getList() with sort & page size 1 instead
-     */
-    public function getLatest(int $themeId, int $storeId): ?PublicationInterface
-    {
-        $collection = $this->collectionFactory->create();
-        $collection->addThemeStoreFilter($themeId, $storeId);
-        $collection->addPublishedAtOrder('DESC');
-        $collection->setPageSize(1);
-
-        $item = $collection->getFirstItem();
-
-        return $item->getPublicationId() ? $item : null;
-    }
-
     public function delete(PublicationInterface $publication): bool
     {
         try {
@@ -130,32 +115,5 @@ class PublicationRepository implements PublicationRepositoryInterface
     public function deleteById(int $publicationId): bool
     {
         return $this->delete($this->getById($publicationId));
-    }
-
-    /**
-     * @deprecated Use getList() with SearchCriteria instead
-     */
-    public function getLegacyList(
-        int $themeId,
-        int $storeId,
-        int $pageSize = 20,
-        int $currentPage = 1,
-        ?string $search = null
-    ): array {
-        $collection = $this->collectionFactory->create();
-        $collection->addThemeStoreFilter($themeId, $storeId);
-        $collection->addPublishedAtOrder('DESC');
-
-        if ($search) {
-            $collection->addTitleSearch($search);
-        }
-
-        $collection->setPageSize($pageSize);
-        $collection->setCurPage($currentPage);
-
-        return [
-            'items' => $collection->getItems(),
-            'total_count' => $collection->getSize()
-        ];
     }
 }
