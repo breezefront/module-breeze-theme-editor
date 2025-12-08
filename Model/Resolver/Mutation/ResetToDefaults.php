@@ -57,8 +57,8 @@ class ResetToDefaults extends AbstractSaveMutation
         // Зберегти default-значення сучасним методом
         $resetCount = $this->valueRepository->saveMultiple($valueModels);
 
-        // Отримати збережені значення як legacy-масив, якщо треба для value history в UI
-        $values = $this->valueRepository->getValuesByTheme(
+        // Отримати збережені значення через ValueService
+        $values = $this->valueService->getValuesByTheme(
             $params['themeId'],
             $params['storeId'],
             $params['statusId'],

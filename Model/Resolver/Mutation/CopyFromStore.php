@@ -29,7 +29,7 @@ class CopyFromStore extends AbstractSaveMutation
             );
         }
 
-        // ✅ Використати базовий метод для target store
+        // Використати базовий метод для target store
         $params = $this->prepareBaseParams([
             'storeId' => $toStoreId,
             'themeId' => $input['themeId'] ?? null,
@@ -39,10 +39,10 @@ class CopyFromStore extends AbstractSaveMutation
         // Визначити themeId для source store
         $fromThemeId = $this->themeResolver->getThemeIdByStoreId($fromStoreId);
 
-        // Копіювати published values з source store
+        // Копіювати published values з source store через ValueService
         $fromStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
-        $copiedCount = $this->valueRepository->copyValues(
+        $copiedCount = $this->valueService->copyValues(
             $fromThemeId,
             $fromStoreId,
             $fromStatusId,
@@ -54,8 +54,8 @@ class CopyFromStore extends AbstractSaveMutation
             $sectionCodes
         );
 
-        // ✅ Отримати скопійовані values (без inheritance - тільки з цієї теми!)
-        $values = $this->valueRepository->getValuesByTheme(
+        // Отримати скопійовані values через ValueService
+        $values = $this->valueService->getValuesByTheme(
             $params['themeId'],
             $toStoreId,
             $params['statusId'],

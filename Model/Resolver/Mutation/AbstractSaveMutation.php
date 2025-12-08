@@ -4,7 +4,8 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Query\ResolverInterface;
-use Swissup\BreezeThemeEditor\Model\ValueRepository;
+use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
@@ -13,7 +14,8 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 abstract class AbstractSaveMutation implements ResolverInterface
 {
     public function __construct(
-        protected ValueRepository $valueRepository,
+        protected ValueRepositoryInterface $valueRepository,
+        protected ValueService $valueService,
         protected StatusProvider $statusProvider,
         protected UserResolver $userResolver,
         protected ThemeResolver $themeResolver,

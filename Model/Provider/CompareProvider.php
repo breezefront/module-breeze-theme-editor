@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Provider;
 
-use Swissup\BreezeThemeEditor\Model\ValueRepository;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 
 class CompareProvider
 {
     public function __construct(
-        private ValueRepository $valueRepository,
+        private ValueService $valueService,
         private ConfigProvider $configProvider,
         private StatusProvider $statusProvider
     ) {}
@@ -23,8 +23,8 @@ class CompareProvider
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
-        // Отримати draft (без inheritance - тільки з цієї теми!)
-        $draft = $this->valueRepository->getValuesByTheme($themeId, $storeId, $draftStatusId, $userId);
+        // Отримати draft через ValueService
+        $draft = $this->valueService->getValuesByTheme($themeId, $storeId, $draftStatusId, $userId);
 
         // Якщо draft порожній - немає змін
         if (empty($draft)) {
@@ -35,13 +35,13 @@ class CompareProvider
             ];
         }
 
-        // Отримати published (без inheritance - тільки з цієї теми!)
-        $published = $this->valueRepository->getValuesByTheme($themeId, $storeId, $publishedStatusId, null);
+        // Отримати published через ValueService
+        $published = $this->valueService->getValuesByTheme($themeId, $storeId, $publishedStatusId, null);
 
         // Створити map для швидкого пошуку
         $publishedMap = [];
         foreach ($published as $val) {
-            $key = $val['section_code'] .  '.' . $val['setting_code'];
+            $key = $val['section_code'] .   '.' . $val['setting_code'];
             $publishedMap[$key] = $val['value'];
         }
 

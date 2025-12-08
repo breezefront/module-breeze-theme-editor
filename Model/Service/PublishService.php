@@ -17,6 +17,7 @@ class PublishService
 {
     public function __construct(
         private ValueRepositoryInterface $valueRepository,
+        private ValueService $valueService,
         private StatusProvider $statusProvider,
         private CompareProvider $compareProvider,
         private PublicationRepositoryInterface $publicationRepository,
@@ -42,8 +43,8 @@ class PublishService
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
-        // Отримати всі draft значення (legacy-масиви)
-        $draftValues = $this->valueRepository->getValuesByTheme($themeId, $storeId, $draftStatusId, $userId);
+        // Отримати всі draft значення через ValueService
+        $draftValues = $this->valueService->getValuesByTheme($themeId, $storeId, $draftStatusId, $userId);
 
         // Створити publication запис
         $publication = $this->publicationFactory->create();
@@ -77,8 +78,8 @@ class PublishService
             $this->valueRepository->saveMultiple($models);
         }
 
-        // Видалити draft
-        $this->valueRepository->deleteValues(
+        // Видалити draft через ValueService
+        $this->valueService->deleteValues(
             $themeId,
             $storeId,
             $draftStatusId,

@@ -5,14 +5,15 @@ namespace Swissup\BreezeThemeEditor\Model\Service;
 
 use Magento\Framework\Exception\LocalizedException;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
-use Swissup\BreezeThemeEditor\Model\ValueRepository;
+use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 
 class PresetService
 {
     public function __construct(
         private ConfigProvider $configProvider,
-        private ValueRepository $valueRepository,
+        private ValueRepositoryInterface $valueRepository,
+        private ValueService $valueService,
         private StatusProvider $statusProvider
     ) {}
 
@@ -30,7 +31,7 @@ class PresetService
         // Отримати preset з конфігурації
         $preset = $this->configProvider->getPreset($themeId, $presetId);
 
-        if (!$preset) {
+        if (! $preset) {
             throw new LocalizedException(__('Preset "%1" not found', $presetId));
         }
 
@@ -67,9 +68,9 @@ class PresetService
             throw new LocalizedException(__('Preset has no settings'));
         }
 
-        // Якщо не overwrite - видалити існуючі
+        // Якщо не overwrite - видалити існуючі через ValueService
         if (!$overwriteExisting) {
-            $this->valueRepository->deleteValues(
+            $this->valueService->deleteValues(
                 $themeId,
                 $storeId,
                 $statusId,

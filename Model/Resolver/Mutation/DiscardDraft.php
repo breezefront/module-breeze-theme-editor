@@ -6,7 +6,7 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Swissup\BreezeThemeEditor\Model\ValueRepository;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
@@ -14,7 +14,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 class DiscardDraft implements ResolverInterface
 {
     public function __construct(
-        private ValueRepository $valueRepository,
+        private ValueService $valueService,
         private StatusProvider $statusProvider,
         private UserResolver $userResolver,
         private ThemeResolver $themeResolver
@@ -37,25 +37,14 @@ class DiscardDraft implements ResolverInterface
 
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
 
-        // Видалити draft значення
-        if ($sectionCodes) {
-            // Видалити тільки певні секції
-            $discardedCount = $this->valueRepository->deleteValuesBySections(
-                $themeId,
-                $storeId,
-                $draftStatusId,
-                $userId,
-                $sectionCodes
-            );
-        } else {
-            // Видалити всі draft
-            $discardedCount = $this->valueRepository->deleteValues(
-                $themeId,
-                $storeId,
-                $draftStatusId,
-                $userId
-            );
-        }
+        // Видалити draft значення через ValueService
+        $discardedCount = $this->valueService->deleteValues(
+            $themeId,
+            $storeId,
+            $draftStatusId,
+            $userId,
+            $sectionCodes
+        );
 
         return [
             'success' => true,

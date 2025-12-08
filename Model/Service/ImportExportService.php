@@ -5,14 +5,16 @@ namespace Swissup\BreezeThemeEditor\Model\Service;
 
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Serialize\SerializerInterface;
-use Swissup\BreezeThemeEditor\Model\ValueRepository;
+use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValidationService;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 
 class ImportExportService
 {
     public function __construct(
-        private ValueRepository $valueRepository,
+        private ValueRepositoryInterface $valueRepository,
+        private ValueService $valueService,
         private StatusProvider $statusProvider,
         private SerializerInterface $serializer,
         private ValidationService $validationProvider
@@ -25,15 +27,15 @@ class ImportExportService
         int $themeId,
         int $storeId,
         string $statusCode,
-        ? int $userId = null
+        ?  int $userId = null
     ): array {
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
-        // ✅ Використати getValuesByTheme (без inheritance - тільки з цієї теми!)
+        // Використати ValueService для отримання значень
         if ($statusCode === 'PUBLISHED') {
-            $values = $this->valueRepository->getValuesByTheme($themeId, $storeId, $statusId, null);
+            $values = $this->valueService->getValuesByTheme($themeId, $storeId, $statusId, null);
         } else {
-            $values = $this->valueRepository->getValuesByTheme($themeId, $storeId, $statusId, $userId);
+            $values = $this->valueService->getValuesByTheme($themeId, $storeId, $statusId, $userId);
         }
 
         // Форматувати для експорту
@@ -129,7 +131,7 @@ class ImportExportService
         if (!empty($models) && empty($errors)) {
             // Видалити існуючі якщо потрібно
             if (!$overwriteExisting) {
-                $this->valueRepository->deleteValues(
+                $this->valueService->deleteValues(
                     $themeId,
                     $storeId,
                     $statusId,

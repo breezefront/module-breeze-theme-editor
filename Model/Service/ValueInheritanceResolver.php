@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Service;
 
-use Swissup\BreezeThemeEditor\Model\ValueRepository;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 
 class ValueInheritanceResolver
 {
     public function __construct(
-        private ValueRepository $valueRepository,
+        private ValueService $valueService,
         private ThemeResolver $themeResolver,
         private ConfigProvider $configProvider
     ) {}
@@ -22,14 +22,14 @@ class ValueInheritanceResolver
         int $themeId,
         int $storeId,
         int $statusId,
-        ?    int $userId = null
+        ? int $userId = null
     ): array {
         $hierarchy = $this->themeResolver->getThemeHierarchy($themeId);
         $mergedValues = [];
 
         // Merge values від прабабусі до дитини
         foreach (array_reverse($hierarchy) as $themeInfo) {
-            $values = $this->valueRepository->getValuesByTheme(
+            $values = $this->valueService->getValuesByTheme(
                 $themeInfo['theme_id'],
                 $storeId,
                 $statusId,
@@ -54,13 +54,13 @@ class ValueInheritanceResolver
         int $statusId,
         string $sectionCode,
         string $fieldCode,
-        ?   int $userId = null
+        ? int $userId = null
     ): array {
         $hierarchy = $this->themeResolver->getThemeHierarchy($themeId);
 
         // Шукаємо value в кожній темі (від child до parent)
         foreach ($hierarchy as $index => $themeInfo) {
-            $value = $this->valueRepository->getSingleValue(
+            $value = $this->valueService->getSingleValue(
                 $themeInfo['theme_id'],
                 $storeId,
                 $statusId,
@@ -99,7 +99,7 @@ class ValueInheritanceResolver
         int $statusId,
         string $sectionCode,
         string $fieldCode,
-        ?  int $userId = null
+        ?int $userId = null
     ): bool {
         $result = $this->resolveSingleValue(
             $themeId,
@@ -122,8 +122,8 @@ class ValueInheritanceResolver
         int $statusId,
         string $sectionCode,
         string $fieldCode,
-        ?  int $userId = null
-    ): ?  array {
+        ?int $userId = null
+    ): ?array {
         $result = $this->resolveSingleValue(
             $themeId,
             $storeId,

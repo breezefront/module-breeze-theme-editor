@@ -12,7 +12,8 @@ use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 class ApplyPreset extends AbstractSaveMutation
 {
     public function __construct(
-        protected \Swissup\BreezeThemeEditor\Model\ValueRepository $valueRepository,
+        protected \Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface $valueRepository,
+        protected \Swissup\BreezeThemeEditor\Model\Service\ValueService $valueService,
         protected \Swissup\BreezeThemeEditor\Model\Provider\StatusProvider $statusProvider,
         protected \Swissup\BreezeThemeEditor\Model\Utility\UserResolver $userResolver,
         protected \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver,
@@ -21,6 +22,7 @@ class ApplyPreset extends AbstractSaveMutation
     ) {
         parent::__construct(
             $valueRepository,
+            $valueService,
             $statusProvider,
             $userResolver,
             $themeResolver,
@@ -56,11 +58,11 @@ class ApplyPreset extends AbstractSaveMutation
 
         // Якщо не overwrite - застосовуємо лише нові поля
         if (!$overwriteExisting) {
-            $existing = $this->valueRepository->getValuesByTheme(
+            $existing = $this->valueService->getValuesByTheme(
                 $params['themeId'],
                 $params['storeId'],
                 $params['statusId'],
-                $params['statusCode'] === 'DRAFT' ? $params['userId'] : null
+                $params['statusCode'] === 'DRAFT' ?  $params['userId'] : null
             );
 
             $existingKeys = [];
@@ -69,7 +71,7 @@ class ApplyPreset extends AbstractSaveMutation
             }
 
             $presetValues = array_filter($presetValues, function($val) use ($existingKeys) {
-                $key = $val['sectionCode'] . '.' . $val['fieldCode'];
+                $key = $val['sectionCode'] .  '.' . $val['fieldCode'];
                 return !in_array($key, $existingKeys);
             });
         }
@@ -92,8 +94,8 @@ class ApplyPreset extends AbstractSaveMutation
         // Зберігаємо через saveMultiple()
         $appliedCount = $this->valueRepository->saveMultiple($valueModels);
 
-        // Отримати збережені значення (для UI)
-        $values = $this->valueRepository->getValuesByTheme(
+        // Отримати збережені значення через ValueService
+        $values = $this->valueService->getValuesByTheme(
             $params['themeId'],
             $params['storeId'],
             $params['statusId'],
