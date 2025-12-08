@@ -24,9 +24,6 @@ class PublishService
         private ChangelogFactory $changelogFactory
     ) {}
 
-    /**
-     * Опублікувати draft -> published
-     */
     public function publish(
         int $themeId,
         int $storeId,
@@ -34,7 +31,6 @@ class PublishService
         string $title,
         ?string $description = null
     ): array {
-        // Порівняти draft vs published
         $comparison = $this->compareProvider->compare($themeId, $storeId, $userId);
 
         if (! $comparison['hasChanges']) {
@@ -44,7 +40,7 @@ class PublishService
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
-        // ✅ Отримати всі draft значення (без inheritance - тільки з цієї теми!)
+        // ✅ Отримати всі draft значення (legacy-масиви)
         $draftValues = $this->valueRepository->getValuesByTheme($themeId, $storeId, $draftStatusId, $userId);
 
         // Створити publication запис
@@ -62,23 +58,22 @@ class PublishService
         // Зберегти changelog
         $this->saveChangelog($publication->getPublicationId(), $comparison['changes']);
 
-        // ✅ Скопіювати draft -> published (зберігаємо user_id того хто публікує)
-        $formatted = [];
+        // ✅ Сучасний підхід: draftValues → ValueInterface моделі → saveMultiple
+        $models = [];
         foreach ($draftValues as $val) {
-            $formatted[] = [
-                'sectionCode' => $val['section_code'],
-                'fieldCode' => $val['setting_code'],
-                'value' => $val['value']
-            ];
+            $model = $this->valueRepository->create();
+            $model->setThemeId($themeId);
+            $model->setStoreId($storeId);
+            $model->setStatusId($publishedStatusId);
+            $model->setSectionCode($val['section_code']);
+            $model->setSettingCode($val['setting_code']);
+            $model->setValue($val['value']);
+            $model->setUserId($userId);
+            $models[] = $model;
         }
-
-        $this->valueRepository->saveValues(
-            $themeId,
-            $storeId,
-            $publishedStatusId,
-            $formatted,
-            $userId // ✅ Зберігаємо user_id того хто робить publish
-        );
+        if ($models) {
+            $this->valueRepository->saveMultiple($models);
+        }
 
         // Видалити draft
         $this->valueRepository->deleteValues(
@@ -102,22 +97,17 @@ class PublishService
         ];
     }
 
-    /**
-     * Rollback до попередньої версії
-     */
     public function rollback(
         int $publicationId,
         int $userId,
         string $title,
         ?string $description = null
     ): array {
-        // Отримати стару публікацію
         $oldPublication = $this->publicationRepository->getById($publicationId);
 
         $themeId = $oldPublication->getThemeId();
         $storeId = $oldPublication->getStoreId();
 
-        // Отримати зміни зі старої публікації
         $oldChanges = $this->changelogRepository->getByPublicationId($publicationId);
 
         // Створити нову publication (rollback)
@@ -133,26 +123,23 @@ class PublishService
 
         $this->publicationRepository->save($publication);
 
-        // Застосувати старі значення
+        // Застосувати старі значення → ValueInterface[]
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
-        $values = [];
+        $models = [];
         foreach ($oldChanges as $change) {
-            $values[] = [
-                'sectionCode' => $change->getSectionCode(),
-                'fieldCode' => $change->getSettingCode(),
-                'value' => $change->getNewValue() // В rollback беремо newValue зі старої публікації
-            ];
+            $model = $this->valueRepository->create();
+            $model->setThemeId($themeId);
+            $model->setStoreId($storeId);
+            $model->setStatusId($publishedStatusId);
+            $model->setSectionCode($change->getSectionCode());
+            $model->setSettingCode($change->getSettingCode());
+            $model->setValue($change->getNewValue()); // Rollback = newValue зі старої публікації
+            $model->setUserId($userId);
+            $models[] = $model;
         }
-
-        if (!empty($values)) {
-            $this->valueRepository->saveValues(
-                $themeId,
-                $storeId,
-                $publishedStatusId,
-                $values,
-                $userId // ✅ Зберігаємо user_id того хто робить rollback
-            );
+        if ($models) {
+            $this->valueRepository->saveMultiple($models);
         }
 
         // Зберегти changelog для rollback

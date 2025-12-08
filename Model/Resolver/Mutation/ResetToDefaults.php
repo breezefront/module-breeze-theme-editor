@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 
 class ResetToDefaults extends AbstractSaveMutation
 {
@@ -17,45 +18,46 @@ class ResetToDefaults extends AbstractSaveMutation
     ) {
         $input = $args['input'];
 
-        // ✅ Використати базовий метод
+        // Використати базовий метод
         $params = $this->prepareBaseParams($input);
 
         $sectionCodes = $input['sectionCodes'] ?? null;
-        $fieldCodes = $input['fieldCodes'] ??   null;
+        $fieldCodes = $input['fieldCodes'] ?? null;
 
-        // Отримати defaults
+        // Отримати всі поточні значення default з config
         $defaults = $this->configProvider->getAllDefaults($params['themeId']);
 
-        // Фільтр по sections/fields
-        $resettingValues = [];
+        // Фільтр по секціям/полям та зібрати ValueInterface[]
+        $valueModels = [];
         foreach ($defaults as $key => $defaultValue) {
             [$sectionCode, $fieldCode] = explode('.', $key, 2);
 
-            // Перевірка фільтрів
             if ($sectionCodes && !in_array($sectionCode, $sectionCodes)) {
                 continue;
             }
-            if ($fieldCodes && !   in_array($fieldCode, $fieldCodes)) {
+            if ($fieldCodes && !in_array($fieldCode, $fieldCodes)) {
                 continue;
             }
 
-            $resettingValues[] = [
-                'sectionCode' => $sectionCode,
-                'fieldCode' => $fieldCode,
-                'value' => $defaultValue
-            ];
+            /** @var ValueInterface $valueModel */
+            $valueModel = $this->valueRepository->create();
+            $valueModel->setThemeId($params['themeId']);
+            $valueModel->setStoreId($params['storeId']);
+            $valueModel->setStatusId($params['statusId']);
+            $valueModel->setSectionCode($sectionCode);
+            $valueModel->setSettingCode($fieldCode);
+            $valueModel->setValue($defaultValue);
+
+            // Для published user_id = 0, для draft юзай поточного
+            $valueModel->setUserId($params['statusCode'] === 'DRAFT' ? $params['userId'] : 0);
+
+            $valueModels[] = $valueModel;
         }
 
-        // Зберегти default значення
-        $resetCount = $this->valueRepository->saveValues(
-            $params['themeId'],
-            $params['storeId'],
-            $params['statusId'],
-            $params['statusCode'] === 'DRAFT' ? $params['userId'] : 0,
-            $resettingValues
-        );
+        // Зберегти default-значення сучасним методом
+        $resetCount = $this->valueRepository->saveMultiple($valueModels);
 
-        // ✅ Отримати збережені значення (без inheritance - тільки з цієї теми!)
+        // Отримати збережені значення як legacy-масив, якщо треба для value history в UI
         $values = $this->valueRepository->getValuesByTheme(
             $params['themeId'],
             $params['storeId'],
@@ -69,7 +71,7 @@ class ResetToDefaults extends AbstractSaveMutation
                 'sectionCode' => $val['section_code'],
                 'fieldCode' => $val['setting_code'],
                 'value' => $val['value'],
-                'isModified' => false, // Reset to default = not modified
+                'isModified' => false, // Reset = not modified
                 'updatedAt' => $val['updated_at']
             ];
         }

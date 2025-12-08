@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
+use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
@@ -15,7 +16,8 @@ class Publications implements ResolverInterface
     public function __construct(
         private PublicationRepositoryInterface $publicationRepository,
         private UserResolver $userResolver,
-        private ThemeResolver $themeResolver
+        private ThemeResolver $themeResolver,
+        private SearchCriteriaBuilder $searchCriteriaBuilder // <-- додати DI!
     ) {}
 
     public function resolve(
@@ -26,8 +28,6 @@ class Publications implements ResolverInterface
         array $args = null
     ) {
         $storeId = (int)$args['storeId'];
-
-        // Auto-detect themeId
         $themeId = isset($args['themeId']) && $args['themeId']
             ? (int)$args['themeId']
             : $this->themeResolver->getThemeIdByStoreId($storeId);
@@ -36,17 +36,23 @@ class Publications implements ResolverInterface
         $currentPage = $args['currentPage'] ?? 1;
         $search = $args['search'] ?? null;
 
-        // Отримати список публікацій
-        $result = $this->publicationRepository->getList(
-            $themeId,
-            $storeId,
-            $pageSize,
-            $currentPage,
-            $search
-        );
+        // Формуємо SearchCriteria замість старого array getList!
+        $this->searchCriteriaBuilder->addFilter('theme_id', $themeId);
+        $this->searchCriteriaBuilder->addFilter('store_id', $storeId);
+
+        if ($search) {
+            $this->searchCriteriaBuilder->addFilter('title', "%$search%", 'like');
+        }
+
+        $this->searchCriteriaBuilder->setPageSize($pageSize);
+        $this->searchCriteriaBuilder->setCurrentPage($currentPage);
+
+        $criteria = $this->searchCriteriaBuilder->create();
+
+        $searchResults = $this->publicationRepository->getList($criteria);
 
         $items = [];
-        foreach ($result['items'] as $publication) {
+        foreach ($searchResults->getItems() as $publication) {
             $items[] = [
                 'publicationId' => $publication->getPublicationId(),
                 'themeId' => $publication->getThemeId(),
@@ -67,11 +73,11 @@ class Publications implements ResolverInterface
 
         return [
             'items' => $items,
-            'total_count' => $result['total_count'],
+            'total_count' => $searchResults->getTotalCount(),
             'page_info' => [
                 'page_size' => $pageSize,
                 'current_page' => $currentPage,
-                'total_pages' => (int)ceil($result['total_count'] / $pageSize)
+                'total_pages' => (int)ceil($searchResults->getTotalCount() / $pageSize)
             ]
         ];
     }

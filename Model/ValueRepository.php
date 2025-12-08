@@ -5,7 +5,7 @@ namespace Swissup\BreezeThemeEditor\Model;
 
 use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface;
-use Magento\Framework\Api\SearchResultsInterfaceFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ValueSearchResultsInterfaceFactory as SearchResultsInterfaceFactory;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -233,70 +233,6 @@ class ValueRepository implements ValueRepositoryInterface
     }
 
     /**
-     * Save single value (legacy)
-     *
-     * @deprecated Use save() with ValueInterface instance instead
-     * @see save()
-     */
-    public function saveValue(
-        int $themeId,
-        int $storeId,
-        int $statusId,
-        int $userId,
-        string $sectionCode,
-        string $fieldCode,
-        string $value
-    ): void {
-        $valueModel = $this->create();
-        $valueModel->setData([
-            ValueInterface::THEME_ID => $themeId,
-            ValueInterface::STORE_ID => $storeId,
-            ValueInterface::STATUS_ID => $statusId,
-            ValueInterface::USER_ID => $userId,
-            ValueInterface::SECTION_CODE => $sectionCode,
-            ValueInterface::SETTING_CODE => $fieldCode,
-            ValueInterface::VALUE => $value
-        ]);
-
-        $this->save($valueModel);
-    }
-
-    /**
-     * Save multiple values (legacy array format)
-     *
-     * @deprecated Use saveMultiple() with ValueInterface[] instead
-     * @see saveMultiple()
-     */
-    public function saveValues(
-        int $themeId,
-        int $storeId,
-        int $statusId,
-        array $values,
-        ?int $userId = null
-    ): int {
-        if (empty($values)) {
-            return 0;
-        }
-
-        $valueModels = [];
-        foreach ($values as $value) {
-            $valueModel = $this->create();
-            $valueModel->setData([
-                ValueInterface::THEME_ID => $themeId,
-                ValueInterface::STORE_ID => $storeId,
-                ValueInterface::STATUS_ID => $statusId,
-                ValueInterface::USER_ID => $userId,
-                ValueInterface::SECTION_CODE => $value['sectionCode'],
-                ValueInterface::SETTING_CODE => $value['fieldCode'],
-                ValueInterface::VALUE => $value['value']
-            ]);
-            $valueModels[] = $valueModel;
-        }
-
-        return $this->saveMultiple($valueModels);
-    }
-
-    /**
      * Copy values
      *
      * @deprecated Move to separate ValueCopyService
@@ -305,35 +241,43 @@ class ValueRepository implements ValueRepositoryInterface
         int $fromThemeId,
         int $fromStoreId,
         int $fromStatusId,
-        ? int $fromUserId,
+        ?int $fromUserId,
         int $toThemeId,
         int $toStoreId,
         int $toStatusId,
         ?int $toUserId,
         ?array $sectionCodes = null
     ): int {
+        // 1. Отримати legacy-значення (масив, не моделі)
         $values = $this->getValuesByTheme($fromThemeId, $fromStoreId, $fromStatusId, $fromUserId);
 
         if (empty($values)) {
             return 0;
         }
 
+        // 2. Відфільтрувати, якщо секції потрібні
         if ($sectionCodes) {
             $values = array_filter($values, function ($val) use ($sectionCodes) {
                 return in_array($val[ValueInterface::SECTION_CODE], $sectionCodes);
             });
         }
 
-        $formatted = [];
+        // 3. Сформувати масив ValueInterface моделей для нового store/theme/status/user
+        $models = [];
         foreach ($values as $val) {
-            $formatted[] = [
-                'sectionCode' => $val[ValueInterface::SECTION_CODE],
-                'fieldCode' => $val[ValueInterface::SETTING_CODE],
-                'value' => $val[ValueInterface::VALUE]
-            ];
+            $model = $this->create(); // ValueInterface модель
+            $model->setThemeId($toThemeId);
+            $model->setStoreId($toStoreId);
+            $model->setStatusId($toStatusId);
+            $model->setUserId($toUserId);
+            $model->setSectionCode($val[ValueInterface::SECTION_CODE]);
+            $model->setSettingCode($val[ValueInterface::SETTING_CODE]);
+            $model->setValue($val[ValueInterface::VALUE]);
+            $models[] = $model;
         }
 
-        return $this->saveValues($toThemeId, $toStoreId, $toStatusId, $formatted, $toUserId);
+        // 4. Викликати сучасний saveMultiple
+        return $this->saveMultiple($models);
     }
 
     /**

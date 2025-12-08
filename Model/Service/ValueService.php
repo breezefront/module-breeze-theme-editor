@@ -7,6 +7,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Swissup\BreezeThemeEditor\Model\ValueRepository;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValidationService;
+use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 
 class ValueService
 {
@@ -39,14 +40,23 @@ class ValueService
             );
         }
 
-        // Зберегти в БД
-        $count = $this->valueRepository->saveValues(
-            $themeId,
-            $storeId,
-            $statusId,
-            $userIdForSave,
-            $values
-        );
+        // Формуємо масив ValueInterface
+        $valueModels = [];
+        foreach ($values as $val) {
+            /** @var ValueInterface $model */
+            $model = $this->valueRepository->create();
+            $model->setThemeId($themeId);
+            $model->setStoreId($storeId);
+            $model->setStatusId($statusId);
+            $model->setSectionCode($val['sectionCode']);
+            $model->setSettingCode($val['fieldCode']);
+            $model->setValue($val['value']);
+            $model->setUserId($userIdForSave);
+            $valueModels[] = $model;
+        }
+
+        // Сучасне масове збереження через saveMultiple
+        $count = $this->valueRepository->saveMultiple($valueModels);
 
         return $this->formatValuesForOutput($values);
     }
@@ -78,20 +88,22 @@ class ValueService
             throw new LocalizedException(__($validationError));
         }
 
-        $this->valueRepository->saveValue(
-            $themeId,
-            $storeId,
-            $statusId,
-            $userIdForSave,
-            $sectionCode,
-            $fieldCode,
-            $value
-        );
+        /** @var ValueInterface $model */
+        $model = $this->valueRepository->create();
+        $model->setThemeId($themeId);
+        $model->setStoreId($storeId);
+        $model->setStatusId($statusId);
+        $model->setSectionCode($sectionCode);
+        $model->setSettingCode($fieldCode);
+        $model->setValue($value);
+        $model->setUserId($userIdForSave);
+
+        $this->valueRepository->save($model);
 
         return [
             'sectionCode' => $sectionCode,
             'fieldCode' => $fieldCode,
-            'value' => $value
+            'value' => $value,
         ];
     }
 

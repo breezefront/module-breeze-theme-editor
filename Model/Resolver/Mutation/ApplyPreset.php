@@ -7,6 +7,7 @@ use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\PresetService;
+use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 
 class ApplyPreset extends AbstractSaveMutation
 {
@@ -35,14 +36,12 @@ class ApplyPreset extends AbstractSaveMutation
         array $args = null
     ) {
         $input = $args['input'];
-
-        // ✅ Використати базовий метод
         $params = $this->prepareBaseParams($input);
 
         $presetId = $input['presetId'];
         $overwriteExisting = $input['overwriteExisting'] ?? false;
 
-        // Отримати preset values
+        // Отримати preset values (plain масив)
         try {
             $presetValues = $this->presetManager->getPresetValues($params['themeId'], $presetId);
         } catch (\Exception $e) {
@@ -55,9 +54,8 @@ class ApplyPreset extends AbstractSaveMutation
             throw new GraphQlInputException(__('Preset is empty'));
         }
 
-        // Якщо не overwrite - застосувати тільки нові поля
+        // Якщо не overwrite - застосовуємо лише нові поля
         if (!$overwriteExisting) {
-            // ✅ Отримати існуючі (без inheritance - тільки з цієї теми!)
             $existing = $this->valueRepository->getValuesByTheme(
                 $params['themeId'],
                 $params['storeId'],
@@ -76,16 +74,25 @@ class ApplyPreset extends AbstractSaveMutation
             });
         }
 
-        // Зберегти preset values
-        $appliedCount = $this->valueRepository->saveValues(
-            $params['themeId'],
-            $params['storeId'],
-            $params['statusId'],
-            $params['statusCode'] === 'DRAFT' ? $params['userId'] : 0,
-            $presetValues
-        );
+        // СТВОРЮЄМО ValueInterface[] моделі
+        $userIdForSave = $params['statusCode'] === 'DRAFT' ? $params['userId'] : 0;
+        $valueModels = [];
+        foreach ($presetValues as $val) {
+            $valueModel = $this->valueRepository->create();
+            $valueModel->setThemeId($params['themeId']);
+            $valueModel->setStoreId($params['storeId']);
+            $valueModel->setStatusId($params['statusId']);
+            $valueModel->setSectionCode($val['sectionCode']);
+            $valueModel->setSettingCode($val['fieldCode']);
+            $valueModel->setValue($val['value']);
+            $valueModel->setUserId($userIdForSave);
+            $valueModels[] = $valueModel;
+        }
 
-        // ✅ Отримати збережені значення (без inheritance - тільки з цієї теми!)
+        // Зберігаємо через saveMultiple()
+        $appliedCount = $this->valueRepository->saveMultiple($valueModels);
+
+        // Отримати збережені значення (для UI)
         $values = $this->valueRepository->getValuesByTheme(
             $params['themeId'],
             $params['storeId'],
@@ -97,17 +104,17 @@ class ApplyPreset extends AbstractSaveMutation
         foreach ($values as $val) {
             $savedValues[] = [
                 'sectionCode' => $val['section_code'],
-                'fieldCode' => $val['setting_code'],
-                'value' => $val['value'],
-                'isModified' => true,
-                'updatedAt' => $val['updated_at']
+                'fieldCode'   => $val['setting_code'],
+                'value'       => $val['value'],
+                'isModified'  => true,
+                'updatedAt'   => $val['updated_at']
             ];
         }
 
         return [
-            'success' => true,
-            'message' => __('Preset "%1" applied successfully', $presetId),
-            'values' => $savedValues,
+            'success'      => true,
+            'message'      => __('Preset "%1" applied successfully', $presetId),
+            'values'       => $savedValues,
             'appliedCount' => $appliedCount
         ];
     }

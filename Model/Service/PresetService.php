@@ -37,28 +37,33 @@ class PresetService
         $statusId = $this->statusProvider->getStatusId($statusCode);
         $userIdForSave = ($statusCode === 'PUBLISHED') ? 0 : $userId;
 
-        // Конвертувати preset settings в формат для збереження
-        $values = [];
+        // Конвертувати preset settings в масив моделей ValueInterface
+        $models = [];
 
         if (isset($preset['settings']) && is_array($preset['settings'])) {
             foreach ($preset['settings'] as $key => $value) {
-                // key format: "section_code.field_code" або просто "field_code"
+                // key формат: "section_code.field_code" або просто "field_code"
                 if (strpos($key, '.') !== false) {
                     [$sectionCode, $fieldCode] = explode('.', $key, 2);
                 } else {
-                    // Якщо немає секції - спробувати знайти в конфігурації
+                    // Якщо немає секції - шукаємо у конфігурації
                     [$sectionCode, $fieldCode] = $this->findFieldInConfig($themeId, $key);
                 }
 
-                $values[] = [
-                    'sectionCode' => $sectionCode,
-                    'fieldCode' => $fieldCode,
-                    'value' => is_string($value) ? $value : json_encode($value)
-                ];
+                // Створення ValueInterface-моделі
+                $model = $this->valueRepository->create();
+                $model->setThemeId($themeId);
+                $model->setStoreId($storeId);
+                $model->setStatusId($statusId);
+                $model->setUserId($userIdForSave);
+                $model->setSectionCode($sectionCode);
+                $model->setSettingCode($fieldCode);
+                $model->setValue(is_string($value) ? $value : json_encode($value));
+                $models[] = $model;
             }
         }
 
-        if (empty($values)) {
+        if (empty($models)) {
             throw new LocalizedException(__('Preset has no settings'));
         }
 
@@ -72,14 +77,18 @@ class PresetService
             );
         }
 
-        // Зберегти значення
-        $count = $this->valueRepository->saveValues(
-            $themeId,
-            $storeId,
-            $statusId,
-            $values,
-            $userIdForSave
-        );
+        // Сучасне збереження: пакетно через saveMultiple
+        $count = $this->valueRepository->saveMultiple($models);
+
+        // Формат виводу: можна залишити такий як був
+        $values = [];
+        foreach ($models as $model) {
+            $values[] = [
+                'sectionCode' => $model->getSectionCode(),
+                'fieldCode' => $model->getSettingCode(),
+                'value' => $model->getValue()
+            ];
+        }
 
         return [
             'appliedCount' => $count,

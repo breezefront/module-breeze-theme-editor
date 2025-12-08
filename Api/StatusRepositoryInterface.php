@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Api;
 
 use Swissup\BreezeThemeEditor\Api\Data\StatusInterface;
+use Swissup\BreezeThemeEditor\Api\Data\StatusSearchResultsInterface;
+use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\CouldNotDeleteException;
@@ -11,45 +13,44 @@ use Magento\Framework\Exception\CouldNotDeleteException;
 interface StatusRepositoryInterface
 {
     /**
-     * Get status by ID
-     *
-     * @param int $statusId
-     * @return StatusInterface
+     * Create new status instance
+     */
+    public function create(): StatusInterface;
+
+    /**
+     * Save status
+     */
+    public function save(StatusInterface $status): StatusInterface;
+
+    /**
+     * @throws NoSuchEntityException
+     */
+    public function get(int $id): StatusInterface;
+
+    /**
      * @throws NoSuchEntityException
      */
     public function getById(int $statusId): StatusInterface;
 
     /**
-     * Get status by code
-     *
-     * @param string $code
-     * @return StatusInterface
      * @throws NoSuchEntityException
      */
     public function getByCode(string $code): StatusInterface;
 
     /**
-     * Get all statuses
-     *
-     * @return StatusInterface[]
+     * @return StatusSearchResultsInterface
      */
-    public function getList(): array;
-
-    /**
-     * Save status
-     *
-     * @param StatusInterface $status
-     * @return StatusInterface
-     * @throws CouldNotSaveException
-     */
-    public function save(StatusInterface $status): StatusInterface;
+    public function getList(SearchCriteriaInterface $searchCriteria): StatusSearchResultsInterface;
 
     /**
      * Delete status
-     *
-     * @param StatusInterface $status
-     * @return bool
-     * @throws CouldNotDeleteException
      */
     public function delete(StatusInterface $status): bool;
+
+    /**
+     * Delete status by id
+     * @throws NoSuchEntityException
+     * @throws CouldNotDeleteException
+     */
+    public function deleteById(int $statusId): bool;
 }

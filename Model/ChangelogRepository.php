@@ -4,10 +4,14 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model;
 
 use Swissup\BreezeThemeEditor\Api\Data\ChangelogInterface;
+use Swissup\BreezeThemeEditor\Api\Data\ChangelogSearchResultsInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\ChangelogFactory;
 use Swissup\BreezeThemeEditor\Model\ResourceModel\Changelog as ChangelogResource;
 use Swissup\BreezeThemeEditor\Model\ResourceModel\Changelog\CollectionFactory;
+use Magento\Framework\Api\SearchCriteriaInterface;
+use Swissup\BreezeThemeEditor\Api\Data\ChangelogSearchResultsInterfaceFactory as SearchResultsInterfaceFactory;
+use Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -19,35 +23,14 @@ class ChangelogRepository implements ChangelogRepositoryInterface
     public function __construct(
         private ChangelogFactory $changelogFactory,
         private ChangelogResource $changelogResource,
-        private CollectionFactory $collectionFactory
+        private CollectionFactory $collectionFactory,
+        private SearchResultsInterfaceFactory $searchResultsFactory,
+        private CollectionProcessorInterface $collectionProcessor
     ) {}
 
-    public function getById(int $changeId): ChangelogInterface
+    public function create(): ChangelogInterface
     {
-        if (isset($this->instances[$changeId])) {
-            return $this->instances[$changeId];
-        }
-
-        $changelog = $this->changelogFactory->create();
-        $this->changelogResource->load($changelog, $changeId);
-
-        if (!$changelog->getChangeId()) {
-            throw new NoSuchEntityException(
-                __('Changelog with id "%1" does not exist.', $changeId)
-            );
-        }
-
-        $this->instances[$changeId] = $changelog;
-
-        return $changelog;
-    }
-
-    public function getByPublicationId(int $publicationId): array
-    {
-        $collection = $this->collectionFactory->create();
-        $collection->addPublicationFilter($publicationId);
-
-        return $collection->getItems();
+        return $this->changelogFactory->create();
     }
 
     public function save(ChangelogInterface $changelog): ChangelogInterface
@@ -74,6 +57,57 @@ class ChangelogRepository implements ChangelogRepositoryInterface
         return $count;
     }
 
+    public function get(int $changeId): ChangelogInterface
+    {
+        $changelog = $this->changelogFactory->create();
+        $this->changelogResource->load($changelog, $changeId);
+        return $changelog;
+    }
+
+    public function getById(int $changeId): ChangelogInterface
+    {
+        if (isset($this->instances[$changeId])) {
+            return $this->instances[$changeId];
+        }
+
+        $changelog = $this->changelogFactory->create();
+        $this->changelogResource->load($changelog, $changeId);
+
+        if (!$changelog->getChangeId()) {
+            throw new NoSuchEntityException(
+                __('Changelog with id "%1" does not exist.', $changeId)
+            );
+        }
+
+        $this->instances[$changeId] = $changelog;
+
+        return $changelog;
+    }
+
+    /**
+     * @deprecated Use getList() with SearchCriteria instead
+     */
+    public function getByPublicationId(int $publicationId): array
+    {
+        $collection = $this->collectionFactory->create();
+        $collection->addPublicationFilter($publicationId);
+
+        return $collection->getItems();
+    }
+
+    public function getList(SearchCriteriaInterface $searchCriteria): ChangelogSearchResultsInterface
+    {
+        $collection = $this->collectionFactory->create();
+        $this->collectionProcessor->process($searchCriteria, $collection);
+
+        /** @var ChangelogSearchResultsInterface $searchResults */
+        $searchResults = $this->searchResultsFactory->create();
+        $searchResults->setSearchCriteria($searchCriteria);
+        $searchResults->setItems($collection->getItems());
+        $searchResults->setTotalCount($collection->getSize());
+        return $searchResults;
+    }
+
     public function delete(ChangelogInterface $changelog): bool
     {
         try {
@@ -89,6 +123,9 @@ class ChangelogRepository implements ChangelogRepositoryInterface
         }
     }
 
+    /**
+     * @deprecated Use getList() + delete() instead
+     */
     public function deleteByPublicationId(int $publicationId): int
     {
         $collection = $this->collectionFactory->create();
@@ -101,5 +138,10 @@ class ChangelogRepository implements ChangelogRepositoryInterface
         }
 
         return $count;
+    }
+
+    public function deleteById(int $changeId): bool
+    {
+        return $this->delete($this->getById($changeId));
     }
 }

@@ -59,7 +59,16 @@ class ImportExportService
     }
 
     /**
-     * Імпорт налаштувань
+     * @param int $themeId
+     * @param int $storeId
+     * @param string $statusCode
+     * @param int $userId
+     * @param string $jsonData
+     * @param bool $overwriteExisting
+     * @return array
+     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\CouldNotSaveException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function import(
         int $themeId,
@@ -80,10 +89,10 @@ class ImportExportService
         }
 
         $statusId = $this->statusProvider->getStatusId($statusCode);
-        $userIdForSave = ($statusCode === 'PUBLISHED') ?    0 : $userId;
+        $userIdForSave = ($statusCode === 'PUBLISHED') ? 0 : $userId;
 
-        // Конвертувати в формат для збереження
-        $values = [];
+        // Конвертувати у ValueInterface[]
+        $models = [];
         $errors = [];
 
         foreach ($data as $key => $value) {
@@ -94,15 +103,20 @@ class ImportExportService
 
             [$sectionCode, $fieldCode] = explode('.', $key, 2);
 
-            $values[] = [
-                'sectionCode' => $sectionCode,
-                'fieldCode' => $fieldCode,
-                'value' => is_string($value) ?  $value : $this->serializer->serialize($value)
-            ];
+            $model = $this->valueRepository->create();
+            $model->setThemeId($themeId);
+            $model->setStoreId($storeId);
+            $model->setStatusId($statusId);
+            $model->setUserId($userIdForSave);
+            $model->setSectionCode($sectionCode);
+            $model->setSettingCode($fieldCode);
+            $model->setValue(is_string($value) ? $value : $this->serializer->serialize($value));
+
+            $models[] = $model;
         }
 
         // Валідація
-        $validationErrors = $this->validationProvider->validateValues($themeId, $values);
+        $validationErrors = $this->validationProvider->validateValues($themeId, $models);
         if (!empty($validationErrors)) {
             foreach ($validationErrors as $error) {
                 $errors[] = $error['message'];
@@ -112,7 +126,7 @@ class ImportExportService
         $imported = 0;
         $skipped = count($errors);
 
-        if (!   empty($values) && empty($errors)) {
+        if (!empty($models) && empty($errors)) {
             // Видалити існуючі якщо потрібно
             if (!$overwriteExisting) {
                 $this->valueRepository->deleteValues(
@@ -123,13 +137,7 @@ class ImportExportService
                 );
             }
 
-            $imported = $this->valueRepository->saveValues(
-                $themeId,
-                $storeId,
-                $statusId,
-                $userIdForSave,
-                $values
-            );
+            $imported = $this->valueRepository->saveMultiple($models);
         }
 
         return [

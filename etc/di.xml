@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
 
+    <!-- Access Token Model -->
     <preference for="Swissup\BreezeThemeEditor\Api\AccessTokenInterface"
                 type="Swissup\BreezeThemeEditor\Model\Data\AccessToken"/>
 
@@ -14,15 +15,33 @@
     <preference for="Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface"
                 type="Swissup\BreezeThemeEditor\Model\ChangelogRepository"/>
 
-    <!-- Value Repository -->
     <preference for="Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface"
                 type="Swissup\BreezeThemeEditor\Model\ValueRepository" />
 
-    <!-- Value Search Results -->
-    <preference for="Swissup\BreezeThemeEditor\Api\Data\ValueSearchResultsInterface"
-                type="Magento\Framework\Api\SearchResults" />
-
-    <!-- Value Interface -->
+    <!-- Domain Models -->
     <preference for="Swissup\BreezeThemeEditor\Api\Data\ValueInterface"
                 type="Swissup\BreezeThemeEditor\Model\Value" />
+
+    <preference for="Swissup\BreezeThemeEditor\Api\Data\ChangelogInterface"
+                type="Swissup\BreezeThemeEditor\Model\Changelog" />
+
+    <preference for="Swissup\BreezeThemeEditor\Api\Data\PublicationInterface"
+                type="Swissup\BreezeThemeEditor\Model\Publication" />
+
+    <preference for="Swissup\BreezeThemeEditor\Api\Data\StatusInterface"
+                type="Swissup\BreezeThemeEditor\Model\Status" />
+
+    <!-- SearchResults Preferences -->
+
+    <preference for="Swissup\BreezeThemeEditor\Api\Data\ValueSearchResultsInterface"
+                type="Swissup\BreezeThemeEditor\Model\ValueSearchResults" />
+
+    <preference for="Swissup\BreezeThemeEditor\Api\Data\ChangelogSearchResultsInterface"
+                type="Swissup\BreezeThemeEditor\Model\ChangelogSearchResults" />
+
+    <preference for="Swissup\BreezeThemeEditor\Api\Data\PublicationSearchResultsInterface"
+                type="Swissup\BreezeThemeEditor\Model\PublicationSearchResults" />
+
+    <preference for="Swissup\BreezeThemeEditor\Api\Data\StatusSearchResultsInterface"
+                type="Swissup\BreezeThemeEditor\Model\StatusSearchResults" />
 </config>
