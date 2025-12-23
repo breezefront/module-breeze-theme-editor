@@ -3,8 +3,11 @@ define([
     'jquery-ui-modules/widget',
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/theme-editor/panel.html',
-    'Swissup_BreezeThemeEditor/js/theme-editor/css-preview-manager'
-], function ($, widget, mageTemplate, panelTemplate, CssPreviewManager) {
+    'Swissup_BreezeThemeEditor/js/theme-editor/css-preview-manager',
+    'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
+    'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values',
+    'Swissup_BreezeThemeEditor/js/graphql/mutations/publish'
+], function ($, widget, mageTemplate, panelTemplate, CssPreviewManager, getConfig, saveValues, publish) {
     'use strict';
 
     $.widget('swissup.themeEditorPanel', {
