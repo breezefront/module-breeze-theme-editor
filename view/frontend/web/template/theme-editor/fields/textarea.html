@@ -1,0 +1,47 @@
+<div class="bte-field bte-field-textarea <%= data.isModified ? 'bte-field-modified' : '' %>" <%= data.dataAttributes %>>
+    <div class="bte-field-header">
+        <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.fieldCode %>">
+            <%= data.label %>
+            <% if (data.required) { %>
+                <span class="bte-required">*</span>
+            <% } %>
+        </label>
+        <% if (data.isModified) { %>
+            <span class="bte-badge bte-badge-modified">Modified</span>
+        <% } %>
+    </div>
+
+    <% if (data.description) { %>
+        <div class="bte-field-description"><%= data.description %></div>
+    <% } %>
+
+    <div class="bte-field-control">
+        <textarea
+            id="field-<%= data.sectionCode %>-<%= data.fieldCode %>"
+            class="bte-textarea"
+            rows="5"
+            placeholder="<%= data.placeholder %>"
+            data-section="<%= data.sectionCode %>"
+            data-field="<%= data.fieldCode %>"
+            data-css-var="<%= data.cssVar %>"
+            data-default="<%= data.default %>"
+            <% if (data.validation.minLength) { %>
+                minlength="<%= data.validation.minLength %>"
+            <% } %>
+            <% if (data.validation.maxLength) { %>
+                maxlength="<%= data.validation.maxLength %>"
+            <% } %>
+            <%= data.required ? 'required' : '' %>
+        ><%= data.value %></textarea>
+    </div>
+
+    <% if (data.helpText) { %>
+        <div class="bte-field-help"><%= data.helpText %></div>
+    <% } %>
+
+    <% if (data.validation.maxLength) { %>
+        <div class="bte-field-counter">
+            <span class="bte-counter-current">0</span> / <%= data.validation.maxLength %>
+        </div>
+    <% } %>
+</div>

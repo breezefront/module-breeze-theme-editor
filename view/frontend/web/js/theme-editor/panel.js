@@ -3,28 +3,48 @@ define([
     'jquery-ui-modules/widget',
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/theme-editor/panel.html',
+    'Swissup_BreezeThemeEditor/js/theme-editor/panel-state',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderer',
     'Swissup_BreezeThemeEditor/js/theme-editor/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/publish'
-], function ($, widget, mageTemplate, panelTemplate, CssPreviewManager, getConfig, saveValues, publish) {
+], function (
+    $,
+    widget,
+    mageTemplate,
+    panelTemplate,
+    PanelState,
+    FieldRenderer,
+    CssPreviewManager,
+    getConfig,
+    saveValues,
+    publish
+) {
     'use strict';
 
     $.widget('swissup.themeEditorPanel', {
         options: {
             title: 'Theme Editor',
             closeTitle: 'Close Panel',
-            presetsLabel: 'Presets:'
+            presetsLabel: 'Presets: ',
+            storeId: null,
+            themeId: null,
+            status: 'DRAFT'
         },
 
         _create: function () {
             console.log('✅ Initializing Theme Editor Panel');
 
+            // Get config from global or options
+            this.storeId = this.options.storeId || (window.BREEZE_EDITOR_CONFIG && window.BREEZE_EDITOR_CONFIG.storeId);
+            this.themeId = this.options.themeId || (window.BREEZE_EDITOR_CONFIG && window.BREEZE_EDITOR_CONFIG.themeId);
+
             this.template = mageTemplate(panelTemplate);
             this._render();
             this._bind();
-            this._initAccordion();
-            this._initPreview();  // ← ДОДАТИ
+            this._initPreview();
+            this._loadConfig();
         },
 
         _render: function () {
@@ -41,8 +61,7 @@ define([
             this.$closeButton = this.element.find('.bte-panel-close');
             this.$resetButton = this.element.find('.bte-reset-button');
             this.$saveButton = this.element.find('.bte-save-button');
-            this.$accordionHeaders = this.element.find('.bte-accordion-header');
-            this.$accordionContents = this.element.find('.bte-accordion-content');
+            this.$sectionsContainer = this.element.find('.bte-sections-container');
 
             console.log('📋 Theme Editor Panel rendered');
         },
@@ -52,174 +71,225 @@ define([
             this.$resetButton.on('click', $.proxy(this._reset, this));
             this.$saveButton.on('click', $.proxy(this._save, this));
 
-            // Accordion toggle
-            this.$accordionHeaders.on('click', $.proxy(this._toggleSection, this));
-
-            // Live preview для контролів
-            this.element.on('input change', '.bte-color-picker', $.proxy(this._onColorChange, this));
-            this.element.on('input', '.bte-range-slider', $.proxy(this._onRangeChange, this));
-            this.element.on('change', '.bte-font-picker', $.proxy(this._onFontChange, this));
-        },
-
-        _initAccordion: function () {
-            // Відкрити першу секцію за замовчуванням
-            this.$accordionHeaders.first().addClass('active');
-            this.$accordionContents.first().addClass('active').show();
+            // Delegate events for dynamic content
+            this.element.on('click', '.bte-accordion-header', $.proxy(this._toggleSection, this));
+            this.element.on('input change', '.bte-color-picker', $.proxy(this._onFieldChange, this));
+            this.element.on('input', '.bte-range-slider', $.proxy(this._onFieldChange, this));
+            this.element.on('change', '.bte-font-picker', $.proxy(this._onFieldChange, this));
+            this.element.on('change', '.bte-select', $.proxy(this._onFieldChange, this));
+            this.element.on('input', '.bte-text-input', $.proxy(this._onFieldChange, this));
+            this.element.on('change', '.bte-toggle-input', $.proxy(this._onFieldChange, this));
         },
 
         /**
-         * 🔥 NEW: Ініціалізувати CSS Preview Manager
+         * Initialize CSS Preview Manager
          */
         _initPreview: function() {
-            // Затримка щоб iframe встиг завантажитись
             setTimeout(function() {
                 CssPreviewManager.init();
             }, 500);
         },
 
+        /**
+         * Load theme config from GraphQL
+         */
+        _loadConfig: function() {
+            var self = this;
+
+            this._showLoader('Loading configuration...');
+
+            getConfig(this.storeId, this.themeId, this.options.status)
+                .done(function(data) {
+                    console.log('✅ Config loaded:', data);
+
+                    var config = data.breezeThemeEditorConfig;
+
+                    // Initialize state
+                    PanelState.init(config);
+
+                    // Render fields
+                    self._renderSections(config.sections);
+
+                    self._hideLoader();
+                })
+                .fail(function(error) {
+                    console.error('❌ Failed to load config:', error);
+                    self._showError('Failed to load configuration:  ' + error.message);
+                });
+        },
+
+        /**
+         * Render sections dynamically
+         */
+        _renderSections: function(sections) {
+            var html = '';
+
+            sections.forEach(function(section) {
+                html += '<div class="bte-accordion-section">';
+                html += '<div class="bte-accordion-header" data-section="' + section.code + '">';
+                html += '<i class="bte-icon-' + (section.icon || 'settings') + '"></i>';
+                html += '<span class="bte-section-label">' + section.label + '</span>';
+                html += '<i class="bte-icon-chevron-down bte-accordion-arrow"></i>';
+                html += '</div>';
+                html += FieldRenderer.renderSection(section);
+                html += '</div>';
+            });
+
+            this.$sectionsContainer.html(html);
+
+            // Open first section
+            this.$sectionsContainer.find('.bte-accordion-header').first().addClass('active');
+            this.$sectionsContainer.find('.bte-accordion-content').first().addClass('active').show();
+
+            console.log('📋 Rendered', sections.length, 'sections');
+        },
+
+        /**
+         * Toggle accordion section
+         */
         _toggleSection: function (e) {
             var $header = $(e.currentTarget);
             var section = $header.data('section');
-            var $content = this. element.find('.bte-accordion-content[data-section="' + section + '"]');
-
+            var $content = this.element.find('.bte-accordion-content[data-section="' + section + '"]');
             var isActive = $header.hasClass('active');
 
             if (isActive) {
-                // Закрити секцію
                 $header.removeClass('active');
-                $content.removeClass('active');
-
-                // ✅ Використати CSS transition замість slideUp
-                $content.css('max-height', '0');
-
-                // Сховати після анімації
-                setTimeout(function() {
-                    if (!$content.hasClass('active')) {
-                        $content.hide();
-                    }
-                }, 200);
+                $content.removeClass('active').slideUp(200);
             } else {
-                // Відкрити секцію
                 $header.addClass('active');
-                $content.show();
-
-                // ✅ Trigger reflow для CSS transition
-                var scrollHeight = $content[0].scrollHeight;
-
-                // Додати active клас для transition
-                setTimeout(function() {
-                    $content.addClass('active');
-                    $content.css('max-height', scrollHeight + 'px');
-                }, 10);
+                $content.addClass('active').slideDown(200);
             }
 
-            console.log('🔄 Accordion section toggled:', section, '→', ! isActive);
+            console.log('🔄 Accordion toggled:', section, '→', ! isActive);
         },
 
         /**
-         * 🔥 UPDATED: Live preview для color picker
+         * Handle field change (unified)
          */
-        _onColorChange: function (e) {
+        _onFieldChange: function (e) {
             var $input = $(e.currentTarget);
-            var color = $input.val();
+            var sectionCode = $input.data('section');
+            var fieldCode = $input.data('field');
             var cssVar = $input.data('css-var');
-            var format = $input.data('format') || 'color-hex';
-
-            console.log('🎨 Color changed:', cssVar, '=', color);
-
-            if (cssVar) {
-                CssPreviewManager.setVariable(cssVar, color, format);
-            }
-        },
-
-        /**
-         * 🔥 UPDATED: Live preview для range slider
-         */
-        _onRangeChange: function (e) {
-            var $input = $(e.currentTarget);
             var value = $input.val();
-            var $output = $input.siblings('.bte-range-value');
-            var cssVar = $input.data('css-var');
-            var format = $input.data('format') || 'size';
 
-            // Оновити output
-            var unit = format === 'number' ? '' : 'px';
-            $output.text(value + unit);
-
-            console.log('📏 Range changed:', cssVar, '=', value);
-
-            if (cssVar) {
-                CssPreviewManager.setVariable(cssVar, value, format);
+            if (! sectionCode || !fieldCode) {
+                console.warn('Missing data attributes:', $input);
+                return;
             }
+
+            // Update state
+            PanelState.setValue(sectionCode, fieldCode, value);
+
+            // Live preview
+            if (cssVar) {
+                CssPreviewManager.setVariable(cssVar, value);
+            }
+
+            // Update UI badges
+            this._updateChangesCount();
+
+            console.log('🔄 Field changed:', sectionCode + '.' + fieldCode, '=', value);
         },
 
         /**
-         * 🔥 UPDATED: Live preview для font picker
+         * Update changes count badge
          */
-        _onFontChange: function (e) {
-            var $select = $(e.currentTarget);
-            var font = $select.val();
-            var cssVar = $select.data('css-var');
-
-            console.log('🔤 Font changed:', cssVar, '=', font);
-
-            if (cssVar) {
-                CssPreviewManager.setVariable(cssVar, font);
-            }
+        _updateChangesCount: function() {
+            var count = PanelState.getChangesCount();
+            this.$saveButton.text('Save (' + count + ')');
+            this.$resetButton.prop('disabled', count === 0);
         },
 
+        /**
+         * Close panel
+         */
         _close: function () {
-            console.log('❌ Closing Theme Editor Panel');
-
-            // Тригернути клік на navigation tab щоб закрити панель
+            console.log('❌ Closing panel');
             $('#toolbar-navigation .nav-item[data-id="theme-editor"]').click();
         },
 
         /**
-         * 🔥 UPDATED: Reset з preview manager
+         * Reset changes
          */
         _reset: function () {
-            console.log('↺ Resetting theme settings');
-
-            if (! CssPreviewManager.hasChanges()) {
+            if (! PanelState.hasChanges()) {
                 alert('No changes to reset');
                 return;
             }
 
             if (confirm('Reset all changes to default values?')) {
+                PanelState.reset();
                 CssPreviewManager.reset();
-                console.log('✅ Settings reset');
+                this._loadConfig(); // Reload to refresh UI
+                console.log('✅ Reset complete');
             }
         },
 
         /**
-         * 🔥 UPDATED: Save з preview manager
+         * Save changes
          */
-        _save: function () {
-            console.log('💾 Saving theme settings');
-
-            if (!CssPreviewManager.hasChanges()) {
+        _save:  function () {
+            if (!PanelState.hasChanges()) {
                 alert('No changes to save');
                 return;
             }
 
-            var changes = CssPreviewManager.getChanges();
-            console.log('📦 Changes to save:', changes);
+            var values = PanelState.getChangesForSave();
+            var self = this;
 
-            // TODO: Save to backend via AJAX
-            alert('Save functionality will be implemented next.\n\nChanges:\n' + JSON.stringify(changes, null, 2));
+            this.$saveButton.prop('disabled', true).text('Saving...');
+
+            saveValues(this.storeId, this.themeId, this.options.status, values)
+                .done(function(data) {
+                    console.log('✅ Saved:', data);
+
+                    if (data.saveBreezeThemeEditorValues.success) {
+                        alert('Settings saved successfully!');
+                        PanelState.markAsSaved();
+                        CssPreviewManager.markAsSaved();
+                        self._updateChangesCount();
+                    } else {
+                        alert('Failed to save:  ' + data.saveBreezeThemeEditorValues.message);
+                    }
+                })
+                .fail(function(error) {
+                    console.error('❌ Save failed:', error);
+                    alert('Failed to save settings: ' + error.message);
+                })
+                .always(function() {
+                    self.$saveButton.prop('disabled', false).text('Save');
+                });
         },
 
-        _destroy: function () {
-            this.$closeButton.off('click');
-            this.$resetButton.off('click');
-            this.$saveButton.off('click');
-            this.$accordionHeaders.off('click');
-            this.element.off('input change');
+        /**
+         * Show loader
+         */
+        _showLoader: function(message) {
+            // TODO: Implement loader UI
+            console.log('⏳', message);
+        },
 
-            // Знищити preview manager
+        /**
+         * Hide loader
+         */
+        _hideLoader: function() {
+            // TODO: Hide loader UI
+        },
+
+        /**
+         * Show error message
+         */
+        _showError: function(message) {
+            // TODO: Implement error UI
+            alert(message);
+        },
+
+        _destroy: function() {
+            this.element.off('click input change');
             CssPreviewManager.destroy();
-
+            PanelState.clear();
             this._super();
         }
     });

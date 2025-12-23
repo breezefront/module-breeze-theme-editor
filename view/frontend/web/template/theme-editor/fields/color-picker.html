@@ -1,0 +1,44 @@
+<div class="bte-field bte-field-color <%= data.isModified ? 'bte-field-modified' : '' %>" <%= data.dataAttributes %>>
+    <div class="bte-field-header">
+        <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.fieldCode %>">
+            <%= data.label %>
+            <% if (data.required) { %>
+                <span class="bte-required">*</span>
+            <% } %>
+        </label>
+        <% if (data.isModified) { %>
+            <span class="bte-badge bte-badge-modified">Modified</span>
+        <% } %>
+    </div>
+
+    <% if (data.description) { %>
+        <div class="bte-field-description"><%= data.description %></div>
+    <% } %>
+
+    <div class="bte-field-control">
+        <div class="bte-color-picker-wrapper">
+            <input
+                type="color"
+                id="field-<%= data.sectionCode %>-<%= data.fieldCode %>"
+                class="bte-color-picker"
+                value="<%= data.value %>"
+                data-section="<%= data.sectionCode %>"
+                data-field="<%= data.fieldCode %>"
+                data-css-var="<%= data.cssVar %>"
+                data-default="<%= data.default %>"
+                <%= data.required ? 'required' : '' %>
+            />
+            <input
+                type="text"
+                class="bte-color-input"
+                value="<%= data.value %>"
+                placeholder="<%= data.placeholder || '#000000' %>"
+                pattern="<%= data.validation.pattern || '^#[0-9A-Fa-f]{6}$' %>"
+            />
+        </div>
+    </div>
+
+    <% if (data.helpText) { %>
+        <div class="bte-field-help"><%= data.helpText %></div>
+    <% } %>
+</div>

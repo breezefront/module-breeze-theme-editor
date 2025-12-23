@@ -1,0 +1,50 @@
+<div class="bte-field bte-field-select <%= data.isModified ? 'bte-field-modified' : '' %>" <%= data.dataAttributes %>>
+    <div class="bte-field-header">
+        <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.fieldCode %>">
+            <%= data.label %>
+            <% if (data.required) { %>
+                <span class="bte-required">*</span>
+            <% } %>
+        </label>
+        <% if (data.isModified) { %>
+            <span class="bte-badge bte-badge-modified">Modified</span>
+        <% } %>
+    </div>
+
+    <% if (data.description) { %>
+        <div class="bte-field-description"><%= data.description %></div>
+    <% } %>
+
+    <div class="bte-field-control">
+        <select
+            id="field-<%= data.sectionCode %>-<%= data.fieldCode %>"
+            class="bte-select"
+            data-section="<%= data.sectionCode %>"
+            data-field="<%= data.fieldCode %>"
+            data-css-var="<%= data.cssVar %>"
+            data-default="<%= data.default %>"
+            <%= data.required ? 'required' : '' %>
+        >
+            <% if (data.placeholder) { %>
+                <option value="" disabled <%= ! data.value ? 'selected' : '' %>>
+                    <%= data.placeholder %>
+                </option>
+            <% } %>
+
+            <% if (data.hasOptions) { %>
+                <% _. each(data.options, function(option) { %>
+                    <option
+                        value="<%= option.value %>"
+                        <%= option.value === data.value ? 'selected' : '' %>
+                    >
+                        <%= option.label %>
+                    </option>
+                <% }); %>
+            <% } %>
+        </select>
+    </div>
+
+    <% if (data.helpText) { %>
+        <div class="bte-field-help"><%= data.helpText %></div>
+    <% } %>
+</div>
