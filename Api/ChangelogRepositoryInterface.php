@@ -29,15 +29,6 @@ interface ChangelogRepositoryInterface
     public function save(ChangelogInterface $changelog): ChangelogInterface;
 
     /**
-     * Save multiple changelog items
-     *
-     * @param ChangelogInterface[] $changelogs
-     * @return int Number of saved items
-     * @throws CouldNotSaveException
-     */
-    public function saveMultiple(array $changelogs): int;
-
-    /**
      * Get changelog by ID
      *
      * @param int $changeId

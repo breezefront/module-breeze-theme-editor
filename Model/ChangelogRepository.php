@@ -47,16 +47,6 @@ class ChangelogRepository implements ChangelogRepositoryInterface
         return $changelog;
     }
 
-    public function saveMultiple(array $changelogs): int
-    {
-        $count = 0;
-        foreach ($changelogs as $changelog) {
-            $this->save($changelog);
-            $count++;
-        }
-        return $count;
-    }
-
     public function get(int $changeId): ChangelogInterface
     {
         $changelog = $this->changelogFactory->create();

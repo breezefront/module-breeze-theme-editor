@@ -23,11 +23,6 @@ interface PublicationRepositoryInterface
     public function save(PublicationInterface $publication): PublicationInterface;
 
     /**
-     * Save multiple publications (batch)
-     */
-    public function saveMultiple(array $publications): int;
-
-    /**
      * Get publication by ID (without exception)
      */
     public function get(int $publicationId): PublicationInterface;

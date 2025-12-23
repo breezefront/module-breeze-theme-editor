@@ -47,16 +47,6 @@ class PublicationRepository implements PublicationRepositoryInterface
         return $publication;
     }
 
-    public function saveMultiple(array $publications): int
-    {
-        $count = 0;
-        foreach ($publications as $publication) {
-            $this->save($publication);
-            $count++;
-        }
-        return $count;
-    }
-
     public function get(int $publicationId): PublicationInterface
     {
         $publication = $this->publicationFactory->create();

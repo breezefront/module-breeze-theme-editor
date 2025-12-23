@@ -19,7 +19,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 class StatusRepository implements StatusRepositoryInterface
 {
     private array $instancesById = [];
-    private array $instancesByCode = [];
 
     /**
      * @param \Swissup\BreezeThemeEditor\Model\StatusFactory $statusFactory
@@ -56,7 +55,6 @@ class StatusRepository implements StatusRepositoryInterface
 
             // Clear cache
             unset($this->instancesById[$status->getStatusId()]);
-            unset($this->instancesByCode[$status->getCode()]);
         } catch (\Exception $e) {
             throw new CouldNotSaveException(
                 __('Could not save status: %1', $e->getMessage())
@@ -94,29 +92,6 @@ class StatusRepository implements StatusRepositoryInterface
             );
         }
         $this->instancesById[$statusId] = $status;
-        $this->instancesByCode[$status->getCode()] = $status;
-        return $status;
-    }
-
-    /**
-     * @param string $code
-     * @return StatusInterface
-     * @throws NoSuchEntityException
-     */
-    public function getByCode(string $code): StatusInterface
-    {
-        if (isset($this->instancesByCode[$code])) {
-            return $this->instancesByCode[$code];
-        }
-        $status = $this->statusFactory->create();
-        $this->statusResource->loadByCode($status, $code);
-        if (!$status->getStatusId()) {
-            throw new NoSuchEntityException(
-                __('Status with code "%1" does not exist.', $code)
-            );
-        }
-        $this->instancesByCode[$code] = $status;
-        $this->instancesById[$status->getStatusId()] = $status;
         return $status;
     }
 
@@ -149,7 +124,6 @@ class StatusRepository implements StatusRepositoryInterface
             $this->statusResource->delete($status);
 
             unset($this->instancesById[$statusId]);
-            unset($this->instancesByCode[$code]);
             return true;
         } catch (\Exception $e) {
             throw new CouldNotDeleteException(

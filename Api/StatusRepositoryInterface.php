@@ -33,11 +33,6 @@ interface StatusRepositoryInterface
     public function getById(int $statusId): StatusInterface;
 
     /**
-     * @throws NoSuchEntityException
-     */
-    public function getByCode(string $code): StatusInterface;
-
-    /**
      * @return StatusSearchResultsInterface
      */
     public function getList(SearchCriteriaInterface $searchCriteria): StatusSearchResultsInterface;
