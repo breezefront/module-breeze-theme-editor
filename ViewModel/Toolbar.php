@@ -4,6 +4,8 @@ namespace Swissup\BreezeThemeEditor\ViewModel;
 
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\View\DesignInterface;
 
 class Toolbar implements ArgumentInterface
 {
@@ -33,7 +35,7 @@ class Toolbar implements ArgumentInterface
     private $authSession;
 
     /**
-     * @var \Magento\Store\Model\StoreManagerInterface
+     * @var StoreManagerInterface
      */
     private $storeManager;
 
@@ -53,14 +55,20 @@ class Toolbar implements ArgumentInterface
     private $jsonSerializer;
 
     /**
+     * @var DesignInterface
+     */
+    private $design;
+
+    /**
      * @param \Swissup\BreezeThemeEditor\Helper\Data $helper
      * @param \Swissup\BreezeThemeEditor\Model\Data\AccessToken $accessToken
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param \Magento\Backend\Model\Auth\Session $authSession
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Swissup\BreezeThemeEditor\Model\PageUrlProvider $pageUrlProvider
+     * @param StoreManagerInterface $storeManager
+     * @param \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider $pageUrlProvider
      * @param \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider
+     * @param DesignInterface $design
      * @param Json $jsonSerializer
      */
     public function __construct(
@@ -69,9 +77,10 @@ class Toolbar implements ArgumentInterface
         \Magento\Framework\App\RequestInterface $request,
         \Magento\Framework\UrlInterface $urlBuilder,
         \Magento\Backend\Model\Auth\Session $authSession,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        StoreManagerInterface $storeManager,
         \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider $pageUrlProvider,
         \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider,
+        DesignInterface $design,
         Json $jsonSerializer
     ) {
         $this->helper = $helper;
@@ -82,6 +91,7 @@ class Toolbar implements ArgumentInterface
         $this->storeManager = $storeManager;
         $this->pageUrlProvider = $pageUrlProvider;
         $this->storeDataProvider = $storeDataProvider;
+        $this->design = $design;
         $this->jsonSerializer = $jsonSerializer;
     }
 
@@ -92,7 +102,7 @@ class Toolbar implements ArgumentInterface
      */
     public function canShow()
     {
-        return true; // For development
+//        return true; // For development
 
         if (!$this->helper->isEnabled()) {
             return false;
@@ -203,7 +213,6 @@ class Toolbar implements ArgumentInterface
      */
     public function getPagesJsonData()
     {
-//        consoleLog($this->getPageSelectorData());
         return $this->jsonSerializer->serialize($this->getPageSelectorData());
     }
 
@@ -243,5 +252,123 @@ class Toolbar implements ArgumentInterface
         $tokenParam = $this->accessToken->getParamName();
 
         return preg_replace('/[?&]' . preg_quote($tokenParam, '/') . '=[^&]*/', '', $url);
+    }
+
+    /**
+     * Get current store ID
+     *
+     * @return int
+     */
+    public function getStoreId()
+    {
+        try {
+            return (int)$this->storeManager->getStore()->getId();
+        } catch (\Exception $e) {
+            return 1; // Default store
+        }
+    }
+
+    /**
+     * Get current store code
+     *
+     * @return string
+     */
+    public function getStoreCode()
+    {
+        try {
+            return $this->storeManager->getStore()->getCode();
+        } catch (\Exception $e) {
+            return 'default';
+        }
+    }
+
+    /**
+     * Get current theme ID
+     *
+     * @return int
+     */
+    public function getThemeId()
+    {
+        try {
+            return (int)$this->design->getDesignTheme()->getId();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Get current theme name
+     *
+     * @return string
+     */
+    public function getThemeName()
+    {
+        try {
+            return $this->design->getDesignTheme()->getThemeTitle();
+        } catch (\Exception $e) {
+            return 'Default';
+        }
+    }
+
+    /**
+     * Get current website ID
+     *
+     * @return int
+     */
+    public function getWebsiteId()
+    {
+        try {
+            return (int)$this->storeManager->getStore()->getWebsiteId();
+        } catch (\Exception $e) {
+            return 1;
+        }
+    }
+
+    /**
+     * Get base currency code
+     *
+     * @return string
+     */
+    public function getBaseCurrency()
+    {
+        try {
+            return $this->storeManager->getStore()->getBaseCurrencyCode();
+        } catch (\Exception $e) {
+            return 'USD';
+        }
+    }
+
+    /**
+     * Get store locale
+     *
+     * @return string
+     */
+    public function getLocale()
+    {
+        try {
+            return $this->design->getLocale();
+        } catch (\Exception $e) {
+            return 'en_US';
+        }
+    }
+
+    /**
+     * Get GraphQL endpoint URL
+     *
+     * @return string
+     */
+    public function getGraphqlEndpoint()
+    {
+        return $this->urlBuilder->getUrl('graphql');
+    }
+
+    /**
+     * Get access token for GraphQL requests
+     *
+     * @return string|null
+     */
+    public function getAccessToken()
+    {
+        return $this->accessToken->getToken();
     }
 }

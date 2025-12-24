@@ -11,179 +11,44 @@
         </button>
     </div>
 
-    <!-- Presets (optional, буде пізніше) -->
-    <div class="bte-panel-presets" style="display: none;">
-        <label><%= data.presetsLabel %></label>
-        <select class="bte-presets-selector">
-            <option value="">Select preset... </option>
-        </select>
-    </div>
-
     <!-- Content -->
     <div class="bte-panel-content">
-        <!-- Accordion Sections -->
-        <div class="bte-accordion">
-            <!-- Colors Section -->
-            <div class="bte-accordion-section">
-                <button type="button" class="bte-accordion-header" data-section="colors">
-                    <span class="bte-section-icon">🎨</span>
-                    <span class="bte-section-title">Colors</span>
-                    <span class="bte-section-arrow">›</span>
-                </button>
-                <div class="bte-accordion-content" data-section="colors">
-                    <div class="bte-control-group">
-                        <label>Primary Color</label>
-                        <input type="color"
-                               value="#1979c3"
-                               class="bte-color-picker"
-                               data-css-var="--brand-color"
-                               data-format="color-rgb">
-                    </div>
-                    <div class="bte-control-group">
-                        <label>Secondary Color</label>
-                        <input type="color"
-                               value="#006bb4"
-                               class="bte-color-picker"
-                               data-css-var="--info-color"
-                               data-format="color-rgb">
-                    </div>
-                    <div class="bte-control-group">
-                        <label>Background Color</label>
-                        <input type="color"
-                               value="#ffffff"
-                               class="bte-color-picker"
-                               data-css-var="--base-bg"
-                               data-format="color-rgb">
-                    </div>
-                    <div class="bte-control-group">
-                        <label>Link Color</label>
-                        <input type="color"
-                               value="#1979c3"
-                               class="bte-color-picker"
-                               data-css-var="--link-color"
-                               data-format="color-rgb">
-                    </div>
-                    <div class="bte-control-group">
-                        <label>Heading Color</label>
-                        <input type="color"
-                               value="#000000"
-                               class="bte-color-picker"
-                               data-css-var="--headings-color"
-                               data-format="color-rgb">
-                    </div>
-                </div>
-            </div>
+        <!-- 🔥 LOADER STATE -->
+        <div class="bte-panel-loader" style="display: none;">
+            <div class="bte-loader-spinner"></div>
+            <p class="bte-loader-text">Loading configuration...</p>
+        </div>
 
-            <!-- Typography Section -->
-            <div class="bte-accordion-section">
-                <button type="button" class="bte-accordion-header" data-section="typography">
-                    <span class="bte-section-icon">🔤</span>
-                    <span class="bte-section-title">Typography</span>
-                    <span class="bte-section-arrow">›</span>
-                </button>
-                <div class="bte-accordion-content" data-section="typography">
-                    <div class="bte-control-group">
-                        <label>Base Font Family</label>
-                        <select class="bte-font-picker"
-                                data-css-var="font-family">
-                            <option value="'Open Sans', sans-serif">Open Sans</option>
-                            <option value="'Roboto', sans-serif">Roboto</option>
-                            <option value="'Lato', sans-serif">Lato</option>
-                            <option value="'Montserrat', sans-serif">Montserrat</option>
-                            <option value="Arial, sans-serif">Arial</option>
-                            <option value="'Georgia', serif">Georgia</option>
-                        </select>
-                    </div>
-                    <div class="bte-control-group">
-                        <label>Base Font Size</label>
-                        <input type="range"
-                               min="12"
-                               max="20"
-                               value="14"
-                               class="bte-range-slider"
-                               data-css-var="font-size"
-                               data-format="size">
-                        <output class="bte-range-value">14px</output>
-                    </div>
-                </div>
+        <!-- 🔥 ERROR STATE -->
+        <div class="bte-panel-error" style="display: none;">
+            <div class="bte-error-icon">⚠️</div>
+            <h3 class="bte-error-title">Configuration Error</h3>
+            <p class="bte-error-message"><!-- Error message here --></p>
+            <div class="bte-error-details" style="display: none;">
+                <button type="button" class="bte-error-toggle">Show technical details</button>
+                <pre class="bte-error-stack"></pre>
             </div>
+            <button type="button" class="bte-button bte-button-secondary bte-error-retry">
+                <span class="bte-icon">↺</span>
+                Retry
+            </button>
+        </div>
 
-            <!-- Layout Section -->
-            <div class="bte-accordion-section">
-                <button type="button" class="bte-accordion-header" data-section="layout">
-                    <span class="bte-section-icon">📐</span>
-                    <span class="bte-section-title">Layout</span>
-                    <span class="bte-section-arrow">›</span>
-                </button>
-                <div class="bte-accordion-content" data-section="layout">
-                    <div class="bte-control-group">
-                        <label>Container Max Width</label>
-                        <input type="range"
-                               min="960"
-                               max="1920"
-                               value="1280"
-                               step="20"
-                               class="bte-range-slider"
-                               data-css-var="--container-max-width"
-                               data-format="size">
-                        <output class="bte-range-value">1280px</output>
-                    </div>
-                    <div class="bte-control-group">
-                        <label>Sidebar Width</label>
-                        <input type="range"
-                               min="200"
-                               max="400"
-                               value="280"
-                               step="10"
-                               class="bte-range-slider"
-                               data-css-var="--sidebar-width"
-                               data-format="size">
-                        <output class="bte-range-value">280px</output>
-                    </div>
-                    <div class="bte-control-group">
-                        <label>Spacing Scale</label>
-                        <input type="range"
-                               min="0. 5"
-                               max="2"
-                               value="1"
-                               step="0.1"
-                               class="bte-range-slider"
-                               data-css-var="--spacing-scale"
-                               data-format="number">
-                        <output class="bte-range-value">1</output>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Custom CSS Section -->
-            <div class="bte-accordion-section">
-                <button type="button" class="bte-accordion-header" data-section="custom-css">
-                    <span class="bte-section-icon">💻</span>
-                    <span class="bte-section-title">Custom CSS</span>
-                    <span class="bte-section-arrow">›</span>
-                </button>
-                <div class="bte-accordion-content" data-section="custom-css">
-                    <div class="bte-control-group">
-                        <label>Additional CSS</label>
-                        <textarea class="bte-code-editor"
-                                  rows="10"
-                                  placeholder="/* Your custom CSS */"
-                                  data-css-var="custom-css"></textarea>
-                    </div>
-                </div>
-            </div>
+        <!-- 🔥 DYNAMIC SECTIONS CONTAINER (rendered from GraphQL) -->
+        <div class="bte-sections-container">
+            <!-- Динамічно згенеровані секції з field-renderer. js -->
         </div>
     </div>
 
     <!-- Footer -->
     <div class="bte-panel-footer">
-        <button type="button" class="bte-button bte-button-secondary bte-reset-button">
+        <button type="button" class="bte-button bte-button-secondary bte-reset-button" disabled>
             <span class="bte-icon">↺</span>
             Reset
         </button>
-        <button type="button" class="bte-button bte-button-primary bte-save-button">
+        <button type="button" class="bte-button bte-button-primary bte-save-button" disabled>
             <span class="bte-icon">✓</span>
-            Save Changes
+            Save (0)
         </button>
     </div>
 </div>

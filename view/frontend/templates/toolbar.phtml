@@ -15,6 +15,13 @@ if (!$viewModel->canShow()) {
     "body": {
         "Swissup_BreezeThemeEditor/js/toolbar": {
             "currentUser": "<?= $block->escapeJs($viewModel->getAdminUsername()) ?>",
+            "storeId": <?= (int)$viewModel->getStoreId() ?>,
+            "storeCode": "<?= $block->escapeJs($viewModel->getStoreCode()) ?>",
+            "themeId": <?= (int)$viewModel->getThemeId() ?>,
+            "themeName": "<?= $block->escapeJs($viewModel->getThemeName()) ?>",
+            "websiteId": <?= (int)$viewModel->getWebsiteId() ?>,
+            "graphqlEndpoint": "<?= $block->escapeJs($viewModel->getGraphqlEndpoint()) ?>",
+            "accessToken": "<?= $block->escapeJs($viewModel->getAccessToken()) ?>",
             "components": {
                 "adminLink": {
                     "selector": "#toolbar-admin-link",

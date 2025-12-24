@@ -7,7 +7,15 @@ define([
      * Lightweight GraphQL client
      */
     var GraphQLClient = {
-        endpoint: '/graphql',
+        /**
+         * Get GraphQL endpoint from config
+         *
+         * @returns {String}
+         */
+        _getEndpoint: function() {
+            var config = $('body').data('breeze-editor-config');
+            return config && config.graphqlEndpoint ? config.graphqlEndpoint : '/graphql';
+        },
 
         /**
          * Execute GraphQL query/mutation
@@ -28,7 +36,7 @@ define([
             }
 
             return $.ajax({
-                url: this.endpoint,
+                url: this._getEndpoint(),
                 type: 'POST',
                 contentType: 'application/json',
                 dataType: 'json',
@@ -42,26 +50,34 @@ define([
 
         /**
          * Get request headers
+         *
+         * @returns {Object}
          */
         _getHeaders: function() {
             var headers = {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             };
 
-            // Add store header if available
-            var storeCode = window.BREEZE_EDITOR_CONFIG?.storeCode;
-            if (storeCode) {
-                headers['Store'] = storeCode;
+            // Add store header from body data config
+            var config = $('body').data('breeze-editor-config');
+            if (config && config.storeCode) {
+                headers['Store'] = config.storeCode;
             }
-
-            // Add X-Requested-With for AJAX detection
-            headers['X-Requested-With'] = 'XMLHttpRequest';
+            // Add authorization token
+            if (config && config.accessToken) {
+                // headers['Authorization'] = 'Bearer ' + config. accessToken;
+                headers['X-Breeze-Theme-Editor-Token'] = config.accessToken;
+            }
 
             return headers;
         },
 
         /**
          * Handle successful response
+         *
+         * @param {Object} response
+         * @returns {Object}
          */
         _handleSuccess: function(response) {
             if (response.errors && response.errors.length > 0) {
@@ -79,6 +95,10 @@ define([
 
         /**
          * Handle AJAX error
+         *
+         * @param {Object} xhr
+         * @param {String} status
+         * @param {String} error
          */
         _handleError: function(xhr, status, error) {
             console.error('GraphQL Request Failed:', {

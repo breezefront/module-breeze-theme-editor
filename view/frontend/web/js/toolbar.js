@@ -17,6 +17,7 @@ define([
 
     return function (config, element) {
         var $mainBody = $(window.top.document.body);
+
         if (window.self !== window.top) {
             console.warn('⚠️ Skipping toolbar init inside iframe');
             return;
@@ -28,6 +29,24 @@ define([
         }
 
         console.log('✅ Initializing Breeze Theme Editor Toolbar for', config.currentUser);
+        console.log('📊 Config:', {
+            storeId: config.storeId,
+            storeCode: config.storeCode,
+            themeId: config.themeId,
+            themeName: config.themeName,
+            graphqlEndpoint: config.graphqlEndpoint
+        });
+
+        // Store config in body data for components
+        $mainBody.data('breeze-editor-config', {
+            storeId: config.storeId,
+            storeCode: config.storeCode,
+            themeId: config.themeId,
+            themeName: config.themeName,
+            websiteId: config.websiteId,
+            graphqlEndpoint: config.graphqlEndpoint,
+            accessToken: config.accessToken
+        });
 
         $mainBody.find('.breeze-theme-editor-toolbar').remove();
         $mainBody.find('#toolbar-compact-toggle').remove();
@@ -37,7 +56,6 @@ define([
         var template = mageTemplate(toolbarTemplate);
         var html = template({ data: {} });
 
-        // Додати в TOP window body
         $mainBody.prepend(html);
 
         var $toolbar = $mainBody.find('#breeze-theme-editor-toolbar');
@@ -49,10 +67,7 @@ define([
 
         console.log('✅ Toolbar rendered in top window');
 
-        // Позначити як ініціалізовано
         $mainBody.data('breeze-toolbar-initialized', true);
-
-        // Add body class
         $mainBody.addClass('breeze-theme-editor-active');
 
         /**
@@ -83,14 +98,11 @@ define([
             document.documentElement.style.setProperty('--breeze-toolbar-height', toolbarHeight + 'px');
             console.log('Toolbar height updated:', toolbarHeight + 'px');
 
-            // 🔥 Також встановити ширину sidebar (для випадку кастомізації)
             var sidebarWidth = $('#bte-panels-container').outerWidth() || 360;
-            // Можна додати динамічну зміну, але поки статично
             console.log('📏 Toolbar height:', toolbarHeight + 'px');
             document.documentElement.style.setProperty('--bte-sidebar-width', sidebarWidth + 'px');
         }
 
-        // Detect viewport on init
         detectViewportSize();
 
         // Initialize all components
@@ -111,7 +123,6 @@ define([
                 panelSelector: components.navigation.panelSelector || '#bte-panels-container'
             });
 
-            // Listen to navigation changes
             $(components.navigation.selector).on('navigationChanged', function(event, data) {
                 if (data.active) {
                     console.log('📍 Navigation activated:', data.id, '→', data.panelId);
@@ -120,17 +131,14 @@ define([
                 }
             });
 
-            // Listen to panel shown
             $(components.navigation.selector).on('panelShown', function(event, data) {
                 console.log('👁️ Panel shown:', data.panelId);
             });
 
-            // Listen to panel hidden
             $(components.navigation.selector).on('panelHidden', function(event, data) {
                 console.log('🙈 Panel hidden:', data.panelId);
             });
 
-            // Listen to disabled clicks
             $(components.navigation.selector).on('navigationDisabledClick', function(event, data) {
                 console.warn('⚠️ Disabled navigation clicked:', data.message);
             });
@@ -188,10 +196,8 @@ define([
             });
         }
 
-        // Set initial height after all components rendered
         setTimeout(updateToolbarHeight, 100);
 
-        // Update on window resize
         var resizeTimer;
         $(window).on('resize', function() {
             clearTimeout(resizeTimer);
@@ -201,12 +207,10 @@ define([
             }, 250);
         });
 
-        // Listen to toolbar toggle events
         $(document).on('toolbarShown toolbarHidden', function() {
             setTimeout(updateToolbarHeight, 350);
         });
 
-        // Listen to device changed events
         $(document).on('deviceChanged', function(event, device) {
             console.log('Device changed to:', device);
             setTimeout(function() {

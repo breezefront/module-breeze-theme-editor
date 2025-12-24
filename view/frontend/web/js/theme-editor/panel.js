@@ -24,23 +24,35 @@ define([
     'use strict';
 
     $.widget('swissup.themeEditorPanel', {
-        options: {
+        options:  {
             title: 'Theme Editor',
             closeTitle: 'Close Panel',
-            presetsLabel: 'Presets: ',
-            storeId: null,
-            themeId: null,
+            presetsLabel: 'Presets:  ',
             status: 'DRAFT'
         },
 
         _create: function () {
             console.log('✅ Initializing Theme Editor Panel');
 
-            // Get config from global or options
-            this.storeId = this.options.storeId || (window.BREEZE_EDITOR_CONFIG && window.BREEZE_EDITOR_CONFIG.storeId);
-            this.themeId = this.options.themeId || (window.BREEZE_EDITOR_CONFIG && window.BREEZE_EDITOR_CONFIG.themeId);
+            // Get config from body data (set by toolbar. js)
+            var config = $('body').data('breeze-editor-config');
 
-            this.template = mageTemplate(panelTemplate);
+            if (config) {
+                this.storeId = config.storeId;
+                this.themeId = config.themeId;
+                console.log('📊 Panel config:', {
+                    storeId: this.storeId,
+                    themeId:  this.themeId,
+                    themeName: config.themeName
+                });
+            } else {
+                console.error('❌ Breeze editor config not found in body data! ');
+                // Fallback to options
+                this.storeId = this.options.storeId || 1;
+                this. themeId = this.options. themeId || 0;
+            }
+
+            this. template = mageTemplate(panelTemplate);
             this._render();
             this._bind();
             this._initPreview();
@@ -56,12 +68,14 @@ define([
                 }
             });
 
-            this.element.html(html);
+            this.element. html(html);
 
             this.$closeButton = this.element.find('.bte-panel-close');
             this.$resetButton = this.element.find('.bte-reset-button');
             this.$saveButton = this.element.find('.bte-save-button');
             this.$sectionsContainer = this.element.find('.bte-sections-container');
+            this.$loader = this.element.find('.bte-panel-loader');
+            this.$error = this.element.find('.bte-panel-error');
 
             console.log('📋 Theme Editor Panel rendered');
         },
@@ -70,6 +84,23 @@ define([
             this.$closeButton.on('click', $.proxy(this._close, this));
             this.$resetButton.on('click', $.proxy(this._reset, this));
             this.$saveButton.on('click', $.proxy(this._save, this));
+
+            // Error retry button
+            this.element.on('click', '.bte-error-retry', $.proxy(this._loadConfig, this));
+
+            // Error details toggle
+            this.element.on('click', '.bte-error-toggle', function(e) {
+                var $btn = $(e.currentTarget);
+                var $stack = $btn.siblings('.bte-error-stack');
+
+                if ($stack.is(':visible')) {
+                    $stack.hide();
+                    $btn.text('Show technical details');
+                } else {
+                    $stack.show();
+                    $btn.text('Hide technical details');
+                }
+            });
 
             // Delegate events for dynamic content
             this.element.on('click', '.bte-accordion-header', $.proxy(this._toggleSection, this));
@@ -84,21 +115,21 @@ define([
         /**
          * Initialize CSS Preview Manager
          */
-        _initPreview: function() {
+        _initPreview:  function() {
             setTimeout(function() {
-                CssPreviewManager.init();
+                CssPreviewManager. init();
             }, 500);
         },
 
         /**
          * Load theme config from GraphQL
          */
-        _loadConfig: function() {
+        _loadConfig:  function() {
             var self = this;
 
             this._showLoader('Loading configuration...');
 
-            getConfig(this.storeId, this.themeId, this.options.status)
+            getConfig(this.storeId, this.themeId, this. options.status)
                 .done(function(data) {
                     console.log('✅ Config loaded:', data);
 
@@ -114,7 +145,23 @@ define([
                 })
                 .fail(function(error) {
                     console.error('❌ Failed to load config:', error);
-                    self._showError('Failed to load configuration:  ' + error.message);
+
+                    // Parse GraphQL errors
+                    var errorData = error;
+
+                    if (error.message && error.message.indexOf('GraphQL Error: ') !== -1) {
+                        // Extract GraphQL error message
+                        try {
+                            var match = error.message.match(/GraphQL Error: (.*)/);
+                            if (match) {
+                                errorData = { message: match[1] };
+                            }
+                        } catch (e) {
+                            // Fallback to original error
+                        }
+                    }
+
+                    self._showError(errorData);
                 });
         },
 
@@ -161,7 +208,7 @@ define([
                 $content.addClass('active').slideDown(200);
             }
 
-            console.log('🔄 Accordion toggled:', section, '→', ! isActive);
+            console.log('🔄 Accordion toggled:', section, '→', !isActive);
         },
 
         /**
@@ -220,7 +267,7 @@ define([
             }
 
             if (confirm('Reset all changes to default values?')) {
-                PanelState.reset();
+                PanelState. reset();
                 CssPreviewManager.reset();
                 this._loadConfig(); // Reload to refresh UI
                 console.log('✅ Reset complete');
@@ -230,7 +277,7 @@ define([
         /**
          * Save changes
          */
-        _save:  function () {
+        _save: function () {
             if (!PanelState.hasChanges()) {
                 alert('No changes to save');
                 return;
@@ -245,7 +292,7 @@ define([
                 .done(function(data) {
                     console.log('✅ Saved:', data);
 
-                    if (data.saveBreezeThemeEditorValues.success) {
+                    if (data. saveBreezeThemeEditorValues.success) {
                         alert('Settings saved successfully!');
                         PanelState.markAsSaved();
                         CssPreviewManager.markAsSaved();
@@ -267,7 +314,15 @@ define([
          * Show loader
          */
         _showLoader: function(message) {
-            // TODO: Implement loader UI
+            this.$loader.show();
+            this.$loader.find('.bte-loader-text').text(message || 'Loading...');
+            this.$error.hide();
+            this.$sectionsContainer.hide();
+
+            // Disable buttons
+            this.$saveButton.prop('disabled', true);
+            this.$resetButton.prop('disabled', true);
+
             console.log('⏳', message);
         },
 
@@ -275,15 +330,76 @@ define([
          * Hide loader
          */
         _hideLoader: function() {
-            // TODO: Hide loader UI
+            this.$loader.hide();
+            this.$sectionsContainer.show();
+
+            // Enable buttons (will be updated by _updateChangesCount)
+            this.$saveButton.prop('disabled', false);
+            this.$resetButton.prop('disabled', true);
         },
 
         /**
          * Show error message
          */
-        _showError: function(message) {
-            // TODO: Implement error UI
-            alert(message);
+        _showError: function(errorData) {
+            var $details = this.$error.find('.bte-error-details');
+
+            // Hide loader and sections
+            this.$loader.hide();
+            this.$sectionsContainer.hide();
+
+            // Parse error
+            var message = 'An unexpected error occurred';
+            var debugMessage = null;
+
+            if (typeof errorData === 'string') {
+                message = errorData;
+            } else if (errorData && errorData.message) {
+                message = errorData.message;
+
+                // Check for GraphQL error with debugMessage
+                if (errorData.extensions && errorData.extensions.debugMessage) {
+                    debugMessage = errorData.extensions.debugMessage;
+                }
+            }
+
+            // User-friendly messages map
+            var friendlyMessages = {
+                'Theme editor configuration file not found': 'Theme configuration is not set up yet.  Please contact your administrator.',
+                'configuration file not found': 'Theme configuration is not set up yet. Please contact your administrator.',
+                'Access token required': 'Your session has expired. Please refresh the page.',
+                'Invalid access token': 'Your session has expired. Please refresh the page.',
+                'Internal server error': 'The server encountered an error. Please try again later.'
+            };
+
+            // Check if we have a friendly message
+            for (var key in friendlyMessages) {
+                if (message.indexOf(key) !== -1 || (debugMessage && debugMessage.indexOf(key) !== -1)) {
+                    message = friendlyMessages[key];
+                    break;
+                }
+            }
+
+            // Set message
+            this.$error.find('.bte-error-message').text(message);
+
+            // Show/hide technical details
+            if (debugMessage) {
+                $details.show();
+                this.$error.find('.bte-error-stack').text(debugMessage);
+                this.$error.find('.bte-error-toggle').text('Show technical details');
+            } else {
+                $details.hide();
+            }
+
+            // Show error state
+            this.$error.show();
+
+            // Disable buttons
+            this.$saveButton.prop('disabled', true);
+            this.$resetButton.prop('disabled', true);
+
+            console.error('❌ Panel error:', errorData);
         },
 
         _destroy: function() {
