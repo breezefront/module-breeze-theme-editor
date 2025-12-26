@@ -119,7 +119,7 @@ define([
             this._showLoader('Loading configuration...');
 
             getConfig(this.storeId, this.themeId, this. options.status)
-                .done(function(data) {
+                .then(function(data) {
                     console.log('✅ Config loaded:', data);
 
                     var config = data.breezeThemeEditorConfig;
@@ -132,7 +132,7 @@ define([
 
                     self._hideLoader();
                 })
-                .fail(function(error) {
+                .catch(function(error) {
                     console.error('❌ Failed to load config:', error);
 
                     // Parse GraphQL errors
