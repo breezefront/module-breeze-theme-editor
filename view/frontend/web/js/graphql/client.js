@@ -59,15 +59,19 @@ define([
                 'X-Requested-With': 'XMLHttpRequest'
             };
 
-            // Add store header from body data config
+            // Get config from body data
             var config = $('body').data('breeze-editor-config');
-            if (config && config.storeCode) {
-                headers['Store'] = config.storeCode;
-            }
-            // Add authorization token
-            if (config && config.accessToken) {
-                // headers['Authorization'] = 'Bearer ' + config. accessToken;
-                headers['X-Breeze-Theme-Editor-Token'] = config.accessToken;
+
+            if (config) {
+                // Add store header
+                if (config.storeCode) {
+                    headers['Store'] = config.storeCode;
+                }
+
+                // Add access token
+                if (config.accessToken) {
+                    headers['X-Breeze-Theme-Editor-Token'] = config.accessToken;
+                }
             }
 
             return headers;
@@ -83,11 +87,15 @@ define([
             if (response.errors && response.errors.length > 0) {
                 console.error('GraphQL Errors:', response.errors);
 
-                var errorMessage = response.errors
-                    .map(function(err) { return err.message; })
-                    .join(', ');
+                var firstError = response.errors[0];
+                var errorMessage = firstError.message;
 
-                throw new Error('GraphQL Error: ' + errorMessage);
+                // Create error object with full GraphQL error data
+                var error = new Error('GraphQL Error: ' + errorMessage);
+                error.graphqlErrors = response.errors;
+                error.extensions = firstError.extensions || null;
+
+                throw error;
             }
 
             return response.data;
@@ -103,22 +111,33 @@ define([
         _handleError: function(xhr, status, error) {
             console.error('GraphQL Request Failed:', {
                 status: status,
-                error: error,
-                response: xhr.responseText
+                error:  error,
+                response: xhr. responseText
             });
 
             var message = 'Network error';
+            var extensions = null;
 
             try {
                 var response = JSON.parse(xhr.responseText);
                 if (response.errors && response.errors.length > 0) {
-                    message = response.errors[0].message;
+                    var firstError = response.errors[0];
+                    message = firstError.message;
+
+                    // Parse extensions with debugMessage
+                    if (firstError.extensions) {
+                        extensions = firstError.extensions;
+                    }
                 }
             } catch (e) {
                 message = error || status;
             }
 
-            throw new Error(message);
+            // Create error object with extensions
+            var errorObj = new Error(message);
+            errorObj.extensions = extensions;
+
+            throw errorObj;
         }
     };
 
