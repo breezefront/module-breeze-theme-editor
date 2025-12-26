@@ -1,0 +1,29 @@
+<div class="bte-field-group bte-field-font-picker">
+    <label class="bte-field-label" for="<%= data.fieldId %>">
+        <%= data.label %>
+        <% if (data.required) { %>
+            <span class="bte-required">*</span>
+        <% } %>
+    </label>
+
+    <% if (data.hasDescription) { %>
+        <p class="bte-field-description"><%= data.description %></p>
+    <% } %>
+
+    <select id="<%= data.fieldId %>"
+            class="bte-font-picker"
+            <%= data.dataAttrs %>
+            <% if (data.required) { %>required<% } %>>
+        <% _.each(data.fonts, function(font) { %>
+            <option value="<%= font.value %>"
+                    <%= font.selected ? 'selected' : '' %>
+                    style="font-family: <%= font.fontFamily %>;">
+                <%= font.label %>
+            </option>
+        <% }); %>
+    </select>
+
+    <% if (data.hasHelpText) { %>
+        <small class="bte-field-help"><%= data.helpText %></small>
+    <% } %>
+</div>

@@ -112,7 +112,7 @@ define([
             console.error('GraphQL Request Failed:', {
                 status: status,
                 error:  error,
-                response: xhr. responseText
+                response: xhr.responseText
             });
 
             var message = 'Network error';

@@ -1,0 +1,43 @@
+<div class="bte-field-group bte-field-icon-set-picker">
+    <label class="bte-field-label">
+        <%= data.label %>
+        <% if (data.required) { %>
+            <span class="bte-required">*</span>
+        <% } %>
+    </label>
+
+    <% if (data.hasDescription) { %>
+        <p class="bte-field-description"><%= data.description %></p>
+    <% } %>
+
+    <div class="bte-icon-set-picker">
+        <% _.each(data.iconSets, function(set) { %>
+            <label class="bte-icon-set-option <%= set.active ? 'active' : '' %>">
+                <input type="radio"
+                       name="<%= data.fieldId %>"
+                       class="bte-icon-set-radio"
+                       value="<%= set.value %>"
+                       <%= set.checked ? 'checked' : '' %>
+                       <%= data.dataAttrs %>>
+
+                <div class="bte-icon-set-preview">
+                    <% if (set.preview) { %>
+                        <span class="bte-icon-sample"><%= set.preview %></span>
+                    <% } else { %>
+                        <span class="bte-icon-sample"><%= set.label.charAt(0) %></span>
+                    <% } %>
+                </div>
+
+                <span class="bte-icon-set-label"><%= set.label %></span>
+
+                <% if (set.description) { %>
+                    <small class="bte-icon-set-description"><%= set.description %></small>
+                <% } %>
+            </label>
+        <% }); %>
+    </div>
+
+    <% if (data.hasHelpText) { %>
+        <small class="bte-field-help"><%= data.helpText %></small>
+    <% } %>
+</div>

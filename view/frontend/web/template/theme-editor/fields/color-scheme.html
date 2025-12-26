@@ -1,0 +1,37 @@
+<div class="bte-field-group bte-field-color-scheme">
+    <label class="bte-field-label">
+        <%= data.label %>
+        <% if (data.required) { %>
+            <span class="bte-required">*</span>
+        <% } %>
+    </label>
+
+    <% if (data.hasDescription) { %>
+        <p class="bte-field-description"><%= data.description %></p>
+    <% } %>
+
+    <div class="bte-color-scheme-picker">
+        <% _.each(data.schemes, function(scheme) { %>
+            <label class="bte-scheme-option <%= scheme.active ?  'active' : '' %>">
+                <input type="radio"
+                       name="<%= data.fieldId %>"
+                       class="bte-scheme-radio"
+                       value="<%= scheme.value %>"
+                       <%= scheme.checked ? 'checked' : '' %>
+                       <%= data.dataAttrs %>>
+
+                <div class="bte-scheme-preview">
+                    <% _.each(scheme.colors, function(color) { %>
+                        <span class="bte-scheme-color" style="background-color: <%= color %>;"></span>
+                    <% }); %>
+                </div>
+
+                <span class="bte-scheme-label"><%= scheme.label %></span>
+            </label>
+        <% }); %>
+    </div>
+
+    <% if (data.hasHelpText) { %>
+        <small class="bte-field-help"><%= data.helpText %></small>
+    <% } %>
+</div>

@@ -1,161 +1,112 @@
 define([
-    'jquery',
-    'mage/template',
-    'text!Swissup_BreezeThemeEditor/template/theme-editor/fields/color-picker.html',
-    'text!Swissup_BreezeThemeEditor/template/theme-editor/fields/range-slider.html',
-    'text!Swissup_BreezeThemeEditor/template/theme-editor/fields/select.html',
-    'text!Swissup_BreezeThemeEditor/template/theme-editor/fields/text-input.html',
-    'text!Swissup_BreezeThemeEditor/template/theme-editor/fields/textarea.html',
-    'text!Swissup_BreezeThemeEditor/template/theme-editor/fields/toggle.html'
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/base',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/color',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/text',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/number',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/range',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/select',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/toggle',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/textarea',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/font-picker',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/color-scheme',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/code',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/icon-set-picker',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/social-links'
 ], function(
-    $,
-    mageTemplate,
-    colorPickerTpl,
-    rangeSliderTpl,
-    selectTpl,
-    textInputTpl,
-    textareaTpl,
-    toggleTpl
+    BaseFieldRenderer,
+    ColorRenderer,
+    TextRenderer,
+    NumberRenderer,
+    RangeRenderer,
+    SelectRenderer,
+    ToggleRenderer,
+    TextareaRenderer,
+    FontPickerRenderer,
+    ColorSchemeRenderer,
+    CodeRenderer,
+    IconSetPickerRenderer,
+    SocialLinksRenderer
 ) {
     'use strict';
 
     /**
-     * Field renderer
-     * Dynamically renders field UI based on type
+     * Field Renderer - Main Orchestrator
+     * Routes field types to appropriate renderers
      */
     var FieldRenderer = {
         /**
-         * Templates cache
+         * Renderer registry
          */
-        templates: {},
-
-        /**
-         * Initialize templates
-         */
-        init: function() {
-            this.templates = {
-                COLOR:  mageTemplate(colorPickerTpl),
-                RANGE: mageTemplate(rangeSliderTpl),
-                NUMBER: mageTemplate(rangeSliderTpl), // Same as RANGE
-                SELECT: mageTemplate(selectTpl),
-                TEXT:  mageTemplate(textInputTpl),
-                TEXTAREA: mageTemplate(textareaTpl),
-                TOGGLE: mageTemplate(toggleTpl),
-                CHECKBOX: mageTemplate(toggleTpl) // Same as TOGGLE
-            };
+        renderers: {
+            'COLOR': ColorRenderer,
+            'TEXT': TextRenderer,
+            'NUMBER': NumberRenderer,
+            'RANGE': RangeRenderer,
+            'SELECT': SelectRenderer,
+            'TOGGLE': ToggleRenderer,
+            'CHECKBOX': ToggleRenderer, // Alias for TOGGLE
+            'TEXTAREA': TextareaRenderer,
+            'FONT_PICKER': FontPickerRenderer,
+            'COLOR_SCHEME':  ColorSchemeRenderer,
+            'CODE': CodeRenderer,
+            'ICON_SET_PICKER':  IconSetPickerRenderer,
+            'SOCIAL_LINKS': SocialLinksRenderer
         },
 
         /**
-         * Render field HTML
+         * Register custom renderer
+         *
+         * @param {String} type
+         * @param {Object} renderer
+         */
+        register: function(type, renderer) {
+            this.renderers[type] = renderer;
+            console.log('✅ Registered custom renderer:', type);
+        },
+
+        /**
+         * Render single field
          *
          * @param {Object} field - Field config from GraphQL
          * @param {String} sectionCode
          * @returns {String} HTML
          */
         render: function(field, sectionCode) {
-            var template = this.templates[field.type];
+            var renderer = this.renderers[field.type];
 
-            if (!template) {
-                console.warn('No template for field type:', field.type);
+            if (!renderer) {
+                console.warn('⚠️ No renderer for field type:', field.type, '- Using fallback');
                 return this._renderUnsupported(field, sectionCode);
             }
 
-            var data = this._prepareFieldData(field, sectionCode);
-
             try {
-                return template({ data: data });
+                return renderer.render(field, sectionCode);
             } catch (e) {
-                console.error('Failed to render field:', field.code, e);
-                return this._renderError(field, sectionCode);
+                console.error('❌ Failed to render field:', field.code, e);
+                return this._renderError(field, sectionCode, e);
             }
         },
 
         /**
-         * Render section with fields
+         * Render section with all fields
          *
          * @param {Object} section - Section config from GraphQL
          * @returns {String} HTML
          */
         renderSection: function(section) {
+            var self = this;
             var html = '<div class="bte-accordion-content" data-section="' + section.code + '">';
 
             section.fields.forEach(function(field) {
                 html += '<div class="bte-field-wrapper" data-field="' + field.code + '">';
-                html += this.render(field, section.code);
+                html += self.render(field, section.code);
                 html += '</div>';
-            }.bind(this));
+            });
 
             html += '</div>';
+
+            console.log('📋 Rendered section:', section.code, '(' + section.fields.length + ' fields)');
             return html;
-        },
-
-        /**
-         * Prepare field data for template
-         *
-         * @param {Object} field
-         * @param {String} sectionCode
-         * @returns {Object}
-         */
-        _prepareFieldData: function(field, sectionCode) {
-            var value = field.value || field.default || '';
-            var params = field.params || {};
-
-            return {
-                sectionCode: sectionCode,
-                fieldCode: field.code,
-                label: field.label,
-                description: field.description || '',
-                helpText: field.helpText || '',
-                value: value,
-                default: field.default || '',
-                cssVar: field.cssVar || '',
-                placeholder: field.placeholder || '',
-                required: field.required || false,
-                isModified: field.isModified || false,
-                validation: field.validation || {},
-                min: params.min || 0,
-                max: params.max || 100,
-                step: params.step || 1,
-                unit: params.unit || '',
-                options: params.options || [],
-                language: params.language || 'css',
-                hasOptions: params.options && params.options.length > 0,
-                showValue: field.type === 'RANGE' || field.type === 'NUMBER',
-                dataAttributes: this._buildDataAttributes(field, sectionCode)
-            };
-        },
-
-        /**
-         * Build data attributes string
-         *
-         * @param {Object} field
-         * @param {String} sectionCode
-         * @returns {String}
-         */
-        _buildDataAttributes: function(field, sectionCode) {
-            var attrs = [];
-
-            attrs.push('data-section="' + sectionCode + '"');
-            attrs.push('data-field="' + field.code + '"');
-            attrs.push('data-type="' + field.type + '"');
-
-            if (field.cssVar) {
-                attrs.push('data-css-var="' + field.cssVar + '"');
-            }
-
-            if (field.validation) {
-                if (field.validation.min !== undefined) {
-                    attrs.push('data-min="' + field.validation.min + '"');
-                }
-                if (field.validation.max !== undefined) {
-                    attrs.push('data-max="' + field.validation.max + '"');
-                }
-                if (field.validation.pattern) {
-                    attrs.push('data-pattern="' + field.validation.pattern + '"');
-                }
-            }
-
-            return attrs.join(' ');
         },
 
         /**
@@ -166,10 +117,18 @@ define([
          * @returns {String}
          */
         _renderUnsupported: function(field, sectionCode) {
-            return '<div class="bte-field bte-field-unsupported" data-section="' + sectionCode + '" data-field="' + field.code + '">' +
-                '<label>' + field.label + '</label>' +
-                '<div class="bte-field-message">Field type "' + field.type + '" is not supported yet</div>' +
-                '</div>';
+            return `
+                <div class="bte-field-group bte-field-unsupported"
+                     data-section="${sectionCode}"
+                     data-field="${field.code}">
+                    <label class="bte-field-label">${field.label}</label>
+                    <div class="bte-field-message bte-warning">
+                        <span class="bte-icon">⚠️</span>
+                        Field type "<strong>${field.type}</strong>" is not yet supported.
+                    </div>
+                    ${field.description ? `<p class="bte-field-description">${field.description}</p>` : ''}
+                </div>
+            `;
         },
 
         /**
@@ -177,18 +136,23 @@ define([
          *
          * @param {Object} field
          * @param {String} sectionCode
+         * @param {Error} error
          * @returns {String}
          */
-        _renderError: function(field, sectionCode) {
-            return '<div class="bte-field bte-field-error" data-section="' + sectionCode + '" data-field="' + field.code + '">' +
-                '<label>' + field.label + '</label>' +
-                '<div class="bte-field-message bte-error">Failed to render field</div>' +
-                '</div>';
+        _renderError: function(field, sectionCode, error) {
+            return `
+                <div class="bte-field-group bte-field-error"
+                     data-section="${sectionCode}"
+                     data-field="${field.code}">
+                    <label class="bte-field-label">${field.label}</label>
+                    <div class="bte-field-message bte-error">
+                        <span class="bte-icon">❌</span>
+                        Failed to render field:  ${error.message}
+                    </div>
+                </div>
+            `;
         }
     };
-
-    // Initialize templates
-    FieldRenderer.init();
 
     return FieldRenderer;
 });

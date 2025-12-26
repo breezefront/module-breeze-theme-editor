@@ -52,7 +52,7 @@ define([
                 this.themeId = this.options.themeId || 0;
             }
 
-            this. template = mageTemplate(panelTemplate);
+            this.template = mageTemplate(panelTemplate);
             this._render();
             this._bind();
             this._initPreview();
@@ -82,14 +82,14 @@ define([
 
         _bind: function () {
             this.$closeButton.on('click', $.proxy(this._close, this));
-            this.$resetButton. on('click', $.proxy(this._reset, this));
+            this.$resetButton.on('click', $.proxy(this._reset, this));
             this.$saveButton.on('click', $.proxy(this._save, this));
 
             // Error retry button
             this.element.on('click', '.bte-error-retry', $.proxy(this._loadConfig, this));
 
             // Error details toggle
-            this.element.on('click', '.bte-error-toggle', $. proxy(this._toggleErrorDetails, this));
+            this.element.on('click', '.bte-error-toggle', $.proxy(this._toggleErrorDetails, this));
 
             // Delegate events for dynamic content
             this.element.on('click', '.bte-accordion-header', $.proxy(this._toggleSection, this));
@@ -106,7 +106,7 @@ define([
          */
         _initPreview:  function() {
             setTimeout(function() {
-                CssPreviewManager. init();
+                CssPreviewManager.init();
             }, 500);
         },
 
@@ -118,7 +118,7 @@ define([
 
             this._showLoader('Loading configuration...');
 
-            getConfig(this.storeId, this.themeId, this. options.status)
+            getConfig(this.storeId, this.themeId, this.options.status)
                 .then(function(data) {
                     console.log('✅ Config loaded:', data);
 
@@ -138,7 +138,7 @@ define([
                     // Parse GraphQL errors
                     var errorData = error;
 
-                    if (error.message && error.message. indexOf('GraphQL Error: ') !== -1) {
+                    if (error.message && error.message.indexOf('GraphQL Error: ') !== -1) {
                         // Extract GraphQL error message
                         try {
                             var match = error.message.match(/GraphQL Error: (.*)/);
@@ -177,7 +177,7 @@ define([
             this.$sectionsContainer.find('.bte-accordion-header').first().addClass('active');
             this.$sectionsContainer.find('.bte-accordion-content').first().addClass('active').show();
 
-            console.log('📋 Rendered', sections. length, 'sections');
+            console.log('📋 Rendered', sections.length, 'sections');
         },
 
         /**
@@ -186,7 +186,7 @@ define([
         _toggleSection: function (e) {
             var $header = $(e.currentTarget);
             var section = $header.data('section');
-            var $content = this. element.find('.bte-accordion-content[data-section="' + section + '"]');
+            var $content = this.element.find('.bte-accordion-content[data-section="' + section + '"]');
             var isActive = $header.hasClass('active');
 
             if (isActive) {
@@ -252,7 +252,7 @@ define([
          * Update changes count badge
          */
         _updateChangesCount: function() {
-            var count = PanelState. getChangesCount();
+            var count = PanelState.getChangesCount();
             this.$saveButton.text('Save (' + count + ')');
             this.$resetButton.prop('disabled', count === 0);
         },
@@ -298,9 +298,9 @@ define([
 
             saveValues(this.storeId, this.themeId, this.options.status, values)
                 .done(function(data) {
-                    console. log('✅ Saved:', data);
+                    console.log('✅ Saved:', data);
 
-                    if (data.saveBreezeThemeEditorValues. success) {
+                    if (data.saveBreezeThemeEditorValues.success) {
                         alert('Settings saved successfully!');
                         PanelState.markAsSaved();
                         CssPreviewManager.markAsSaved();
@@ -311,7 +311,7 @@ define([
                 })
                 .fail(function(error) {
                     console.error('❌ Save failed:', error);
-                    alert('Failed to save settings: ' + error. message);
+                    alert('Failed to save settings: ' + error.message);
                 })
                 .always(function() {
                     self.$saveButton.prop('disabled', false).text('Save');
@@ -354,25 +354,25 @@ define([
 
             // Hide loader and sections
             this.$loader.hide();
-            this.$sectionsContainer. hide();
+            this.$sectionsContainer.hide();
 
             // Parse error data
             var errorInfo = this._parseErrorData(errorData);
             console.log('🔥 Parsed error info:', errorInfo);
 
             // Apply friendly message if available
-            var displayMessage = this._getFriendlyMessage(errorInfo. message, errorInfo.debugMessage);
-            console.log('🔥 Display message:', displayMessage. message, 'Friendly:', displayMessage.isFriendly);
+            var displayMessage = this._getFriendlyMessage(errorInfo.message, errorInfo.debugMessage);
+            console.log('🔥 Display message:', displayMessage.message, 'Friendly:', displayMessage.isFriendly);
 
             // Update UI
-            this._updateErrorUI(displayMessage. message, errorInfo.debugMessage, displayMessage. isFriendly);
+            this._updateErrorUI(displayMessage.message, errorInfo.debugMessage, displayMessage.isFriendly);
 
             // Disable buttons
             this.$saveButton.prop('disabled', true);
             this.$resetButton.prop('disabled', true);
 
             // Show error state
-            this.$error. show();
+            this.$error.show();
 
             console.error('❌ Panel error:', errorData);
         },
@@ -400,27 +400,27 @@ define([
 
                 // Remove "GraphQL Error:  " prefix
                 if (message.indexOf('GraphQL Error: ') === 0) {
-                    message = message. substring(15);
+                    message = message.substring(15);
                     console.log('📝 Removed GraphQL prefix:', message);
                 }
 
                 // Priority 1: extensions.debugMessage (direct)
-                if (errorData. extensions && errorData.extensions.debugMessage) {
+                if (errorData.extensions && errorData.extensions.debugMessage) {
                     debugMessage = errorData.extensions.debugMessage;
                     console.log('✅ Found debugMessage in extensions:', debugMessage);
                 }
 
                 // Priority 2: graphqlErrors[0].extensions.debugMessage
-                if (!debugMessage && errorData.graphqlErrors && errorData. graphqlErrors.length > 0) {
+                if (!debugMessage && errorData.graphqlErrors && errorData.graphqlErrors.length > 0) {
                     var firstError = errorData.graphqlErrors[0];
-                    if (firstError. extensions && firstError.extensions.debugMessage) {
+                    if (firstError.extensions && firstError.extensions.debugMessage) {
                         debugMessage = firstError.extensions.debugMessage;
                         console.log('✅ Found debugMessage in graphqlErrors:', debugMessage);
                     }
                 }
 
                 // Priority 3: Use stack trace (only if it's a real stack)
-                if (!debugMessage && errorData.stack && errorData. stack.indexOf('Error:') !== -1) {
+                if (!debugMessage && errorData.stack && errorData.stack.indexOf('Error:') !== -1) {
                     debugMessage = errorData.stack;
                     console.log('✅ Using stack trace:', debugMessage);
                 }
@@ -439,7 +439,7 @@ define([
          */
         _getFriendlyMessage: function(message, debugMessage) {
             var friendlyMessages = {
-                'Theme editor configuration file not found':  'Theme configuration is not set up yet. Please contact your administrator.',
+                'Theme editor configuration file not found':  'Theme configuration is not set up yet.Please contact your administrator.',
                 'configuration file not found': 'Theme configuration is not set up yet. Please contact your administrator.',
                 'Access token required': 'Your session has expired. Please refresh the page.',
                 'Invalid access token':  'Your session has expired. Please refresh the page.',
@@ -507,7 +507,7 @@ define([
         },
 
         _destroy: function() {
-            this. element.off('click input change');
+            this.element.off('click input change');
             CssPreviewManager.destroy();
             PanelState.clear();
             this._super();
