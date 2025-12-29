@@ -44,7 +44,7 @@ define([
             'RANGE': RangeRenderer,
             'SELECT': SelectRenderer,
             'TOGGLE': ToggleRenderer,
-            'CHECKBOX': ToggleRenderer, // Alias for TOGGLE
+            'CHECKBOX': ToggleRenderer,
             'TEXTAREA': TextareaRenderer,
             'FONT_PICKER': FontPickerRenderer,
             'COLOR_SCHEME':  ColorSchemeRenderer,
@@ -72,6 +72,14 @@ define([
          * @returns {String} HTML
          */
         render: function(field, sectionCode) {
+            // Validate field structure
+            if (!field.code) {
+                console.error('❌ Field missing "code" property:', field);
+            }
+            if (!field.type) {
+                console.error('❌ Field missing "type" property:', field);
+            }
+
             var renderer = this.renderers[field.type];
 
             if (!renderer) {
@@ -82,7 +90,8 @@ define([
             try {
                 return renderer.render(field, sectionCode);
             } catch (e) {
-                console.error('❌ Failed to render field:', field.code, e);
+                console.error('❌ Failed to render field:', field.code || 'unknown', e);
+                console.error('Field data:', field);
                 return this._renderError(field, sectionCode, e);
             }
         },
@@ -97,8 +106,15 @@ define([
             var self = this;
             var html = '<div class="bte-accordion-content" data-section="' + section.code + '">';
 
+            console.log('📋 Rendering section:', section.code, 'with', section.fields.length, 'fields');
+
             section.fields.forEach(function(field) {
-                html += '<div class="bte-field-wrapper" data-field="' + field.code + '">';
+                // Validate each field
+                if (!field.code) {
+                    console.error('❌ Field missing code in section:', section.code, field);
+                }
+
+                html += '<div class="bte-field-wrapper" data-field="' + (field.code || 'unknown') + '">';
                 html += self.render(field, section.code);
                 html += '</div>';
             });
@@ -116,19 +132,22 @@ define([
          * @param {String} sectionCode
          * @returns {String}
          */
-        _renderUnsupported: function(field, sectionCode) {
-            return `
-                <div class="bte-field-group bte-field-unsupported"
-                     data-section="${sectionCode}"
-                     data-field="${field.code}">
-                    <label class="bte-field-label">${field.label}</label>
-                    <div class="bte-field-message bte-warning">
-                        <span class="bte-icon">⚠️</span>
-                        Field type "<strong>${field.type}</strong>" is not yet supported.
-                    </div>
-                    ${field.description ? `<p class="bte-field-description">${field.description}</p>` : ''}
-                </div>
-            `;
+        _renderUnsupported:  function(field, sectionCode) {
+            var fieldCode = field.code || 'unknown';
+            var fieldLabel = field.label || 'Unnamed Field';
+            var fieldType = field.type || 'unknown';
+            var fieldDescription = field.description || '';
+
+            return '<div class="bte-field-group bte-field-unsupported" ' +
+                'data-section="' + sectionCode + '" ' +
+                'data-field="' + fieldCode + '">' +
+                '<label class="bte-field-label">' + fieldLabel + '</label>' +
+                '<div class="bte-field-message bte-warning">' +
+                '<span class="bte-icon">⚠️</span>' +
+                'Field type "<strong>' + fieldType + '</strong>" is not yet supported.' +
+                '</div>' +
+                (fieldDescription ? '<p class="bte-field-description">' + fieldDescription + '</p>' : '') +
+                '</div>';
         },
 
         /**
@@ -139,18 +158,20 @@ define([
          * @param {Error} error
          * @returns {String}
          */
-        _renderError: function(field, sectionCode, error) {
-            return `
-                <div class="bte-field-group bte-field-error"
-                     data-section="${sectionCode}"
-                     data-field="${field.code}">
-                    <label class="bte-field-label">${field.label}</label>
-                    <div class="bte-field-message bte-error">
-                        <span class="bte-icon">❌</span>
-                        Failed to render field:  ${error.message}
-                    </div>
-                </div>
-            `;
+        _renderError:  function(field, sectionCode, error) {
+            var fieldCode = field.code || 'unknown';
+            var fieldLabel = field.label || 'Unnamed Field';
+            var errorMessage = error.message || 'Unknown error';
+
+            return '<div class="bte-field-group bte-field-error" ' +
+                'data-section="' + sectionCode + '" ' +
+                'data-field="' + fieldCode + '">' +
+                '<label class="bte-field-label">' + fieldLabel + '</label>' +
+                '<div class="bte-field-message bte-error">' +
+                '<span class="bte-icon">❌</span>' +
+                'Failed to render field: ' + errorMessage +
+                '</div>' +
+                '</div>';
         }
     };
 

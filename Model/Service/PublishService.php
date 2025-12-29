@@ -36,7 +36,7 @@ class PublishService
     ): array {
         $comparison = $this->compareProvider->compare($themeId, $storeId, $userId);
 
-        if (! $comparison['hasChanges']) {
+        if (!$comparison['hasChanges']) {
             throw new LocalizedException(__('No changes to publish'));
         }
 

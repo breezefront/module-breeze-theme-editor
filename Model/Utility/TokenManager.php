@@ -23,7 +23,7 @@ class TokenManager
     {
         $user = $this->authSession->getUser();
 
-        if (! $user || !$user->getId()) {
+        if (!$user || !$user->getId()) {
             throw new \Exception('No admin user in session');
         }
 

@@ -228,7 +228,7 @@ class Config implements ResolverInterface
 
     private function formatDependency(array $setting): ?  array
     {
-        if (!  isset($setting['dependsOn'])) {
+        if (!isset($setting['dependsOn'])) {
             return null;
         }
 

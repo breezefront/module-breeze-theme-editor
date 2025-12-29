@@ -33,7 +33,7 @@ class UserResolver
         // Отримати userId з metadata
         $userId = $this->accessToken->getUserId($token);
 
-        if (! $userId) {
+        if (!$userId) {
             throw new GraphQlAuthorizationException(__('User not found for token'));
         }
 

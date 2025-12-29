@@ -229,7 +229,7 @@ define([
             var cssVar = $input.data('css-var');
             var value = $input.val();
 
-            if (! sectionCode || !fieldCode) {
+            if (!sectionCode || !fieldCode) {
                 console.warn('Missing data attributes:', $input);
                 return;
             }
@@ -269,7 +269,7 @@ define([
          * Reset changes
          */
         _reset:  function () {
-            if (! PanelState.hasChanges()) {
+            if (!PanelState.hasChanges()) {
                 alert('No changes to reset');
                 return;
             }

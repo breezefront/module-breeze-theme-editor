@@ -30,7 +30,7 @@ class StatusProvider
         $map = $this->getStatusMap();
         $lowerCode = strtolower($code);
 
-        if (! isset($map[$lowerCode])) {
+        if (!isset($map[$lowerCode])) {
             throw new NoSuchEntityException(__('Status "%1" not found', $code));
         }
 

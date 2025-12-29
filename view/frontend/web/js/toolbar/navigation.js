@@ -136,7 +136,7 @@ define([
                 return i.id === itemId;
             });
 
-            if (! item) {
+            if (!item) {
                 return;
             }
 
@@ -162,7 +162,7 @@ define([
         },
 
         _showPanel: function (itemId) {
-            if (! this.options.panelSelector) {
+            if (!this.options.panelSelector) {
                 return;
             }
 

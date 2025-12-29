@@ -16,7 +16,7 @@ define([
         /**
          * Compiled template cache
          */
-        _compiledTemplate: null,
+        _compiledTemplate:  null,
 
         /**
          * Get compiled template
@@ -24,7 +24,7 @@ define([
          * @returns {Function}
          */
         getTemplate: function() {
-            if (! this._compiledTemplate && this.templateString) {
+            if (!this._compiledTemplate && this.templateString) {
                 this._compiledTemplate = mageTemplate(this.templateString);
             }
             return this._compiledTemplate;
@@ -41,8 +41,8 @@ define([
             var data = this.prepareData(field, sectionCode);
             var template = this.getTemplate();
 
-            if (! template) {
-                console.error('No template for renderer:', this);
+            if (!template) {
+                console.error('❌ No template for renderer:', this);
                 return '';
             }
 
@@ -57,25 +57,33 @@ define([
          * @returns {Object}
          */
         prepareData: function(field, sectionCode) {
+            // Validate required properties
+            if (!field.code) {
+                console.error('❌ Field missing "code" property:', field);
+            }
+            if (!sectionCode) {
+                console.error('❌ Missing sectionCode for field:', field.code || 'unknown');
+            }
+
+            var fieldCode = field.code || 'unknown';
+
             return {
                 sectionCode: sectionCode,
-                code: field.code,
-                label: field.label,
+                code: fieldCode,
+                label: field.label || 'Unnamed Field',
                 description: field.description || '',
                 helpText: field.helpText || '',
-                value: field.value !== null ? field.value : field.default,
+                value: field.value !== undefined && field.value !== null ? field.value : field.default,
                 default: field.default,
                 cssVar: field.cssVar || '',
                 placeholder: field.placeholder || '',
-                required: field.required || false,
-                isModified: field.isModified || false,
+                required: !!field.required,
+                isModified: !!field.isModified,
                 validation: field.validation || {},
                 params: field.params || {},
                 // Template helpers
                 dataAttrs: this.buildDataAttributes(field, sectionCode),
-                fieldId: 'field-' + field.code,
-                hasDescription: !!field.description,
-                hasHelpText: !!field.helpText
+                fieldId: 'field-' + fieldCode
             };
         },
 
@@ -86,11 +94,13 @@ define([
          * @param {String} sectionCode
          * @returns {String}
          */
-        buildDataAttributes:  function(field, sectionCode) {
+        buildDataAttributes: function(field, sectionCode) {
+            var fieldCode = field.code || 'unknown';
+
             var attrs = [
                 'data-section="' + sectionCode + '"',
-                'data-field="' + field.code + '"',
-                'data-type="' + field.type + '"'
+                'data-field="' + fieldCode + '"',
+                'data-type="' + (field.type || 'unknown') + '"'
             ];
 
             if (field.cssVar) {

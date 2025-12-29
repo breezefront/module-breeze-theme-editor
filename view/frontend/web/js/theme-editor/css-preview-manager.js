@@ -147,7 +147,7 @@ define([
             // rgb може бути "255, 255, 255" або "rgb(255, 255, 255)"
             var parts = rgb.match(/\d+/g);
 
-            if (! parts || parts.length < 3) {
+            if (!parts || parts.length < 3) {
                 return '#000000';
             }
 

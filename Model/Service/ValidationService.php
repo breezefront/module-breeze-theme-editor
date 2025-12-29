@@ -81,7 +81,7 @@ class ValidationService
     private function validateColor(string $value): ?string
     {
         // HEX color validation
-        if (! preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
+        if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
             return 'Invalid color format. Expected HEX color (e.g.  #FF0000)';
         }
 

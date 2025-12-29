@@ -31,7 +31,7 @@ class PresetService
         // Отримати preset з конфігурації
         $preset = $this->configProvider->getPreset($themeId, $presetId);
 
-        if (! $preset) {
+        if (!$preset) {
             throw new LocalizedException(__('Preset "%1" not found', $presetId));
         }
 
@@ -150,7 +150,7 @@ class PresetService
         foreach ($settings as $settingCode => $value) {
             $sectionCode = $sectionMap[$settingCode] ?? null;
 
-            if (! $sectionCode) {
+            if (!$sectionCode) {
                 continue; // Skip unknown settings
             }
 

@@ -162,7 +162,7 @@ class ConfigProvider
         $config = $this->loadConfigFile($theme);
 
         // Додати metadata якщо її немає
-        if (! isset($config['metadata'])) {
+        if (!isset($config['metadata'])) {
             $config['metadata'] = $this->buildMetadata($theme);
         }
 
@@ -380,7 +380,7 @@ class ConfigProvider
             throw new LocalizedException(__('Missing "version" in theme configuration'));
         }
 
-        if (! isset($config['sections']) || ! is_array($config['sections'])) {
+        if (!isset($config['sections']) || ! is_array($config['sections'])) {
             throw new LocalizedException(__('Missing or invalid "sections" in theme configuration'));
         }
     }

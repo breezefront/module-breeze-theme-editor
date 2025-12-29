@@ -123,7 +123,7 @@ class ValueRepository implements ValueRepositoryInterface
         $value = $this->create();
         $this->resource->load($value, $valueId);
 
-        if (! $value->getValueId()) {
+        if (!$value->getValueId()) {
             throw new NoSuchEntityException(
                 __('Value with id "%1" does not exist. ', $valueId)
             );

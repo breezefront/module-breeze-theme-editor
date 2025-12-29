@@ -74,7 +74,7 @@ class ThemeResolver
         $collection = $this->themeCollectionFactory->create();
         $theme = $collection->getItemById($themeId);
 
-        if (! $theme) {
+        if (!$theme) {
             return $hierarchy;
         }
 
@@ -104,7 +104,7 @@ class ThemeResolver
         $collection = $this->themeCollectionFactory->create();
         $theme = $collection->getItemById($themeId);
 
-        if (! $theme) {
+        if (!$theme) {
             throw new LocalizedException(__('Theme with ID %1 not found', $themeId));
         }
 
