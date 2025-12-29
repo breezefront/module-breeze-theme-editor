@@ -7,19 +7,16 @@ define([
     var ColorRenderer = Object.create(BaseFieldRenderer);
     ColorRenderer.templateString = template;
 
-    /**
-     * Prepare color-specific data
-     */
     ColorRenderer.prepareData = function(field, sectionCode) {
         var data = BaseFieldRenderer.prepareData.call(this, field, sectionCode);
 
-        // Ensure value is valid hex color
-        data.value = data.value || data.default || '#000000';
-
-        // Validate hex format
-        if (!/^#[0-9A-F]{6}$/i.test(data.value)) {
-            console.warn('Invalid color value:', data.value, '- using default');
-            data.value = '#000000';
+        // Ensure value is a valid HEX string (do not override 0/false)
+        if (typeof data.value !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(data.value)) {
+            if (typeof data.default === 'string' && /^#[0-9A-Fa-f]{6}$/.test(data.default)) {
+                data.value = data.default;
+            } else {
+                data.value = '#000000';
+            }
         }
 
         return data;

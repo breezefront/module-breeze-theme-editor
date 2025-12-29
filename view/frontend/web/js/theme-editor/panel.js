@@ -24,17 +24,16 @@ define([
     'use strict';
 
     $.widget('swissup.themeEditorPanel', {
-        options:   {
+        options: {
             title: 'Theme Editor',
             closeTitle: 'Close Panel',
-            presetsLabel: 'Presets:  ',
+            presetsLabel: 'Presets: ',
             status: 'DRAFT'
         },
 
-        _create: function () {
+        _create:  function () {
             console.log('✅ Initializing Theme Editor Panel');
 
-            // Get config from body data (set by toolbar.js)
             var config = $('body').data('breeze-editor-config');
 
             if (config) {
@@ -46,13 +45,12 @@ define([
                     themeName: config.themeName
                 });
             } else {
-                console.error('❌ Breeze editor config not found in body data!');
-                // Fallback to options
+                console.error('❌ Breeze editor config not found in body data! ');
                 this.storeId = this.options.storeId || 1;
                 this.themeId = this.options.themeId || 0;
             }
 
-            this.template = mageTemplate(panelTemplate);
+            this. template = mageTemplate(panelTemplate);
             this._render();
             this._bind();
             this._initPreview();
@@ -64,11 +62,11 @@ define([
                 data: {
                     title: this.options.title,
                     closeTitle: this.options.closeTitle,
-                    presetsLabel: this.options.presetsLabel
+                    presetsLabel:  this.options.presetsLabel
                 }
             });
 
-            this.element.html(html);
+            this. element.html(html);
 
             this.$closeButton = this.element.find('.bte-panel-close');
             this.$resetButton = this.element.find('.bte-reset-button');
@@ -81,19 +79,42 @@ define([
         },
 
         _bind: function () {
-            this.$closeButton.on('click', $.proxy(this._close, this));
+            var self = this;
+
+            this.$closeButton.on('click', $. proxy(this._close, this));
             this.$resetButton.on('click', $.proxy(this._reset, this));
             this.$saveButton.on('click', $.proxy(this._save, this));
 
             // Error retry button
-            this.element.on('click', '.bte-error-retry', $.proxy(this._loadConfig, this));
+            this. element.on('click', '.bte-error-retry', $.proxy(this._loadConfig, this));
 
             // Error details toggle
             this.element.on('click', '.bte-error-toggle', $.proxy(this._toggleErrorDetails, this));
 
             // Delegate events for dynamic content
             this.element.on('click', '.bte-accordion-header', $.proxy(this._toggleSection, this));
-            this.element.on('input change', '.bte-color-picker', $.proxy(this._onFieldChange, this));
+
+            // ✅ Color picker with sync (picker → text input)
+            this.element.on('change', '.bte-color-picker', function(e) {
+                var $picker = $(e.currentTarget);
+                var $textInput = $picker.siblings('.bte-color-input');
+                $textInput.val($picker.val());
+                self._onFieldChange(e);
+            });
+
+            // ✅ Color text input with validation & sync (text input → picker)
+            this.element.on('input', '.bte-color-input', function(e) {
+                var $textInput = $(e.currentTarget);
+                var value = $textInput.val();
+
+                // Validate HEX format
+                if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+                    $textInput.siblings('.bte-color-picker').val(value);
+                    self._onFieldChange(e);
+                }
+            });
+
+            // Other fields
             this.element.on('input', '.bte-range-slider', $.proxy(this._onFieldChange, this));
             this.element.on('change', '.bte-font-picker', $.proxy(this._onFieldChange, this));
             this.element.on('change', '.bte-select', $.proxy(this._onFieldChange, this));
@@ -104,16 +125,16 @@ define([
         /**
          * Initialize CSS Preview Manager
          */
-        _initPreview:  function() {
+        _initPreview: function() {
             setTimeout(function() {
-                CssPreviewManager.init();
+                CssPreviewManager. init();
             }, 500);
         },
 
         /**
          * Load theme config from GraphQL
          */
-        _loadConfig:  function() {
+        _loadConfig: function() {
             var self = this;
 
             this._showLoader('Loading configuration...');
@@ -133,17 +154,15 @@ define([
                     self._hideLoader();
                 })
                 .catch(function(error) {
-                    console.error('❌ Failed to load config:', error);
+                    console. error('❌ Failed to load config:', error);
 
-                    // Parse GraphQL errors
                     var errorData = error;
 
-                    if (error.message && error.message.indexOf('GraphQL Error: ') !== -1) {
-                        // Extract GraphQL error message
+                    if (error.message && error. message.indexOf('GraphQL Error: ') !== -1) {
                         try {
                             var match = error.message.match(/GraphQL Error: (.*)/);
                             if (match) {
-                                errorData = { message:  match[1] };
+                                errorData = { message: match[1] };
                             }
                         } catch (e) {
                             // Fallback to original error
@@ -162,7 +181,7 @@ define([
 
             sections.forEach(function(section) {
                 html += '<div class="bte-accordion-section">';
-                html += '<div class="bte-accordion-header" data-section="' + section.code + '">';
+                html += '<div class="bte-accordion-header" data-section="' + section. code + '">';
                 html += '<i class="bte-icon-' + (section.icon || 'settings') + '"></i>';
                 html += '<span class="bte-section-label">' + section.label + '</span>';
                 html += '<i class="bte-icon-chevron-down bte-accordion-arrow"></i>';
@@ -184,7 +203,7 @@ define([
          * Toggle accordion section
          */
         _toggleSection: function (e) {
-            var $header = $(e.currentTarget);
+            var $header = $(e. currentTarget);
             var section = $header.data('section');
             var $content = this.element.find('.bte-accordion-content[data-section="' + section + '"]');
             var isActive = $header.hasClass('active');
@@ -227,19 +246,20 @@ define([
             var sectionCode = $input.data('section');
             var fieldCode = $input.data('field');
             var cssVar = $input.data('css-var');
+            var fieldType = $input.data('type');
             var value = $input.val();
 
             if (!sectionCode || !fieldCode) {
-                console.warn('Missing data attributes:', $input);
+                console.warn('⚠️ Missing data attributes:', $input);
                 return;
             }
 
-            // Update state
-            PanelState.setValue(sectionCode, fieldCode, value);
+            // Update state (store original HEX value)
+            PanelState. setValue(sectionCode, fieldCode, value);
 
-            // Live preview
+            // Live preview (CssPreviewManager handles HEX→RGB conversion)
             if (cssVar) {
-                CssPreviewManager.setVariable(cssVar, value);
+                CssPreviewManager.setVariable(cssVar, value, fieldType);
             }
 
             // Update UI badges
@@ -252,7 +272,7 @@ define([
          * Update changes count badge
          */
         _updateChangesCount: function() {
-            var count = PanelState.getChangesCount();
+            var count = PanelState. getChangesCount();
             this.$saveButton.text('Save (' + count + ')');
             this.$resetButton.prop('disabled', count === 0);
         },
@@ -269,7 +289,7 @@ define([
          * Reset changes
          */
         _reset:  function () {
-            if (!PanelState.hasChanges()) {
+            if (! PanelState.hasChanges()) {
                 alert('No changes to reset');
                 return;
             }
@@ -277,7 +297,7 @@ define([
             if (confirm('Reset all changes to default values?')) {
                 PanelState.reset();
                 CssPreviewManager.reset();
-                this._loadConfig(); // Reload to refresh UI
+                this._loadConfig();
                 console.log('✅ Reset complete');
             }
         },
@@ -285,7 +305,7 @@ define([
         /**
          * Save changes
          */
-        _save:  function () {
+        _save: function () {
             if (!PanelState.hasChanges()) {
                 alert('No changes to save');
                 return;
@@ -300,8 +320,8 @@ define([
                 .done(function(data) {
                     console.log('✅ Saved:', data);
 
-                    if (data.saveBreezeThemeEditorValues.success) {
-                        alert('Settings saved successfully!');
+                    if (data.saveBreezeThemeEditorValues. success) {
+                        alert('Settings saved successfully! ');
                         PanelState.markAsSaved();
                         CssPreviewManager.markAsSaved();
                         self._updateChangesCount();
@@ -311,7 +331,7 @@ define([
                 })
                 .fail(function(error) {
                     console.error('❌ Save failed:', error);
-                    alert('Failed to save settings: ' + error.message);
+                    alert('Failed to save settings:  ' + error.message);
                 })
                 .always(function() {
                     self.$saveButton.prop('disabled', false).text('Save');
@@ -327,7 +347,6 @@ define([
             this.$error.hide();
             this.$sectionsContainer.hide();
 
-            // Disable buttons
             this.$saveButton.prop('disabled', true);
             this.$resetButton.prop('disabled', true);
 
@@ -341,7 +360,6 @@ define([
             this.$loader.hide();
             this.$sectionsContainer.show();
 
-            // Enable buttons (will be updated by _updateChangesCount)
             this.$saveButton.prop('disabled', false);
             this.$resetButton.prop('disabled', true);
         },
@@ -352,66 +370,49 @@ define([
         _showError: function(errorData) {
             console.log('🔥 _showError called with:', errorData);
 
-            // Hide loader and sections
             this.$loader.hide();
             this.$sectionsContainer.hide();
 
-            // Parse error data
             var errorInfo = this._parseErrorData(errorData);
             console.log('🔥 Parsed error info:', errorInfo);
 
-            // Apply friendly message if available
-            var displayMessage = this._getFriendlyMessage(errorInfo.message, errorInfo.debugMessage);
-            console.log('🔥 Display message:', displayMessage.message, 'Friendly:', displayMessage.isFriendly);
+            var displayMessage = this._getFriendlyMessage(errorInfo. message, errorInfo.debugMessage);
+            console.log('🔥 Display message:', displayMessage. message, 'Friendly:', displayMessage.isFriendly);
 
-            // Update UI
             this._updateErrorUI(displayMessage.message, errorInfo.debugMessage, displayMessage.isFriendly);
 
-            // Disable buttons
             this.$saveButton.prop('disabled', true);
-            this.$resetButton.prop('disabled', true);
+            this.$resetButton. prop('disabled', true);
 
-            // Show error state
             this.$error.show();
 
             console.error('❌ Panel error:', errorData);
         },
 
-        /**
-         * Parse error data and extract message + debugMessage
-         *
-         * @param {Object|String} errorData
-         * @returns {Object} {message:  string, debugMessage: string|null}
-         */
         _parseErrorData: function(errorData) {
             var message = 'An unexpected error occurred';
             var debugMessage = null;
 
-            // Handle string errors
             if (typeof errorData === 'string') {
                 message = errorData;
                 console.log('📝 String error:', message);
                 return { message: message, debugMessage: null };
             }
 
-            // Handle object errors
             if (errorData && errorData.message) {
                 message = errorData.message;
 
-                // Remove "GraphQL Error:  " prefix
                 if (message.indexOf('GraphQL Error: ') === 0) {
                     message = message.substring(15);
                     console.log('📝 Removed GraphQL prefix:', message);
                 }
 
-                // Priority 1: extensions.debugMessage (direct)
                 if (errorData.extensions && errorData.extensions.debugMessage) {
                     debugMessage = errorData.extensions.debugMessage;
                     console.log('✅ Found debugMessage in extensions:', debugMessage);
                 }
 
-                // Priority 2: graphqlErrors[0].extensions.debugMessage
-                if (!debugMessage && errorData.graphqlErrors && errorData.graphqlErrors.length > 0) {
+                if (! debugMessage && errorData.graphqlErrors && errorData.graphqlErrors. length > 0) {
                     var firstError = errorData.graphqlErrors[0];
                     if (firstError.extensions && firstError.extensions.debugMessage) {
                         debugMessage = firstError.extensions.debugMessage;
@@ -419,8 +420,7 @@ define([
                     }
                 }
 
-                // Priority 3: Use stack trace (only if it's a real stack)
-                if (!debugMessage && errorData.stack && errorData.stack.indexOf('Error:') !== -1) {
+                if (! debugMessage && errorData.stack && errorData.stack.indexOf('Error: ') !== -1) {
                     debugMessage = errorData.stack;
                     console.log('✅ Using stack trace:', debugMessage);
                 }
@@ -430,23 +430,15 @@ define([
             return { message: message, debugMessage: debugMessage };
         },
 
-        /**
-         * Get friendly message if available
-         *
-         * @param {String} message
-         * @param {String|null} debugMessage
-         * @returns {Object} {message: string, isFriendly: boolean}
-         */
         _getFriendlyMessage: function(message, debugMessage) {
             var friendlyMessages = {
-                'Theme editor configuration file not found':  'Theme configuration is not set up yet.Please contact your administrator.',
+                'Theme editor configuration file not found': 'Theme configuration is not set up yet.  Please contact your administrator.',
                 'configuration file not found': 'Theme configuration is not set up yet. Please contact your administrator.',
                 'Access token required': 'Your session has expired. Please refresh the page.',
-                'Invalid access token':  'Your session has expired. Please refresh the page.',
-                'Internal server error': 'The server encountered an error. Please try again later.'
+                'Invalid access token': 'Your session has expired. Please refresh the page.',
+                'Internal server error': 'The server encountered an error.  Please try again later.'
             };
 
-            // Check if we have a friendly message
             for (var key in friendlyMessages) {
                 if (message.indexOf(key) !== -1 || (debugMessage && debugMessage.indexOf(key) !== -1)) {
                     console.log('✅ Found friendly message for:', key);
@@ -464,30 +456,20 @@ define([
             };
         },
 
-        /**
-         * Update error UI elements
-         *
-         * @param {String} message - Main error message to display
-         * @param {String|null} debugMessage - Technical details
-         * @param {Boolean} hasFriendlyMessage - Whether message is user-friendly
-         */
         _updateErrorUI: function(message, debugMessage, hasFriendlyMessage) {
             var $details = this.$error.find('.bte-error-details');
-            var $stack = this.$error.find('.bte-error-stack');
+            var $stack = this.$error. find('.bte-error-stack');
             var $toggle = this.$error.find('.bte-error-toggle');
 
-            // Set main error message
             this.$error.find('.bte-error-message').text(message);
             console.log('📝 Set error message:', message);
 
-            // Handle technical details
             if (debugMessage) {
                 $details.show();
                 $stack.text(debugMessage);
                 console.log('📝 Set debug message:', debugMessage);
 
-                // Auto-expand if no friendly message (generic error)
-                if (!hasFriendlyMessage) {
+                if (! hasFriendlyMessage) {
                     $stack.show();
                     $toggle.text('Hide technical details');
                     console.log('✅ Auto-expanded (generic error)');
@@ -497,17 +479,16 @@ define([
                     console.log('✅ Collapsed (friendly message)');
                 }
             } else {
-                // No debugMessage available
                 $details.show();
-                $stack.text('No additional technical information available. Check browser console for more details.');
+                $stack.text('No additional technical information available.  Check browser console for more details.');
                 $stack.hide();
                 $toggle.text('Show technical details');
-                console.log('⚠️ No debugMessage, showing fallback');
+                console. log('⚠️ No debugMessage, showing fallback');
             }
         },
 
         _destroy: function() {
-            this.element.off('click input change');
+            this. element.off('click input change');
             CssPreviewManager.destroy();
             PanelState.clear();
             this._super();
