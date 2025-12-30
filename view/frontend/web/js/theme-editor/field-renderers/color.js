@@ -1,6 +1,6 @@
 define([
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/base',
-    'text!Swissup_BreezeThemeEditor/template/theme-editor/fields/color-picker.html'
+    'text!Swissup_BreezeThemeEditor/template/theme-editor/fields/color.html'
 ], function(BaseFieldRenderer, template) {
     'use strict';
 

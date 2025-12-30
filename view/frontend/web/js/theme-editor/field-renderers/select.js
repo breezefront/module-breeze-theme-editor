@@ -13,17 +13,25 @@ define([
     SelectRenderer.prepareData = function(field, sectionCode) {
         var data = BaseFieldRenderer.prepareData.call(this, field, sectionCode);
 
-        // Options with selected flag
-        data.options = (data.params.options || []).map(function(opt) {
+        // Get options from params
+        var options = data.params && data.params.options ?  data.params.options : [];
+
+        // Map options with selected flag
+        data.options = options.map(function(opt) {
             return {
                 value: opt.value,
                 label: opt.label,
                 icon: opt.icon || null,
-                selected: opt.value === data.value
+                selected: String(opt.value) === String(data.value)
             };
         });
 
         data.hasOptions = data.options.length > 0;
+
+        // If no value set, use first option or default
+        if (!data.value && data.options.length > 0) {
+            data.value = data.default || data.options[0].value;
+        }
 
         return data;
     };

@@ -1,36 +1,47 @@
-<div class="bte-field-group bte-field-social-links">
-    <label class="bte-field-label">
-        <%= data.label %>
-        <% if (data.required) { %>
-            <span class="bte-required">*</span>
+<div class="bte-field bte-field-social-links <%= data.isModified ? 'bte-field-modified' :  '' %>">
+    <div class="bte-field-header">
+        <label class="bte-field-label">
+            <%= data.label %>
+            <% if (data.required) { %>
+                <span class="bte-required">*</span>
+            <% } %>
+        </label>
+        <% if (data.isModified) { %>
+            <span class="bte-badge bte-badge-modified">Modified</span>
         <% } %>
-    </label>
-
-    <% if (data.hasDescription) { %>
-        <p class="bte-field-description"><%= data.description %></p>
-    <% } %>
-
-    <div class="bte-social-links">
-        <% _.each(data.platforms, function(platform) { %>
-            <div class="bte-social-link-item">
-                <label class="bte-social-link-label">
-                    <% if (platform.icon) { %>
-                        <span class="bte-social-icon"><%= platform.icon %></span>
-                    <% } %>
-                    <span class="bte-social-name"><%= platform.label %></span>
-                </label>
-                <input type="url"
-                       class="bte-text-input bte-social-link-input"
-                       value="<%= platform.value || '' %>"
-                       placeholder="<%= platform.placeholder || 'https://' + platform.code + '.com/your-profile' %>"
-                       data-section="<%= data.sectionCode %>"
-                       data-field="<%= data.code %>"
-                       data-platform="<%= platform.code %>">
-            </div>
-        <% }); %>
     </div>
 
-    <% if (data.hasHelpText) { %>
-        <small class="bte-field-help"><%= data.helpText %></small>
+    <% if (data.description) { %>
+        <div class="bte-field-description"><%= data.description %></div>
+    <% } %>
+
+    <div class="bte-field-control">
+        <div class="bte-social-links-grid">
+            <% _.each(data.platforms, function(platform) { %>
+                <div class="bte-social-link-item">
+                    <label class="bte-social-link-label">
+                        <% if (platform.icon) { %>
+                            <span class="bte-social-icon"><%= platform.icon %></span>
+                        <% } %>
+                        <span class="bte-social-name"><%= platform.label %></span>
+                    </label>
+                    <input
+                        type="url"
+                        class="bte-text-input bte-social-link-input"
+                        value="<%= platform.value || '' %>"
+                        placeholder="<%= platform.placeholder || ('https://' + platform.code + '.com/your-profile') %>"
+                        data-section="<%= data.sectionCode %>"
+                        data-field="<%= data.code %>"
+                        data-type="social_links"
+                        data-platform="<%= platform.code %>"
+                        data-css-var="<%= data.cssVar %>"
+                    />
+                </div>
+            <% }); %>
+        </div>
+    </div>
+
+    <% if (data.helpText) { %>
+        <div class="bte-field-help"><%= data.helpText %></div>
     <% } %>
 </div>

@@ -1,9 +1,12 @@
-<div class="bte-field bte-field-text <%= data.isModified ? 'bte-field-modified' : '' %>" <%= data.dataAttributes %>>
+<div class="bte-field bte-field-code <%= data.isModified ? 'bte-field-modified' : '' %>">
     <div class="bte-field-header">
         <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.code %>">
             <%= data.label %>
             <% if (data.required) { %>
                 <span class="bte-required">*</span>
+            <% } %>
+            <% if (data.params && data.params.language) { %>
+                <span class="bte-code-language"><%= data.params.language.toUpperCase() %></span>
             <% } %>
         </label>
         <% if (data.isModified) { %>
@@ -16,37 +19,22 @@
     <% } %>
 
     <div class="bte-field-control">
-        <input
-            type="text"
+        <textarea
             id="field-<%= data.sectionCode %>-<%= data.code %>"
-            class="bte-text-input"
-            value="<%= data.value %>"
-            placeholder="<%= data.placeholder %>"
+            class="bte-code-editor"
+            rows="<%= (data.params && data.params.rows) || 10 %>"
+            placeholder="<%= data.placeholder || '/* Your ' + ((data.params && data.params.language) || 'CSS') + ' code */' %>"
             data-section="<%= data.sectionCode %>"
             data-field="<%= data.code %>"
             data-css-var="<%= data.cssVar %>"
-            data-type="text"
+            data-type="code"
             data-default="<%= data.default %>"
-            <% if (data.validation && data.validation.minLength) { %>
-                minlength="<%= data.validation.minLength %>"
-            <% } %>
-            <% if (data.validation && data.validation.maxLength) { %>
-                maxlength="<%= data.validation.maxLength %>"
-            <% } %>
-            <% if (data.validation && data.validation.pattern) { %>
-                pattern="<%= data.validation.pattern %>"
-            <% } %>
+            data-language="<%= (data.params && data.params.language) || 'css' %>"
             <%= data.required ? 'required' : '' %>
-        />
+        ><%= data.value %></textarea>
     </div>
 
     <% if (data.helpText) { %>
         <div class="bte-field-help"><%= data.helpText %></div>
-    <% } %>
-
-    <% if (data.validation && data.validation.message) { %>
-        <div class="bte-field-validation-message" style="display: none;">
-            <%= data.validation.message %>
-        </div>
     <% } %>
 </div>

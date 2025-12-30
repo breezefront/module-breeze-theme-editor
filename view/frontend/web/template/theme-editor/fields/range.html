@@ -1,4 +1,4 @@
-<div class="bte-field bte-field-toggle <%= data.isModified ? 'bte-field-modified' : '' %>">
+<div class="bte-field bte-field-range <%= data.isModified ? 'bte-field-modified' : '' %>">
     <div class="bte-field-header">
         <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.code %>">
             <%= data.label %>
@@ -16,21 +16,24 @@
     <% } %>
 
     <div class="bte-field-control">
-        <label class="bte-toggle-switch">
+        <div class="bte-range-wrapper">
             <input
-                type="checkbox"
+                type="range"
                 id="field-<%= data.sectionCode %>-<%= data.code %>"
-                class="bte-toggle-input"
+                class="bte-range-slider"
+                value="<%= data.value %>"
+                min="<%= data.min %>"
+                max="<%= data.max %>"
+                step="<%= data.step %>"
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
                 data-css-var="<%= data.cssVar %>"
-                data-type="toggle"
+                data-type="range"
                 data-default="<%= data.default %>"
-                <%= (data.value === 'true' || data.value === '1' || data.value === true) ? 'checked' : '' %>
                 <%= data.required ? 'required' : '' %>
             />
-            <span class="bte-toggle-slider"></span>
-        </label>
+            <span class="bte-range-value"><%= data.value %><%= data.unit %></span>
+        </div>
     </div>
 
     <% if (data.helpText) { %>

@@ -1,6 +1,6 @@
 define([
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/base',
-    'text!Swissup_BreezeThemeEditor/template/theme-editor/fields/range-slider.html'
+    'text!Swissup_BreezeThemeEditor/template/theme-editor/fields/range.html'
 ], function(BaseFieldRenderer, template) {
     'use strict';
 

@@ -1,6 +1,6 @@
-<div class="bte-field bte-field-select <%= data.isModified ? 'bte-field-modified' : '' %>" <%= data.dataAttributes %>>
+<div class="bte-field bte-field-select <%= data.isModified ? 'bte-field-modified' : '' %>">
     <div class="bte-field-header">
-        <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.fieldCode %>">
+        <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.code %>">
             <%= data.label %>
             <% if (data.required) { %>
                 <span class="bte-required">*</span>
@@ -17,25 +17,26 @@
 
     <div class="bte-field-control">
         <select
-            id="field-<%= data.sectionCode %>-<%= data.fieldCode %>"
+            id="field-<%= data.sectionCode %>-<%= data.code %>"
             class="bte-select"
             data-section="<%= data.sectionCode %>"
-            data-field="<%= data.fieldCode %>"
+            data-field="<%= data.code %>"
             data-css-var="<%= data.cssVar %>"
+            data-type="select"
             data-default="<%= data.default %>"
             <%= data.required ? 'required' : '' %>
         >
             <% if (data.placeholder) { %>
-                <option value="" disabled <%= ! data.value ? 'selected' : '' %>>
+                <option value="" disabled <%= !data.value ? 'selected' : '' %>>
                     <%= data.placeholder %>
                 </option>
             <% } %>
 
             <% if (data.hasOptions) { %>
-                <% _. each(data.options, function(option) { %>
+                <% _.each(data.options, function(option) { %>
                     <option
                         value="<%= option.value %>"
-                        <%= option.value === data.value ? 'selected' : '' %>
+                        <%= String(option.value) === String(data.value) ? 'selected' : '' %>
                     >
                         <%= option.label %>
                     </option>

@@ -1,37 +1,52 @@
-<div class="bte-field-group bte-field-color-scheme">
-    <label class="bte-field-label">
-        <%= data.label %>
-        <% if (data.required) { %>
-            <span class="bte-required">*</span>
+<div class="bte-field bte-field-color-scheme <%= data.isModified ? 'bte-field-modified' : '' %>">
+    <div class="bte-field-header">
+        <label class="bte-field-label">
+            <%= data.label %>
+            <% if (data.required) { %>
+                <span class="bte-required">*</span>
+            <% } %>
+        </label>
+        <% if (data.isModified) { %>
+            <span class="bte-badge bte-badge-modified">Modified</span>
         <% } %>
-    </label>
-
-    <% if (data.hasDescription) { %>
-        <p class="bte-field-description"><%= data.description %></p>
-    <% } %>
-
-    <div class="bte-color-scheme-picker">
-        <% _.each(data.schemes, function(scheme) { %>
-            <label class="bte-scheme-option <%= scheme.active ?  'active' : '' %>">
-                <input type="radio"
-                       name="<%= data.fieldId %>"
-                       class="bte-scheme-radio"
-                       value="<%= scheme.value %>"
-                       <%= scheme.checked ? 'checked' : '' %>
-                       <%= data.dataAttrs %>>
-
-                <div class="bte-scheme-preview">
-                    <% _.each(scheme.colors, function(color) { %>
-                        <span class="bte-scheme-color" style="background-color: <%= color %>;"></span>
-                    <% }); %>
-                </div>
-
-                <span class="bte-scheme-label"><%= scheme.label %></span>
-            </label>
-        <% }); %>
     </div>
 
-    <% if (data.hasHelpText) { %>
-        <small class="bte-field-help"><%= data.helpText %></small>
+    <% if (data.description) { %>
+        <div class="bte-field-description"><%= data.description %></div>
+    <% } %>
+
+    <div class="bte-field-control">
+        <div class="bte-color-scheme-grid">
+            <% _.each(data.schemes, function(scheme) { %>
+                <label class="bte-scheme-option <%= scheme.active ? 'active' : '' %>">
+                    <input
+                        type="radio"
+                        name="field-<%= data.sectionCode %>-<%= data.code %>"
+                        value="<%= scheme.value %>"
+                        class="bte-scheme-input"
+                        data-section="<%= data.sectionCode %>"
+                        data-field="<%= data.code %>"
+                        data-css-var="<%= data.cssVar %>"
+                        data-type="color_scheme"
+                        data-default="<%= data.default %>"
+                        <%= scheme.checked ? 'checked' : '' %>
+                        <%= data.required ? 'required' : '' %>
+                    />
+                    <div class="bte-scheme-preview">
+                        <% _.each(scheme.colors, function(color) { %>
+                            <span class="bte-scheme-color" style="background-color: <%= color %>;"></span>
+                        <% }); %>
+                    </div>
+                    <span class="bte-scheme-label"><%= scheme.label %></span>
+                    <% if (scheme.description) { %>
+                        <span class="bte-scheme-description"><%= scheme.description %></span>
+                    <% } %>
+                </label>
+            <% }); %>
+        </div>
+    </div>
+
+    <% if (data.helpText) { %>
+        <div class="bte-field-help"><%= data.helpText %></div>
     <% } %>
 </div>

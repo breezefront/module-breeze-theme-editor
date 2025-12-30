@@ -1,4 +1,4 @@
-<div class="bte-field bte-field-toggle <%= data.isModified ? 'bte-field-modified' : '' %>">
+<div class="bte-field bte-field-number <%= data.isModified ? 'bte-field-modified' : '' %>">
     <div class="bte-field-header">
         <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.code %>">
             <%= data.label %>
@@ -16,21 +16,35 @@
     <% } %>
 
     <div class="bte-field-control">
-        <label class="bte-toggle-switch">
+        <div class="bte-number-wrapper">
             <input
-                type="checkbox"
+                type="number"
                 id="field-<%= data.sectionCode %>-<%= data.code %>"
-                class="bte-toggle-input"
+                class="bte-number-input"
+                value="<%= data.value %>"
+                placeholder="<%= data.placeholder %>"
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
                 data-css-var="<%= data.cssVar %>"
-                data-type="toggle"
+                data-type="number"
                 data-default="<%= data.default %>"
-                <%= (data.value === 'true' || data.value === '1' || data.value === true) ? 'checked' : '' %>
+                <% if (data.params && data.params.min !== null && data.params.min !== undefined) { %>
+                    min="<%= data.params.min %>"
+                <% } %>
+                <% if (data.params && data.params.max !== null && data.params.max !== undefined) { %>
+                    max="<%= data.params.max %>"
+                <% } %>
+                <% if (data.params && data.params.step) { %>
+                    step="<%= data.params.step %>"
+                <% } else { %>
+                    step="1"
+                <% } %>
                 <%= data.required ? 'required' : '' %>
             />
-            <span class="bte-toggle-slider"></span>
-        </label>
+            <% if (data.params && data.params.unit) { %>
+                <span class="bte-number-unit"><%= data.params.unit %></span>
+            <% } %>
+        </div>
     </div>
 
     <% if (data.helpText) { %>

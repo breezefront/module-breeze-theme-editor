@@ -81,8 +81,6 @@ define([
                 isModified: !!field.isModified,
                 validation: field.validation || {},
                 params: field.params || {},
-                // Template helpers
-                dataAttrs: this.buildDataAttributes(field, sectionCode),
                 fieldId: 'field-' + fieldCode
             };
         },

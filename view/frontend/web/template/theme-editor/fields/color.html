@@ -1,4 +1,4 @@
-<div class="bte-field bte-field-range <%= data.isModified ? 'bte-field-modified' : '' %>" <%= data.dataAttributes %>>
+<div class="bte-field bte-field-color <%= data.isModified ? 'bte-field-modified' : '' %>">
     <div class="bte-field-header">
         <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.code %>">
             <%= data.label %>
@@ -16,23 +16,26 @@
     <% } %>
 
     <div class="bte-field-control">
-        <div class="bte-range-wrapper">
+        <div class="bte-color-picker-wrapper">
             <input
-                type="range"
+                type="color"
                 id="field-<%= data.sectionCode %>-<%= data.code %>"
-                class="bte-range-slider"
-                value="<%= data.value %>"
-                min="<%= data.min %>"
-                max="<%= data.max %>"
-                step="<%= data.step %>"
+                class="bte-color-picker"
+                value="<%= data.hexValue || data.value %>"
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
                 data-css-var="<%= data.cssVar %>"
-                data-type="range"
+                data-type="color"
                 data-default="<%= data.default %>"
                 <%= data.required ? 'required' : '' %>
             />
-            <span class="bte-range-value"><%= data.value %><%= data.unit %></span>
+            <input
+                type="text"
+                class="bte-color-input"
+                value="<%= data.hexValue || data.value %>"
+                placeholder="<%= data.placeholder || '#000000' %>"
+                pattern="<%= data.validation && data.validation.pattern || '^#[0-9A-Fa-f]{6}$' %>"
+            />
         </div>
     </div>
 

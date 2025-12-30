@@ -1,4 +1,4 @@
-<div class="bte-field bte-field-font <%= data.isModified ? 'bte-field-modified' : '' %>">
+<div class="bte-field bte-field-text <%= data.isModified ? 'bte-field-modified' : '' %>">
     <div class="bte-field-header">
         <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.code %>">
             <%= data.label %>
@@ -16,29 +16,37 @@
     <% } %>
 
     <div class="bte-field-control">
-        <select
+        <input
+            type="text"
             id="field-<%= data.sectionCode %>-<%= data.code %>"
-            class="bte-font-picker"
+            class="bte-text-input"
+            value="<%= data.value %>"
+            placeholder="<%= data.placeholder %>"
             data-section="<%= data.sectionCode %>"
             data-field="<%= data.code %>"
             data-css-var="<%= data.cssVar %>"
-            data-type="font_picker"
+            data-type="text"
             data-default="<%= data.default %>"
+            <% if (data.validation && data.validation.minLength) { %>
+                minlength="<%= data.validation.minLength %>"
+            <% } %>
+            <% if (data.validation && data.validation.maxLength) { %>
+                maxlength="<%= data.validation.maxLength %>"
+            <% } %>
+            <% if (data.validation && data.validation.pattern) { %>
+                pattern="<%= data.validation.pattern %>"
+            <% } %>
             <%= data.required ? 'required' : '' %>
-        >
-            <% _.each(data.fonts, function(font) { %>
-                <option
-                    value="<%= font.value %>"
-                    <%= String(font.value) === String(data.value) ? 'selected' : '' %>
-                    style="font-family: <%= font.fontFamily || font.value %>;"
-                >
-                    <%= font.label %>
-                </option>
-            <% }); %>
-        </select>
+        />
     </div>
 
     <% if (data.helpText) { %>
         <div class="bte-field-help"><%= data.helpText %></div>
+    <% } %>
+
+    <% if (data.validation && data.validation.message) { %>
+        <div class="bte-field-validation-message" style="display: none;">
+            <%= data.validation.message %>
+        </div>
     <% } %>
 </div>
