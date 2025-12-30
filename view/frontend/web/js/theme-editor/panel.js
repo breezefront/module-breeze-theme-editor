@@ -7,6 +7,7 @@ define([
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderer',
     'Swissup_BreezeThemeEditor/js/theme-editor/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers',
+    'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/publish'
@@ -19,6 +20,7 @@ define([
     FieldRenderer,
     CssPreviewManager,
     FieldHandlers,
+    Toastify,
     getConfig,
     saveValues,
     publish
@@ -237,7 +239,7 @@ define([
          */
         _reset: function () {
             if (! PanelState.hasChanges()) {
-                alert('No changes to reset');
+                this._showToast('notice', 'No changes to reset');
                 return;
             }
 
@@ -254,7 +256,7 @@ define([
          */
         _save: function () {
             if (!PanelState.hasChanges()) {
-                alert('No changes to save');
+                this._showToast('notice', 'No changes to save');
                 return;
             }
 
@@ -268,17 +270,17 @@ define([
                     console.log('✅ Saved:', data);
 
                     if (data.saveBreezeThemeEditorValues.success) {
-                        alert('Settings saved successfully! ');
+                        self._showToast('success', 'Settings saved successfully! ');
                         PanelState.markAsSaved();
                         CssPreviewManager.markAsSaved();
                         self._updateChangesCount();
                     } else {
-                        alert('Failed to save: ' + data.saveBreezeThemeEditorValues.message);
+                        self._showToast('error', 'Failed to save: ' + data.saveBreezeThemeEditorValues.message);
                     }
                 })
                 .catch(function(error) {
                     console.error('❌ Save failed:', error);
-                    alert('Failed to save settings: ' + error.message);
+                    self._showToast('error', 'Failed to save settings: ' + error.message);
                 })
                 .finally(function() {
                     self.$saveButton.prop('disabled', false).text('Save');
@@ -334,6 +336,10 @@ define([
             this.$error.show();
 
             console.error('❌ Panel error:', errorData);
+        },
+
+        _showToast: function(type, message) {
+            Toastify.show(type, message);
         },
 
         _parseErrorData: function(errorData) {
