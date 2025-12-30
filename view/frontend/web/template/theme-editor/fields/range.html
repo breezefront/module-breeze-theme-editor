@@ -22,9 +22,9 @@
                 id="field-<%= data.sectionCode %>-<%= data.code %>"
                 class="bte-range-slider"
                 value="<%= data.value %>"
-                min="<%= data.min %>"
-                max="<%= data.max %>"
-                step="<%= data.step %>"
+                min="<%= data.params && data.params.min !== undefined ? data.params.min : 0 %>"
+                max="<%= data.params && data.params.max !== undefined ? data.params.max : 100 %>"
+                step="<%= data.params && data.params.step || 1 %>"
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
                 data-css-var="<%= data.cssVar %>"
@@ -32,7 +32,9 @@
                 data-default="<%= data.default %>"
                 <%= data.required ? 'required' : '' %>
             />
-            <span class="bte-range-value"><%= data.value %><%= data.unit %></span>
+            <output class="bte-range-value">
+                <%= data.value %><% if (data.params && data.params.unit) { %><%= data.params.unit %><% } %>
+            </output>
         </div>
     </div>
 

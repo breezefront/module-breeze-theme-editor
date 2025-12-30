@@ -27,14 +27,14 @@
             data-css-var="<%= data.cssVar %>"
             data-type="text"
             data-default="<%= data.default %>"
+            <% if (data.validation && data.validation.pattern) { %>
+                pattern="<%= data.validation.pattern %>"
+            <% } %>
             <% if (data.validation && data.validation.minLength) { %>
                 minlength="<%= data.validation.minLength %>"
             <% } %>
             <% if (data.validation && data.validation.maxLength) { %>
                 maxlength="<%= data.validation.maxLength %>"
-            <% } %>
-            <% if (data.validation && data.validation.pattern) { %>
-                pattern="<%= data.validation.pattern %>"
             <% } %>
             <%= data.required ? 'required' : '' %>
         />
@@ -42,11 +42,5 @@
 
     <% if (data.helpText) { %>
         <div class="bte-field-help"><%= data.helpText %></div>
-    <% } %>
-
-    <% if (data.validation && data.validation.message) { %>
-        <div class="bte-field-validation-message" style="display: none;">
-            <%= data.validation.message %>
-        </div>
     <% } %>
 </div>
