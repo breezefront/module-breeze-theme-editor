@@ -1,6 +1,7 @@
 define([
-    'mage/template'
-], function(mageTemplate) {
+    'mage/template',
+    'Swissup_BreezeThemeEditor/js/theme-editor/panel-state'
+], function(mageTemplate, PanelState) {
     'use strict';
 
     /**
@@ -9,14 +10,14 @@ define([
      */
     var BaseFieldRenderer = {
         /**
-         * Template (set in subclass via text!  plugin)
+         * Template (set in subclass via text! plugin)
          */
         templateString: null,
 
         /**
          * Compiled template cache
          */
-        _compiledTemplate:  null,
+        _compiledTemplate: null,
 
         /**
          * Get compiled template
@@ -25,7 +26,7 @@ define([
          */
         getTemplate: function() {
             if (!this._compiledTemplate && this.templateString) {
-                this._compiledTemplate = mageTemplate(this.templateString);
+                this._compiledTemplate = mageTemplate(this. templateString);
             }
             return this._compiledTemplate;
         },
@@ -38,7 +39,7 @@ define([
          * @returns {String} HTML
          */
         render: function(field, sectionCode) {
-            var data = this.prepareData(field, sectionCode);
+            var data = this. prepareData(field, sectionCode);
             var template = this.getTemplate();
 
             if (!template) {
@@ -58,7 +59,7 @@ define([
          */
         prepareData: function(field, sectionCode) {
             // Validate required properties
-            if (!field.code) {
+            if (!field. code) {
                 console.error('❌ Field missing "code" property:', field);
             }
             if (!sectionCode) {
@@ -67,22 +68,128 @@ define([
 
             var fieldCode = field.code || 'unknown';
 
+            // ✅ Get runtime state from PanelState (if initialized)
+            var fieldState = PanelState. getFieldState(sectionCode, fieldCode);
+
+            // Use runtime state if available, otherwise fallback to field data
+            var currentValue = fieldState
+                ? fieldState. value
+                : (field.value !== undefined && field.value !== null ? field.value : field.default);
+
+            var isModified = fieldState
+                ?  fieldState.isModified
+                : !!field.isModified;
+
+            var isDirty = fieldState
+                ? fieldState. isDirty
+                : false;
+
             return {
                 sectionCode: sectionCode,
                 code: fieldCode,
                 label: field.label || 'Unnamed Field',
                 description: field.description || '',
                 helpText: field.helpText || '',
-                value: field.value !== undefined && field.value !== null ? field.value : field.default,
+                value: currentValue,
                 default: field.default,
                 cssVar: field.cssVar || '',
                 placeholder: field.placeholder || '',
                 required: !!field.required,
-                isModified: !!field.isModified,
+                isModified: isModified,
+                isDirty: isDirty,
+                badgesHtml: this.renderBadges(isDirty, isModified),
                 validation: field.validation || {},
                 params: field.params || {},
                 fieldId: 'field-' + fieldCode
             };
+        },
+
+        /**
+         * Render status badges HTML
+         *
+         * @param {Boolean} isDirty - Has unsaved changes
+         * @param {Boolean} isModified - Different from default (saved)
+         * @returns {String} HTML
+         */
+        renderBadges: function(isDirty, isModified) {
+            var html = '';
+
+            // ✅ Dirty badge (unsaved changes) - higher priority, shown first
+            if (isDirty) {
+                html += '<span class="bte-badge bte-badge-dirty" title="You have unsaved changes for this field">' +
+                        '<span class="bte-badge-icon">●</span> Changed' +
+                        '</span>';
+            }
+
+            // ✅ Modified badge (saved but not default)
+            if (isModified) {
+                html += '<span class="bte-badge bte-badge-modified" title="This field has been customized from its default value">' +
+                        'Modified' +
+                        '</span>';
+            }
+
+            return html;
+        },
+
+        /**
+         * Update field badges in DOM without re-rendering entire field
+         *
+         * @param {jQuery} $element - Panel element
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         * @returns {Boolean} Success
+         */
+        updateFieldBadges: function($element, sectionCode, fieldCode) {
+            var fieldState = PanelState.getFieldState(sectionCode, fieldCode);
+
+            if (!fieldState) {
+                console.warn('⚠️ Field state not found:', sectionCode + '.' + fieldCode);
+                return false;
+            }
+
+            // Find field container by input element
+            var $input = $element.find('[data-section="' + sectionCode + '"][data-field="' + fieldCode + '"]');
+
+            if ($input.length === 0) {
+                console. warn('⚠️ Field input not found in DOM:', sectionCode + '.' + fieldCode);
+                return false;
+            }
+
+            var $field = $input.closest('.bte-field');
+
+            if ($field.length === 0) {
+                console.warn('⚠️ Field container not found:', sectionCode + '.' + fieldCode);
+                return false;
+            }
+
+            // Update field state classes
+            $field.toggleClass('bte-field-modified', fieldState.isModified);
+            $field.toggleClass('bte-field-dirty', fieldState.isDirty);
+
+            // Update badges in header
+            var $header = $field.find('.bte-field-header');
+
+            if ($header.length === 0) {
+                console.warn('⚠️ Field header not found:', sectionCode + '.' + fieldCode);
+                return false;
+            }
+
+            // Remove old badges
+            $header.find('.bte-badge').remove();
+
+            // Generate and append new badges
+            var badgesHtml = this.renderBadges(fieldState.isDirty, fieldState.isModified);
+
+            if (badgesHtml) {
+                $header.append(badgesHtml);
+            }
+
+            console.log('🔄 Badges updated:', sectionCode + '.' + fieldCode, {
+                isDirty: fieldState.isDirty,
+                isModified: fieldState.isModified
+            });
+
+            return true;
         },
 
         /**
@@ -98,11 +205,15 @@ define([
             var attrs = [
                 'data-section="' + sectionCode + '"',
                 'data-field="' + fieldCode + '"',
-                'data-type="' + (field.type || 'unknown') + '"'
+                'data-type="' + (field. type || 'unknown') + '"'
             ];
 
             if (field.cssVar) {
                 attrs.push('data-css-var="' + field.cssVar + '"');
+            }
+
+            if (field.default !== undefined) {
+                attrs.push('data-default="' + field.default + '"');
             }
 
             return attrs.join(' ');

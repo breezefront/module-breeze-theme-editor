@@ -3,8 +3,9 @@ define([
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/color',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/range',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/radio',
-    'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/simple'
-], function (BaseHandler, ColorHandler, RangeHandler, RadioHandler, SimpleHandler) {
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/simple',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/base'
+], function (BaseHandler, ColorHandler, RangeHandler, RadioHandler, SimpleHandler, BaseRenderer) {
     'use strict';
 
     /**
@@ -42,6 +43,18 @@ define([
             SimpleHandler.destroy($element);
 
             console.log('🗑️ All field handlers destroyed');
+        },
+
+        /**
+         * Update field badges in DOM
+         *
+         * @param {jQuery} $element - Panel element
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         * @returns {Boolean} Success
+         */
+        updateBadges: function($element, sectionCode, fieldCode) {
+            return BaseRenderer.updateFieldBadges($element, sectionCode, fieldCode);
         },
 
         // Expose base handler for custom use

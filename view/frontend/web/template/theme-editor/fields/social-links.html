@@ -6,9 +6,7 @@
                 <span class="bte-required">*</span>
             <% } %>
         </label>
-        <% if (data.isModified) { %>
-            <span class="bte-badge bte-badge-modified">Modified</span>
-        <% } %>
+        <%= data.badgesHtml %>
     </div>
 
     <% if (data.description) { %>

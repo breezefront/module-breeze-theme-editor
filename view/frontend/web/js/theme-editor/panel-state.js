@@ -12,14 +12,9 @@ define([], function() {
         config: null,
 
         /**
-         * Current values {sectionCode.fieldCode: value}
+         * Current values {sectionCode.fieldCode: {value, savedValue, defaultValue, isModified, isDirty}}
          */
         values: {},
-
-        /**
-         * Changed values {sectionCode.fieldCode: {old, new}}
-         */
-        changes: {},
 
         /**
          * Field metadata map for quick lookup
@@ -34,7 +29,6 @@ define([], function() {
         init: function(config) {
             this.config = config;
             this.values = {};
-            this.changes = {};
             this.fieldsMap = {};
 
             // Build values map and fields lookup
@@ -42,9 +36,18 @@ define([], function() {
                 config.sections.forEach(function(section) {
                     section.fields.forEach(function(field) {
                         var key = section.code + '.' + field.code;
+                        var currentValue = field.value !== null && field.value !== undefined
+                            ? field.value
+                            : field.default;
 
-                        // Store current value
-                        this.values[key] = field.value || field.default;
+                        // Store field state
+                        this.values[key] = {
+                            value: currentValue,           // Current (unsaved) value
+                            savedValue: currentValue,      // Last saved value
+                            defaultValue:  field.default,   // Default from config
+                            isModified: !!field.isModified, // Saved value !== default (from DB)
+                            isDirty: false                  // Current !== saved
+                        };
 
                         // Store field metadata for quick access
                         this.fieldsMap[key] = {
@@ -62,7 +65,7 @@ define([], function() {
                 }.bind(this));
             }
 
-            console.log('📊 State initialized:', Object.keys(this.values).length, 'values');
+            console.log('📊 State initialized:', Object. keys(this.values).length, 'values');
         },
 
         /**
@@ -74,7 +77,19 @@ define([], function() {
          */
         getField: function(sectionCode, fieldCode) {
             var key = sectionCode + '.' + fieldCode;
-            return this.fieldsMap[key] || null;
+            return this. fieldsMap[key] || null;
+        },
+
+        /**
+         * Get field state (value, savedValue, isDirty, isModified)
+         *
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         * @returns {Object|null}
+         */
+        getFieldState: function(sectionCode, fieldCode) {
+            var key = sectionCode + '.' + fieldCode;
+            return this.values[key] || null;
         },
 
         /**
@@ -85,57 +100,65 @@ define([], function() {
          * @returns {String|null}
          */
         getValue: function(sectionCode, fieldCode) {
-            var key = sectionCode + '.' + fieldCode;
-            return this.values[key] !== undefined ? this.values[key] : null;
+            var state = this.getFieldState(sectionCode, fieldCode);
+            return state ? state.value : null;
         },
 
         /**
-         * Set value and track change
+         * Set value and track dirty state
          *
          * @param {String} sectionCode
          * @param {String} fieldCode
-         * @param {String} newValue
+         * @param {*} newValue
          */
-        setValue: function(sectionCode, fieldCode, newValue) {
+        setValue:  function(sectionCode, fieldCode, newValue) {
             var key = sectionCode + '.' + fieldCode;
-            var oldValue = this.values[key];
-            var field = this.fieldsMap[key];
+            var state = this.values[key];
 
-            if (!field) {
-                console.warn('Field not found:', key);
+            if (!state) {
+                console.warn('⚠️ Field not found:', key);
                 return;
             }
 
             // Update value
-            this.values[key] = newValue;
+            state.value = newValue;
 
-            // Track change
-            var defaultValue = field.default;
+            // Mark as dirty if different from saved value
+            state.isDirty = (newValue !== state.savedValue);
 
-            if (newValue !== defaultValue) {
-                // Value is different from default
-                this.changes[key] = {
-                    sectionCode: sectionCode,
-                    fieldCode: fieldCode,
-                    oldValue: oldValue,
-                    newValue: newValue,
-                    cssVar: field.cssVar
-                };
-            } else {
-                // Value restored to default - remove from changes
-                delete this.changes[key];
-            }
-
-            console.log('📝 Value updated:', key, '=', newValue, '(changes:', Object.keys(this.changes).length, ')');
+            console.log('📝 Value updated:', {
+                key: key,
+                value: newValue,
+                savedValue: state.savedValue,
+                isDirty: state.isDirty,
+                isModified: state. isModified
+            });
         },
 
         /**
-         * Get all changes
+         * Get all dirty (unsaved) changes
          *
-         * @returns {Object} - {key: {sectionCode, fieldCode, oldValue, newValue}}
+         * @returns {Array} - [{sectionCode, fieldCode, value, savedValue}]
          */
-        getChanges: function() {
-            return this.changes;
+        getDirtyChanges: function() {
+            var changes = [];
+
+            Object.keys(this.values).forEach(function(key) {
+                var state = this.values[key];
+                var field = this.fieldsMap[key];
+
+                if (state.isDirty) {
+                    changes.push({
+                        sectionCode: field.sectionCode,
+                        fieldCode: field.fieldCode,
+                        value: state.value,
+                        savedValue: state.savedValue,
+                        cssVar: field.cssVar
+                    });
+                }
+            }.bind(this));
+
+            return changes;
         },
 
         /**
@@ -144,18 +167,13 @@ define([], function() {
          * @returns {Array} - [{sectionCode, fieldCode, value}]
          */
         getChangesForSave: function() {
-            var result = [];
-
-            Object.keys(this.changes).forEach(function(key) {
-                var change = this.changes[key];
-                result.push({
+            return this.getDirtyChanges().map(function(change) {
+                return {
                     sectionCode: change.sectionCode,
-                    fieldCode: change.fieldCode,
-                    value: change.newValue
-                });
-            }.bind(this));
-
-            return result;
+                    fieldCode: change. fieldCode,
+                    value:  change.value
+                };
+            });
         },
 
         /**
@@ -164,7 +182,7 @@ define([], function() {
          * @returns {Boolean}
          */
         hasChanges: function() {
-            return Object.keys(this.changes).length > 0;
+            return this.getDirtyChanges().length > 0;
         },
 
         /**
@@ -173,66 +191,85 @@ define([], function() {
          * @returns {Number}
          */
         getChangesCount: function() {
-            return Object.keys(this.changes).length;
+            return this.getDirtyChanges().length;
         },
 
         /**
-         * Reset all changes to defaults
+         * Reset dirty changes to saved values
          */
         reset: function() {
-            var self = this;
-
-            Object.keys(this.changes).forEach(function(key) {
-                var field = self.fieldsMap[key];
-                if (field) {
-                    self.values[key] = field.default;
+            Object.keys(this.values).forEach(function(key) {
+                var state = this.values[key];
+                if (state.isDirty) {
+                    state.value = state.savedValue;
+                    state.isDirty = false;
                 }
-            });
+            }.bind(this));
 
-            this.changes = {};
-            console.log('↺ State reset to defaults');
+            console.log('↺ All dirty changes reset to saved values');
         },
 
         /**
-         * Reset specific section
+         * Reset specific section to saved values
          *
          * @param {String} sectionCode
          */
         resetSection: function(sectionCode) {
-            var self = this;
             var resetCount = 0;
 
-            Object.keys(this.changes).forEach(function(key) {
+            Object.keys(this.values).forEach(function(key) {
                 if (key.startsWith(sectionCode + '.')) {
-                    var field = self.fieldsMap[key];
-                    if (field) {
-                        self.values[key] = field.default;
-                        delete self.changes[key];
+                    var state = this.values[key];
+                    if (state.isDirty) {
+                        state. value = state.savedValue;
+                        state.isDirty = false;
                         resetCount++;
                     }
                 }
-            });
+            }.bind(this));
 
             console.log('↺ Section reset:', sectionCode, '(' + resetCount + ' fields)');
         },
 
         /**
-         * Mark changes as saved (clear changes but keep values)
+         * Reset to defaults (all fields)
+         */
+        resetToDefaults: function() {
+            Object.keys(this. values).forEach(function(key) {
+                var state = this. values[key];
+                state.value = state.defaultValue;
+                state.isDirty = (state.defaultValue !== state.savedValue);
+            }.bind(this));
+
+            console.log('↺ All fields reset to defaults');
+        },
+
+        /**
+         * Mark changes as saved
+         * Moves current values to savedValues, clears dirty flags
          */
         markAsSaved: function() {
-            this.changes = {};
-            console.log('✅ Changes marked as saved');
+            Object.keys(this.values).forEach(function(key) {
+                var state = this.values[key];
+                if (state.isDirty) {
+                    state.savedValue = state.value;
+                    state.isDirty = false;
+                    // Update isModified based on default
+                    state.isModified = (state.value !== state.defaultValue);
+                }
+            }.bind(this));
+
+            console.log('✅ All changes marked as saved');
         },
 
         /**
          * Clear all state
          */
-        clear: function() {
+        clear:  function() {
             this.config = null;
             this.values = {};
-            this.changes = {};
             this.fieldsMap = {};
-            console.log('🗑️ State cleared');
+            console. log('🗑️ State cleared');
         }
     };
 

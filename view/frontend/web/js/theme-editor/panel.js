@@ -49,12 +49,12 @@ define([
                     themeName: config.themeName
                 });
             } else {
-                console.error('❌ Breeze editor config not found in body data! ');
+                console.error('❌ Breeze editor config not found in body data!');
                 this.storeId = this.options.storeId || 1;
                 this.themeId = this.options.themeId || 0;
             }
 
-            this.template = mageTemplate(panelTemplate);
+            this. template = mageTemplate(panelTemplate);
             this._render();
             this._bind();
             this._initPreview();
@@ -72,11 +72,11 @@ define([
 
             this.element.html(html);
 
-            this.$closeButton = this.element.find('.bte-panel-close');
+            this.$closeButton = this. element.find('.bte-panel-close');
             this.$resetButton = this.element.find('.bte-reset-button');
             this.$saveButton = this.element.find('.bte-save-button');
             this.$sectionsContainer = this.element.find('.bte-sections-container');
-            this.$loader = this.element.find('.bte-panel-loader');
+            this.$loader = this. element.find('.bte-panel-loader');
             this.$error = this.element.find('.bte-panel-error');
 
             console.log('📋 Theme Editor Panel rendered');
@@ -86,18 +86,22 @@ define([
             var self = this;
 
             // Panel controls
-            this.$closeButton.on('click', $.proxy(this._close, this));
+            this.$closeButton.on('click', $. proxy(this._close, this));
             this.$resetButton.on('click', $.proxy(this._reset, this));
-            this.$saveButton.on('click', $.proxy(this._save, this));
+            this.$saveButton.on('click', $. proxy(this._save, this));
 
             // Error handlers
-            this.element.on('click', '.bte-error-retry', $.proxy(this._loadConfig, this));
+            this.element.on('click', '.bte-error-retry', $. proxy(this._loadConfig, this));
             this.element.on('click', '.bte-error-toggle', $.proxy(this._toggleErrorDetails, this));
             this.element.on('click', '.bte-accordion-header', $.proxy(this._toggleSection, this));
 
-            // ✅ Field changes (delegated to FieldHandlers)
+            // ✅ Field changes with live badge updates
             FieldHandlers.init(this.element, function(fieldData) {
+                // Update changes counter
                 self._updateChangesCount();
+
+                // ✅ Update badges in real-time
+                FieldHandlers.updateBadges(self.element, fieldData. sectionCode, fieldData.fieldCode);
             });
         },
 
@@ -116,7 +120,7 @@ define([
         _loadConfig: function() {
             var self = this;
 
-            this._showLoader('Loading configuration.. .');
+            this._showLoader('Loading configuration...');
 
             getConfig(this.storeId, this.themeId, this.options.status)
                 .then(function(data) {
@@ -160,7 +164,7 @@ define([
 
             sections.forEach(function(section) {
                 html += '<div class="bte-accordion-section">';
-                html += '<div class="bte-accordion-header" data-section="' + section.code + '">';
+                html += '<div class="bte-accordion-header" data-section="' + section. code + '">';
                 html += '<i class="bte-icon-' + (section.icon || 'settings') + '"></i>';
                 html += '<span class="bte-section-label">' + section.label + '</span>';
                 html += '<i class="bte-icon-chevron-down bte-accordion-arrow"></i>';
@@ -184,7 +188,7 @@ define([
         _toggleSection: function (e) {
             var $header = $(e.currentTarget);
             var section = $header.data('section');
-            var $content = this.element.find('.bte-accordion-content[data-section="' + section + '"]');
+            var $content = this. element.find('.bte-accordion-content[data-section="' + section + '"]');
             var isActive = $header.hasClass('active');
 
             if (isActive) {
@@ -195,7 +199,7 @@ define([
                 $content.addClass('active').slideDown(200);
             }
 
-            console.log('🔄 Accordion toggled:', section, '→', ! isActive);
+            console.log('🔄 Accordion toggled:', section, '→', !isActive);
         },
 
         /**
@@ -221,7 +225,7 @@ define([
          * Update changes count badge
          */
         _updateChangesCount: function() {
-            var count = PanelState.getChangesCount();
+            var count = PanelState. getChangesCount();
             this.$saveButton.text('Save (' + count + ')');
             this.$resetButton.prop('disabled', count === 0);
         },
@@ -231,14 +235,14 @@ define([
          */
         _close: function () {
             console.log('❌ Closing panel');
-            $('#toolbar-navigation .nav-item[data-id="theme-editor"]').click();
+            $('#toolbar-navigation . nav-item[data-id="theme-editor"]').click();
         },
 
         /**
          * Reset changes
          */
         _reset: function () {
-            if (! PanelState.hasChanges()) {
+            if (!PanelState.hasChanges()) {
                 this._showToast('notice', 'No changes to reset');
                 return;
             }
@@ -267,13 +271,16 @@ define([
 
             saveValues(this.storeId, this.themeId, this.options.status, values)
                 .then(function(data) {
-                    console.log('✅ Saved:', data);
+                    console. log('✅ Saved:', data);
 
-                    if (data.saveBreezeThemeEditorValues.success) {
-                        self._showToast('success', 'Settings saved successfully! ');
+                    if (data.saveBreezeThemeEditorValues. success) {
+                        self._showToast('success', 'Settings saved successfully!');
                         PanelState.markAsSaved();
                         CssPreviewManager.markAsSaved();
                         self._updateChangesCount();
+
+                        // ✅ Update all field badges after save
+                        self._refreshAllBadges();
                     } else {
                         self._showToast('error', 'Failed to save: ' + data.saveBreezeThemeEditorValues.message);
                     }
@@ -285,6 +292,23 @@ define([
                 .finally(function() {
                     self.$saveButton.prop('disabled', false).text('Save');
                 });
+        },
+
+        /**
+         * Refresh all field badges after save
+         */
+        _refreshAllBadges: function() {
+            var self = this;
+            var state = PanelState.getState();
+
+            Object.keys(state. values).forEach(function(key) {
+                var parts = key.split('.');
+                if (parts.length === 2) {
+                    FieldHandlers.updateBadges(self.element, parts[0], parts[1]);
+                }
+            });
+
+            console.log('🔄 All badges refreshed after save');
         },
 
         /**
@@ -326,12 +350,12 @@ define([
             console.log('🔥 Parsed error info:', errorInfo);
 
             var displayMessage = this._getFriendlyMessage(errorInfo.message, errorInfo.debugMessage);
-            console.log('🔥 Display message:', displayMessage.message, 'Friendly:', displayMessage.isFriendly);
+            console.log('🔥 Display message:', displayMessage. message, 'Friendly:', displayMessage.isFriendly);
 
-            this._updateErrorUI(displayMessage.message, errorInfo.debugMessage, displayMessage.isFriendly);
+            this._updateErrorUI(displayMessage. message, errorInfo.debugMessage, displayMessage.isFriendly);
 
             this.$saveButton.prop('disabled', true);
-            this.$resetButton.prop('disabled', true);
+            this.$resetButton. prop('disabled', true);
 
             this.$error.show();
 
@@ -339,7 +363,7 @@ define([
         },
 
         _showToast: function(type, message) {
-            Toastify.show(type, message);
+            Toastify. show(type, message);
         },
 
         _parseErrorData: function(errorData) {
@@ -365,10 +389,10 @@ define([
                     console.log('✅ Found debugMessage in extensions:', debugMessage);
                 }
 
-                if (! debugMessage && errorData.graphqlErrors && errorData.graphqlErrors.length > 0) {
+                if (!debugMessage && errorData.graphqlErrors && errorData.graphqlErrors.length > 0) {
                     var firstError = errorData.graphqlErrors[0];
                     if (firstError.extensions && firstError.extensions.debugMessage) {
-                        debugMessage = firstError.extensions.debugMessage;
+                        debugMessage = firstError. extensions.debugMessage;
                         console.log('✅ Found debugMessage in graphqlErrors:', debugMessage);
                     }
                 }
@@ -420,16 +444,16 @@ define([
             if (debugMessage) {
                 $details.show();
                 $stack.text(debugMessage);
-                console.log('📝 Set debug message:', debugMessage);
+                console. log('📝 Set debug message:', debugMessage);
 
-                if (! hasFriendlyMessage) {
+                if (!hasFriendlyMessage) {
                     $stack.show();
                     $toggle.text('Hide technical details');
                     console. log('✅ Auto-expanded (generic error)');
                 } else {
                     $stack.hide();
                     $toggle.text('Show technical details');
-                    console. log('✅ Collapsed (friendly message)');
+                    console.log('✅ Collapsed (friendly message)');
                 }
             } else {
                 $details.show();
@@ -448,5 +472,5 @@ define([
         }
     });
 
-    return $.swissup.themeEditorPanel;
+    return $. swissup.themeEditorPanel;
 });

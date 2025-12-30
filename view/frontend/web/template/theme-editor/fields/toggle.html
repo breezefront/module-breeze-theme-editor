@@ -1,4 +1,6 @@
-<div class="bte-field bte-field-toggle <%= data.isModified ? 'bte-field-modified' : '' %>">
+<div class="bte-field bte-field-toggle 
+    <%= data.isModified ? 'bte-field-modified' : '' %> 
+    <%= data.isDirty ? 'bte-field-dirty' : '' %>">
     <div class="bte-field-header">
         <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.code %>">
             <%= data.label %>
@@ -6,9 +8,7 @@
                 <span class="bte-required">*</span>
             <% } %>
         </label>
-        <% if (data.isModified) { %>
-            <span class="bte-badge bte-badge-modified">Modified</span>
-        <% } %>
+        <%= data.badgesHtml %>
     </div>
 
     <% if (data.description) { %>
