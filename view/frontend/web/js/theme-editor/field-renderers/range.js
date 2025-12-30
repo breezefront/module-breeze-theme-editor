@@ -14,8 +14,8 @@ define([
         var data = BaseFieldRenderer.prepareData.call(this, field, sectionCode);
 
         // Range params
-        data.min = data.params.min !== null ? data.params.min :  0;
-        data.max = data.params.max !== null ? data.params.max : 100;
+        data.min = data.params.min !== undefined ? data.params.min :  0;
+        data.max = data.params.max !== undefined ? data.params.max : 100;
         data.step = data.params.step || 1;
         data.unit = data.params.unit || '';
 
@@ -26,6 +26,9 @@ define([
 
         data.value = Math.max(data.min, Math.min(data.max, Number(data.value)));
         data.displayValue = data.value + data.unit;
+
+        // ✅ Add fieldCode for backward compatibility (if needed)
+        data.fieldCode = data.code;
 
         return data;
     };
