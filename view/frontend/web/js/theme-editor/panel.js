@@ -235,7 +235,7 @@ define([
          */
         _close: function () {
             console.log('❌ Closing panel');
-            $('#toolbar-navigation . nav-item[data-id="theme-editor"]').click();
+            $('#toolbar-navigation .nav-item[data-id="theme-editor"]').click();
         },
 
         /**
@@ -299,9 +299,8 @@ define([
          */
         _refreshAllBadges: function() {
             var self = this;
-            var state = PanelState.getState();
 
-            Object.keys(state. values).forEach(function(key) {
+            Object.keys(PanelState.values).forEach(function(key) {
                 var parts = key.split('.');
                 if (parts.length === 2) {
                     FieldHandlers.updateBadges(self.element, parts[0], parts[1]);

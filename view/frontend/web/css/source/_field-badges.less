@@ -3,8 +3,10 @@
  * --------------------------------------------
  */
 
-/* Status Badges
-// -------------------------------------------- */
+/*
+ * Status Badges
+ * --------------------------------------------
+ */
 
 .bte-badge {
     display: inline-flex;
@@ -22,26 +24,26 @@
     vertical-align: middle;
 }
 
-/* 🟡 Dirty badge - unsaved changes (higher priority) */
+/* Dirty badge - unsaved changes (higher priority) */
 .bte-badge-dirty {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    color: #92400e;
-    border: 1px solid #fbbf24;
+    background: linear-gradient(135deg, @bte-badge-dirty-bg-start 0%, @bte-badge-dirty-bg-end 100%);
+    color: @bte-badge-dirty-text;
+    border: 1px solid @bte-badge-dirty-border;
     animation: bte-pulse-badge 2s ease-in-out infinite;
 
     .bte-badge-icon {
         display: inline-block;
         font-size: 8px;
-        color: #f59e0b;
+        color: @bte-badge-dirty-primary;
         animation: bte-pulse-dot 1.5s ease-in-out infinite;
     }
 }
 
-/* 🔵 Modified badge - saved but different from default */
+/* Modified badge - saved but different from default */
 .bte-badge-modified {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    color: #1e40af;
-    border: 1px solid #60a5fa;
+    background: linear-gradient(135deg, @bte-badge-modified-bg-start 0%, @bte-badge-modified-bg-end 100%);
+    color: @bte-badge-modified-text;
+    border: 1px solid @bte-badge-modified-border;
 }
 
 /* Badge spacing when both present */
@@ -49,23 +51,25 @@
     margin-left: 4px;
 }
 
-/* Field State Indicators
-// -------------------------------------------- */
+/*
+ * Field State Indicators
+ * --------------------------------------------
+ */
 
 .bte-field {
     position: relative;
-    border-left: 3px solid transparent;
+    /* border-left: 3px solid transparent; */
     transition: border-color 0.2s ease, background-color 0.2s ease;
 
     /* Modified state (saved customization) */
     &.bte-field-modified {
-        border-left-color: #60a5fa;
+        /* border-left-color: @bte-badge-modified-light; */
 
         .bte-field-header {
             position: relative;
 
             /* Status dot indicator */
-            &::before {
+            &:before {
                 content: '';
                 position: absolute;
                 left: -15px;
@@ -74,47 +78,49 @@
                 width: 6px;
                 height: 6px;
                 border-radius: 50%;
-                background: #3b82f6;
+                background: @bte-badge-modified-primary;
             }
         }
     }
 
     /* Dirty state (unsaved changes) - overrides modified */
     &.bte-field-dirty {
-        border-left-color: #fbbf24;
-        background: linear-gradient(90deg, rgba(254, 243, 199, 0.1) 0%, transparent 100%);
+        /* border-left-color: @bte-badge-dirty-light; */
+        background: linear-gradient(90deg, fadeout(@bte-badge-dirty-bg-start, 90%) 0%, transparent 100%);
 
         .bte-field-header {
-            &::before {
-                background: #f59e0b;
+            &:before {
+                background: @bte-badge-dirty-primary;
                 animation: bte-pulse-dot 1.5s ease-in-out infinite;
             }
         }
 
         /* Hover effect - intensify background */
         &:hover {
-            background: linear-gradient(90deg, rgba(254, 243, 199, 0.2) 0%, transparent 100%);
+            background: linear-gradient(90deg, fadeout(@bte-badge-dirty-bg-start, 80%) 0%, transparent 100%);
         }
     }
 
     /* Both states active */
     &.bte-field-dirty.bte-field-modified {
         /* Dirty takes visual priority */
-        .bte-field-header::before {
-            background: #f59e0b;
+        .bte-field-header:before {
+            background: @bte-badge-dirty-primary;
         }
     }
 }
 
-/* Animations
-// -------------------------------------------- */
+/*
+ * Animations
+ * --------------------------------------------
+ */
 
 @keyframes bte-pulse-badge {
     0%, 100% {
-        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
+        box-shadow: 0 0 0 0 fadeout(@bte-badge-dirty-light, 60%);
     }
     50% {
-        box-shadow: 0 0 0 3px rgba(251, 191, 36, 0);
+        box-shadow: 0 0 0 3px fadeout(@bte-badge-dirty-light, 100%);
     }
 }
 
@@ -129,8 +135,10 @@
     }
 }
 
-/* Compact Mode
-// -------------------------------------------- */
+/*
+ * Compact Mode
+ * --------------------------------------------
+ */
 
 .bte-panel.compact {
     .bte-badge {
@@ -145,7 +153,7 @@
 
     .bte-field.bte-field-modified,
     .bte-field.bte-field-dirty {
-        .bte-field-header::before {
+        .bte-field-header:before {
             width: 4px;
             height: 4px;
             left: -12px;
@@ -153,52 +161,56 @@
     }
 }
 
-/* Dark Mode Support
-// -------------------------------------------- */
+/*
+ * Dark Mode Support
+ * --------------------------------------------
+ */
 
 @media (prefers-color-scheme: dark) {
     .bte-badge-dirty {
-        background: linear-gradient(135deg, #451a03 0%, #78350f 100%);
-        color: #fef3c7;
-        border-color: #92400e;
+        background: linear-gradient(135deg, @bte-badge-dirty-dark-bg-start 0%, @bte-badge-dirty-dark-bg-end 100%);
+        color: @bte-badge-dirty-dark-text;
+        border-color: @bte-badge-dirty-dark-border;
 
         .bte-badge-icon {
-            color: #fbbf24;
+            color: @bte-badge-dirty-dark-icon;
         }
     }
 
     .bte-badge-modified {
-        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-        color: #dbeafe;
-        border-color: #3b82f6;
+        background: linear-gradient(135deg, @bte-badge-modified-dark-bg-start 0%, @bte-badge-modified-dark-bg-end 100%);
+        color: @bte-badge-modified-dark-text;
+        border-color: @bte-badge-modified-dark-border;
     }
 
     .bte-field {
         &.bte-field-modified {
-            border-left-color: #3b82f6;
+            /* border-left-color: @bte-badge-modified-primary; */
 
-            .bte-field-header::before {
-                background: #60a5fa;
+            .bte-field-header:before {
+                background: @bte-badge-modified-dark-dot;
             }
         }
 
         &.bte-field-dirty {
-            border-left-color: #f59e0b;
-            background: linear-gradient(90deg, rgba(120, 53, 15, 0.2) 0%, transparent 100%);
+            /* border-left-color: @bte-badge-dirty-primary; */
+            background: linear-gradient(90deg, fadeout(@bte-badge-dirty-dark-bg-end, 80%) 0%, transparent 100%);
 
-            .bte-field-header::before {
-                background: #fbbf24;
+            .bte-field-header:before {
+                background: @bte-badge-dirty-dark-icon;
             }
 
             &:hover {
-                background: linear-gradient(90deg, rgba(120, 53, 15, 0.3) 0%, transparent 100%);
+                background: linear-gradient(90deg, fadeout(@bte-badge-dirty-dark-bg-end, 70%) 0%, transparent 100%);
             }
         }
     }
 }
 
-/* Accessibility
-// -------------------------------------------- */
+/*
+ * Accessibility
+ * --------------------------------------------
+ */
 
 /* High contrast mode */
 @media (prefers-contrast: high) {
@@ -208,7 +220,7 @@
 
     .bte-field.bte-field-modified,
     .bte-field.bte-field-dirty {
-        border-left-width: 4px;
+        /* border-left-width: 4px; */
     }
 }
 
@@ -216,13 +228,15 @@
 @media (prefers-reduced-motion: reduce) {
     .bte-badge-dirty,
     .bte-badge-dirty .bte-badge-icon,
-    .bte-field-dirty .bte-field-header::before {
+    .bte-field-dirty .bte-field-header:before {
         animation: none;
     }
 }
 
-/* Responsive
-// -------------------------------------------- */
+/*
+ * Responsive
+ * --------------------------------------------
+ */
 
 /* Mobile - smaller badges */
 .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__s) {
@@ -239,9 +253,9 @@
 
     .bte-field.bte-field-modified,
     .bte-field.bte-field-dirty {
-        border-left-width: 2px;
+        /* border-left-width: 2px; */
 
-        .bte-field-header::before {
+        .bte-field-header:before {
             width: 4px;
             height: 4px;
             left: -10px;
