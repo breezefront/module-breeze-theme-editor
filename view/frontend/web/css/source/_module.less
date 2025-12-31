@@ -1,30 +1,31 @@
 //
-// Breeze Theme Editor - Main Styles
-// _____________________________________________
+//  Breeze Theme Editor
+//  _____________________________________________
 
-// Variables and Mixins
+// Foundation
 @import '_variables.less';
 @import '_mixins.less';
-
-// Main Toolbar
-@import '_toolbar.less';
-@import '_toolbar-left.less';
-@import '_toolbar-center.less';
-@import '_toolbar-right.less';
-@import '_toolbar-compact.less';
-
-// Components
-@import '_device-switcher.less';
-@import '_scope-selector.less';
-@import '_page-selector.less';
-
-// Utilities
 @import '_utilities.less';
-@import '_toastify.less';
-@import '_field-badges.less';
 
-@import '_device-frame.less';
+// Base Toolbar
+@import 'base/_toolbar.less';
+@import 'base/_toolbar-left.less';
+@import 'base/_toolbar-center.less';
+@import 'base/_toolbar-right.less';
+@import 'base/_toolbar-compact.less';
 
-@import '_panels.less';
-@import '_theme-editor-panel.less';
-@import '_theme-editor-fields.less';
+// Toolbar Components
+@import 'components/_publication-selector.less';
+@import 'components/_scope-selector.less';
+@import 'components/_page-selector.less';
+@import 'components/_device-switcher.less';
+@import 'components/_device-frame.less';
+
+// Panels
+@import 'panels/_panels.less';
+@import 'panels/_theme-editor-panel.less';
+@import 'panels/_theme-editor-fields.less';
+
+// UI Elements
+@import 'ui/_field-badges.less';
+@import 'ui/_toastify.less';
