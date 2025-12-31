@@ -9,6 +9,7 @@ define([
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
+    'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/publish'
 ], function (
@@ -22,6 +23,7 @@ define([
     FieldHandlers,
     Toastify,
     getConfig,
+    getConfigFromPublication,
     saveValues,
     publish
 ) {
@@ -103,6 +105,23 @@ define([
                 // ✅ Update badges in real-time
                 FieldHandlers.updateBadges(self.element, fieldData. sectionCode, fieldData.fieldCode);
             });
+
+            // ✅ Publication selector events
+            $(document).on('publicationStatusChanged', function (e, data) {
+                console.log('🔄 Publication status changed to:', data.status);
+                self.options.status = data.status;
+                self._loadConfig();
+            });
+
+            $(document).on('loadThemeEditorFromPublication', function (e, data) {
+                console.log('📥 Loading config from publication:', data.publicationId);
+                self._loadConfigFromPublication(data.publicationId);
+            });
+
+            $(document).on('openPublicationHistoryModal', function () {
+                console.log('📜 Opening publication history modal');
+                self._showToast('notice', 'Publication history coming soon!');
+            });
         },
 
         /**
@@ -125,22 +144,14 @@ define([
             getConfig(this.storeId, this.themeId, this.options.status)
                 .then(function(data) {
                     console.log('✅ Config loaded:', data);
-
                     var config = data.breezeThemeEditorConfig;
-
-                    // Initialize state
                     PanelState.init(config);
-
-                    // Render fields
                     self._renderSections(config.sections);
-
                     self._hideLoader();
                 })
                 .catch(function(error) {
                     console.error('❌ Failed to load config:', error);
-
                     var errorData = error;
-
                     if (error.message && error.message.indexOf('GraphQL Error: ') !== -1) {
                         try {
                             var match = error.message.match(/GraphQL Error: (.*)/);
@@ -151,8 +162,29 @@ define([
                             // Fallback to original error
                         }
                     }
-
                     self._showError(errorData);
+                });
+        },
+
+        /**
+         * Load config from specific publication
+         */
+        _loadConfigFromPublication: function(publicationId) {
+            var self = this;
+            this._showLoader('Loading publication #' + publicationId + '...');
+
+            getConfigFromPublication(this.storeId, this.themeId, publicationId)
+                .then(function(config) {
+                    console. log('✅ Config loaded from publication:', config);
+                    PanelState.init(config);
+                    self._renderSections(config. sections);
+                    self._hideLoader();
+                    // Show notification
+                    self._showToast('success', 'Loaded publication:  ' + (config.metadata.lastPublished || 'Unknown date'));
+                })
+                .catch(function(error) {
+                    console.error('❌ Failed to load config from publication:', error);
+                    self._showError(error);
                 });
         },
 

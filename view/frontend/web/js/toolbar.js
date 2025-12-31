@@ -4,7 +4,7 @@ define([
     'text!Swissup_BreezeThemeEditor/template/toolbar.html',
     'Swissup_BreezeThemeEditor/js/toolbar/admin-link',
     'Swissup_BreezeThemeEditor/js/toolbar/navigation',
-    'Swissup_BreezeThemeEditor/js/toolbar/version-selector',
+    'Swissup_BreezeThemeEditor/js/toolbar/publication-selector',
     'Swissup_BreezeThemeEditor/js/toolbar/scope-selector',
     'Swissup_BreezeThemeEditor/js/toolbar/page-selector',
     'Swissup_BreezeThemeEditor/js/toolbar/device-switcher',
@@ -144,12 +144,35 @@ define([
             });
         }
 
-        // Version Selector
-        if (components.versionSelector) {
-            $(components.versionSelector.selector).breezeVersionSelector({
-                currentVersion: components.versionSelector.currentVersion,
-                published: components.versionSelector.published
-            });
+        // Publication Selector
+        if (components.publicationSelector) {
+            var $pubSelector = $(components.publicationSelector.selector);
+
+            if ($pubSelector.length) {
+                $pubSelector.publicationSelector();
+
+                $pubSelector.on('publicationStatusChanged', function (e, data) {
+                    console. log('🔄 Publication status changed:', data.status);
+                    $(document).trigger('publicationStatusChanged', {status: data.status});
+                });
+
+                $pubSelector.on('publicationSelected', function (e, data) {
+                    console.log('📥 Publication selected:', data.publicationId, data.publication.title);
+                    $(document).trigger('loadThemeEditorFromPublication', {
+                        publicationId: data.publicationId,
+                        publication: data.publication
+                    });
+                });
+
+                $pubSelector.on('publicationHistoryRequested', function () {
+                    console.log('📜 Publication history modal requested');
+                    $(document).trigger('openPublicationHistoryModal');
+                });
+
+                console.log('✅ Publication Selector initialized');
+            } else {
+                console.warn('⚠️ Publication Selector element not found:', components.publicationSelector.selector);
+            }
         }
 
         // Scope Selector

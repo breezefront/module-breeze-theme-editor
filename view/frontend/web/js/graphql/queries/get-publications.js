@@ -37,20 +37,22 @@ define([
     /**
      * Get publication history
      *
-     * @param {Number} storeId
-     * @param {Number} themeId - Optional
-     * @param {Number} pageSize
-     * @param {Number} currentPage
-     * @param {String} search - Optional
-     * @returns {Promise}
+     * @param {Number} storeId - Required
+     * @param {Number|null} themeId - Optional, auto-detected if null
+     * @param {Number} pageSize - Items per page (default: 20)
+     * @param {Number} currentPage - Current page (default: 1)
+     * @param {String|null} search - Search by title (optional)
+     * @returns {Promise<Object>} - Returns { items:  [], page_info: {}, total_count: 0 }
      */
     return function getPublications(storeId, themeId, pageSize, currentPage, search) {
         return client.execute(query, {
-            storeId:  storeId,
+            storeId: storeId,
             themeId: themeId || null,
             pageSize: pageSize || 20,
             currentPage: currentPage || 1,
-            search:  search || null
-        }, 'GetPublications');
+            search: search || null
+        }, 'GetPublications').then(function (response) {
+            return response.breezeThemeEditorPublications;
+        });
     };
 });

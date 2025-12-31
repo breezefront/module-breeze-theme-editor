@@ -43,6 +43,12 @@ type Query {
         status: BreezeThemeEditorStatusCode
     ): BreezeThemeEditorConfig!  @doc(description: "Get theme configuration with current values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Config")
 
+    breezeThemeEditorConfigFromPublication(
+        storeId: Int!
+        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        publicationId: Int! @doc(description: "Load configuration from this publication")
+    ): BreezeThemeEditorConfig!  @doc(description: "Get theme configuration from specific publication") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\ConfigFromPublication")
+
     breezeThemeEditorValues(
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
