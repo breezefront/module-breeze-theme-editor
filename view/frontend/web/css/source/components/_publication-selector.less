@@ -345,3 +345,82 @@ _____________________________________________
         }
     }
 }
+
+/* ============================================================================
+ * PUBLISH BUTTON IN DROPDOWN
+ * ============================================================================ */
+
+/* Dropdown item group (contains Draft item + publish button) */
+.dropdown-item-group {
+    position: relative;
+
+    &:not(.active):hover {
+        background: rgba(0, 0, 0, 0.02);
+    }
+
+    &.active {
+        background: rgba(236, 103, 55, 0.05);
+    }
+
+    .dropdown-item {
+        border-bottom: none;
+    }
+}
+
+/* Publish button wrapper */
+.dropdown-publish-button-wrapper {
+    padding: 8px 12px 12px;
+    background: transparent;
+}
+
+/* Publish button */
+.dropdown-publish-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, @bte-toolbar-icon 0%, darken(@bte-toolbar-icon, 10%) 100%);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px fade(@bte-toolbar-icon, 30%);
+
+    &:hover {
+        background: linear-gradient(135deg, darken(@bte-toolbar-icon, 5%) 0%, @bte-toolbar-icon 100%);
+        box-shadow: 0 4px 8px fade(@bte-toolbar-icon, 40%);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px fade(@bte-toolbar-icon, 30%);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+
+        &:hover {
+            transform: none;
+        }
+    }
+
+    .publish-icon {
+        font-size: 16px;
+        line-height: 1;
+    }
+
+    .publish-label {
+        font-size: 14px;
+        font-weight: 600;
+    }
+}
+
+

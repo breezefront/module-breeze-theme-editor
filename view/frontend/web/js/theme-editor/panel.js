@@ -10,8 +10,7 @@ define([
     'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
-    'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values',
-    'Swissup_BreezeThemeEditor/js/graphql/mutations/publish'
+    'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values'
 ], function (
     $,
     widget,
@@ -24,8 +23,7 @@ define([
     Toastify,
     getConfig,
     getConfigFromPublication,
-    saveValues,
-    publish
+    saveValues
 ) {
     'use strict';
 
@@ -121,6 +119,17 @@ define([
             $(document).on('openPublicationHistoryModal', function () {
                 console.log('📜 Opening publication history modal');
                 self._showToast('notice', 'Publication history coming soon!');
+            });
+
+            $(document).on('themeEditorPublished', function (e, data) {
+                console.log('✅ Theme editor published:', data.publication);
+
+                // Оновити UI
+                PanelState.markAsSaved();
+                CssPreviewManager.markAsSaved();
+                self._updateChangesCount();
+                self._updatePublicationSelectorBadge();
+                self._refreshAllBadges();
             });
         },
 

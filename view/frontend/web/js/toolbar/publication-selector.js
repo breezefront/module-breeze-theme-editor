@@ -1,12 +1,14 @@
+/**
+ * Publication Selector Widget
+ * Main coordinator for UI, metadata loading, and publish functionality
+ */
 define([
     'jquery',
     'jquery-ui-modules/widget',
-    'mage/template',
-    'mage/translate',
-    'text!Swissup_BreezeThemeEditor/template/toolbar/publication-selector.html',
-    'Swissup_BreezeThemeEditor/js/graphql/queries/get-publications',
-    'Swissup_BreezeThemeEditor/js/graphql/queries/get-config'
-], function ($, widget, mageTemplate, $t, publicationSelectorTemplate, getPublications, getConfig) {
+    'Swissup_BreezeThemeEditor/js/toolbar/publication-selector/renderer',
+    'Swissup_BreezeThemeEditor/js/toolbar/publication-selector/metadata-loader',
+    'Swissup_BreezeThemeEditor/js/toolbar/publication-selector/publish-handler'
+], function ($, widget, Renderer, MetadataLoader, PublishHandler) {
     'use strict';
 
     $.widget('swissup.publicationSelector', {
@@ -22,266 +24,94 @@ define([
 
         _create: function () {
             console.log('✅ Initializing Publication Selector');
+
+            this._loadConfig();
+            this._initModules();
+
+            this.isDropdownOpen = false;
+
+            this.renderer.render();
+            this._bind();
+            this.metadataLoader.load();
+            this.metadataLoader.loadPublications();
+        },
+
+        _loadConfig: function() {
             var editorConfig = $('body').data('breeze-editor-config');
             if (editorConfig) {
                 this.options.storeId = this.options.storeId || editorConfig.storeId;
                 this.options.themeId = this.options.themeId || editorConfig.themeId;
             }
 
-            this.options.currentStatus = localStorage.getItem('bte_current_status') || this.options.currentStatus || 'DRAFT';
-            this.options.currentPublicationId = parseInt(localStorage.getItem('bte_current_publication_id')) || this.options.currentPublicationId || null;
-            this.options.currentPublicationTitle = localStorage.getItem('bte_current_publication_title') || this.options.currentPublicationTitle || null;
+            this.options.currentStatus = localStorage.getItem('bte_current_status') || 'DRAFT';
+            this.options.currentPublicationId = parseInt(localStorage.getItem('bte_current_publication_id')) || null;
+            this.options.currentPublicationTitle = localStorage.getItem('bte_current_publication_title') || null;
 
             console.log('📊 Config:', {
                 storeId: this.options.storeId,
                 themeId: this.options.themeId,
                 currentStatus: this.options.currentStatus
             });
-
-            this.template = mageTemplate(publicationSelectorTemplate);
-            this.publications = [];
-            this.isDropdownOpen = false;
-
-            this._render();
-            this._bind();
-            this._loadMetadata();
-            this._loadPublications();
         },
 
-        _loadMetadata: function () {
-            var self = this;
-            if (!this.options.storeId || !this.options.themeId) {
-                console.warn('⚠️ Cannot load metadata: storeId or themeId missing');
-                return;
-            }
-            getConfig(this.options.storeId, this.options.themeId, 'DRAFT')
-                .then(function (data) {
-                    var config = data.breezeThemeEditorConfig;
-                    self.options.draftChangesCount = config.metadata.draftChangesCount || 0;
-                    self.options.lastPublishedAt = config.metadata.lastPublished || null;
-                    console.log('📊 Metadata loaded:', {
-                        draftChangesCount: self.options.draftChangesCount,
-                        lastPublishedAt: self.options.lastPublishedAt
-                    });
-                    self._updateBadge();
-                })
-                .catch(function (error) {
-                    console.error('❌ Failed to load metadata:', error);
-                });
-        },
-
-        _render: function () {
-            var html = this.template({
-                data: {
-                    label: this._getLabel(),
-                    badge: this._getBadge(),
-                    statusClass: this._getStatusClass(),
-                    hasDropdown: true,
-                    i18n: {
-                        switchPublication: $t('Switch Publication'),
-                        draft: $t('Draft'),
-                        published: $t('Published'),
-                        recentPublications: $t('Recent Publications'),
-                        loading: $t('Loading...'),
-                        viewAll: $t('View All Publications')
-                    }
-                }
-            });
-            this.element.html(html);
-            this.$button = this.element.find('.toolbar-select');
-            this.$dropdown = this.element.find('.toolbar-dropdown');
-            this.$publicationsList = this.element.find('.publications-list');
-        },
-
-        _getLabel: function () {
-            if (this.options.currentStatus === 'DRAFT') {
-                return $t('Draft');
-            }
-            if (this.options.currentStatus === 'PUBLISHED') {
-                return $t('Published');
-            }
-            if (this.options.currentStatus === 'PUBLICATION' && this.options.currentPublicationTitle) {
-                return this.options.currentPublicationTitle;
-            }
-            return $t('Draft');
-        },
-
-        _getBadge: function () {
-            var count = this.options.draftChangesCount;
-            if (this.options.currentStatus === 'DRAFT') {
-                return count > 0
-                    ? $t('(%1 changes)').replace('%1', count)
-                    : $t('(no changes)');
-            }
-            if (this.options.currentStatus === 'PUBLISHED') {
-                return count > 0
-                    ? $t('(%1 unpublished)').replace('%1', count)
-                    : $t('(live)');
-            }
-            if (this.options.currentStatus === 'PUBLICATION') {
-                return $t('(loaded from history)');
-            }
-            return '';
-        },
-
-        _getStatusClass: function () {
-            var map = {
-                'DRAFT': 'status-draft',
-                'PUBLISHED': 'status-published',
-                'PUBLICATION': 'status-historical'
-            };
-            return map[this.options.currentStatus] || '';
-        },
-
-        _updateBadge: function () {
-            if (!this.$button || !this.$button.length) {
-                return;
-            }
-            var newBadge = this._getBadge();
-            var $badge = this.$button.find('.select-badge');
-            if (newBadge) {
-                if ($badge.length) {
-                    $badge.text(newBadge);
-                } else {
-                    this.$button.find('.select-label').after('<span class="select-badge">' + newBadge + '</span>');
-                }
-            } else {
-                $badge.remove();
-            }
-            console.log('🔄 Badge updated:', newBadge);
-        },
-
-        _updateButton: function () {
-            if (!this.$button || !this.$button.length) {
-                return;
-            }
-            var newLabel = this._getLabel();
-            var newBadge = this._getBadge();
-            var newStatusClass = this._getStatusClass();
-            this.$button.find('.select-label').text(newLabel);
-            var $badge = this.$button.find('.select-badge');
-            if (newBadge) {
-                if ($badge.length) {
-                    $badge.text(newBadge);
-                } else {
-                    this.$button.find('.select-label').after('<span class="select-badge">' + newBadge + '</span>');
-                }
-            } else {
-                $badge.remove();
-            }
-            this.$button
-                .removeClass('status-draft status-published status-historical')
-                .addClass(newStatusClass);
-            console.log('🔄 Button updated:', {label: newLabel, badge: newBadge, class: newStatusClass});
+        _initModules: function() {
+            this.renderer = new Renderer(this.element, this.options);
+            this.metadataLoader = new MetadataLoader(this.options, this.renderer);
+            this.publishHandler = new PublishHandler(this.options, this.renderer, this.metadataLoader);
         },
 
         _bind: function () {
             var self = this;
 
-            this.$button.off('click');
             this.element.off('click');
             $(document).off('click.publicationSelector');
 
-            this.$button.on('click', $.proxy(this._toggleDropdown, this));
+            this.element.on('click', '.toolbar-select', $.proxy(this._toggleDropdown, this));
+            this.element.on('click', '[data-status]', $.proxy(this._switchStatus, this));
+            this.element.on('click', '[data-publication-id]', $.proxy(this._loadPublication, this));
+            this.element.on('click', '[data-action="history"]', $.proxy(this._openHistory, this));
+            this.element.on('click', '[data-action="publish"]', $.proxy(this.publishHandler.publish, this.publishHandler));
 
             $(document).on('click.publicationSelector', function (e) {
                 if (!self.element.is(e.target) && self.element.has(e.target).length === 0) {
                     self._closeDropdown();
                 }
             });
-
-            this.element.on('click', '[data-status]', $.proxy(this._switchStatus, this));
-            this.element.on('click', '[data-publication-id]', $.proxy(this._loadPublication, this));
-            this.element.on('click', '[data-action="history"]', $.proxy(this._openHistory, this));
         },
 
         _toggleDropdown: function (e) {
             e.preventDefault();
             e.stopPropagation();
-
-            if (this.isDropdownOpen) {
-                this._closeDropdown();
-            } else {
-                this._openDropdown();
-            }
+            this.isDropdownOpen ? this._closeDropdown() : this._openDropdown();
         },
 
         _openDropdown: function () {
-            this.$dropdown.slideDown(200);
-            this.$button.addClass('active');
+            this.element.find('.toolbar-dropdown').slideDown(200);
+            this.element.find('.toolbar-select').addClass('active');
             this.isDropdownOpen = true;
             console.log('📂 Dropdown opened');
         },
 
         _closeDropdown: function () {
-            this.$dropdown.slideUp(200);
-            this.$button.removeClass('active');
+            this.element.find('.toolbar-dropdown').slideUp(200);
+            this.element.find('.toolbar-select').removeClass('active');
             this.isDropdownOpen = false;
-        },
-
-        _loadPublications: function () {
-            var self = this;
-            if (!this.options.storeId || !this.options.themeId) {
-                console.warn('⚠️ storeId or themeId not set');
-                return;
-            }
-            console.log('📥 Loading publications...');
-            getPublications(this.options.storeId, this.options.themeId, 5)
-                .then(function (data) {
-                    self.publications = data.items || [];
-                    console.log('✅ Publications loaded:', self.publications.length);
-                    self._renderPublications();
-                })
-                .catch(function (error) {
-                    console.error('❌ Failed to load publications:', error);
-                    self._renderPublicationsError();
-                });
-        },
-
-        _renderPublications: function () {
-            var html = '';
-
-            if (this.publications.length === 0) {
-                html = '<div class="dropdown-empty">' + $t('No publications yet') + '</div>';
-            } else {
-                this.publications.forEach(function (pub) {
-                    var date = new Date(pub.publishedAt);
-                    var dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-
-                    var safeTitle = $('<div>').text(pub.title).html();
-
-                    html += '<a href="#" class="dropdown-item" data-publication-id="' + pub.publicationId + '">';
-                    html += '  <span class="item-icon">📦</span>';
-                    html += '  <span class="item-content">';
-                    html += '    <span class="item-title">' + safeTitle + '</span>';
-                    html += '    <span class="item-meta">' + dateStr + '</span>';
-                    html += '  </span>';
-                    html += '</a>';
-                });
-            }
-
-            this.$publicationsList.html(html);
-        },
-
-        _renderPublicationsError: function () {
-            var html = '<div class="dropdown-error">' + $t('Failed to load publications') + '</div>';
-            this.$publicationsList.html(html);
         },
 
         _switchStatus: function (e) {
             e.preventDefault();
             var status = $(e.currentTarget).data('status');
             console.log('🔄 Switching to status:', status);
+
             localStorage.setItem('bte_current_status', status);
             localStorage.removeItem('bte_current_publication_id');
             localStorage.removeItem('bte_current_publication_title');
+
             this.options.currentStatus = status;
             this.options.currentPublicationId = null;
             this.options.currentPublicationTitle = null;
-            this._updateButton();
+
+            this.renderer.updateButton();
             this._closeDropdown();
             this.element.trigger('publicationStatusChanged', {status: status});
         },
@@ -290,40 +120,64 @@ define([
             e.preventDefault();
             var publicationId = parseInt($(e.currentTarget).data('publication-id'), 10);
             console.log('📥 Loading publication:', publicationId);
-            var publication = this.publications.find(function (p) {
+
+            var publication = this.metadataLoader.publications.find(function (p) {
                 return p.publicationId === publicationId;
             });
+
             if (!publication) {
                 console.error('❌ Publication not found:', publicationId);
                 return;
             }
+
             localStorage.setItem('bte_current_status', 'PUBLICATION');
             localStorage.setItem('bte_current_publication_id', publicationId);
             localStorage.setItem('bte_current_publication_title', publication.title);
+
             this.options.currentStatus = 'PUBLICATION';
             this.options.currentPublicationId = publicationId;
             this.options.currentPublicationTitle = publication.title;
-            this._updateButton();
+
+            this.renderer.updateButton();
             this._closeDropdown();
-            this.element.trigger('publicationSelected', {
-                publicationId: publicationId,
-                publication: publication
-            });
+            this.element.trigger('loadThemeEditorFromPublication', {publicationId: publicationId});
         },
 
         _openHistory: function (e) {
             e.preventDefault();
             console.log('📜 Opening publication history modal');
-
             this._closeDropdown();
-            this.element.trigger('publicationHistoryRequested');
+            this.element.trigger('openPublicationHistoryModal');
         },
 
         updateChangesCount: function (count) {
             console.log('🔄 Updating changes count:', count);
 
+            var oldCount = this.options.draftChangesCount;
             this.options.draftChangesCount = count;
-            this._updateBadge();
+
+            var shouldShowBefore = oldCount > 0 && this.options.currentStatus === 'DRAFT';
+            var shouldShowAfter = count > 0 && this.options.currentStatus === 'DRAFT';
+
+            if (shouldShowBefore !== shouldShowAfter) {
+                console.log('🔄 Publish button visibility changed, re-rendering');
+                this.renderer.render();
+                this._bind();
+                this.metadataLoader.renderPublications();
+            } else {
+                this.renderer.updateBadge();
+            }
+        },
+
+        reloadPublications: function() {
+            console.log('🔄 Reloading publications list');
+            this.metadataLoader.loadPublications();
+            this.metadataLoader.load();
+        },
+
+        reloadMetadata: function() {
+            console.log('🔄 Reloading metadata (called from external)');
+            this.metadataLoader.load();
         },
 
         _destroy: function () {

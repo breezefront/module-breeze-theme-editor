@@ -37,7 +37,7 @@ define([
     return function saveValues(storeId, themeId, status, values, autoPublish, publicationTitle) {
         return client.execute(mutation, {
             input: {
-                storeId:  storeId,
+                storeId: storeId,
                 themeId: themeId || null,
                 status: status || 'DRAFT',
                 values: values,

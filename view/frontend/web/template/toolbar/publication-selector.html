@@ -18,14 +18,40 @@
             </div>
 
             <div class="dropdown-content">
-                <!-- Current States -->
-                <a href="#" class="dropdown-item" data-status="DRAFT">
-                    <span class="item-icon">🟡</span>
-                    <span class="item-text"><%= data.i18n.draft %></span>
-                </a>
+                <!-- Draft status with publish button -->
+                <div class="dropdown-item-group <%= data.isDraftActive ? 'active' : '' %>">
+                    <a href="#" class="dropdown-item" data-status="DRAFT">
+                        <span class="item-icon">🟡</span>
+                        <span class="item-text"><%= data.i18n.draft %></span>
+                        <% if (data.draftBadge) { %>
+                            <span class="item-meta"><%= data.draftBadge %></span>
+                        <% } %>
+                        <% if (data.isDraftActive) { %>
+                            <span class="item-check">✓</span>
+                        <% } %>
+                    </a>
+
+                    <!-- Publish button (only when Draft is active with changes) -->
+                    <% if (data.showPublishButton) { %>
+                        <div class="dropdown-publish-button-wrapper">
+                            <button type="button" class="dropdown-publish-button" data-action="publish">
+                                <span class="publish-icon">💾</span>
+                                <span class="publish-label"><%= data.publishButtonLabel %></span>
+                            </button>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Published status -->
                 <a href="#" class="dropdown-item" data-status="PUBLISHED">
                     <span class="item-icon">🟢</span>
                     <span class="item-text"><%= data.i18n.published %></span>
+                    <% if (data.publishedBadge) { %>
+                        <span class="item-meta"><%= data.publishedBadge %></span>
+                    <% } %>
+                    <% if (data.isPublishedActive) { %>
+                        <span class="item-check">✓</span>
+                    <% } %>
                 </a>
 
                 <div class="dropdown-divider"></div>
