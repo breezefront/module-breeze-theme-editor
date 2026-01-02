@@ -13,7 +13,7 @@ define([
         options: {
             currentStatus: 'DRAFT',
             draftChangesCount: 0,
-            currentPublicationId:  null,
+            currentPublicationId: null,
             currentPublicationTitle: null,
             lastPublishedAt: null,
             storeId: null,
@@ -48,29 +48,21 @@ define([
             this._loadPublications();
         },
 
-        /**
-         * ✅ Завантажити metadata (draftChangesCount, lastPublishedAt) через GraphQL
-         */
         _loadMetadata: function () {
             var self = this;
-
             if (!this.options.storeId || !this.options.themeId) {
                 console.warn('⚠️ Cannot load metadata: storeId or themeId missing');
                 return;
             }
-
             getConfig(this.options.storeId, this.options.themeId, 'DRAFT')
                 .then(function (data) {
                     var config = data.breezeThemeEditorConfig;
                     self.options.draftChangesCount = config.metadata.draftChangesCount || 0;
                     self.options.lastPublishedAt = config.metadata.lastPublished || null;
-
                     console.log('📊 Metadata loaded:', {
                         draftChangesCount: self.options.draftChangesCount,
                         lastPublishedAt: self.options.lastPublishedAt
                     });
-
-                    // Оновити badge
                     self._updateBadge();
                 })
                 .catch(function (error) {
@@ -95,9 +87,7 @@ define([
                     }
                 }
             });
-
             this.element.html(html);
-
             this.$button = this.element.find('.toolbar-select');
             this.$dropdown = this.element.find('.toolbar-dropdown');
             this.$publicationsList = this.element.find('.publications-list');
@@ -118,7 +108,6 @@ define([
 
         _getBadge: function () {
             var count = this.options.draftChangesCount;
-
             if (this.options.currentStatus === 'DRAFT') {
                 return count > 0
                     ? $t('(%1 changes)').replace('%1', count)
@@ -126,7 +115,7 @@ define([
             }
             if (this.options.currentStatus === 'PUBLISHED') {
                 return count > 0
-                    ?  $t('(%1 unpublished)').replace('%1', count)
+                    ? $t('(%1 unpublished)').replace('%1', count)
                     : $t('(live)');
             }
             if (this.options.currentStatus === 'PUBLICATION') {
@@ -144,13 +133,12 @@ define([
             return map[this.options.currentStatus] || '';
         },
 
-        /**
-         * ✅ Оновити тільки badge (без full re-render)
-         */
         _updateBadge: function () {
+            if (!this.$button || !this.$button.length) {
+                return;
+            }
             var newBadge = this._getBadge();
             var $badge = this.$button.find('.select-badge');
-
             if (newBadge) {
                 if ($badge.length) {
                     $badge.text(newBadge);
@@ -160,35 +148,50 @@ define([
             } else {
                 $badge.remove();
             }
-
             console.log('🔄 Badge updated:', newBadge);
+        },
+
+        _updateButton: function () {
+            if (!this.$button || !this.$button.length) {
+                return;
+            }
+            var newLabel = this._getLabel();
+            var newBadge = this._getBadge();
+            var newStatusClass = this._getStatusClass();
+            this.$button.find('.select-label').text(newLabel);
+            var $badge = this.$button.find('.select-badge');
+            if (newBadge) {
+                if ($badge.length) {
+                    $badge.text(newBadge);
+                } else {
+                    this.$button.find('.select-label').after('<span class="select-badge">' + newBadge + '</span>');
+                }
+            } else {
+                $badge.remove();
+            }
+            this.$button
+                .removeClass('status-draft status-published status-historical')
+                .addClass(newStatusClass);
+            console.log('🔄 Button updated:', {label: newLabel, badge: newBadge, class: newStatusClass});
         },
 
         _bind: function () {
             var self = this;
 
-            // Unbind old events first
             this.$button.off('click');
             this.element.off('click');
             $(document).off('click.publicationSelector');
 
-            // Toggle dropdown
             this.$button.on('click', $.proxy(this._toggleDropdown, this));
 
-            // Close on outside click
             $(document).on('click.publicationSelector', function (e) {
                 if (!self.element.is(e.target) && self.element.has(e.target).length === 0) {
                     self._closeDropdown();
                 }
             });
 
-            // Switch status
             this.element.on('click', '[data-status]', $.proxy(this._switchStatus, this));
-
-            // Load publication
             this.element.on('click', '[data-publication-id]', $.proxy(this._loadPublication, this));
-
-            // Open history
             this.element.on('click', '[data-action="history"]', $.proxy(this._openHistory, this));
         },
 
@@ -218,17 +221,11 @@ define([
 
         _loadPublications: function () {
             var self = this;
-
             if (!this.options.storeId || !this.options.themeId) {
                 console.warn('⚠️ storeId or themeId not set');
                 return;
             }
-
-            console.log('📥 Loading publications... ', {
-                storeId:  this.options.storeId,
-                themeId: this.options.themeId
-            });
-
+            console.log('📥 Loading publications...');
             getPublications(this.options.storeId, this.options.themeId, 5)
                 .then(function (data) {
                     self.publications = data.items || [];
@@ -277,53 +274,37 @@ define([
         _switchStatus: function (e) {
             e.preventDefault();
             var status = $(e.currentTarget).data('status');
-
             console.log('🔄 Switching to status:', status);
-
-            // ✅ Зберегти в localStorage
             localStorage.setItem('bte_current_status', status);
             localStorage.removeItem('bte_current_publication_id');
             localStorage.removeItem('bte_current_publication_title');
-
             this.options.currentStatus = status;
             this.options.currentPublicationId = null;
             this.options.currentPublicationTitle = null;
-
-            this._render();
-            this._bind();
+            this._updateButton();
             this._closeDropdown();
-
-            this.element.trigger('publicationStatusChanged', { status: status });
+            this.element.trigger('publicationStatusChanged', {status: status});
         },
 
         _loadPublication: function (e) {
             e.preventDefault();
             var publicationId = parseInt($(e.currentTarget).data('publication-id'), 10);
-
             console.log('📥 Loading publication:', publicationId);
-
             var publication = this.publications.find(function (p) {
                 return p.publicationId === publicationId;
             });
-
             if (!publication) {
                 console.error('❌ Publication not found:', publicationId);
                 return;
             }
-
-            // ✅ Зберегти в localStorage
             localStorage.setItem('bte_current_status', 'PUBLICATION');
             localStorage.setItem('bte_current_publication_id', publicationId);
             localStorage.setItem('bte_current_publication_title', publication.title);
-
             this.options.currentStatus = 'PUBLICATION';
             this.options.currentPublicationId = publicationId;
             this.options.currentPublicationTitle = publication.title;
-
-            this._render();
-            this._bind();
+            this._updateButton();
             this._closeDropdown();
-
             this.element.trigger('publicationSelected', {
                 publicationId: publicationId,
                 publication: publication
@@ -338,9 +319,6 @@ define([
             this.element.trigger('publicationHistoryRequested');
         },
 
-        /**
-         * ✅ Public method: оновити changes count (викликається з panel.js)
-         */
         updateChangesCount: function (count) {
             console.log('🔄 Updating changes count:', count);
 
