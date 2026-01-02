@@ -56,7 +56,7 @@ define([
                 this.themeId = this.options.themeId || 0;
             }
 
-            this. template = mageTemplate(panelTemplate);
+            this.template = mageTemplate(panelTemplate);
             this._render();
             this._bind();
             this._initPreview();
@@ -74,11 +74,11 @@ define([
 
             this.element.html(html);
 
-            this.$closeButton = this. element.find('.bte-panel-close');
+            this.$closeButton = this.element.find('.bte-panel-close');
             this.$resetButton = this.element.find('.bte-reset-button');
             this.$saveButton = this.element.find('.bte-save-button');
             this.$sectionsContainer = this.element.find('.bte-sections-container');
-            this.$loader = this. element.find('.bte-panel-loader');
+            this.$loader = this.element.find('.bte-panel-loader');
             this.$error = this.element.find('.bte-panel-error');
 
             console.log('📋 Theme Editor Panel rendered');
@@ -88,12 +88,12 @@ define([
             var self = this;
 
             // Panel controls
-            this.$closeButton.on('click', $. proxy(this._close, this));
+            this.$closeButton.on('click', $.proxy(this._close, this));
             this.$resetButton.on('click', $.proxy(this._reset, this));
-            this.$saveButton.on('click', $. proxy(this._save, this));
+            this.$saveButton.on('click', $.proxy(this._save, this));
 
             // Error handlers
-            this.element.on('click', '.bte-error-retry', $. proxy(this._loadConfig, this));
+            this.element.on('click', '.bte-error-retry', $.proxy(this._loadConfig, this));
             this.element.on('click', '.bte-error-toggle', $.proxy(this._toggleErrorDetails, this));
             this.element.on('click', '.bte-accordion-header', $.proxy(this._toggleSection, this));
 
@@ -103,7 +103,7 @@ define([
                 self._updateChangesCount();
 
                 // ✅ Update badges in real-time
-                FieldHandlers.updateBadges(self.element, fieldData. sectionCode, fieldData.fieldCode);
+                FieldHandlers.updateBadges(self.element, fieldData.sectionCode, fieldData.fieldCode);
             });
 
             // ✅ Publication selector events
@@ -148,6 +148,7 @@ define([
                     PanelState.init(config);
                     self._renderSections(config.sections);
                     self._hideLoader();
+                    self._updatePublicationSelectorBadge();
                 })
                 .catch(function(error) {
                     console.error('❌ Failed to load config:', error);
@@ -175,10 +176,11 @@ define([
 
             getConfigFromPublication(this.storeId, this.themeId, publicationId)
                 .then(function(config) {
-                    console. log('✅ Config loaded from publication:', config);
+                    console.log('✅ Config loaded from publication:', config);
                     PanelState.init(config);
-                    self._renderSections(config. sections);
+                    self._renderSections(config.sections);
                     self._hideLoader();
+                    self._updatePublicationSelectorBadge();
                     // Show notification
                     self._showToast('success', 'Loaded publication:  ' + (config.metadata.lastPublished || 'Unknown date'));
                 })
@@ -196,7 +198,7 @@ define([
 
             sections.forEach(function(section) {
                 html += '<div class="bte-accordion-section">';
-                html += '<div class="bte-accordion-header" data-section="' + section. code + '">';
+                html += '<div class="bte-accordion-header" data-section="' + section.code + '">';
                 html += '<i class="bte-icon-' + (section.icon || 'settings') + '"></i>';
                 html += '<span class="bte-section-label">' + section.label + '</span>';
                 html += '<i class="bte-icon-chevron-down bte-accordion-arrow"></i>';
@@ -220,7 +222,7 @@ define([
         _toggleSection: function (e) {
             var $header = $(e.currentTarget);
             var section = $header.data('section');
-            var $content = this. element.find('.bte-accordion-content[data-section="' + section + '"]');
+            var $content = this.element.find('.bte-accordion-content[data-section="' + section + '"]');
             var isActive = $header.hasClass('active');
 
             if (isActive) {
@@ -257,9 +259,21 @@ define([
          * Update changes count badge
          */
         _updateChangesCount: function() {
-            var count = PanelState. getChangesCount();
+            var count = PanelState.getChangesCount();
             this.$saveButton.text('Save (' + count + ')');
             this.$resetButton.prop('disabled', count === 0);
+        },
+
+        /**
+         * Update publication selector badge
+         */
+        _updatePublicationSelectorBadge: function() {
+            var count = PanelState.getChangesCount();
+            var $pubSelector = $('#toolbar-publication-selector');
+            if ($pubSelector.length && $.fn.publicationSelector) {
+                $pubSelector.publicationSelector('updateChangesCount', count);
+                console.log('🔄 Updated publication selector badge:', count);
+            }
         },
 
         /**
@@ -283,6 +297,7 @@ define([
                 PanelState.reset();
                 CssPreviewManager.reset();
                 this._loadConfig();
+                // this._updatePublicationSelectorBadge();
                 console.log('✅ Reset complete');
             }
         },
@@ -299,22 +314,27 @@ define([
             var values = PanelState.getChangesForSave();
             var self = this;
 
+            console.log('💾 Saving values:', values);
+            console.log('💾 Changes count BEFORE save:', PanelState.getChangesCount());
+
             this.$saveButton.prop('disabled', true).text('Saving...');
 
             saveValues(this.storeId, this.themeId, this.options.status, values)
                 .then(function(data) {
-                    console. log('✅ Saved:', data);
+                    console.log('✅ Saved:', data);
 
                     if (data.saveBreezeThemeEditorValues. success) {
                         self._showToast('success', 'Settings saved successfully!');
-                        PanelState.markAsSaved();
-                        CssPreviewManager.markAsSaved();
-                        self._updateChangesCount();
 
-                        // ✅ Update all field badges after save
+                        console.log('💾 Changes count BEFORE markAsSaved:', PanelState.getChangesCount());  // ← Додати
+                        PanelState.markAsSaved();
+                        console.log('💾 Changes count AFTER markAsSaved:', PanelState. getChangesCount());  // ← Додати
+
+                        CssPreviewManager.markAsSaved();
+                        self._updatePublicationSelectorBadge();
                         self._refreshAllBadges();
                     } else {
-                        self._showToast('error', 'Failed to save: ' + data.saveBreezeThemeEditorValues.message);
+                        self._showToast('error', 'Failed to save: ' + data.saveBreezeThemeEditorValues. message);
                     }
                 })
                 .catch(function(error) {
@@ -322,7 +342,8 @@ define([
                     self._showToast('error', 'Failed to save settings: ' + error.message);
                 })
                 .finally(function() {
-                    self.$saveButton.prop('disabled', false).text('Save');
+                    self.$saveButton.prop('disabled', false);//.text('Save');
+                    self._updateChangesCount();
                 });
         },
 
@@ -366,6 +387,7 @@ define([
 
             this.$saveButton.prop('disabled', false);
             this.$resetButton.prop('disabled', true);
+            this._updateChangesCount();
         },
 
         /**
@@ -381,12 +403,12 @@ define([
             console.log('🔥 Parsed error info:', errorInfo);
 
             var displayMessage = this._getFriendlyMessage(errorInfo.message, errorInfo.debugMessage);
-            console.log('🔥 Display message:', displayMessage. message, 'Friendly:', displayMessage.isFriendly);
+            console.log('🔥 Display message:', displayMessage.message, 'Friendly:', displayMessage.isFriendly);
 
-            this._updateErrorUI(displayMessage. message, errorInfo.debugMessage, displayMessage.isFriendly);
+            this._updateErrorUI(displayMessage.message, errorInfo.debugMessage, displayMessage.isFriendly);
 
             this.$saveButton.prop('disabled', true);
-            this.$resetButton. prop('disabled', true);
+            this.$resetButton.prop('disabled', true);
 
             this.$error.show();
 
@@ -394,7 +416,7 @@ define([
         },
 
         _showToast: function(type, message) {
-            Toastify. show(type, message);
+            Toastify.show(type, message);
         },
 
         _parseErrorData: function(errorData) {
@@ -423,7 +445,7 @@ define([
                 if (!debugMessage && errorData.graphqlErrors && errorData.graphqlErrors.length > 0) {
                     var firstError = errorData.graphqlErrors[0];
                     if (firstError.extensions && firstError.extensions.debugMessage) {
-                        debugMessage = firstError. extensions.debugMessage;
+                        debugMessage = firstError.extensions.debugMessage;
                         console.log('✅ Found debugMessage in graphqlErrors:', debugMessage);
                     }
                 }
@@ -475,12 +497,12 @@ define([
             if (debugMessage) {
                 $details.show();
                 $stack.text(debugMessage);
-                console. log('📝 Set debug message:', debugMessage);
+                console.log('📝 Set debug message:', debugMessage);
 
                 if (!hasFriendlyMessage) {
                     $stack.show();
                     $toggle.text('Hide technical details');
-                    console. log('✅ Auto-expanded (generic error)');
+                    console.log('✅ Auto-expanded (generic error)');
                 } else {
                     $stack.hide();
                     $toggle.text('Show technical details');
@@ -491,7 +513,7 @@ define([
                 $stack.text('No additional technical information available. Check browser console for more details.');
                 $stack.hide();
                 $toggle.text('Show technical details');
-                console. log('⚠️ No debugMessage, showing fallback');
+                console.log('⚠️ No debugMessage, showing fallback');
             }
         },
 
@@ -503,5 +525,5 @@ define([
         }
     });
 
-    return $. swissup.themeEditorPanel;
+    return $.swissup.themeEditorPanel;
 });
