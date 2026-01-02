@@ -123,24 +123,34 @@
  * ============================================================================ */
 
 /* Dropdown Structure */
-@dropdown-bg: #ffffff;
-@dropdown-border: #e5e7eb;
+@dropdown-bg: @bte-toolbar-dropdown-bg; /* #2a2623 - темний фон */
+@dropdown-border: @bte-toolbar-dropdown-border; /* rgba(255, 255, 255, 0.15) */
 @dropdown-border-radius: 8px;
-@dropdown-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+@dropdown-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
 @dropdown-z-index: 10050;
 
 /* Dropdown Header */
-@dropdown-header-bg: #f9fafb;
-@dropdown-header-color: #374151;
+@dropdown-header-bg: rgba(255, 255, 255, 0.05); /* Трохи світліший за dropdown */
+@dropdown-header-color: @bte-toolbar-text; /* #fff */
 
 /* Dropdown Divider */
-@dropdown-divider-color: #e5e7eb;
+@dropdown-divider-color: rgba(255, 255, 255, 0.1);
 
 /* Dropdown Items */
-@dropdown-item-color: #1f2937;
-@dropdown-item-hover-bg: #f3f4f6;
-@dropdown-item-active-bg: #eff6ff;
-@dropdown-item-active-color: #1e40af;
+@dropdown-item-color: @bte-toolbar-text; /* #fff */
+@dropdown-item-hover-bg: rgba(255, 255, 255, 0.1);
+@dropdown-item-active-bg: rgba(236, 103, 55, 0.2); /* Помаранчевий з toolbar */
+@dropdown-item-active-color: @bte-toolbar-icon; /* #EC6737 */
+
+/* Dropdown Item Meta (dates, secondary text) */
+@dropdown-item-meta-color: @bte-toolbar-text-muted; /* rgba(255, 255, 255, 0.8) */
+
+/* Dropdown Section Title */
+@dropdown-section-title-color: @bte-toolbar-text-muted; /* rgba(255, 255, 255, 0.8) */
+
+/* Dropdown Action Item */
+@dropdown-action-bg: rgba(255, 255, 255, 0.03);
+@dropdown-action-hover-bg: rgba(255, 255, 255, 0.08);
 
 /* Toolbar Button Colors (for publication selector button) */
 @toolbar-button-bg: rgba(255, 255, 255, 0.05);
@@ -154,7 +164,7 @@
 @toolbar-border-radius: @bte-toolbar-border-radius;
 @toolbar-text-color: @bte-toolbar-text;
 @toolbar-text-muted: @bte-toolbar-text-muted;
-@toolbar-primary-color: #1979c3;
+@toolbar-primary-color: @bte-toolbar-icon; /* #EC6737 - помаранчевий замість синього */
 
 /* Responsive Breakpoints (reference existing Magento variables) */
 @screen-s: @screen__s;

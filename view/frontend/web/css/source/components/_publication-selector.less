@@ -52,6 +52,7 @@ _____________________________________________
             svg {
                 width: 7px;
                 height: 5px;
+                fill: currentColor;
             }
         }
 
@@ -113,6 +114,7 @@ _____________________________________________
         box-shadow: @dropdown-shadow;
         z-index: @dropdown-z-index;
         overflow: hidden;
+        display: none;
 
         .dropdown-header {
             padding: 12px 16px;
@@ -128,6 +130,24 @@ _____________________________________________
         .dropdown-content {
             max-height: 400px;
             overflow-y: auto;
+
+            /* Custom scrollbar for dark theme */
+            &::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.05);
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 4px;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                }
+            }
         }
 
         .dropdown-item {
@@ -139,6 +159,10 @@ _____________________________________________
             text-decoration: none;
             transition: background 0.15s ease;
             cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
 
             &:hover {
                 background: @dropdown-item-hover-bg;
@@ -159,6 +183,7 @@ _____________________________________________
             .item-text {
                 flex: 1;
                 font-size: 14px;
+                color: @dropdown-item-color;
             }
 
             .item-content {
@@ -201,6 +226,10 @@ _____________________________________________
 
                 &:hover {
                     background: @dropdown-action-hover-bg;
+                }
+
+                .item-text {
+                    color: @toolbar-primary-color;
                 }
             }
         }
