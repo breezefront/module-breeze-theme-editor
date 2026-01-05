@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Api\SortOrder;
+use Magento\Framework\Api\SortOrderBuilder;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
@@ -17,7 +19,8 @@ class Publications implements ResolverInterface
         private PublicationRepositoryInterface $publicationRepository,
         private UserResolver $userResolver,
         private ThemeResolver $themeResolver,
-        private SearchCriteriaBuilder $searchCriteriaBuilder // <-- додати DI!
+        private SearchCriteriaBuilder $searchCriteriaBuilder,
+        private SortOrderBuilder $sortOrderBuilder
     ) {}
 
     public function resolve(
@@ -43,6 +46,13 @@ class Publications implements ResolverInterface
         if ($search) {
             $this->searchCriteriaBuilder->addFilter('title', "%$search%", 'like');
         }
+
+        $sortOrder = $this->sortOrderBuilder
+            ->setField('published_at')
+            ->setDirection(SortOrder::SORT_DESC)
+            ->create();
+
+        $this->searchCriteriaBuilder->addSortOrder($sortOrder);
 
         $this->searchCriteriaBuilder->setPageSize($pageSize);
         $this->searchCriteriaBuilder->setCurrentPage($currentPage);
