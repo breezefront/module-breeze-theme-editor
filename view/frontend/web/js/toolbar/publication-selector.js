@@ -70,8 +70,8 @@ define([
             this.element.on('click', '.toolbar-select', $.proxy(this._toggleDropdown, this));
             this.element.on('click', '[data-status]', $.proxy(this._switchStatus, this));
             this.element.on('click', '[data-publication-id]', $.proxy(this._loadPublication, this));
-            this.element.on('click', '[data-action="history"]', $.proxy(this._openHistory, this));
             this.element.on('click', '[data-action="publish"]', $.proxy(this.publishHandler.publish, this.publishHandler));
+            this.element.on('click', '[data-action="load-more"]', $.proxy(this._loadMore, this));
 
             $(document).on('click.publicationSelector', function (e) {
                 if (!self.element.is(e.target) && self.element.has(e.target).length === 0) {
@@ -89,7 +89,7 @@ define([
             console.log('🎧 Binding global events for Publication Selector');
 
             // Listen: Draft saved → reload metadata
-            $(document).on('themeEditorDraftSaved. publicationSelector', function(e, data) {
+            $(document).on('themeEditorDraftSaved.publicationSelector', function(e, data) {
                 console.log('📥 Draft saved event received:', data);
                 self.metadataLoader.load();
             });
@@ -97,7 +97,7 @@ define([
             // Listen: Published → reload metadata + publications
             $(document).on('themeEditorPublished.publicationSelector', function(e, data) {
                 console.log('📥 Published event received:', data.publication);
-                self.metadataLoader. load();
+                self.metadataLoader.load();
                 self.metadataLoader.loadPublications();
             });
 
@@ -177,11 +177,10 @@ define([
             this.element.trigger('loadThemeEditorFromPublication', {publicationId: publicationId});
         },
 
-        _openHistory: function (e) {
+        _loadMore: function(e) {
             e.preventDefault();
-            console.log('📜 Opening publication history modal');
-            this._closeDropdown();
-            this.element.trigger('openPublicationHistoryModal');
+            console.log('⬇️ Loading more publications');
+            this.metadataLoader.loadMorePublications();
         },
 
         reloadPublications: function() {

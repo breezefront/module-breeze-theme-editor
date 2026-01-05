@@ -152,7 +152,7 @@ define([
                 $pubSelector.publicationSelector();
 
                 $pubSelector.on('publicationStatusChanged', function (e, data) {
-                    console. log('🔄 Publication status changed:', data.status);
+                    console.log('🔄 Publication status changed:', data.status);
                     $(document).trigger('publicationStatusChanged', {status: data.status});
                 });
 

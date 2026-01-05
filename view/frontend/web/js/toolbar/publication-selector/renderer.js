@@ -36,7 +36,8 @@ define([
                         published: $t('Published'),
                         recentPublications: $t('Recent Publications'),
                         loading: $t('Loading...'),
-                        viewAll: $t('View All Publications')
+                        loadMore: $t('Load More Publications'),
+                        allLoaded: $t('All publications loaded')
                     }
                 }
             });

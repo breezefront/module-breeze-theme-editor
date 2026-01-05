@@ -47,7 +47,7 @@ define([
             }
 
             // Update state
-            PanelState.setValue(fieldData.sectionCode, fieldData. fieldCode, fieldData.value);
+            PanelState.setValue(fieldData.sectionCode, fieldData.fieldCode, fieldData.value);
 
             // Live preview
             if (fieldData.cssVar && ! options.skipPreview) {
@@ -60,9 +60,9 @@ define([
             }
 
             console.log('🔄 Field changed:', {
-                section:  fieldData.sectionCode,
+                section: fieldData.sectionCode,
                 field: fieldData.fieldCode,
-                type: fieldData. type,
+                type: fieldData.type,
                 value: fieldData.value,
                 cssVar: fieldData.cssVar
             });
@@ -94,7 +94,7 @@ define([
          * @returns {String|Boolean|null}
          */
         getInputValue: function($input) {
-            var type = $input. attr('type');
+            var type = $input.attr('type');
 
             if (type === 'checkbox') {
                 return $input.prop('checked');
@@ -102,7 +102,7 @@ define([
 
             if (type === 'radio') {
                 // Only return value if this radio is checked
-                return $input. is(':checked') ? $input.val() : null;
+                return $input.is(':checked') ? $input.val() : null;
             }
 
             return $input.val();

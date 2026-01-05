@@ -2,9 +2,9 @@
  * Lightweight Toast Notification Library
  *
  * Usage:
- *   Toastify. show('success', 'Operation completed! ');
+ *   Toastify.show('success', 'Operation completed! ');
  *   Toastify.show('error', 'Something went wrong!');
- *   Toastify.show('notice', 'Please note.. .');
+ *   Toastify.show('notice', 'Please note...');
  *   Toastify.show('warning', 'Be careful!');
  */
 define([
@@ -62,7 +62,7 @@ define([
         show: function(type, message, options) {
             this._initContainer();
 
-            options = $. extend({}, this.defaults, options || {});
+            options = $.extend({}, this.defaults, options || {});
 
             var self = this;
             var toastId = 'toast-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -102,7 +102,7 @@ define([
             }
 
             // Add to container
-            this.$container. append($toast);
+            this.$container.append($toast);
             this.activeToasts++;
 
             // Trigger show animation
@@ -130,7 +130,7 @@ define([
 
             // Pause on hover
             if (options.pauseOnHover) {
-                $toast. on('mouseenter', stopHideTimer);
+                $toast.on('mouseenter', stopHideTimer);
                 $toast.on('mouseleave', startHideTimer);
             }
 

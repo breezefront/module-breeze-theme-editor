@@ -68,12 +68,18 @@
 
                 <div class="dropdown-divider"></div>
 
-                <!-- View All Action -->
-                <a href="#" class="dropdown-item dropdown-action" data-action="history">
-                    <span class="item-icon">📜</span>
-                    <span class="item-text"><%= data.i18n.viewAll %></span>
-                    <span class="item-arrow">→</span>
+                <!-- Load More Action (замість View All) -->
+                <a href="#" class="dropdown-item dropdown-action" data-action="load-more" style="display: none;">
+                    <span class="item-icon">⬇️</span>
+                    <span class="item-text"><%= data.i18n.loadMore %></span>
+                    <span class="item-meta" id="publications-count"></span>
                 </a>
+
+                <!-- All Loaded Message -->
+                <div class="dropdown-item dropdown-info" data-status="all-loaded" style="display: none;">
+                    <span class="item-icon">✅</span>
+                    <span class="item-text"><%= data.i18n.allLoaded %></span>
+                </div>
             </div>
         </div>
     <% } %>

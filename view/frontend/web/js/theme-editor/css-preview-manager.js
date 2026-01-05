@@ -178,7 +178,7 @@ define([
                 return null;
             }
 
-            // Use iframeDocument.documentElement instead of iframeDocument. documentElement (fix extra space)
+            // Use iframeDocument.documentElement instead of iframeDocument.documentElement (fix extra space)
             var value = getComputedStyle(iframeDocument.documentElement)
                 .getPropertyValue(varName)
                 .trim();

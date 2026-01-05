@@ -316,12 +316,12 @@ define([
                 .then(function(data) {
                     console.log('✅ Saved:', data);
 
-                    if (data.saveBreezeThemeEditorValues. success) {
+                    if (data.saveBreezeThemeEditorValues.success) {
                         self._showToast('success', 'Settings saved successfully!');
 
-                        console.log('💾 Changes count BEFORE markAsSaved:', PanelState.getChangesCount());  // ← Додати
+                        console.log('💾 Changes count BEFORE markAsSaved:', PanelState.getChangesCount());
                         PanelState.markAsSaved();
-                        console.log('💾 Changes count AFTER markAsSaved:', PanelState. getChangesCount());  // ← Додати
+                        console.log('💾 Changes count AFTER markAsSaved:', PanelState.getChangesCount());
 
                         CssPreviewManager.markAsSaved();
                         self._refreshAllBadges();
@@ -331,7 +331,7 @@ define([
                         });
                         console.log('✅ Save complete, event triggered');
                     } else {
-                        self._showToast('error', 'Failed to save: ' + data.saveBreezeThemeEditorValues. message);
+                        self._showToast('error', 'Failed to save: ' + data.saveBreezeThemeEditorValues.message);
                     }
                 })
                 .catch(function(error) {

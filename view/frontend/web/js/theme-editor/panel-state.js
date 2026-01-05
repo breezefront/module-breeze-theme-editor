@@ -65,7 +65,7 @@ define([], function() {
                 }.bind(this));
             }
 
-            console.log('📊 State initialized:', Object. keys(this.values).length, 'values');
+            console.log('📊 State initialized:', Object.keys(this.values).length, 'values');
         },
 
         /**
@@ -77,7 +77,7 @@ define([], function() {
          */
         getField: function(sectionCode, fieldCode) {
             var key = sectionCode + '.' + fieldCode;
-            return this. fieldsMap[key] || null;
+            return this.fieldsMap[key] || null;
         },
 
         /**
@@ -131,7 +131,7 @@ define([], function() {
                 value: newValue,
                 savedValue: state.savedValue,
                 isDirty: state.isDirty,
-                isModified: state. isModified
+                isModified: state.isModified
             });
         },
 
@@ -170,7 +170,7 @@ define([], function() {
             return this.getDirtyChanges().map(function(change) {
                 return {
                     sectionCode: change.sectionCode,
-                    fieldCode: change. fieldCode,
+                    fieldCode: change.fieldCode,
                     value:  change.value
                 };
             });
@@ -221,7 +221,7 @@ define([], function() {
                 if (key.startsWith(sectionCode + '.')) {
                     var state = this.values[key];
                     if (state.isDirty) {
-                        state. value = state.savedValue;
+                        state.value = state.savedValue;
                         state.isDirty = false;
                         resetCount++;
                     }
@@ -235,8 +235,8 @@ define([], function() {
          * Reset to defaults (all fields)
          */
         resetToDefaults: function() {
-            Object.keys(this. values).forEach(function(key) {
-                var state = this. values[key];
+            Object.keys(this.values).forEach(function(key) {
+                var state = this.values[key];
                 state.value = state.defaultValue;
                 state.isDirty = (state.defaultValue !== state.savedValue);
             }.bind(this));
@@ -269,7 +269,7 @@ define([], function() {
             this.config = null;
             this.values = {};
             this.fieldsMap = {};
-            console. log('🗑️ State cleared');
+            console.log('🗑️ State cleared');
         }
     };
 

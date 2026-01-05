@@ -26,7 +26,7 @@ define([
          */
         getTemplate: function() {
             if (!this._compiledTemplate && this.templateString) {
-                this._compiledTemplate = mageTemplate(this. templateString);
+                this._compiledTemplate = mageTemplate(this.templateString);
             }
             return this._compiledTemplate;
         },
@@ -39,7 +39,7 @@ define([
          * @returns {String} HTML
          */
         render: function(field, sectionCode) {
-            var data = this. prepareData(field, sectionCode);
+            var data = this.prepareData(field, sectionCode);
             var template = this.getTemplate();
 
             if (!template) {
@@ -59,7 +59,7 @@ define([
          */
         prepareData: function(field, sectionCode) {
             // Validate required properties
-            if (!field. code) {
+            if (!field.code) {
                 console.error('❌ Field missing "code" property:', field);
             }
             if (!sectionCode) {
@@ -69,11 +69,11 @@ define([
             var fieldCode = field.code || 'unknown';
 
             // ✅ Get runtime state from PanelState (if initialized)
-            var fieldState = PanelState. getFieldState(sectionCode, fieldCode);
+            var fieldState = PanelState.getFieldState(sectionCode, fieldCode);
 
             // Use runtime state if available, otherwise fallback to field data
             var currentValue = fieldState
-                ? fieldState. value
+                ? fieldState.value
                 : (field.value !== undefined && field.value !== null ? field.value : field.default);
 
             var isModified = fieldState
@@ -81,7 +81,7 @@ define([
                 : !!field.isModified;
 
             var isDirty = fieldState
-                ? fieldState. isDirty
+                ? fieldState.isDirty
                 : false;
 
             return {
@@ -151,7 +151,7 @@ define([
             var $input = $element.find('[data-section="' + sectionCode + '"][data-field="' + fieldCode + '"]');
 
             if ($input.length === 0) {
-                console. warn('⚠️ Field input not found in DOM:', sectionCode + '.' + fieldCode);
+                console.warn('⚠️ Field input not found in DOM:', sectionCode + '.' + fieldCode);
                 return false;
             }
 
@@ -205,7 +205,7 @@ define([
             var attrs = [
                 'data-section="' + sectionCode + '"',
                 'data-field="' + fieldCode + '"',
-                'data-type="' + (field. type || 'unknown') + '"'
+                'data-type="' + (field.type || 'unknown') + '"'
             ];
 
             if (field.cssVar) {

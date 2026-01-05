@@ -15,6 +15,9 @@ define([
         this.renderer = renderer;
         this.publications = [];
         this.publicationsLoaded = false;
+        this.currentPage = 1;
+        this.pageSize = 5;
+        this.totalCount = 0;
     }
 
     MetadataLoader.prototype = {
@@ -53,27 +56,49 @@ define([
                 });
         },
 
-        loadPublications: function() {
+        loadPublications: function(append) {
             var self = this;
             if (!this.options.storeId || !this.options.themeId) {
                 console.warn('⚠️ Cannot load publications');
                 return;
             }
 
-            console.log('📥 Loading publications...');
+            console.log('📥 Loading publications (page %1)...', this.currentPage);
 
-            getPublications(this.options.storeId, this.options.themeId, 5)
+            getPublications(this.options.storeId, this.options.themeId, this.pageSize, this.currentPage)
                 .then(function(data) {
-                    self.publications = data.items || [];
+                    if (append) {
+                        // Append to existing (Load More)
+                        self.publications = self.publications.concat(data.items || []);
+                        console.log('➕ Appended publications: %1 total', self.publications.length);
+                    } else {
+                        // Replace (Initial load or refresh)
+                        self.publications = data.items || [];
+                        self.currentPage = 1;
+                        console.log('✅ Publications loaded: %1', self.publications.length);
+                    }
+
+                    self.totalCount = data.total_count || 0;
                     self.publicationsLoaded = true;
-                    console.log('✅ Publications loaded:', self.publications.length);
+
                     self.renderPublications();
+                    self._updateLoadMoreButton();
                 })
                 .catch(function(error) {
                     console.error('❌ Failed to load publications:', error);
                     self.publicationsLoaded = true;
                     self.renderPublicationsError();
                 });
+        },
+
+        loadMorePublications: function() {
+            if (this.publications.length >= this.totalCount) {
+                console.log('ℹ️ All publications already loaded');
+                return;
+            }
+
+            this.currentPage++;
+            this.loadPublications(true);
         },
 
         renderPublications: function() {
@@ -106,6 +131,26 @@ define([
         renderPublicationsError: function() {
             var html = '<div class="dropdown-error">' + $t('Failed to load publications') + '</div>';
             this.renderer.element.find('.publications-list').html(html);
+        },
+
+        _updateLoadMoreButton: function() {
+            var $loadMore = this.renderer.element.find('[data-action="load-more"]');
+            var $allLoaded = this.renderer.element.find('[data-status="all-loaded"]');
+            var $count = $loadMore.find('.item-meta');
+
+            if (this.publications.length >= this.totalCount) {
+                // All loaded → hide "Load More", show "All Loaded"
+                $loadMore.hide();
+                $allLoaded.show();
+                console.log('✅ All %1 publications loaded', this.totalCount);
+            } else {
+                // Show "Load More" with count
+                $loadMore.show();
+                $allLoaded.hide();
+                $count.text($t('Showing %1 of %2')
+                    .replace('%1', this.publications.length)
+                    .replace('%2', this.totalCount));
+            }
         }
     };
 
