@@ -82,18 +82,27 @@ define([
         _toggleDropdown: function (e) {
             e.preventDefault();
             e.stopPropagation();
-            this.isDropdownOpen ? this._closeDropdown() : this._openDropdown();
+
+            var isVisible = this.element.find('.toolbar-dropdown').hasClass('active');
+
+            // ✅ Close all other dropdowns (sync with Page/Scope Selector)
+            $('.toolbar-dropdown').removeClass('active');
+            $('.toolbar-select').removeClass('active');
+
+            if (!isVisible) {
+                this._openDropdown();
+            }
         },
 
         _openDropdown: function () {
-            this.element.find('.toolbar-dropdown').slideDown(200);
+            this.element.find('.toolbar-dropdown').addClass('active');
             this.element.find('.toolbar-select').addClass('active');
             this.isDropdownOpen = true;
             console.log('📂 Dropdown opened');
         },
 
-        _closeDropdown: function () {
-            this.element.find('.toolbar-dropdown').slideUp(200);
+        _closeDropdown:  function () {
+            this.element.find('.toolbar-dropdown').removeClass('active');
             this.element.find('.toolbar-select').removeClass('active');
             this.isDropdownOpen = false;
         },
