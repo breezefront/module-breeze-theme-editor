@@ -128,7 +128,6 @@ define([
                 PanelState.markAsSaved();
                 CssPreviewManager.markAsSaved();
                 self._updateChangesCount();
-                self._updatePublicationSelectorBadge();
                 self._refreshAllBadges();
             });
         },
@@ -157,7 +156,6 @@ define([
                     PanelState.init(config);
                     self._renderSections(config.sections);
                     self._hideLoader();
-                    self._updatePublicationSelectorBadge();
                 })
                 .catch(function(error) {
                     console.error('❌ Failed to load config:', error);
@@ -189,7 +187,6 @@ define([
                     PanelState.init(config);
                     self._renderSections(config.sections);
                     self._hideLoader();
-                    self._updatePublicationSelectorBadge();
                     // Show notification
                     self._showToast('success', 'Loaded publication:  ' + (config.metadata.lastPublished || 'Unknown date'));
                 })
@@ -274,18 +271,6 @@ define([
         },
 
         /**
-         * Update publication selector badge
-         */
-        _updatePublicationSelectorBadge: function() {
-            var count = PanelState.getChangesCount();
-            var $pubSelector = $('#toolbar-publication-selector');
-            if ($pubSelector.length && $.fn.publicationSelector) {
-                $pubSelector.publicationSelector('updateChangesCount', count);
-                console.log('🔄 Updated publication selector badge:', count);
-            }
-        },
-
-        /**
          * Close panel
          */
         _close: function () {
@@ -306,7 +291,6 @@ define([
                 PanelState.reset();
                 CssPreviewManager.reset();
                 this._loadConfig();
-                // this._updatePublicationSelectorBadge();
                 console.log('✅ Reset complete');
             }
         },
@@ -340,8 +324,12 @@ define([
                         console.log('💾 Changes count AFTER markAsSaved:', PanelState. getChangesCount());  // ← Додати
 
                         CssPreviewManager.markAsSaved();
-                        self._updatePublicationSelectorBadge();
                         self._refreshAllBadges();
+                        $(document).trigger('themeEditorDraftSaved', {
+                            storeId: self.storeId,
+                            themeId: self.themeId
+                        });
+                        console.log('✅ Save complete, event triggered');
                     } else {
                         self._showToast('error', 'Failed to save: ' + data.saveBreezeThemeEditorValues. message);
                     }

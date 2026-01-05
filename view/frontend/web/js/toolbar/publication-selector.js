@@ -32,6 +32,7 @@ define([
 
             this.renderer.render();
             this._bind();
+            this._bindGlobalEvents();
             this.metadataLoader.load();
             this.metadataLoader.loadPublications();
         },
@@ -77,6 +78,30 @@ define([
                     self._closeDropdown();
                 }
             });
+        },
+
+        /**
+         * Bind global events (draft saved, published)
+         */
+        _bindGlobalEvents:  function() {
+            var self = this;
+
+            console.log('🎧 Binding global events for Publication Selector');
+
+            // Listen: Draft saved → reload metadata
+            $(document).on('themeEditorDraftSaved. publicationSelector', function(e, data) {
+                console.log('📥 Draft saved event received:', data);
+                self.metadataLoader.load();
+            });
+
+            // Listen: Published → reload metadata + publications
+            $(document).on('themeEditorPublished.publicationSelector', function(e, data) {
+                console.log('📥 Published event received:', data.publication);
+                self.metadataLoader. load();
+                self.metadataLoader.loadPublications();
+            });
+
+            console.log('✅ Global events bound');
         },
 
         _toggleDropdown: function (e) {
@@ -159,25 +184,6 @@ define([
             this.element.trigger('openPublicationHistoryModal');
         },
 
-        updateChangesCount: function (count) {
-            console.log('🔄 Updating changes count:', count);
-
-            var oldCount = this.options.draftChangesCount;
-            this.options.draftChangesCount = count;
-
-            var shouldShowBefore = oldCount > 0 && this.options.currentStatus === 'DRAFT';
-            var shouldShowAfter = count > 0 && this.options.currentStatus === 'DRAFT';
-
-            if (shouldShowBefore !== shouldShowAfter) {
-                console.log('🔄 Publish button visibility changed, re-rendering');
-                this.renderer.render();
-                this._bind();
-                this.metadataLoader.renderPublications();
-            } else {
-                this.renderer.updateBadge();
-            }
-        },
-
         reloadPublications: function() {
             console.log('🔄 Reloading publications list');
             this.metadataLoader.loadPublications();
@@ -191,6 +197,8 @@ define([
 
         _destroy: function () {
             $(document).off('click.publicationSelector');
+            $(document).off('themeEditorDraftSaved.publicationSelector');
+            $(document).off('themeEditorPublished.publicationSelector');
             this._super();
         }
     });
