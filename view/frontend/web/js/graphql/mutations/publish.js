@@ -36,7 +36,7 @@ define([
                 themeId: themeId || null,
                 title: title,
                 description: description || null,
-                notifyUsers:  notifyUsers || false
+                notifyUsers: notifyUsers || false
             }
         }, 'PublishDraft');
     };

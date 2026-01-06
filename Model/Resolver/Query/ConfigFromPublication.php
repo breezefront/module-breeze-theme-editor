@@ -14,16 +14,18 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 
-class ConfigFromPublication implements ResolverInterface
+class ConfigFromPublication extends AbstractConfigResolver implements ResolverInterface
 {
     public function __construct(
-        private ConfigProvider $configProvider,
+        SerializerInterface $serializer,
+        ConfigProvider $configProvider,
         private ThemeResolver $themeResolver,
         private PublicationRepositoryInterface $publicationRepository,
         private ChangelogRepositoryInterface $changelogRepository,
-        private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory,
-        private SerializerInterface $serializer
-    ) {}
+        private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory
+    ) {
+        parent::__construct($serializer, $configProvider);
+    }
 
     public function resolve(
         Field $field,
@@ -43,7 +45,7 @@ class ConfigFromPublication implements ResolverInterface
         // 2. Визначити theme ID
         $themeId = isset($args['themeId']) && $args['themeId']
             ? (int)$args['themeId']
-            :  $this->themeResolver->getThemeIdByStoreId($storeId);
+            : $this->themeResolver->getThemeIdByStoreId($storeId);
 
         // 3. Перевірити, що публікація існує
         try {
@@ -63,7 +65,7 @@ class ConfigFromPublication implements ResolverInterface
         // 6. Реконструювати values з changelog
         $valuesMap = $this->buildValuesMapFromChangelog($changelog);
 
-        // 7. Змержити sections з values
+        // 7. Змержити sections з values (inherited method)
         $sections = $this->mergeSectionsWithValues(
             $config['sections'] ?? [],
             $valuesMap,
@@ -80,7 +82,7 @@ class ConfigFromPublication implements ResolverInterface
         return [
             'version' => $config['version'],
             'sections' => $sections,
-            'presets' => $this->formatPresets($config['presets'] ??  []),
+            'presets' => $this->formatPresets($config['presets'] ?? []),
             'metadata' => $metadata
         ];
     }
@@ -90,7 +92,6 @@ class ConfigFromPublication implements ResolverInterface
      */
     private function getPublicationChangelog(int $publicationId): array
     {
-        // ✅ Create new instance via Factory
         $searchCriteriaBuilder = $this->searchCriteriaBuilderFactory->create();
 
         $searchCriteria = $searchCriteriaBuilder
@@ -125,198 +126,5 @@ class ConfigFromPublication implements ResolverInterface
         }
 
         return $valuesMap;
-    }
-
-    /**
-     * Merge sections with values (reused from Config resolver)
-     */
-    private function mergeSectionsWithValues(array $sections, array $valuesMap, int $themeId): array
-    {
-        $defaults = $this->configProvider->getAllDefaults($themeId);
-
-        $result = [];
-        $order = 0;
-
-        foreach ($sections as $section) {
-            $fields = [];
-
-            foreach ($section['settings'] ??  [] as $setting) {
-                $key = $section['id'] . '.' . $setting['id'];
-                $currentValue = $valuesMap[$key] ?? null;
-                $defaultValue = $defaults[$key] ?? ($setting['default'] ?? null);
-
-                $fields[] = [
-                    'code' => $setting['id'],
-                    'label' => $setting['label'],
-                    'type' => strtoupper($setting['type']),
-                    'description' => $setting['description'] ??  null,
-                    'value' => $currentValue,
-                    'default' => $this->encodeValue($defaultValue),
-                    'isModified' => $currentValue !== null && $currentValue !== $defaultValue,
-                    'cssVar' => $setting['css_var'] ?? null,
-                    'required' => $setting['required'] ?? false,
-                    'validation' => $this->formatValidation($setting),
-                    'placeholder' => $setting['placeholder'] ?? null,
-                    'helpText' => $setting['help_text'] ?? null,
-                    'params' => $this->formatParams($setting),
-                    'dependsOn' => $this->formatDependency($setting)
-                ];
-            }
-
-            $result[] = [
-                'code' => $section['id'],
-                'label' => $section['name'],
-                'icon' => $section['icon'] ??  null,
-                'description' => $section['description'] ?? null,
-                'fields' => $fields,
-                'order' => $section['order'] ?? $order++
-            ];
-        }
-
-        return $result;
-    }
-
-    private function formatValidation(array $setting): ?array
-    {
-        $validation = [];
-
-        if (isset($setting['minLength'])) {
-            $validation['minLength'] = $setting['minLength'];
-        }
-        if (isset($setting['maxLength'])) {
-            $validation['maxLength'] = $setting['maxLength'];
-        }
-        if (isset($setting['min'])) {
-            $validation['min'] = (float)$setting['min'];
-        }
-        if (isset($setting['max'])) {
-            $validation['max'] = (float)$setting['max'];
-        }
-        if (isset($setting['pattern'])) {
-            $validation['pattern'] = $setting['pattern'];
-        }
-        if (isset($setting['validationMessage'])) {
-            $validation['message'] = $setting['validationMessage'];
-        }
-
-        return empty($validation) ? null : $validation;
-    }
-
-    private function formatParams(array $setting): ?array
-    {
-        $params = [];
-
-        if (isset($setting['min'])) {
-            $params['min'] = (float)$setting['min'];
-        }
-        if (isset($setting['max'])) {
-            $params['max'] = (float)$setting['max'];
-        }
-        if (isset($setting['step'])) {
-            $params['step'] = (float)$setting['step'];
-        }
-        if (isset($setting['unit'])) {
-            $params['unit'] = $setting['unit'];
-        }
-        if (isset($setting['options'])) {
-            $params['options'] = $this->formatOptions($setting['options']);
-        }
-        if (isset($setting['language'])) {
-            $params['language'] = $setting['language'];
-        }
-        if (isset($setting['fallback'])) {
-            $params['fallback'] = $setting['fallback'];
-        }
-        if (isset($setting['fontWeights'])) {
-            $params['fontWeights'] = $setting['fontWeights'];
-        }
-        if (isset($setting['platforms'])) {
-            $params['platforms'] = $setting['platforms'];
-        }
-        if (isset($setting['maxItems'])) {
-            $params['maxItems'] = $setting['maxItems'];
-        }
-        if (isset($setting['allowedExtensions'])) {
-            $params['allowedExtensions'] = $setting['allowedExtensions'];
-        }
-        if (isset($setting['maxFileSize'])) {
-            $params['maxFileSize'] = $setting['maxFileSize'];
-        }
-        if (isset($setting['sides'])) {
-            $params['sides'] = $setting['sides'];
-        }
-
-        return empty($params) ? null : $params;
-    }
-
-    private function formatOptions(array $options): array
-    {
-        $result = [];
-        foreach ($options as $option) {
-            $result[] = [
-                'label' => $option['label'],
-                'value' => $option['value'],
-                'icon' => $option['icon'] ?? null,
-                'preview' => $option['preview'] ?? null
-            ];
-        }
-        return $result;
-    }
-
-    private function formatDependency(array $setting): ?array
-    {
-        if (! isset($setting['dependsOn'])) {
-            return null;
-        }
-
-        $dep = $setting['dependsOn'];
-
-        return [
-            'fieldCode' => $dep['field'],
-            'value' => $dep['value'],
-            'operator' => strtoupper($dep['operator'] ?? 'EQUALS')
-        ];
-    }
-
-    private function formatPresets(array $presets): array
-    {
-        $result = [];
-        foreach ($presets as $preset) {
-            $result[] = [
-                'id' => $preset['id'],
-                'name' => $preset['name'],
-                'description' => $preset['description'] ?? null,
-                'preview' => $preset['preview'] ?? null,
-                'settings' => $this->formatPresetSettings($preset['settings'] ?? [])
-            ];
-        }
-        return $result;
-    }
-
-    private function formatPresetSettings(array $settings): array
-    {
-        $result = [];
-        foreach ($settings as $key => $value) {
-            if (strpos($key, '.') !== false) {
-                [$sectionCode, $fieldCode] = explode('.', $key, 2);
-                $result[] = [
-                    'sectionCode' => $sectionCode,
-                    'fieldCode' => $fieldCode,
-                    'value' => is_string($value) ? $value : $this->serializer->serialize($value),
-                    'isModified' => false,
-                    'updatedAt' => null
-                ];
-            }
-        }
-        return $result;
-    }
-
-    private function encodeValue($value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        return is_string($value) ? $value : $this->serializer->serialize($value);
     }
 }
