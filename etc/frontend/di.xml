@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn: magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- Invalidate CSS variables cache after mutations -->
+
+    <!-- Plugin:  Invalidate cache after saving draft values -->
+    <type name="Swissup\BreezeThemeEditor\Model\Resolver\Mutation\SaveValues">
+        <plugin name="swissup_bte_invalidate_cache_after_save"
+                type="Swissup\BreezeThemeEditor\Plugin\Mutation\InvalidateCacheAfterMutation"
+                sortOrder="100"/>
+    </type>
+
+    <!-- Plugin: Invalidate cache after publishing -->
+    <type name="Swissup\BreezeThemeEditor\Model\Resolver\Mutation\PublishDraft">
+        <plugin name="swissup_bte_invalidate_cache_after_publish"
+                type="Swissup\BreezeThemeEditor\Plugin\Mutation\InvalidateCacheAfterMutation"
+                sortOrder="100"/>
+    </type>
+
+    <!-- Plugin: Invalidate cache after rollback -->
+    <type name="Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Rollback">
+        <plugin name="swissup_bte_invalidate_cache_after_rollback"
+                type="Swissup\BreezeThemeEditor\Plugin\Mutation\InvalidateCacheAfterMutation"
+                sortOrder="100"/>
+    </type>
+
+</config>

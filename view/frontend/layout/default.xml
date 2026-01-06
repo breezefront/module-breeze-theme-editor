@@ -10,6 +10,13 @@
                     <argument name="view_model" xsi:type="object">Swissup\BreezeThemeEditor\ViewModel\Toolbar</argument>
                 </arguments>
             </block>
+            <block class="Swissup\BreezeThemeEditor\Block\ThemeCssVariables"
+                   name="bte.theme.css.variables"
+                   after="breeze_theme_editor_toolbar">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Swissup\BreezeThemeEditor\ViewModel\ThemeCssVariables</argument>
+                </arguments>
+            </block>
         </referenceContainer>
     </body>
 </page>
