@@ -12,7 +12,6 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 class ConfigProvider
 {
     private const CONFIG_FILE = 'etc/theme_editor/settings.json';
-
     private array $configCache = [];
 
     public function __construct(
@@ -28,34 +27,25 @@ class ConfigProvider
     public function getConfigurationWithInheritance(int $themeId): array
     {
         $cacheKey = 'inherited_' . $themeId;
-
         if (isset($this->configCache[$cacheKey])) {
             return $this->configCache[$cacheKey];
         }
-
         $hierarchy = $this->themeResolver->getThemeHierarchy($themeId);
-
-        // Починаємо з порожнього конфігу
         $mergedConfig = [
             'version' => '1.0',
             'sections' => [],
             'presets' => [],
             'metadata' => []
         ];
-
-        // Merge від найстарішої теми до найновішої
         foreach (array_reverse($hierarchy) as $themeInfo) {
             try {
                 $themeConfig = $this->getConfiguration($themeInfo['theme_id']);
                 $mergedConfig = $this->deepMerge($mergedConfig, $themeConfig);
             } catch (\Exception $e) {
-                // Тема може не мати config файл - skip
                 continue;
             }
         }
-
         $this->configCache[$cacheKey] = $mergedConfig;
-
         return $mergedConfig;
     }
 
@@ -66,7 +56,6 @@ class ConfigProvider
     {
         foreach ($override as $key => $value) {
             if (is_array($value) && isset($base[$key]) && is_array($base[$key])) {
-                // Для sections робимо спеціальний merge по 'id'
                 if ($key === 'sections') {
                     $base[$key] = $this->mergeSections($base[$key], $value);
                 } else {
@@ -76,7 +65,6 @@ class ConfigProvider
                 $base[$key] = $value;
             }
         }
-
         return $base;
     }
 
@@ -86,38 +74,29 @@ class ConfigProvider
     private function mergeSections(array $baseSections, array $overrideSections): array
     {
         $merged = $baseSections;
-
         foreach ($overrideSections as $overrideSection) {
             $found = false;
-
             foreach ($merged as &$baseSection) {
                 if ($baseSection['id'] === $overrideSection['id']) {
-                    // Merge settings всередині секції
                     if (isset($overrideSection['settings'])) {
                         $baseSection['settings'] = $this->mergeSettings(
                             $baseSection['settings'] ?? [],
                             $overrideSection['settings']
                         );
                     }
-
-                    // Override інші поля
                     foreach (['name', 'description', 'icon', 'order'] as $field) {
                         if (isset($overrideSection[$field])) {
                             $baseSection[$field] = $overrideSection[$field];
                         }
                     }
-
                     $found = true;
                     break;
                 }
             }
-
-            // Якщо секція нова - додати
             if (!$found) {
                 $merged[] = $overrideSection;
             }
         }
-
         return $merged;
     }
 
@@ -127,25 +106,19 @@ class ConfigProvider
     private function mergeSettings(array $baseSettings, array $overrideSettings): array
     {
         $merged = $baseSettings;
-
         foreach ($overrideSettings as $overrideSetting) {
             $found = false;
-
             foreach ($merged as &$baseSetting) {
                 if ($baseSetting['id'] === $overrideSetting['id']) {
-                    // Override всі поля setting
                     $baseSetting = array_merge($baseSetting, $overrideSetting);
                     $found = true;
                     break;
                 }
             }
-
-            // Якщо setting нове - додати
             if (!$found) {
                 $merged[] = $overrideSetting;
             }
         }
-
         return $merged;
     }
 
@@ -157,17 +130,12 @@ class ConfigProvider
         if (isset($this->configCache[$themeId])) {
             return $this->configCache[$themeId];
         }
-
         $theme = $this->getTheme($themeId);
         $config = $this->loadConfigFile($theme);
-
-        // Додати metadata якщо її немає
         if (!isset($config['metadata'])) {
             $config['metadata'] = $this->buildMetadata($theme);
         }
-
         $this->configCache[$themeId] = $config;
-
         return $config;
     }
 
@@ -181,7 +149,7 @@ class ConfigProvider
             'themeName' => $theme->getThemeTitle(),
             'themeCode' => $theme->getCode(),
             'themePath' => $theme->getThemePath(),
-            'parentId' => $theme->getParentId() ?  (int)$theme->getParentId() : null,
+            'parentId' => $theme->getParentId() ? (int)$theme->getParentId() : null,
         ];
     }
 
@@ -206,16 +174,14 @@ class ConfigProvider
     /**
      * Отримати конкретну секцію
      */
-    public function getSection(int $themeId, string $sectionCode): ? array
+    public function getSection(int $themeId, string $sectionCode): ?array
     {
         $sections = $this->getSections($themeId);
-
         foreach ($sections as $section) {
             if ($section['id'] === $sectionCode) {
                 return $section;
             }
         }
-
         return null;
     }
 
@@ -225,17 +191,14 @@ class ConfigProvider
     public function getField(int $themeId, string $sectionCode, string $fieldCode): ?array
     {
         $section = $this->getSection($themeId, $sectionCode);
-
         if (!$section) {
             return null;
         }
-
         foreach ($section['settings'] as $setting) {
             if ($setting['id'] === $fieldCode) {
                 return $setting;
             }
         }
-
         return null;
     }
 
@@ -254,13 +217,11 @@ class ConfigProvider
     public function getPreset(int $themeId, string $presetId): ?array
     {
         $presets = $this->getPresets($themeId);
-
         foreach ($presets as $preset) {
             if ($preset['id'] === $presetId) {
                 return $preset;
             }
         }
-
         return null;
     }
 
@@ -280,7 +241,6 @@ class ConfigProvider
     {
         $sections = $this->getSections($themeId);
         $defaults = [];
-
         foreach ($sections as $section) {
             foreach ($section['settings'] as $setting) {
                 if (isset($setting['default'])) {
@@ -289,7 +249,6 @@ class ConfigProvider
                 }
             }
         }
-
         return $defaults;
     }
 
@@ -300,11 +259,9 @@ class ConfigProvider
     {
         $themeCollection = $this->themeCollectionFactory->create();
         $theme = $themeCollection->getItemById($themeId);
-
         if (!$theme || !$theme->getId()) {
             throw new LocalizedException(__('Theme with ID %1 not found', $themeId));
         }
-
         return $theme;
     }
 
@@ -314,21 +271,16 @@ class ConfigProvider
     private function loadConfigFile($theme): array
     {
         $configPath = $this->findConfigFile($theme);
-
         if (!$configPath) {
             throw new LocalizedException(
                 __('Theme editor configuration file not found for theme: %1', $theme->getThemeTitle())
             );
         }
-
         try {
             $content = file_get_contents($configPath);
             $config = $this->serializer->unserialize($content);
-
             $this->validateConfig($config);
-
             return $config;
-
         } catch (\Exception $e) {
             throw new LocalizedException(
                 __('Error reading theme configuration: %1', $e->getMessage())
@@ -342,24 +294,18 @@ class ConfigProvider
     private function findConfigFile($theme): ?string
     {
         $themePath = $theme->getFullPath();
-
-        // Варіант 1: app/design/frontend/Vendor/theme/etc/theme_editor/settings.json
-        $appDesignPath = BP .  '/app/design/' . $themePath . '/' . self::CONFIG_FILE;
+        $appDesignPath = BP . '/app/design/' . $themePath . '/' . self::CONFIG_FILE;
         if (file_exists($appDesignPath)) {
             return $appDesignPath;
         }
-
-        // Варіант 2: Через ComponentRegistrar (для composer тем)
         $parts = explode('/', $themePath);
         if (count($parts) >= 2) {
             $area = $parts[0];
             $themeCode = implode('/', array_slice($parts, 1));
-
             $themePath = $this->componentRegistrar->getPath(
                 ComponentRegistrar::THEME,
-                $area .  '/' . $themeCode
+                $area . '/' . $themeCode
             );
-
             if ($themePath) {
                 $composerPath = $themePath . '/' . self::CONFIG_FILE;
                 if (file_exists($composerPath)) {
@@ -367,7 +313,6 @@ class ConfigProvider
                 }
             }
         }
-
         return null;
     }
 
@@ -379,8 +324,7 @@ class ConfigProvider
         if (!isset($config['version'])) {
             throw new LocalizedException(__('Missing "version" in theme configuration'));
         }
-
-        if (!isset($config['sections']) || ! is_array($config['sections'])) {
+        if (!isset($config['sections']) || !is_array($config['sections'])) {
             throw new LocalizedException(__('Missing or invalid "sections" in theme configuration'));
         }
     }
@@ -388,7 +332,7 @@ class ConfigProvider
     /**
      * Очистити кеш
      */
-    public function clearCache(? int $themeId = null): void
+    public function clearCache(?int $themeId = null): void
     {
         if ($themeId) {
             unset($this->configCache[$themeId]);
