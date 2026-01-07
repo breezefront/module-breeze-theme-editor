@@ -67,6 +67,11 @@ class CssGenerator
                 continue;
             }
 
+            $default = $field['default'] ?? null;
+            if ($default !== null && $this->valuesAreEqual($rawValue, $default)) {
+                continue;  // Use Breeze default, don't override
+            }
+
             $cssVar = $field['css_var'] ?? null;
 
             if (!$cssVar) {
@@ -76,8 +81,9 @@ class CssGenerator
             $fieldType = $field['type'] ?? null;
             $formattedValue = $this->formatValue($rawValue, $fieldType);
             $comment = $this->getComment($rawValue, $fieldType);
+            $important = $field['important'] ?? false;
 
-            $css .= "    $cssVar: $formattedValue;";
+            $css .= "    $cssVar: $formattedValue" . ($important ? ' !important' : '') . ";";
             if ($comment) {
                 $css .= "  /* $comment */";
             }
@@ -91,6 +97,9 @@ class CssGenerator
 
     /**
      * Format value based on field type
+     * @param mixed $value
+     * @param string|null $fieldType
+     * @return string
      */
     private function formatValue($value, ?string $fieldType): string
     {
@@ -104,12 +113,60 @@ class CssGenerator
             'color' => $this->hexToRgb($value),
             'font_picker' => $this->formatFont($value),
             'toggle', 'checkbox' => ($value === true || $value === '1' || $value === 1) ? '1' : '0',
+            'textarea' => $this->escapeValue((string)$value),
             default => (string)$value
         };
     }
 
     /**
+     * Escapes certain characters within the given string to prevent unintended behavior.
+     *
+     * @param string $value The input string to be escaped.
+     * @return string The escaped string where specific characters are replaced.
+     */
+    private function escapeValue(string $value): string
+    {
+        return str_replace(['/*', '*/'], ['/ *', '* /'], $value);
+    }
+
+    /**
+     * Compare two values for equality, normalizing types
+     * @param mixed $value1
+     * @param mixed $value2
+     * @return bool
+     */
+    private function valuesAreEqual($value1, $value2): bool
+    {
+        // Normalize types
+        $v1 = $this->normalizeValue($value1);
+        $v2 = $this->normalizeValue($value2);
+
+        return $v1 === $v2;
+    }
+
+    /**
+     * Normalize value for comparison
+     * @param mixed $value
+     * @return string
+     */
+    private function normalizeValue($value): string
+    {
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+
+        if (is_numeric($value)) {
+            return (string)$value;
+        }
+
+        return trim((string)$value);
+    }
+
+    /**
      * Get comment for CSS variable
+     * @param mixed $value
+     * @param string|null $fieldType
+     * @return string|null
      */
     private function getComment($value, ?string $fieldType): ?string
     {
@@ -127,6 +184,8 @@ class CssGenerator
 
     /**
      * Convert HEX to RGB (Breeze format: "255, 0, 0")
+     * @param string $hex
+     * @return string
      */
     private function hexToRgb(string $hex): string
     {
@@ -149,6 +208,8 @@ class CssGenerator
 
     /**
      * Format font family with fallback
+     * @param string $font
+     * @return string
      */
     private function formatFont(string $font): string
     {
