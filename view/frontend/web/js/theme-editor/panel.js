@@ -126,7 +126,6 @@ define([
 
                 // Оновити UI
                 PanelState.markAsSaved();
-                CssPreviewManager.markAsSaved();
                 self._updateChangesCount();
                 self._refreshAllBadges();
             });
@@ -323,7 +322,6 @@ define([
                         PanelState.markAsSaved();
                         console.log('💾 Changes count AFTER markAsSaved:', PanelState.getChangesCount());
 
-                        CssPreviewManager.markAsSaved();
                         self._refreshAllBadges();
                         $(document).trigger('themeEditorDraftSaved', {
                             storeId: self.storeId,
