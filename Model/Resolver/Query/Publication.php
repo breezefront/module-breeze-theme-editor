@@ -11,6 +11,7 @@ use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Swissup\BreezeThemeEditor\Model\Utility\AdminUserLoader;
 
 class Publication implements ResolverInterface
 {
@@ -18,7 +19,8 @@ class Publication implements ResolverInterface
         private PublicationRepositoryInterface $publicationRepository,
         private ChangelogRepositoryInterface $changelogRepository,
         private ConfigProvider $configProvider,
-        private SearchCriteriaBuilder $searchCriteriaBuilder
+        private SearchCriteriaBuilder $searchCriteriaBuilder,
+        private AdminUserLoader $adminUserLoader
     ) {}
 
     public function resolve(
@@ -71,6 +73,10 @@ class Publication implements ResolverInterface
             ];
         }
 
+        // Load user data
+        $publishedBy = $publication->getPublishedBy();
+        $userData = $this->adminUserLoader->getUserData($publishedBy);
+
         return [
             'publicationId'   => $publication->getPublicationId(),
             'themeId'         => $publication->getThemeId(),
@@ -78,9 +84,9 @@ class Publication implements ResolverInterface
             'title'           => $publication->getTitle(),
             'description'     => $publication->getDescription(),
             'publishedAt'     => $publication->getPublishedAt(),
-            'publishedBy'     => $publication->getPublishedBy(),
-            'publishedByName' => null, // TODO
-            'publishedByEmail'=> null, // TODO
+            'publishedBy'     => $publishedBy,
+            'publishedByName' => $userData['fullname'] ?? $userData['username'] ?? null,
+            'publishedByEmail'=> $userData['email'] ?? null,
             'isRollback'      => (bool)$publication->getIsRollback(),
             'rollbackFrom'    => $publication->getRollbackFrom(),
             'changesCount'    => $publication->getChangesCount(),

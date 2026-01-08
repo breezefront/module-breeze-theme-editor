@@ -12,6 +12,7 @@ use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Utility\AdminUserLoader;
 
 class Publications implements ResolverInterface
 {
@@ -20,7 +21,8 @@ class Publications implements ResolverInterface
         private UserResolver $userResolver,
         private ThemeResolver $themeResolver,
         private SearchCriteriaBuilder $searchCriteriaBuilder,
-        private SortOrderBuilder $sortOrderBuilder
+        private SortOrderBuilder $sortOrderBuilder,
+        private AdminUserLoader $adminUserLoader
     ) {}
 
     public function resolve(
@@ -61,8 +63,20 @@ class Publications implements ResolverInterface
 
         $searchResults = $this->publicationRepository->getList($criteria);
 
+        // Collect all user IDs for batch loading
+        $userIds = [];
+        foreach ($searchResults->getItems() as $publication) {
+            $userIds[] = $publication->getPublishedBy();
+        }
+        
+        // Load all user data in one query
+        $usersData = $this->adminUserLoader->getMultipleUsersData(array_unique($userIds));
+
         $items = [];
         foreach ($searchResults->getItems() as $publication) {
+            $publishedBy = $publication->getPublishedBy();
+            $userData = $usersData[$publishedBy] ?? null;
+            
             $items[] = [
                 'publicationId' => $publication->getPublicationId(),
                 'themeId' => $publication->getThemeId(),
@@ -70,9 +84,9 @@ class Publications implements ResolverInterface
                 'title' => $publication->getTitle(),
                 'description' => $publication->getDescription(),
                 'publishedAt' => $publication->getPublishedAt(),
-                'publishedBy' => $publication->getPublishedBy(),
-                'publishedByName' => null, // TODO: отримати з admin_user
-                'publishedByEmail' => null, // TODO: отримати з admin_user
+                'publishedBy' => $publishedBy,
+                'publishedByName' => $userData['fullname'] ?? $userData['username'] ?? null,
+                'publishedByEmail' => $userData['email'] ?? null,
                 'isRollback' => (bool)$publication->getIsRollback(),
                 'rollbackFrom' => $publication->getRollbackFrom(),
                 'changesCount' => $publication->getChangesCount(),
