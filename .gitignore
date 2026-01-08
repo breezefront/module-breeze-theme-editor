@@ -11,3 +11,8 @@ Thumbs.db
 # Composer
 /vendor/
 composer.lock
+
+# Documentation (managed centrally in swissup.github.io)
+CHANGELOG.md
+ROADMAP.md
+/docs/
