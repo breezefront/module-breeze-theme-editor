@@ -16,3 +16,6 @@ composer.lock
 CHANGELOG.md
 ROADMAP.md
 /docs/
+
+# PHPUnit
+.phpunit.result.cache
