@@ -104,7 +104,7 @@ class CssGenerator
     private function formatValue($value, ?string $fieldType): string
     {
         if (! $fieldType) {
-            return (string)$value;
+            return $this->escapeValue((string)$value);
         }
 
         $fieldType = strtolower($fieldType);
@@ -113,8 +113,9 @@ class CssGenerator
             'color' => $this->hexToRgb($value),
             'font_picker' => $this->formatFont($value),
             'toggle', 'checkbox' => ($value === true || $value === '1' || $value === 1) ? '1' : '0',
-            'textarea' => $this->escapeValue((string)$value),
-            default => (string)$value
+            'number', 'range' => (string)$value, // Numbers don't need escaping
+            'textarea', 'text', 'code' => $this->escapeValue((string)$value),
+            default => $this->escapeValue((string)$value)
         };
     }
 
@@ -159,7 +160,16 @@ class CssGenerator
             return (string)$value;
         }
 
-        return trim((string)$value);
+        $stringValue = trim((string)$value);
+        
+        // Normalize RGB formats for comparison
+        // "rgb(255, 0, 0)" → "255, 0, 0"
+        // "rgba(255, 0, 0, 0.5)" → "255, 0, 0, 0.5"
+        if (preg_match('/^rgba?\((.+)\)$/i', $stringValue, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return $stringValue;
     }
 
     /**
@@ -213,10 +223,49 @@ class CssGenerator
      */
     private function formatFont(string $font): string
     {
+        // Already has quotes - assume it's properly formatted
         if (str_starts_with($font, '"') || str_starts_with($font, "'")) {
             return $font;
         }
 
+        // Determine appropriate fallback based on font family
+        $serifFonts = [
+            'Georgia',
+            'Times New Roman',
+            'Times',
+            'Garamond',
+            'Palatino',
+            'Baskerville',
+            'Didot',
+            'Bodoni',
+            'Cambria',
+            'serif'
+        ];
+        
+        $monospaceFonts = [
+            'Courier New',
+            'Courier',
+            'Monaco',
+            'Consolas',
+            'Lucida Console',
+            'monospace'
+        ];
+
+        // Check if font is serif
+        foreach ($serifFonts as $serifFont) {
+            if (stripos($font, $serifFont) !== false) {
+                return '"' . $font . '", serif';
+            }
+        }
+        
+        // Check if font is monospace
+        foreach ($monospaceFonts as $monospaceFont) {
+            if (stripos($font, $monospaceFont) !== false) {
+                return '"' . $font . '", monospace';
+            }
+        }
+
+        // Default to sans-serif
         return '"' . $font . '", sans-serif';
     }
 }

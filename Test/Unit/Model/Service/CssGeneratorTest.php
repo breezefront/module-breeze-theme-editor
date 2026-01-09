@@ -531,6 +531,280 @@ class CssGeneratorTest extends TestCase
     }
 
     /**
+     * Test: RGB comparison - normalized default values
+     * Issue #1: rgb(255, 0, 0) should equal "255, 0, 0" for comparison
+     */
+    public function testRgbComparisonNormalization(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'colors',
+                'setting_code' => 'text',
+                'value' => '17, 24, 39'  // Stored value (after conversion)
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'colors',
+                    'settings' => [
+                        [
+                            'id' => 'text',
+                            'type' => 'color',
+                            'css_var' => '--text-color',
+                            'default' => 'rgb(17, 24, 39)'  // Default in rgb() format
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        // Should skip because "17, 24, 39" equals "rgb(17, 24, 39)" after normalization
+        $this->assertStringNotContainsString('--text-color:', $result);
+        $this->assertEquals(":root {\n}\n", $result);
+    }
+
+    /**
+     * Test: RGBA comparison normalization
+     */
+    public function testRgbaComparisonNormalization(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'colors',
+                'setting_code' => 'overlay',
+                'value' => '0, 0, 0, 0.5'
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'colors',
+                    'settings' => [
+                        [
+                            'id' => 'overlay',
+                            'type' => 'color',
+                            'css_var' => '--overlay-color',
+                            'default' => 'rgba(0, 0, 0, 0.5)'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        // Should skip because values are equal after normalization
+        $this->assertStringNotContainsString('--overlay-color:', $result);
+    }
+
+    /**
+     * Test: Serif font gets correct fallback
+     * Issue #2: Georgia should have "serif" fallback, not "sans-serif"
+     */
+    public function testSerifFontFallback(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'heading_font',
+                'value' => 'Georgia'
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id' => 'heading_font',
+                            'type' => 'font_picker',
+                            'css_var' => '--font-heading'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        $this->assertStringContainsString('--font-heading: "Georgia", serif;', $result);
+        $this->assertStringNotContainsString('sans-serif', $result);
+    }
+
+    /**
+     * Test: Times New Roman serif font
+     */
+    public function testTimesNewRomanSerifFallback(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'body_font',
+                'value' => 'Times New Roman'
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id' => 'body_font',
+                            'type' => 'font_picker',
+                            'css_var' => '--font-body'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        $this->assertStringContainsString('--font-body: "Times New Roman", serif;', $result);
+    }
+
+    /**
+     * Test: Monospace font gets correct fallback
+     */
+    public function testMonospaceFontFallback(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'code_font',
+                'value' => 'Courier New'
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id' => 'code_font',
+                            'type' => 'font_picker',
+                            'css_var' => '--font-code'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        $this->assertStringContainsString('--font-code: "Courier New", monospace;', $result);
+        $this->assertStringNotContainsString('sans-serif', $result);
+    }
+
+    /**
+     * Test: TEXT type escapes CSS comments
+     * Issue #3: Not only textarea should escape, but all text-like fields
+     */
+    public function testTextTypeEscapesComments(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'advanced',
+                'setting_code' => 'custom_value',
+                'value' => 'value /* with comment */'
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'advanced',
+                    'settings' => [
+                        [
+                            'id' => 'custom_value',
+                            'type' => 'text',
+                            'css_var' => '--custom-value'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        // Should escape /* and */
+        $this->assertStringContainsString('/ *', $result);
+        $this->assertStringContainsString('* /', $result);
+    }
+
+    /**
+     * Test: CODE type escapes CSS comments
+     */
+    public function testCodeTypeEscapesComments(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'advanced',
+                'setting_code' => 'custom_code',
+                'value' => 'calc(100% /* full width */ - 20px)'
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'advanced',
+                    'settings' => [
+                        [
+                            'id' => 'custom_code',
+                            'type' => 'code',
+                            'css_var' => '--custom-calc'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        // Should escape comments
+        $this->assertStringContainsString('/ * full width * /', $result);
+        $this->assertStringNotContainsString('/* full width */', $result);
+    }
+
+    /**
+     * Test: NUMBER and RANGE types do NOT escape (they're numeric)
+     */
+    public function testNumberTypesDoNotEscape(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'columns',
+                'value' => '3'
+            ],
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'opacity',
+                'value' => '0.8'
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'layout',
+                    'settings' => [
+                        [
+                            'id' => 'columns',
+                            'type' => 'number',
+                            'css_var' => '--columns'
+                        ],
+                        [
+                            'id' => 'opacity',
+                            'type' => 'range',
+                            'css_var' => '--opacity'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        // Numeric values should remain unchanged
+        $this->assertStringContainsString('--columns: 3;', $result);
+        $this->assertStringContainsString('--opacity: 0.8;', $result);
+    }
+
+    /**
      * Helper: Setup mocks for tests
      */
     private function setupMocks(array $values, array $config): void
