@@ -11,7 +11,10 @@ define([
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/color-scheme',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/code',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/icon-set-picker',
-    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/social-links'
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/social-links',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/image-upload',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/spacing',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/repeater'
 ], function(
     BaseFieldRenderer,
     ColorRenderer,
@@ -25,7 +28,10 @@ define([
     ColorSchemeRenderer,
     CodeRenderer,
     IconSetPickerRenderer,
-    SocialLinksRenderer
+    SocialLinksRenderer,
+    ImageUploadRenderer,
+    SpacingRenderer,
+    RepeaterRenderer
 ) {
     'use strict';
 
@@ -50,7 +56,10 @@ define([
             'COLOR_SCHEME':  ColorSchemeRenderer,
             'CODE': CodeRenderer,
             'ICON_SET_PICKER':  IconSetPickerRenderer,
-            'SOCIAL_LINKS': SocialLinksRenderer
+            'SOCIAL_LINKS': SocialLinksRenderer,
+            'IMAGE_UPLOAD': ImageUploadRenderer,
+            'SPACING': SpacingRenderer,
+            'REPEATER': RepeaterRenderer
         },
 
         /**

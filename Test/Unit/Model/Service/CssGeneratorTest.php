@@ -805,6 +805,266 @@ class CssGeneratorTest extends TestCase
     }
 
     /**
+     * Test: IMAGE_UPLOAD type outputs URL correctly
+     */
+    public function testImageUploadType(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'branding',
+                'setting_code' => 'logo',
+                'value' => 'https://example.com/logo.png'
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'branding',
+                    'settings' => [
+                        [
+                            'id' => 'logo',
+                            'type' => 'image_upload',
+                            'css_var' => '--logo-url'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        $this->assertStringContainsString('--logo-url: https://example.com/logo.png;', $result);
+    }
+
+    /**
+     * Test: SPACING type with all sides same
+     */
+    public function testSpacingTypeAllSidesSame(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'padding',
+                'value' => json_encode([
+                    'top' => 20,
+                    'right' => 20,
+                    'bottom' => 20,
+                    'left' => 20,
+                    'unit' => 'px',
+                    'linked' => true
+                ])
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'layout',
+                    'settings' => [
+                        [
+                            'id' => 'padding',
+                            'type' => 'spacing',
+                            'css_var' => '--container-padding'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        // All sides same should use shorthand
+        $this->assertStringContainsString('--container-padding: 20px;', $result);
+    }
+
+    /**
+     * Test: SPACING type with top/bottom and left/right same
+     */
+    public function testSpacingTypeTwoValueShorthand(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'margin',
+                'value' => json_encode([
+                    'top' => 10,
+                    'right' => 20,
+                    'bottom' => 10,
+                    'left' => 20,
+                    'unit' => 'px'
+                ])
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'layout',
+                    'settings' => [
+                        [
+                            'id' => 'margin',
+                            'type' => 'spacing',
+                            'css_var' => '--container-margin'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        // Should use two-value shorthand
+        $this->assertStringContainsString('--container-margin: 10px 20px;', $result);
+    }
+
+    /**
+     * Test: SPACING type with three values (left/right same)
+     */
+    public function testSpacingTypeThreeValueShorthand(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'padding',
+                'value' => json_encode([
+                    'top' => 10,
+                    'right' => 20,
+                    'bottom' => 30,
+                    'left' => 20,
+                    'unit' => 'rem'
+                ])
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'layout',
+                    'settings' => [
+                        [
+                            'id' => 'padding',
+                            'type' => 'spacing',
+                            'css_var' => '--section-padding'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        // Should use three-value shorthand
+        $this->assertStringContainsString('--section-padding: 10rem 20rem 30rem;', $result);
+    }
+
+    /**
+     * Test: SPACING type with all sides different
+     */
+    public function testSpacingTypeFourValueShorthand(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'margin',
+                'value' => json_encode([
+                    'top' => 10,
+                    'right' => 20,
+                    'bottom' => 30,
+                    'left' => 40,
+                    'unit' => 'px'
+                ])
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'layout',
+                    'settings' => [
+                        [
+                            'id' => 'margin',
+                            'type' => 'spacing',
+                            'css_var' => '--block-margin'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        // Should use four-value shorthand
+        $this->assertStringContainsString('--block-margin: 10px 20px 30px 40px;', $result);
+    }
+
+    /**
+     * Test: SPACING type with different unit (rem)
+     */
+    public function testSpacingTypeWithRemUnit(): void
+    {
+        $this->setupMocks([
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'gap',
+                'value' => json_encode([
+                    'top' => 2,
+                    'right' => 2,
+                    'bottom' => 2,
+                    'left' => 2,
+                    'unit' => 'rem'
+                ])
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'layout',
+                    'settings' => [
+                        [
+                            'id' => 'gap',
+                            'type' => 'spacing',
+                            'css_var' => '--grid-gap'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        $this->assertStringContainsString('--grid-gap: 2rem;', $result);
+    }
+
+    /**
+     * Test: REPEATER type outputs JSON string
+     */
+    public function testRepeaterType(): void
+    {
+        $items = [
+            ['name' => 'Item 1', 'value' => 'Value 1'],
+            ['name' => 'Item 2', 'value' => 'Value 2']
+        ];
+
+        $this->setupMocks([
+            [
+                'section_code' => 'advanced',
+                'setting_code' => 'items',
+                'value' => json_encode($items)
+            ]
+        ], [
+            'sections' => [
+                [
+                    'id' => 'advanced',
+                    'settings' => [
+                        [
+                            'id' => 'items',
+                            'type' => 'repeater',
+                            'css_var' => '--custom-items'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $result = $this->cssGenerator->generate(1, 1);
+
+        // Repeater should output escaped JSON
+        $this->assertStringContainsString('--custom-items:', $result);
+        // Check that it contains the JSON data (comments are escaped)
+        $this->assertStringNotContainsString('/*', $result);
+    }
+
+    /**
      * Helper: Setup mocks for tests
      */
     private function setupMocks(array $values, array $config): void

@@ -115,6 +115,9 @@ class CssGenerator
             'toggle', 'checkbox' => ($value === true || $value === '1' || $value === 1) ? '1' : '0',
             'number', 'range' => (string)$value, // Numbers don't need escaping
             'textarea', 'text', 'code' => $this->escapeValue((string)$value),
+            'image_upload' => $this->escapeValue((string)$value), // URL or data URL
+            'spacing' => $this->formatSpacing($value),
+            'repeater' => $this->formatRepeater($value),
             default => $this->escapeValue((string)$value)
         };
     }
@@ -188,6 +191,7 @@ class CssGenerator
 
         return match ($fieldType) {
             'color' => str_starts_with((string)$value, '#') ? (string)$value : null,
+            'spacing' => 'JSON: ' . (is_string($value) ? $value : json_encode($value)),
             default => null
         };
     }
@@ -267,5 +271,73 @@ class CssGenerator
 
         // Default to sans-serif
         return '"' . $font . '", sans-serif';
+    }
+
+    /**
+     * Format spacing value for CSS
+     * Converts JSON object to CSS shorthand
+     *
+     * @param mixed $value JSON string or array
+     * @return string CSS shorthand (e.g., "10px 20px 30px 40px")
+     */
+    private function formatSpacing($value): string
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $value = $decoded;
+            } else {
+                // If not JSON, assume it's already formatted CSS
+                return $this->escapeValue($value);
+            }
+        }
+
+        if (!is_array($value)) {
+            return '0';
+        }
+
+        $top = $value['top'] ?? 0;
+        $right = $value['right'] ?? 0;
+        $bottom = $value['bottom'] ?? 0;
+        $left = $value['left'] ?? 0;
+        $unit = $value['unit'] ?? 'px';
+
+        // Generate CSS shorthand
+        if ($top === $right && $right === $bottom && $bottom === $left) {
+            // All sides same
+            return $top . $unit;
+        } elseif ($top === $bottom && $left === $right) {
+            // top/bottom same, left/right same
+            return $top . $unit . ' ' . $right . $unit;
+        } elseif ($left === $right) {
+            // left/right same
+            return $top . $unit . ' ' . $right . $unit . ' ' . $bottom . $unit;
+        } else {
+            // All different
+            return $top . $unit . ' ' . $right . $unit . ' ' . $bottom . $unit . ' ' . $left . $unit;
+        }
+    }
+
+    /**
+     * Format repeater value for CSS
+     * Note: Repeater fields typically don't output to CSS directly,
+     * but this provides JSON string representation if needed
+     *
+     * @param mixed $value
+     * @return string
+     */
+    private function formatRepeater($value): string
+    {
+        if (is_string($value)) {
+            // Already a JSON string, just escape it
+            return $this->escapeValue($value);
+        }
+
+        if (is_array($value)) {
+            // Convert to JSON string
+            return $this->escapeValue(json_encode($value));
+        }
+
+        return '';
     }
 }

@@ -4,8 +4,11 @@ define([
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/range',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/radio',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/simple',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/image-upload',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/spacing',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/repeater',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/base'
-], function (BaseHandler, ColorHandler, RangeHandler, RadioHandler, SimpleHandler, BaseRenderer) {
+], function (BaseHandler, ColorHandler, RangeHandler, RadioHandler, SimpleHandler, ImageUploadHandler, SpacingHandler, RepeaterHandler, BaseRenderer) {
     'use strict';
 
     /**
@@ -27,6 +30,9 @@ define([
             RangeHandler.init($element, callback);
             RadioHandler.init($element, callback);
             SimpleHandler.init($element, callback);
+            ImageUploadHandler.init($element, callback);
+            SpacingHandler.init($element, callback);
+            RepeaterHandler.init($element, callback);
 
             console.log('✅ All field handlers initialized');
         },
@@ -41,6 +47,9 @@ define([
             RangeHandler.destroy($element);
             RadioHandler.destroy($element);
             SimpleHandler.destroy($element);
+            ImageUploadHandler.destroy($element);
+            SpacingHandler.destroy($element);
+            RepeaterHandler.destroy($element);
 
             console.log('🗑️ All field handlers destroyed');
         },
