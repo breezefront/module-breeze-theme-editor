@@ -45,15 +45,17 @@ define([
             if (config) {
                 this.storeId = config.storeId;
                 this.themeId = config.themeId;
+                this.themeName = config.themeName || 'current theme';
                 console.log('📊 Panel config:', {
                     storeId: this.storeId,
                     themeId: this.themeId,
-                    themeName: config.themeName
+                    themeName: this.themeName
                 });
             } else {
                 console.error('❌ Breeze editor config not found in body data!');
                 this.storeId = this.options.storeId || 1;
                 this.themeId = this.options.themeId || 0;
+                this.themeName = 'current theme';
             }
 
             this.template = mageTemplate(panelTemplate);
@@ -161,18 +163,8 @@ define([
                 })
                 .catch(function(error) {
                     console.error('❌ Failed to load config:', error);
-                    var errorData = error;
-                    if (error.message && error.message.indexOf('GraphQL Error: ') !== -1) {
-                        try {
-                            var match = error.message.match(/GraphQL Error: (.*)/);
-                            if (match) {
-                                errorData = { message: match[1] };
-                            }
-                        } catch (e) {
-                            // Fallback to original error
-                        }
-                    }
-                    self._showError(errorData);
+                    // Pass the full error object to preserve extensions
+                    self._showError(error);
                 });
         },
 
@@ -413,11 +405,35 @@ define([
 
             this.$error.show();
 
+            // Show toast notification for unsupported theme error
+            this._showErrorToast(errorInfo.message, errorInfo.debugMessage);
+
             console.error('❌ Panel error:', errorData);
         },
 
         _showToast: function(type, message) {
             Toastify.show(type, message);
+        },
+
+        _showErrorToast: function(message, debugMessage) {
+            // Check if this is a theme configuration error
+            var searchText = debugMessage || message;
+            var isThemeConfigError = searchText.indexOf('configuration file not found') !== -1 ||
+                                     searchText.indexOf('Theme editor configuration file not found') !== -1;
+            
+            if (isThemeConfigError) {
+                var themeName = this.themeName || 'this theme';
+                var toastMessage = 'Theme Editor is not available for ' + themeName + '. Please switch to a different store.';
+                
+                Toastify.show('warning', toastMessage, {
+                    duration: 8000,  // 8 seconds (longer than default)
+                    close: true,     // Show close button
+                    gravity: 'top',
+                    position: 'center'
+                });
+                
+                console.log('📢 Toast shown for unsupported theme');
+            }
         },
 
         _parseErrorData: function(errorData) {
@@ -462,17 +478,28 @@ define([
         },
 
         _getFriendlyMessage: function(message, debugMessage) {
+            var themeName = this.themeName || 'current theme';
+            
             var friendlyMessages = {
-                'Theme editor configuration file not found': 'Theme configuration is not set up yet. Please contact your administrator.',
-                'configuration file not found': 'Theme configuration is not set up yet. Please contact your administrator.',
+                'Theme editor configuration file not found': 
+                    'Theme Editor is not available for "' + themeName + '" theme.\n\n' +
+                    'This theme doesn\'t have the required configuration file.\n\n' +
+                    'Please select a different store from the dropdown above that uses a theme with Theme Editor support.',
+                'configuration file not found': 
+                    'Theme Editor is not available for "' + themeName + '" theme.\n\n' +
+                    'This theme doesn\'t have the required configuration file.\n\n' +
+                    'Please select a different store from the dropdown above that uses a theme with Theme Editor support.',
                 'Access token required': 'Your session has expired. Please refresh the page.',
                 'Invalid access token': 'Your session has expired. Please refresh the page.',
                 'Internal server error': 'The server encountered an error. Please try again later.'
             };
 
+            // Check debugMessage first (more specific), then message (generic)
+            var searchText = debugMessage || message;
+            
             for (var key in friendlyMessages) {
-                if (message.indexOf(key) !== -1 || (debugMessage && debugMessage.indexOf(key) !== -1)) {
-                    console.log('✅ Found friendly message for:', key);
+                if (searchText.indexOf(key) !== -1) {
+                    console.log('✅ Found friendly message for:', key, 'in', debugMessage ? 'debugMessage' : 'message');
                     return {
                         message: friendlyMessages[key],
                         isFriendly: true
@@ -480,7 +507,7 @@ define([
                 }
             }
 
-            console.log('⚠️ No friendly message found, using original');
+            console.log('⚠️ No friendly message found, using original message');
             return {
                 message: message,
                 isFriendly: false
