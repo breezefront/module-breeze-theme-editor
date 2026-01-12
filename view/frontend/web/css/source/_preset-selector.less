@@ -1,10 +1,14 @@
-// Preset Selector Styles
+// ============================================================================
+// PRESET SELECTOR - Dark Panel Theme
+// ============================================================================
+
 .bte-preset-selector {
-    padding: 15px;
-    border-top: 1px solid #e5e7eb;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f9fafb;
-    margin-top: 10px;
+    padding: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    margin: 16px 0;
+    border-radius: 6px;
     
     .bte-preset-label {
         display: flex;
@@ -13,7 +17,11 @@
         margin-bottom: 10px;
         font-weight: 500;
         font-size: 14px;
-        color: #374151;
+        color: @bte-toolbar-text;
+        
+        .bte-icon {
+            font-size: 16px;
+        }
     }
     
     .bte-preset-dropdown {
@@ -23,39 +31,42 @@
     .bte-preset-select {
         width: 100%;
         padding: 10px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        background: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.3);
         font-size: 14px;
-        color: #1f2937;
+        color: @bte-toolbar-text;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: @bte-toolbar-transition;
+        font-family: @bte-toolbar-font-family;
         
         &:hover {
-            border-color: #9ca3af;
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.4);
         }
         
         &:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #1979c3;
+            box-shadow: 0 0 0 3px rgba(25, 121, 195, 0.2);
         }
         
         option {
             padding: 8px;
+            background: @bte-toolbar-bg;
+            color: @bte-toolbar-text;
         }
     }
     
     .bte-preset-preview {
         margin-top: 15px;
         padding: 15px;
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
         
         .bte-preset-description {
-            color: #6b7280;
+            color: rgba(255, 255, 255, 0.7);
             margin-bottom: 15px;
             line-height: 1.6;
             font-size: 13px;
@@ -66,12 +77,12 @@
             align-items: center;
             gap: 8px;
             padding: 10px 12px;
-            background: #fef3c7;
-            border-left: 3px solid #f59e0b;
+            background: rgba(245, 158, 11, 0.15);
+            border-left: 3px solid @bte-badge-dirty-primary;
             margin-bottom: 15px;
             border-radius: 4px;
             font-size: 13px;
-            color: #92400e;
+            color: @bte-badge-dirty-light;
             
             span:first-child {
                 font-size: 16px;
@@ -86,14 +97,17 @@
     }
 }
 
-// Dialog Styles
+// ============================================================================
+// DIALOG - Dark Theme
+// ============================================================================
+
 .bte-preset-dialog {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 10000;
+    z-index: 10001; // Higher than panel
     
     .bte-dialog-overlay {
         position: absolute;
@@ -101,8 +115,8 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(2px);
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(3px);
         animation: fadeIn 0.2s ease;
     }
     
@@ -113,10 +127,12 @@
         transform: translate(-50%, -50%);
         width: 90%;
         max-width: 500px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-                    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        background: @bte-toolbar-bg; // Dark background
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: @bte-toolbar-border-radius-large;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5),
+                    0 10px 10px -5px rgba(0, 0, 0, 0.3),
+                    0 0 0 1px rgba(255, 255, 255, 0.1);
         animation: slideUp 0.3s ease;
         max-height: 90vh;
         overflow: hidden;
@@ -126,14 +142,14 @@
     
     .bte-dialog-header {
         padding: 20px 24px;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         flex-shrink: 0;
         
         h3 {
             margin: 0;
             font-size: 18px;
             font-weight: 600;
-            color: #1f2937;
+            color: @bte-toolbar-text;
         }
     }
     
@@ -142,10 +158,29 @@
         overflow-y: auto;
         flex: 1;
         
+        // Custom scrollbar
+        &::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.4);
+            }
+        }
+        
         p {
             margin: 0 0 16px 0;
-            color: #4b5563;
+            color: @bte-toolbar-text-muted;
             line-height: 1.6;
+            font-size: 14px;
             
             &:last-of-type {
                 margin-bottom: 20px;
@@ -153,7 +188,7 @@
         }
         
         .bte-unsaved-count {
-            color: #dc2626;
+            color: @bte-badge-dirty-light;
             font-weight: 600;
         }
         
@@ -167,14 +202,15 @@
             display: flex;
             align-items: flex-start;
             padding: 14px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: @bte-toolbar-transition;
+            background: rgba(0, 0, 0, 0.2);
             
             &:hover {
-                border-color: #3b82f6;
-                background: #f0f9ff;
+                border-color: rgba(25, 121, 195, 0.6);
+                background: rgba(25, 121, 195, 0.1);
             }
             
             input[type="radio"] {
@@ -182,14 +218,15 @@
                 margin-top: 2px;
                 cursor: pointer;
                 flex-shrink: 0;
+                accent-color: #1979c3;
             }
             
             &:has(input:checked) {
-                border-color: #3b82f6;
-                background: #dbeafe;
+                border-color: #1979c3;
+                background: rgba(25, 121, 195, 0.2);
                 
                 .bte-radio-content strong {
-                    color: #1e40af;
+                    color: #60a5fa;
                 }
             }
         }
@@ -201,14 +238,14 @@
                 display: block;
                 margin-bottom: 4px;
                 font-size: 14px;
-                color: #1f2937;
+                color: @bte-toolbar-text;
                 font-weight: 600;
             }
             
             .bte-radio-description {
                 display: block;
                 font-size: 13px;
-                color: #6b7280;
+                color: @bte-toolbar-text-muted;
                 line-height: 1.5;
             }
         }
@@ -216,12 +253,12 @@
     
     .bte-dialog-footer {
         padding: 16px 24px;
-        border-top: 1px solid #e5e7eb;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         gap: 12px;
         justify-content: flex-end;
         flex-shrink: 0;
-        background: #f9fafb;
+        background: rgba(255, 255, 255, 0.03);
     }
 }
 
