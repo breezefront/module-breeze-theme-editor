@@ -15,6 +15,7 @@ composer.lock
 # Documentation (managed centrally in swissup.github.io)
 CHANGELOG.md
 ROADMAP.md
+THEME_DEVELOPER_GUIDE.md
 /docs/
 
 # PHPUnit
