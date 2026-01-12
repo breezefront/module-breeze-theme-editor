@@ -141,6 +141,10 @@ class Toolbar implements ArgumentInterface
     {
         $mode = $this->storeDataProvider->getSwitchMode();
 
+        if ($mode === 'hierarchical') {
+            return $this->storeDataProvider->getHierarchicalStores();
+        }
+
         if ($mode === 'groups') {
             return $this->storeDataProvider->getAvailableGroups();
         }
@@ -156,6 +160,36 @@ class Toolbar implements ArgumentInterface
     public function getScopesJsonData()
     {
         return $this->jsonSerializer->serialize($this->getScopeSelectorData());
+    }
+
+    /**
+     * Check if scope selector should use hierarchical mode
+     *
+     * @return bool
+     */
+    public function isHierarchicalMode()
+    {
+        return $this->storeDataProvider->getSwitchMode() === 'hierarchical';
+    }
+
+    /**
+     * Get active store path for hierarchical navigation
+     *
+     * @return array
+     */
+    public function getActiveStorePath()
+    {
+        return $this->storeDataProvider->getActiveStorePath();
+    }
+
+    /**
+     * Get active store path as JSON
+     *
+     * @return string
+     */
+    public function getActiveStorePathJson()
+    {
+        return $this->jsonSerializer->serialize($this->getActiveStorePath());
     }
 
     /**

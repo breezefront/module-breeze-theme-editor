@@ -8,21 +8,64 @@
                 </svg>
             </span>
         </button>
+        
         <div class="toolbar-dropdown">
             <div class="dropdown-header">
                 <span><%= data.dropdownTitle %></span>
             </div>
-            <div class="dropdown-content">
-                <% _.each(data.scopes, function(scope) { %>
-                    <a href="<%= scope.url %>"
-                       class="dropdown-item <%= scope.active ? 'active' : '' %>"
-                       data-scope-id="<%= scope.id %>">
-                        <span class="item-text"><%= scope.name %></span>
-                        <% if (scope.active) { %>
-                            <span class="item-check">✓</span>
-                        <% } %>
-                    </a>
-                <% }); %>
+            
+            <div class="dropdown-content scope-hierarchy">
+                <% if (data.isHierarchical) { %>
+                    <!-- Hierarchical Structure -->
+                    <% _.each(data.scopes, function(website) { %>
+                        <div class="scope-website" data-website-id="<%= website.id %>">
+                            <!-- Website Header (collapsible, not clickable for navigation) -->
+                            <div class="scope-header scope-header-website">
+                                <span class="scope-toggle">▶</span>
+                                <span class="scope-name"><%= website.name %></span>
+                            </div>
+                            
+                            <!-- Groups Container -->
+                            <div class="scope-groups" style="display: none;">
+                                <% _.each(website.groups, function(group) { %>
+                                    <div class="scope-group" data-group-id="<%= group.id %>">
+                                        <!-- Group Header (collapsible, not clickable for navigation) -->
+                                        <div class="scope-header scope-header-group">
+                                            <span class="scope-toggle">▶</span>
+                                            <span class="scope-name"><%= group.name %></span>
+                                        </div>
+                                        
+                                        <!-- Store Views Container -->
+                                        <div class="scope-stores" style="display: none;">
+                                            <% _.each(group.stores, function(store) { %>
+                                                <a href="<%= store.url %>" 
+                                                   class="dropdown-item scope-store <%= store.active ? 'active' : '' %>"
+                                                   data-store-id="<%= store.id %>">
+                                                    <span class="item-text"><%= store.name %></span>
+                                                    <% if (store.active) { %>
+                                                        <span class="item-check">✓</span>
+                                                    <% } %>
+                                                </a>
+                                            <% }); %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <!-- Fallback: Flat List (old behavior) -->
+                    <% _.each(data.scopes, function(scope) { %>
+                        <a href="<%= scope.url %>"
+                           class="dropdown-item <%= scope.active ? 'active' : '' %>"
+                           data-scope-id="<%= scope.id %>">
+                            <span class="item-text"><%= scope.name %></span>
+                            <% if (scope.active) { %>
+                                <span class="item-check">✓</span>
+                            <% } %>
+                        </a>
+                    <% }); %>
+                <% } %>
             </div>
         </div>
     <% } else { %>

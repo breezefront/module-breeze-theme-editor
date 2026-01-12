@@ -125,15 +125,119 @@ class StoreDataProvider
      */
     public function getSwitchMode()
     {
-        $stores = $this->getAvailableStores();
-        $groups = $this->getAvailableGroups();
+        // Always use hierarchical view for better UX
+        return 'hierarchical';
+    }
 
-        // If multiple groups, show groups
-        if (count($groups) > 1) {
-            return 'groups';
+    /**
+     * Get stores organized by website and group hierarchy
+     * 
+     * Structure:
+     * [
+     *   [
+     *     'type' => 'website',
+     *     'id' => 1,
+     *     'name' => 'Main Website',
+     *     'code' => 'base',
+     *     'groups' => [
+     *       [
+     *         'type' => 'group',
+     *         'id' => 1,
+     *         'name' => 'Main Website Store',
+     *         'stores' => [
+     *           ['type' => 'store', 'id' => 1, 'name' => 'Default', 'url' => '...', 'active' => true],
+     *           ...
+     *         ]
+     *       ]
+     *     ]
+     *   ]
+     * ]
+     *
+     * @return array
+     */
+    public function getHierarchicalStores()
+    {
+        $result = [];
+        $currentStoreId = $this->storeManager->getStore()->getId();
+        
+        // Get all websites except admin
+        $websites = $this->storeManager->getWebsites(false, false);
+        
+        foreach ($websites as $website) {
+            $websiteData = [
+                'type' => 'website',
+                'id' => (int)$website->getId(),
+                'code' => $website->getCode(),
+                'name' => $website->getName(),
+                'groups' => []
+            ];
+            
+            // Get all groups for this website
+            foreach ($website->getGroups() as $group) {
+                $groupData = [
+                    'type' => 'group',
+                    'id' => (int)$group->getId(),
+                    'name' => $group->getName(),
+                    'stores' => []
+                ];
+                
+                // Get all stores for this group
+                foreach ($group->getStores() as $store) {
+                    if (!$store->isActive()) {
+                        continue;
+                    }
+                    
+                    $groupData['stores'][] = [
+                        'type' => 'store',
+                        'id' => (int)$store->getId(),
+                        'code' => $store->getCode(),
+                        'name' => $store->getName(),
+                        'url' => $this->getStoreUrl($store),
+                        'active' => (int)$store->getId() === (int)$currentStoreId
+                    ];
+                }
+                
+                // Sort stores by name
+                usort($groupData['stores'], function ($a, $b) {
+                    return strcmp($a['name'], $b['name']);
+                });
+                
+                // Only add groups with active stores
+                if (!empty($groupData['stores'])) {
+                    $websiteData['groups'][] = $groupData;
+                }
+            }
+            
+            // Only add websites with groups that have stores
+            if (!empty($websiteData['groups'])) {
+                $result[] = $websiteData;
+            }
         }
+        
+        return $result;
+    }
 
-        // Otherwise show stores
-        return 'stores';
+    /**
+     * Get path to active store (website_id, group_id, store_id)
+     * Used to auto-expand tree to active store
+     *
+     * @return array
+     */
+    public function getActiveStorePath()
+    {
+        try {
+            $store = $this->storeManager->getStore();
+            return [
+                'website_id' => (int)$store->getWebsiteId(),
+                'group_id' => (int)$store->getGroupId(),
+                'store_id' => (int)$store->getId()
+            ];
+        } catch (\Exception $e) {
+            return [
+                'website_id' => 0,
+                'group_id' => 0,
+                'store_id' => 0
+            ];
+        }
     }
 }

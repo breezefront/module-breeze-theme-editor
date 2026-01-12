@@ -61,7 +61,9 @@ if (!$viewModel->canShow()) {
                     "selector": "#toolbar-scope-selector",
                     "currentScope": "<?= $block->escapeJs($viewModel->getCurrentScope()) ?>",
                     "scopes": <?= /* @noEscape */ $viewModel->getScopesJsonData() ?>,
-                    "hasMultiple": <?= $viewModel->hasMultipleScopes() ? 'true' : 'false' ?>
+                    "hasMultiple": <?= $viewModel->hasMultipleScopes() ? 'true' : 'false' ?>,
+                    "isHierarchical": <?= $viewModel->isHierarchicalMode() ? 'true' : 'false' ?>,
+                    "activePath": <?= /* @noEscape */ $viewModel->getActiveStorePathJson() ?>
                 },
                 "pageSelector": {
                     "selector": "#toolbar-page-selector",
