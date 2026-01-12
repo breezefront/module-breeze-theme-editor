@@ -18,112 +18,15 @@ class PresetService
     ) {}
 
     /**
-     * Застосувати preset
-     */
-    public function applyPreset(
-        int $themeId,
-        int $storeId,
-        string $presetId,
-        string $statusCode,
-        int $userId,
-        bool $overwriteExisting = true
-    ): array {
-        // Отримати preset з конфігурації
-        $preset = $this->configProvider->getPreset($themeId, $presetId);
-
-        if (!$preset) {
-            throw new LocalizedException(__('Preset "%1" not found', $presetId));
-        }
-
-        $statusId = $this->statusProvider->getStatusId($statusCode);
-        $userIdForSave = ($statusCode === 'PUBLISHED') ? 0 : $userId;
-
-        // Конвертувати preset settings в масив моделей ValueInterface
-        $models = [];
-
-        if (isset($preset['settings']) && is_array($preset['settings'])) {
-            foreach ($preset['settings'] as $key => $value) {
-                // key формат: "section_code.field_code" або просто "field_code"
-                if (strpos($key, '.') !== false) {
-                    [$sectionCode, $fieldCode] = explode('.', $key, 2);
-                } else {
-                    // Якщо немає секції - шукаємо у конфігурації
-                    [$sectionCode, $fieldCode] = $this->findFieldInConfig($themeId, $key);
-                }
-
-                // Створення ValueInterface-моделі
-                $model = $this->valueRepository->create();
-                $model->setThemeId($themeId);
-                $model->setStoreId($storeId);
-                $model->setStatusId($statusId);
-                $model->setUserId($userIdForSave);
-                $model->setSectionCode($sectionCode);
-                $model->setSettingCode($fieldCode);
-                $model->setValue(is_string($value) ? $value : json_encode($value));
-                $models[] = $model;
-            }
-        }
-
-        if (empty($models)) {
-            throw new LocalizedException(__('Preset has no settings'));
-        }
-
-        // Якщо не overwrite - видалити існуючі через ValueService
-        if (!$overwriteExisting) {
-            $this->valueService->deleteValues(
-                $themeId,
-                $storeId,
-                $statusId,
-                $userIdForSave
-            );
-        }
-
-        // Сучасне збереження: пакетно через saveMultiple
-        $count = $this->valueRepository->saveMultiple($models);
-
-        // Формат виводу: можна залишити такий як був
-        $values = [];
-        foreach ($models as $model) {
-            $values[] = [
-                'sectionCode' => $model->getSectionCode(),
-                'fieldCode' => $model->getSettingCode(),
-                'value' => $model->getValue()
-            ];
-        }
-
-        return [
-            'appliedCount' => $count,
-            'values' => $values
-        ];
-    }
-
-    /**
-     * Знайти поле в конфігурації
-     */
-    private function findFieldInConfig(int $themeId, string $fieldCode): array
-    {
-        $sections = $this->configProvider->getSections($themeId);
-
-        foreach ($sections as $section) {
-            foreach ($section['settings'] as $setting) {
-                if ($setting['id'] === $fieldCode) {
-                    return [$section['id'], $fieldCode];
-                }
-            }
-        }
-
-        throw new LocalizedException(__('Field "%1" not found in configuration', $fieldCode));
-    }
-
-    /**
-     * Отримати значення preset
+     * Get preset values parsed from settings
      */
     public function getPresetValues(int $themeId, string $presetId): array
     {
-        $config = $this->configProvider->getConfiguration($themeId);
+        // Use getConfigurationWithInheritance to find presets from parent themes
+        $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $presets = $config['presets'] ?? [];
 
-        // Знайти preset
+        // Find preset by ID
         $preset = null;
         foreach ($presets as $p) {
             if ($p['id'] === $presetId) {
@@ -142,13 +45,20 @@ class PresetService
             return [];
         }
 
-        // Preset settings = flat object {"primary_color": "#007bff"}
-        // Треба знайти section_code для кожного setting
-        $sectionMap = $this->buildSettingSectionMap($config);
-
+        // Preset settings support two formats:
+        // 1. Dot notation: {"section_code.field_code": "value"}
+        // 2. Field only: {"field_code": "value"} (legacy)
         $values = [];
-        foreach ($settings as $settingCode => $value) {
-            $sectionCode = $sectionMap[$settingCode] ?? null;
+        foreach ($settings as $key => $value) {
+            // Parse dot notation if present
+            if (strpos($key, '.') !== false) {
+                [$sectionCode, $fieldCode] = explode('.', $key, 2);
+            } else {
+                // Fallback: lookup in section map (for backward compatibility)
+                $sectionMap = $this->buildSettingSectionMap($config);
+                $sectionCode = $sectionMap[$key] ?? null;
+                $fieldCode = $key;
+            }
 
             if (!$sectionCode) {
                 continue; // Skip unknown settings
@@ -156,7 +66,7 @@ class PresetService
 
             $values[] = [
                 'sectionCode' => $sectionCode,
-                'fieldCode' => $settingCode,
+                'fieldCode' => $fieldCode,
                 'value' => $value
             ];
         }
@@ -165,13 +75,67 @@ class PresetService
     }
 
     /**
-     * Побудувати мапу setting_code => section_code
+     * Apply preset
+     */
+    public function applyPreset(
+        int $themeId,
+        int $storeId,
+        string $presetId,
+        string $statusCode,
+        int $userId,
+        bool $overwriteExisting = true
+    ): array {
+        // Get preset values (already uses inheritance)
+        $presetValues = $this->getPresetValues($themeId, $presetId);
+
+        if (empty($presetValues)) {
+            throw new LocalizedException(__('Preset "%1" has no settings', $presetId));
+        }
+
+        $statusId = $this->statusProvider->getStatusId($statusCode);
+        $userIdForSave = ($statusCode === 'PUBLISHED') ? 0 : $userId;
+
+        // Create ValueInterface models
+        $models = [];
+        foreach ($presetValues as $item) {
+            $model = $this->valueRepository->create();
+            $model->setThemeId($themeId);
+            $model->setStoreId($storeId);
+            $model->setStatusId($statusId);
+            $model->setUserId($userIdForSave);
+            $model->setSectionCode($item['sectionCode']);
+            $model->setSettingCode($item['fieldCode']);
+            $model->setValue($item['value']);
+            $models[] = $model;
+        }
+
+        // If overwrite - delete existing values
+        if ($overwriteExisting) {
+            $this->valueService->deleteValues(
+                $themeId,
+                $storeId,
+                $statusId,
+                $userIdForSave
+            );
+        }
+
+        // Save through saveMultiple
+        $count = $this->valueRepository->saveMultiple($models);
+
+        return [
+            'appliedCount' => $count,
+            'values' => $presetValues
+        ];
+    }
+
+    /**
+     * Build map: setting_code => section_code (for backward compatibility)
      */
     private function buildSettingSectionMap(array $config): array
     {
         $map = [];
 
-        foreach ($config['sections'] ??  [] as $section) {
+        foreach ($config['sections'] ?? [] as $section) {
             $sectionCode = $section['id'];
 
             foreach ($section['settings'] ?? [] as $setting) {

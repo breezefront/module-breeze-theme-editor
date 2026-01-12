@@ -30,7 +30,8 @@ class Presets implements ResolverInterface
             ? (int)$args['themeId']
             : $this->themeResolver->getThemeIdByStoreId($storeId);
 
-        $config = $this->configProvider->getConfiguration($themeId);
+        // Use getConfigurationWithInheritance to get presets from parent themes
+        $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $presets = $config['presets'] ?? [];
 
         if (empty($presets)) {
@@ -39,7 +40,7 @@ class Presets implements ResolverInterface
 
         $result = [];
         foreach ($presets as $preset) {
-            // Отримати values через PresetManager
+            // Get parsed values through PresetService
             $values = $this->presetManager->getPresetValues($themeId, $preset['id']);
 
             $settings = [];
@@ -48,7 +49,7 @@ class Presets implements ResolverInterface
                     'sectionCode' => $val['sectionCode'],
                     'fieldCode' => $val['fieldCode'],
                     'value' => $val['value'],
-                    'isModified' => true,
+                    'isModified' => false,
                     'updatedAt' => null
                 ];
             }
@@ -56,7 +57,7 @@ class Presets implements ResolverInterface
             $result[] = [
                 'id' => $preset['id'],
                 'name' => $preset['name'],
-                'description' => $preset['description'] ?? null,
+                'description' => $preset['description'] ?? '',
                 'preview' => $preset['preview'] ?? null,
                 'settings' => $settings
             ];

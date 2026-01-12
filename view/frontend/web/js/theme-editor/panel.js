@@ -7,6 +7,7 @@ define([
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderer',
     'Swissup_BreezeThemeEditor/js/theme-editor/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers',
+    'Swissup_BreezeThemeEditor/js/theme-editor/preset-selector',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
@@ -20,6 +21,7 @@ define([
     FieldRenderer,
     CssPreviewManager,
     FieldHandlers,
+    PresetSelector,
     Toastify,
     getConfig,
     getConfigFromPublication,
@@ -76,6 +78,7 @@ define([
             this.$resetButton = this.element.find('.bte-reset-button');
             this.$saveButton = this.element.find('.bte-save-button');
             this.$sectionsContainer = this.element.find('.bte-sections-container');
+            this.$presetContainer = this.element.find('.bte-preset-container');
             this.$loader = this.element.find('.bte-panel-loader');
             this.$error = this.element.find('.bte-panel-error');
 
@@ -219,6 +222,9 @@ define([
             this.$sectionsContainer.find('.bte-accordion-content').first().addClass('active').show();
 
             console.log('📋 Rendered', sections.length, 'sections');
+            
+            // Initialize preset selector
+            this._initPresetSelector();
         },
 
         /**
@@ -510,6 +516,44 @@ define([
                 $toggle.text('Show technical details');
                 console.log('⚠️ No debugMessage, showing fallback');
             }
+        },
+
+        /**
+         * Initialize preset selector widget
+         */
+        _initPresetSelector: function() {
+            var self = this;
+            
+            if (!this.$presetContainer || this.$presetContainer.length === 0) {
+                console.log('⚠️ Preset container not found');
+                return;
+            }
+            
+            this.$presetContainer.presetSelector({
+                storeId: this.storeId,
+                themeId: this.themeId,
+                onApply: $.proxy(this._onPresetApplied, this)
+            });
+            
+            console.log('✅ Preset selector initialized');
+        },
+
+        /**
+         * Handle preset applied event
+         */
+        _onPresetApplied: function(result) {
+            console.log('✅ Preset applied:', result.appliedCount, 'values');
+            
+            // Update changes counter
+            this._updateChangesCount();
+            
+            // Refresh all badges
+            this._refreshAllBadges();
+            
+            // Refresh CSS preview
+            CssPreviewManager.refresh();
+            
+            console.log('✅ Panel updated after preset apply');
         },
 
         _destroy: function() {
