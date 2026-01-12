@@ -180,7 +180,9 @@ define([
             $(components.scopeSelector.selector).breezeScopeSelector({
                 currentScope: components.scopeSelector.currentScope,
                 scopes: components.scopeSelector.scopes || [],
-                hasMultiple: components.scopeSelector.hasMultiple || false
+                hasMultiple: components.scopeSelector.hasMultiple || false,
+                isHierarchical: components.scopeSelector.isHierarchical || false,
+                activePath: components.scopeSelector.activePath || {}
             });
         }
 
