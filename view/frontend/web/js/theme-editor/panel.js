@@ -152,8 +152,10 @@ define([
             var self = this;
             setTimeout(function() {
                 CssPreviewManager.init();
-                // Initialize CSS Manager for draft/published CSS switching
-                CssManager.init(self.storeId, self.themeId);
+                // Initialize CSS Manager after iframe and CSS elements are ready
+                setTimeout(function() {
+                    CssManager.init(self.storeId, self.themeId);
+                }, 1000);
             }, 500);
         },
 
