@@ -31,6 +31,7 @@ class ThemeCssVariables extends Template
 
     /**
      * Get unique cache key
+     * Include access token presence to ensure draft CSS is rendered correctly
      *
      * @return array
      */
@@ -46,6 +47,11 @@ class ThemeCssVariables extends Template
         if ($viewModel) {
             $cacheKey[] = $viewModel->getCacheKey();
         }
+
+        // Add token presence to cache key to differentiate toolbar users
+        $request = $this->getRequest();
+        $hasToken = $request && $request->getParam('breeze_theme_editor_access_token', null) !== null;
+        $cacheKey[] = $hasToken ? 'with_token' : 'no_token';
 
         return $cacheKey;
     }

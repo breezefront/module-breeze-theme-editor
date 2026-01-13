@@ -8,7 +8,17 @@ if (!$viewModel->shouldRender()) {
 }
 
 $inlineCssContent = $viewModel->getInlineCssContent();
+$inlineCssContentDraft = $viewModel->getInlineCssContentDraft();
+$hasDraftCss = $viewModel->hasRealCssContent($inlineCssContentDraft);
 ?>
-<style id="bte-theme-css-variables">
+<!-- Published CSS (always present for all users) -->
+<style id="bte-theme-css-variables" data-status="published">
 <?= /* @noEscape */ $inlineCssContent ?>
 </style>
+
+<?php if ($hasDraftCss): ?>
+<!-- Draft CSS (only for toolbar users, disabled by default) -->
+<style id="bte-theme-css-variables-draft" data-status="draft" disabled>
+<?= /* @noEscape */ $inlineCssContentDraft ?>
+</style>
+<?php endif; ?>

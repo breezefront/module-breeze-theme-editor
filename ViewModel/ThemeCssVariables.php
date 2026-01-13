@@ -4,16 +4,22 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\ViewModel;
 
 use Magento\Framework\View\Element\Block\ArgumentInterface;
+use Magento\Framework\App\RequestInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Swissup\BreezeThemeEditor\Model\Service\CssGenerator;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Data\AccessToken;
+use Swissup\BreezeThemeEditor\Helper\Data as HelperData;
 
 class ThemeCssVariables implements ArgumentInterface
 {
     public function __construct(
         private CssGenerator $cssGenerator,
         private ThemeResolver $themeResolver,
-        private StoreManagerInterface $storeManager
+        private StoreManagerInterface $storeManager,
+        private AccessToken $accessToken,
+        private RequestInterface $request,
+        private HelperData $helper
     ) {}
 
     /**
@@ -38,10 +44,62 @@ class ThemeCssVariables implements ArgumentInterface
     {
         try {
             $css = $this->getInlineCssContent();
-            return !empty($css) && $css !== ": root {\n}\n";
+            return !empty($css) && $css !== ":root {\n}\n";
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+    /**
+     * Get generated CSS for DRAFT status
+     * Only generates if toolbar session is active (user has access token)
+     *
+     * @return string
+     */
+    public function getInlineCssContentDraft(): string
+    {
+        try {
+            // Check if toolbar is active (user has access token)
+            if (!$this->canGenerateDraftCss()) {
+                return '';
+            }
+
+            $storeId = (int) $this->storeManager->getStore()->getId();
+            $themeId = $this->themeResolver->getThemeIdByStoreId($storeId);
+
+            return $this->cssGenerator->generate($themeId, $storeId, 'DRAFT');
+        } catch (\Exception $e) {
+            return "/* Breeze Theme Editor: Error generating draft CSS - {$e->getMessage()} */";
+        }
+    }
+
+    /**
+     * Check if draft CSS should be generated
+     * Only for users with active toolbar session
+     *
+     * @return bool
+     */
+    private function canGenerateDraftCss(): bool
+    {
+        // Same logic as Toolbar::canShow()
+        if (!$this->helper->isEnabled()) {
+            return false;
+        }
+
+        return $this->accessToken->validateRequest($this->request);
+    }
+
+    /**
+     * Check if CSS has real content (contains CSS variables)
+     *
+     * @param string $css
+     * @return bool
+     */
+    public function hasRealCssContent(string $css): bool
+    {
+        return !empty($css)
+            && $css !== ":root {\n}\n"
+            && str_contains($css, '--'); // Contains CSS variables
     }
 
     /**

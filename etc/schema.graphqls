@@ -79,6 +79,13 @@ type Query {
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
     ): [BreezeThemeEditorPreset!]! @doc(description: "Get available presets from theme config") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Presets")
+
+    getThemeEditorCss(
+        storeId: Int!
+        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        status: BreezeThemeEditorStatusCode
+        publicationId: Int @doc(description: "For PUBLICATION status: load CSS from this publication")
+    ): BreezeThemeEditorCssOutput @doc(description: "Get generated CSS for specific status") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\GetCss")
 }
 
 # ============================================================================
@@ -284,6 +291,12 @@ type BreezeThemeEditorStatus {
     code: String!
     label: String!
     sortOrder: Int
+}
+
+type BreezeThemeEditorCssOutput {
+    css: String! @doc(description: "Generated CSS code")
+    status: BreezeThemeEditorStatusCode!
+    hasContent: Boolean! @doc(description: "True if CSS contains real variables (not empty)")
 }
 
 input SaveBreezeThemeEditorValuesInput {
