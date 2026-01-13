@@ -5,13 +5,13 @@ define([
     'use strict';
 
     /**
-     * Range Field Handler
+     * Number Field Handler
      *
-     * Handles range slider with live output update
+     * Handles number input with optional unit support
      */
     return {
         /**
-         * Initialize range field handlers
+         * Initialize number field handlers
          *
          * @param {jQuery} $element - Panel element
          * @param {Function} callback - Change callback
@@ -19,14 +19,11 @@ define([
         init: function($element, callback) {
             var self = this;
 
-            $element.on('input', '.bte-range-slider', function(e) {
-                var $slider = $(e.currentTarget);
-
-                // Update output
-                self.updateOutput($slider);
+            $element.on('input', '.bte-number-input', function(e) {
+                var $input = $(e.currentTarget);
 
                 // Handle change with custom getValue to append unit
-                BaseHandler.handleChange($slider, callback, {
+                BaseHandler.handleChange($input, callback, {
                     getValue: function($input) {
                         var value = $input.val();
                         var unit = self.getUnit($input);
@@ -35,25 +32,7 @@ define([
                 });
             });
 
-            console.log('✅ Range field handler initialized');
-        },
-
-        /**
-         * Update output element
-         *
-         * @param {jQuery} $slider
-         */
-        updateOutput: function($slider) {
-            var $output = $slider.siblings('.bte-range-value');
-            if ($output.length === 0) return;
-
-            var value = $slider.val();
-
-            // Extract unit from current output text
-            var currentText = $output.text();
-            var unit = currentText.replace(/[\d.\-]/g, '').trim();
-
-            $output.text(value + (unit ? unit : ''));
+            console.log('✅ Number field handler initialized');
         },
 
         /**
@@ -63,11 +42,10 @@ define([
          * @returns {String}
          */
         getUnit: function($input) {
-            // Try to get unit from sibling output element
-            var $output = $input.siblings('.bte-range-value');
-            if ($output.length > 0) {
-                var text = $output.text();
-                var unit = text.replace(/[\d.\-]/g, '').trim();
+            // Try to get unit from sibling unit span
+            var $unitSpan = $input.siblings('.bte-number-unit');
+            if ($unitSpan.length > 0) {
+                var unit = $unitSpan.text().trim();
                 if (unit) return unit;
             }
 
@@ -77,7 +55,7 @@ define([
 
             // Try to find unit in field wrapper
             var $wrapper = $input.closest('.bte-field');
-            var $unitSpan = $wrapper.find('.bte-range-unit, .bte-number-unit');
+            $unitSpan = $wrapper.find('.bte-number-unit');
             if ($unitSpan.length > 0) {
                 return $unitSpan.text().trim();
             }
@@ -91,7 +69,7 @@ define([
          * @param {jQuery} $element
          */
         destroy: function($element) {
-            $element.off('input', '.bte-range-slider');
+            $element.off('input', '.bte-number-input');
         }
     };
 });

@@ -8,7 +8,8 @@ define([
     /**
      * Simple Field Handler
      *
-     * Handles simple fields:  text, number, select, toggle, textarea, code
+     * Handles simple fields: text, select, toggle, textarea, code
+     * Note: number and range have dedicated handlers
      */
     return {
         /**
@@ -20,11 +21,6 @@ define([
         init: function($element, callback) {
             // Text input
             $element.on('input', '.bte-text-input', function(e) {
-                BaseHandler.handleChange($(e.currentTarget), callback);
-            });
-
-            // Number input
-            $element.on('input', '.bte-number-input', function(e) {
                 BaseHandler.handleChange($(e.currentTarget), callback);
             });
 
@@ -68,7 +64,6 @@ define([
          */
         destroy: function($element) {
             $element.off('input', '.bte-text-input');
-            $element.off('input', '.bte-number-input');
             $element.off('input', '.bte-textarea');
             $element.off('input', '.bte-code-editor');
             $element.off('change', '.bte-select');

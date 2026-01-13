@@ -19,12 +19,24 @@ define([
         data.step = data.params.step || 1;
         data.unit = data.params.unit || '';
 
-        // Ensure value is within range
-        if (data.value === null || data.value === '') {
-            data.value = data.default !== null ? data.default : data.min;
+        // Parse value if it contains unit (e.g., "16px" -> 16)
+        var numericValue = data.value;
+        if (typeof numericValue === 'string' && data.unit) {
+            // Remove unit from value if present
+            numericValue = numericValue.replace(data.unit, '').trim();
         }
 
-        data.value = Math.max(data.min, Math.min(data.max, Number(data.value)));
+        // Ensure value is within range
+        if (numericValue === null || numericValue === '') {
+            numericValue = data.default !== null ? data.default : data.min;
+        }
+
+        // Parse default value too
+        if (typeof numericValue === 'string' && data.unit) {
+            numericValue = numericValue.replace(data.unit, '').trim();
+        }
+
+        data.value = Math.max(data.min, Math.min(data.max, Number(numericValue)));
         data.displayValue = data.value + data.unit;
 
         // ✅ Add fieldCode for backward compatibility (if needed)
