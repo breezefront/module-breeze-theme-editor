@@ -12,7 +12,7 @@
     </type>
 
     <!-- Plugin: Invalidate cache after publishing -->
-    <type name="Swissup\BreezeThemeEditor\Model\Resolver\Mutation\PublishDraft">
+    <type name="Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Publish">
         <plugin name="swissup_bte_invalidate_cache_after_publish"
                 type="Swissup\BreezeThemeEditor\Plugin\Mutation\InvalidateCacheAfterMutation"
                 sortOrder="100"/>
