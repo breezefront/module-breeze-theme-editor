@@ -274,12 +274,12 @@ define([
                     html += 'class="bte-text-input bte-repeater-field-input" ';
                     html += 'value="' + value + '" ';
                     html += 'placeholder="' + (field.placeholder || '') + '" ';
-                    html += 'data-field="' + field.code + '" />';
+                    html += 'data-field="' + field.code + '">';
                 } else if (field.type === 'number') {
                     html += '<input type="number" ';
                     html += 'class="bte-number-input bte-repeater-field-input" ';
                     html += 'value="' + value + '" ';
-                    html += 'data-field="' + field.code + '" />';
+                    html += 'data-field="' + field.code + '">';
                 }
                 
                 html += '</div>';
