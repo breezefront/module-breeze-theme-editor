@@ -19,14 +19,31 @@ define([
          * 
          * @param {Number} store - Store ID
          * @param {Number} theme - Theme ID
+         * @param {Number} retries - Internal retry counter
          */
-        init: function(store, theme) {
+        init: function(store, theme, retries) {
+            retries = retries || 0;
+            var self = this;
+            
             storeId = store;
             themeId = theme;
             
+            // Validate parameters
+            if (!storeId || !themeId) {
+                console.error('❌ CSS Manager: Invalid storeId or themeId', {storeId: storeId, themeId: themeId});
+                return false;
+            }
+            
             iframeDocument = DeviceFrame.getDocument();
             if (!iframeDocument) {
-                console.warn('⚠️ CSS Manager: iframe not initialized');
+                if (retries < 20) {
+                    console.log('⏳ CSS Manager: iframe not ready, retry', retries + 1);
+                    setTimeout(function() {
+                        self.init(store, theme, retries + 1);
+                    }, 200);
+                    return false;
+                }
+                console.warn('⚠️ CSS Manager: iframe not initialized after retries');
                 return false;
             }
 
@@ -35,7 +52,14 @@ define([
             $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
 
             if (!$publishedStyle.length) {
-                console.error('❌ CSS Manager: #bte-theme-css-variables not found!');
+                if (retries < 20) {
+                    console.log('⏳ CSS Manager: CSS elements not ready, retry', retries + 1);
+                    setTimeout(function() {
+                        self.init(store, theme, retries + 1);
+                    }, 200);
+                    return false;
+                }
+                console.error('❌ CSS Manager: #bte-theme-css-variables not found after retries!');
                 return false;
             }
 

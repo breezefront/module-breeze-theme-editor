@@ -152,10 +152,8 @@ define([
             var self = this;
             setTimeout(function() {
                 CssPreviewManager.init();
-                // Initialize CSS Manager after iframe and CSS elements are ready
-                setTimeout(function() {
-                    CssManager.init(self.storeId, self.themeId);
-                }, 1000);
+                // CSS Manager has retry logic, will wait for iframe to be ready
+                CssManager.init(self.storeId, self.themeId);
             }, 500);
         },
 
