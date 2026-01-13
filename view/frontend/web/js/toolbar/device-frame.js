@@ -111,6 +111,9 @@ define([
 
             console.log('✅ Device frame initialized');
 
+            // Синхронізувати URL батьківського вікна з iframe
+            this._syncIframeUrl();
+
             return $iframe;
         },
 
@@ -238,6 +241,83 @@ define([
             $(iframeDocument.body).attr('class', mainBodyClasses);
 
             console.log('🔄 Synced body classes to iframe');
+        },
+
+        /**
+         * Синхронізувати URL батьківського вікна з iframe
+         */
+        _syncIframeUrl: function() {
+            if (!iframeWindow) {
+                console.warn('⚠️ Cannot sync URL: iframe window not initialized');
+                return;
+            }
+
+            var self = this;
+            var lastUrl = '';
+
+            // Відстежувати зміни URL в iframe
+            setInterval(function() {
+                try {
+                    var currentUrl = iframeWindow.location.href;
+
+                    // Ігнорувати about:blank та порожні URL
+                    if (currentUrl === 'about:blank' || !currentUrl) {
+                        return;
+                    }
+
+                    if (currentUrl !== lastUrl && lastUrl !== '') {
+                        console.log('🔄 Iframe URL changed:', currentUrl);
+                        self._updateParentUrl(currentUrl);
+                    }
+
+                    lastUrl = currentUrl;
+                } catch (e) {
+                    // Ігнорувати помилки cross-origin
+                    console.warn('⚠️ Cannot access iframe URL (cross-origin?):', e.message);
+                }
+            }, 500);
+
+            console.log('✅ Iframe URL sync initialized');
+        },
+
+        /**
+         * Оновити URL батьківського вікна
+         */
+        _updateParentUrl: function(iframeUrl) {
+            try {
+                // Додаткова перевірка на about:blank
+                if (iframeUrl === 'about:blank' || !iframeUrl) {
+                    console.warn('⚠️ Skipping URL update: invalid iframe URL');
+                    return;
+                }
+
+                var url = new URL(iframeUrl);
+                var parentUrl = new URL(window.location.href);
+
+                // Перевірити, чи URL має той самий origin
+                if (url.origin !== parentUrl.origin) {
+                    console.warn('⚠️ Skipping URL update: different origin');
+                    return;
+                }
+
+                // Зберегти access token з батьківського URL
+                var accessToken = parentUrl.searchParams.get('breeze_theme_editor_access_token');
+
+                // Видалити старий token з iframe URL якщо є
+                url.searchParams.delete('breeze_theme_editor_access_token');
+
+                // Додати token до нового URL
+                if (accessToken) {
+                    url.searchParams.set('breeze_theme_editor_access_token', accessToken);
+                }
+
+                // Оновити URL батьківського вікна без перезавантаження
+                window.history.replaceState(null, '', url.toString());
+
+                console.log('✅ Parent URL updated:', url.toString());
+            } catch (e) {
+                console.error('❌ Failed to update parent URL:', e);
+            }
         },
 
         destroy: function() {
