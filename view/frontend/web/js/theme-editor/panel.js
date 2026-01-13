@@ -48,16 +48,19 @@ define([
                 this.storeId = config.storeId;
                 this.themeId = config.themeId;
                 this.themeName = config.themeName || 'current theme';
+                this.adminUrl = config.adminUrl || '/admin';
                 console.log('📊 Panel config:', {
                     storeId: this.storeId,
                     themeId: this.themeId,
-                    themeName: this.themeName
+                    themeName: this.themeName,
+                    adminUrl: this.adminUrl
                 });
             } else {
                 console.error('❌ Breeze editor config not found in body data!');
                 this.storeId = this.options.storeId || 1;
                 this.themeId = this.options.themeId || 0;
                 this.themeName = 'current theme';
+                this.adminUrl = '/admin';
             }
 
             this.template = mageTemplate(panelTemplate);
@@ -417,7 +420,7 @@ define([
 
             this.$error.show();
 
-            // Show toast notification for unsupported theme error
+            // Show toast notification for errors
             this._showErrorToast(errorInfo.message, errorInfo.debugMessage);
 
             console.error('❌ Panel error:', errorData);
@@ -433,6 +436,10 @@ define([
             var isThemeConfigError = searchText.indexOf('configuration file not found') !== -1 ||
                                      searchText.indexOf('Theme editor configuration file not found') !== -1;
             
+            // Check if this is an invalid token error
+            var isInvalidToken = searchText.indexOf('Invalid access token') !== -1 ||
+                                searchText.indexOf('Access token required') !== -1;
+            
             if (isThemeConfigError) {
                 var themeName = this.themeName || 'this theme';
                 var toastMessage = 'Theme Editor is not available for ' + themeName + '. Please switch to a different store.';
@@ -445,6 +452,20 @@ define([
                 });
                 
                 console.log('📢 Toast shown for unsupported theme');
+            }
+            
+            if (isInvalidToken) {
+                var adminUrl = this.adminUrl || '/admin';
+                var message = 'Your session has expired. <a href="' + adminUrl + '" target="_blank" style="color: #fff; text-decoration: underline;">Login to Admin</a> or refresh the page.';
+                
+                Toastify.show('error', message, {
+                    duration: 10000, // 10 seconds
+                    close: true,     // Show close button
+                    gravity: 'top',
+                    position: 'center'
+                });
+                
+                console.log('📢 Toast shown for invalid token with admin link');
             }
         },
 

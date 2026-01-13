@@ -45,7 +45,8 @@ define([
             themeName: config.themeName,
             websiteId: config.websiteId,
             graphqlEndpoint: config.graphqlEndpoint,
-            accessToken: config.accessToken
+            accessToken: config.accessToken,
+            adminUrl: config.components && config.components.adminLink ? config.components.adminLink.adminUrl : '/admin'
         });
 
         $mainBody.find('.breeze-theme-editor-toolbar').remove();
