@@ -6,6 +6,7 @@ define([
     'Swissup_BreezeThemeEditor/js/theme-editor/panel-state',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderer',
     'Swissup_BreezeThemeEditor/js/theme-editor/css-preview-manager',
+    'Swissup_BreezeThemeEditor/js/theme-editor/css-manager',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers',
     'Swissup_BreezeThemeEditor/js/theme-editor/preset-selector',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
@@ -20,6 +21,7 @@ define([
     PanelState,
     FieldRenderer,
     CssPreviewManager,
+    CssManager,
     FieldHandlers,
     PresetSelector,
     Toastify,
@@ -133,6 +135,13 @@ define([
                 PanelState.markAsSaved();
                 self._updateChangesCount();
                 self._refreshAllBadges();
+                
+                // Reload page to get fresh published CSS
+                // (Draft CSS in DOM is now outdated, published CSS needs server regeneration)
+                console.log('🔄 Reloading page to apply published CSS...');
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
             });
         },
 
@@ -140,8 +149,11 @@ define([
          * Initialize CSS Preview Manager
          */
         _initPreview: function() {
+            var self = this;
             setTimeout(function() {
                 CssPreviewManager.init();
+                // Initialize CSS Manager for draft/published CSS switching
+                CssManager.init(self.storeId, self.themeId);
             }, 500);
         },
 

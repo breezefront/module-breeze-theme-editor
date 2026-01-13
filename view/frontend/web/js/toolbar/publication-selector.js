@@ -7,8 +7,9 @@ define([
     'jquery-ui-modules/widget',
     'Swissup_BreezeThemeEditor/js/toolbar/publication-selector/renderer',
     'Swissup_BreezeThemeEditor/js/toolbar/publication-selector/metadata-loader',
-    'Swissup_BreezeThemeEditor/js/toolbar/publication-selector/publish-handler'
-], function ($, widget, Renderer, MetadataLoader, PublishHandler) {
+    'Swissup_BreezeThemeEditor/js/toolbar/publication-selector/publish-handler',
+    'Swissup_BreezeThemeEditor/js/theme-editor/css-manager'
+], function ($, widget, Renderer, MetadataLoader, PublishHandler, CssManager) {
     'use strict';
 
     $.widget('swissup.publicationSelector', {
@@ -148,6 +149,9 @@ define([
             this.renderer.updateButton();
             this._closeDropdown();
             this.element.trigger('publicationStatusChanged', {status: status});
+            
+            // Update CSS manager
+            CssManager.switchTo(status);
         },
 
         _loadPublication: function (e) {
@@ -175,6 +179,9 @@ define([
             this.renderer.updateButton();
             this._closeDropdown();
             this.element.trigger('loadThemeEditorFromPublication', {publicationId: publicationId});
+            
+            // Update CSS manager with publication CSS
+            CssManager.switchTo('PUBLICATION', publicationId);
         },
 
         _loadMore: function(e) {
