@@ -1,6 +1,7 @@
 enum BreezeThemeEditorStatusCode {
     DRAFT
     PUBLISHED
+    PUBLICATION
 }
 
 enum BreezeThemeEditorFieldType {
