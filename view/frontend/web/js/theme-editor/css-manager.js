@@ -169,11 +169,12 @@ define([
             // Fetch publication CSS via GraphQL
             return getCss(storeId, themeId, 'PUBLICATION', publicationId)
                 .then(function(response) {
-                    if (!response || !response.data || !response.data.getThemeEditorCss) {
+                    // GraphQL client returns response.data, so response = {getThemeEditorCss: {...}}
+                    if (!response || !response.getThemeEditorCss) {
                         throw new Error('Invalid response from GraphQL');
                     }
 
-                    var result = response.data.getThemeEditorCss;
+                    var result = response.getThemeEditorCss;
 
                     if (!result.hasContent || !result.css) {
                         console.warn('⚠️ Publication CSS is empty');
