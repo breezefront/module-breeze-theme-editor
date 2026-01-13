@@ -102,9 +102,20 @@ define([
             // Reset draft changes count
             this.options.draftChangesCount = 0;
 
+            // Switch to PUBLISHED status (since draft was deleted)
+            localStorage.setItem('bte_current_status', 'PUBLISHED');
+            localStorage.removeItem('bte_current_publication_id');
+            localStorage.removeItem('bte_current_publication_title');
+            this.options.currentStatus = 'PUBLISHED';
+            this.options.currentPublicationId = null;
+            this.options.currentPublicationTitle = null;
+
             // Reload metadata and publications
             this.metadataLoader.load();
             this.metadataLoader.loadPublications();
+
+            // Trigger status change event for Panel and CSS Manager
+            this.renderer.element.trigger('publicationStatusChanged', {status: 'PUBLISHED'});
 
             // Trigger event for Panel to update UI
             $(document).trigger('themeEditorPublished', {
