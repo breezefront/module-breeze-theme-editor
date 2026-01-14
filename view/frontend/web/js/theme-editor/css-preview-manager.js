@@ -1,7 +1,8 @@
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/toolbar/device-frame'
-], function ($, DeviceFrame) {
+    'Swissup_BreezeThemeEditor/js/toolbar/device-frame',
+    'Swissup_BreezeThemeEditor/js/theme-editor/css-manager'
+], function ($, DeviceFrame, CssManager) {
     'use strict';
 
     var changes = {};
@@ -19,12 +20,17 @@ define([
                 return false;
             }
             this._createStyleElement();
+            
+            // Load saved changes from localStorage
+            this._loadFromLocalStorage();
+            
             console.log('✅ CSS Preview Manager initialized');
             return true;
         },
 
         /**
-         * Create <style> element in iframe head
+         * Create <style> element in iframe body
+         * Insert in correct order: published → draft → publication → LIVE PREVIEW (highest priority)
          */
         _createStyleElement: function() {
             if (!iframeDocument) {
@@ -41,12 +47,25 @@ define([
                 type: 'text/css'
             });
 
+            // Insert in correct order (live-preview має найвищий пріоритет)
+            var $publicationStyle = $(iframeDocument).find('#bte-publication-css');
+            var $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
             var $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
 
-            if ($publishedStyle.length) {
+            if ($publicationStyle && $publicationStyle.length) {
+                // Insert after publication (if viewing old version)
+                $publicationStyle.after($styleElement);
+                console.log('📝 Live preview <style> inserted after #bte-publication-css');
+            } else if ($draftStyle && $draftStyle.length) {
+                // Insert after draft (normal case)
+                $draftStyle.after($styleElement);
+                console.log('📝 Live preview <style> inserted after #bte-theme-css-variables-draft');
+            } else if ($publishedStyle && $publishedStyle.length) {
+                // Insert after published (fallback)
                 $publishedStyle.after($styleElement);
                 console.log('📝 Live preview <style> inserted after #bte-theme-css-variables');
             } else {
+                // Last resort: append to body
                 var $body = $(iframeDocument).find('body');
                 if (!$body.length && iframeDocument.body) {
                     $body = $(iframeDocument.body);
@@ -64,8 +83,15 @@ define([
 
         /**
          * Set CSS variable (with automatic format conversion)
+         * Only works in DRAFT mode (editable)
          */
         setVariable: function(varName, value, fieldType) {
+            // Check if editing is allowed
+            if (!CssManager.isEditable()) {
+                console.warn('⚠️ Cannot edit in', CssManager.getCurrentStatus(), 'mode. Switch to DRAFT to edit.');
+                return false;
+            }
+
             if (!iframeDocument || !$styleElement) {
                 if (!this.init()) {
                     return false;
@@ -194,6 +220,10 @@ define([
             });
             css += '}';
             $styleElement.text(css);
+            
+            // Save to localStorage
+            this._saveToLocalStorage();
+            
             if (console.groupCollapsed) {
                 console.groupCollapsed('📝 CSS Preview updated (' + Object.keys(changes).length + ' vars)');
                 console.log(css);
@@ -202,10 +232,129 @@ define([
         },
 
         /**
+         * Load live preview changes from localStorage
+         * @private
+         */
+        _loadFromLocalStorage: function() {
+            try {
+                var stored = localStorage.getItem('bte_live_preview_changes');
+                if (stored) {
+                    changes = JSON.parse(stored);
+                    if (Object.keys(changes).length > 0) {
+                        this._updateStyles();
+                        console.log('📥 Loaded live preview from localStorage:', Object.keys(changes).length, 'variables');
+                        
+                        // Sync form fields with loaded changes (delayed to let fields render first)
+                        setTimeout(function() {
+                            this.syncFieldsFromChanges();
+                        }.bind(this), 100);
+                    }
+                }
+            } catch (e) {
+                console.warn('⚠️ Failed to load live preview from localStorage:', e);
+            }
+        },
+
+        /**
+         * Save live preview changes to localStorage
+         * @private
+         */
+        _saveToLocalStorage: function() {
+            try {
+                localStorage.setItem('bte_live_preview_changes', JSON.stringify(changes));
+            } catch (e) {
+                console.warn('⚠️ Failed to save live preview to localStorage:', e);
+            }
+        },
+
+        /**
          * Get all pending changes
          */
         getChanges: function() {
             return $.extend({}, changes);
+        },
+
+        /**
+         * Sync form fields with live preview changes
+         * Updates field values to match what's in live preview
+         * @param {jQuery} $panelElement - Optional panel element reference (defaults to #bte-panels-container)
+         */
+        syncFieldsFromChanges: function($panelElement) {
+            var syncedCount = 0;
+            
+            // Get panel element if not provided
+            if (!$panelElement || !$panelElement.length) {
+                $panelElement = $('#bte-panels-container');
+            }
+            
+            if (!$panelElement.length) {
+                console.warn('⚠️ Cannot sync fields: panel element not found');
+                return;
+            }
+            
+            // Iterate over all changes and update corresponding form fields
+            Object.keys(changes).forEach(function(cssVar) {
+                var value = changes[cssVar];
+                
+                // Find field with this CSS variable
+                var $field = $('[data-css-var="' + cssVar + '"]');
+                if (!$field.length) {
+                    return;
+                }
+                
+                var fieldType = $field.data('type');
+                var displayValue = value;
+                
+                // Convert value back to field format
+                if (fieldType === 'color') {
+                    // Convert RGB back to HEX
+                    displayValue = this.rgbToHex(value);
+                }
+                
+                // Update field value
+                if ($field.attr('type') === 'color') {
+                    // Color picker
+                    $field.val(displayValue);
+                    
+                    // Also update text input if exists
+                    var $textInput = $field.closest('.bte-field-control').find('.bte-color-input');
+                    if ($textInput.length) {
+                        $textInput.val(displayValue);
+                    }
+                } else if ($field.attr('type') === 'checkbox') {
+                    $field.prop('checked', value === '1' || value === true);
+                } else {
+                    $field.val(displayValue);
+                }
+                
+                // Get section and field codes to update PanelState and badges
+                var sectionCode = $field.data('section');
+                var fieldCode = $field.data('field');
+                
+                if (sectionCode && fieldCode) {
+                    // Dynamically load PanelState and FieldHandlers to avoid circular dependency
+                    require([
+                        'Swissup_BreezeThemeEditor/js/theme-editor/panel-state',
+                        'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers'
+                    ], function(PanelState, FieldHandlers) {
+                        // Update PanelState to mark field as changed
+                        PanelState.setValue(sectionCode, fieldCode, displayValue);
+                        
+                        // Update badges to show "Changed" indicator
+                        FieldHandlers.updateBadges($panelElement, sectionCode, fieldCode);
+                    });
+                    
+                    console.log('🔄 Synced field value & badges:', cssVar, '→', displayValue, '(' + sectionCode + '.' + fieldCode + ')');
+                } else {
+                    console.log('🔄 Synced field value:', cssVar, '→', displayValue, '(no section/field code)');
+                }
+                
+                syncedCount++;
+            }.bind(this));
+            
+            if (syncedCount > 0) {
+                console.log('✅ Synced', syncedCount, 'field values from live preview');
+            }
         },
 
         /**
@@ -223,6 +372,14 @@ define([
             if ($styleElement) {
                 $styleElement.text(':root {}');
             }
+            
+            // Clear localStorage
+            try {
+                localStorage.removeItem('bte_live_preview_changes');
+            } catch (e) {
+                console.warn('⚠️ Failed to clear live preview from localStorage:', e);
+            }
+            
             console.log('↺ CSS Preview reset');
             return true;
         },
