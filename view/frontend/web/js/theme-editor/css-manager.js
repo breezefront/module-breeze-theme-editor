@@ -8,6 +8,7 @@ define([
     var iframeDocument = null;
     var $publishedStyle = null;
     var $draftStyle = null;
+    var $livePreviewStyle = null;
     var $publicationStyle = null;
     var currentStatus = null;
     var storeId = null;
@@ -50,6 +51,7 @@ define([
             // Find existing CSS elements
             $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
             $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
+            $livePreviewStyle = $(iframeDocument).find('#bte-live-preview');
 
             if (!$publishedStyle.length) {
                 if (retries < 20) {
@@ -129,48 +131,91 @@ define([
         },
 
         /**
-         * Show PUBLISHED CSS (disable draft, remove publication)
+         * Show PUBLISHED CSS (disable draft and live-preview, remove publication)
+         * Read-only mode - editing NOT allowed
          */
         showPublished: function() {
+            // Refresh style references (may appear later)
+            if (!$publishedStyle || !$publishedStyle.length) {
+                $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
+            }
+            if (!$draftStyle || !$draftStyle.length) {
+                $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
+            }
+            if (!$livePreviewStyle || !$livePreviewStyle.length) {
+                $livePreviewStyle = $(iframeDocument).find('#bte-live-preview');
+            }
+
             if (!$publishedStyle || !$publishedStyle.length) {
                 return false;
             }
+
+            // Enable published CSS
+            $publishedStyle.prop('disabled', false);
 
             // Disable draft CSS
             if ($draftStyle && $draftStyle.length) {
                 $draftStyle.prop('disabled', true);
             }
 
+            // Disable live preview (NOT editable in PUBLISHED mode)
+            if ($livePreviewStyle && $livePreviewStyle.length) {
+                $livePreviewStyle.prop('disabled', true);
+            }
+
             // Remove publication CSS
             this._removePublicationStyle();
 
             currentStatus = 'PUBLISHED';
-            console.log('📘 CSS Manager: Showing PUBLISHED');
+            console.log('📘 CSS Manager: Showing PUBLISHED (read-only mode)');
             return true;
         },
 
         /**
-         * Show DRAFT CSS (enable draft, remove publication)
+         * Show DRAFT CSS (enable draft and live-preview, remove publication)
+         * Editable mode - editing allowed
          */
         showDraft: function() {
+            // Refresh style references (may appear later)
+            if (!$publishedStyle || !$publishedStyle.length) {
+                $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
+            }
+            if (!$draftStyle || !$draftStyle.length) {
+                $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
+            }
+            if (!$livePreviewStyle || !$livePreviewStyle.length) {
+                $livePreviewStyle = $(iframeDocument).find('#bte-live-preview');
+            }
+
             if (!$draftStyle || !$draftStyle.length) {
                 console.warn('⚠️ CSS Manager: Draft CSS not available');
                 return false;
             }
 
+            // Enable published CSS (base)
+            if ($publishedStyle && $publishedStyle.length) {
+                $publishedStyle.prop('disabled', false);
+            }
+
             // Enable draft CSS
             $draftStyle.prop('disabled', false);
+
+            // Enable live preview (editable in DRAFT mode)
+            if ($livePreviewStyle && $livePreviewStyle.length) {
+                $livePreviewStyle.prop('disabled', false);
+            }
 
             // Remove publication CSS
             this._removePublicationStyle();
 
             currentStatus = 'DRAFT';
-            console.log('📗 CSS Manager: Showing DRAFT');
+            console.log('📗 CSS Manager: Showing DRAFT (editable mode)');
             return true;
         },
 
         /**
          * Show PUBLICATION CSS (fetch via GraphQL, inject as live style)
+         * Read-only mode - viewing historical version
          * 
          * @param {Number} publicationId
          * @returns {Promise}
@@ -185,9 +230,30 @@ define([
 
             console.log('📦 Fetching publication CSS:', publicationId);
 
-            // Disable draft CSS first
+            // Refresh style references (may appear later)
+            if (!$publishedStyle || !$publishedStyle.length) {
+                $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
+            }
+            if (!$draftStyle || !$draftStyle.length) {
+                $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
+            }
+            if (!$livePreviewStyle || !$livePreviewStyle.length) {
+                $livePreviewStyle = $(iframeDocument).find('#bte-live-preview');
+            }
+
+            // Disable published CSS
+            if ($publishedStyle && $publishedStyle.length) {
+                $publishedStyle.prop('disabled', true);
+            }
+
+            // Disable draft CSS
             if ($draftStyle && $draftStyle.length) {
                 $draftStyle.prop('disabled', true);
+            }
+
+            // Disable live preview (NOT editable in PUBLICATION mode)
+            if ($livePreviewStyle && $livePreviewStyle.length) {
+                $livePreviewStyle.prop('disabled', true);
             }
 
             // Fetch publication CSS via GraphQL
@@ -209,7 +275,7 @@ define([
                     self._injectPublicationStyle(result.css);
 
                     currentStatus = 'PUBLICATION';
-                    console.log('📙 CSS Manager: Showing PUBLICATION', publicationId);
+                    console.log('📙 CSS Manager: Showing PUBLICATION', publicationId, '(read-only mode)');
                     return true;
                 })
                 .catch(function(error) {
@@ -222,6 +288,7 @@ define([
 
         /**
          * Inject publication CSS as <style> element
+         * Insert AFTER draft but BEFORE live-preview (correct priority order)
          * @private
          */
         _injectPublicationStyle: function(css) {
@@ -234,14 +301,25 @@ define([
                 type: 'text/css'
             }).text(css);
 
-            // Insert after draft style (or published if draft doesn't exist)
-            if ($draftStyle && $draftStyle.length) {
+            // Insert AFTER draft but BEFORE live-preview (правильний порядок пріоритету)
+            var $livePreview = $(iframeDocument).find('#bte-live-preview');
+            
+            if ($livePreview && $livePreview.length) {
+                // Insert before live-preview (щоб live-preview мав найвищий пріоритет)
+                $livePreview.before($publicationStyle);
+                console.log('📝 Publication CSS injected before #bte-live-preview');
+            } else if ($draftStyle && $draftStyle.length) {
+                // Fallback: insert after draft
                 $draftStyle.after($publicationStyle);
+                console.log('📝 Publication CSS injected after draft (live-preview not found)');
             } else if ($publishedStyle && $publishedStyle.length) {
+                // Fallback: insert after published
                 $publishedStyle.after($publicationStyle);
+                console.log('📝 Publication CSS injected after published');
+            } else {
+                console.error('❌ Cannot find insertion point for publication CSS!');
+                return;
             }
-
-            console.log('📝 Publication CSS injected');
         },
 
         /**
@@ -303,12 +381,23 @@ define([
         },
 
         /**
+         * Check if editing is allowed in current mode
+         * Only DRAFT mode allows editing
+         * 
+         * @returns {Boolean}
+         */
+        isEditable: function() {
+            return currentStatus === 'DRAFT';
+        },
+
+        /**
          * Destroy CSS manager
          */
         destroy: function() {
             this._removePublicationStyle();
             $publishedStyle = null;
             $draftStyle = null;
+            $livePreviewStyle = null;
             iframeDocument = null;
             currentStatus = null;
             console.log('🗑️ CSS Manager destroyed');
