@@ -117,6 +117,13 @@ define([
             // ✅ Publication selector events
             $(document).on('publicationStatusChanged', function (e, data) {
                 console.log('🔄 Publication status changed to:', data.status);
+                
+                // Prevent duplicate loading if status hasn't actually changed
+                if (self.options.status === data.status) {
+                    console.log('⏭️ Status unchanged, skipping reload');
+                    return;
+                }
+                
                 self.options.status = data.status;
                 self._loadConfig();
             });
@@ -175,6 +182,13 @@ define([
                     PanelState.init(config);
                     self._renderSections(config.sections);
                     self._hideLoader();
+                    
+                    // Sync form fields with live preview changes (if in DRAFT mode)
+                    if (self.options.status === 'DRAFT') {
+                        setTimeout(function() {
+                            CssPreviewManager.syncFieldsFromChanges(self.element);
+                        }, 100);
+                    }
                 })
                 .catch(function(error) {
                     console.error('❌ Failed to load config:', error);
