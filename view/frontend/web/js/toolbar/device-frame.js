@@ -58,7 +58,8 @@ define([
             iframeDocument.write('<!DOCTYPE html><html><head></head><body></body></html>');
             iframeDocument.close();
 
-            this._copyHead();
+            // Копіювати head (link та style теги з head)
+            this._copyHeadStyles();
 
             var $allBodyChildren = $('body').children();
 
@@ -85,7 +86,15 @@ define([
                     return false;
                 }
 
-                // Не пропускаємо <style> теги - вони потрібні для PageBuilder
+                // Не переміщувати CSS Manager style теги - вони потрібні в головному документі
+                // Але вони будуть скопійовані в iframe окремо
+                // Note: #bte-live-preview НЕ існує в parent - створюється в iframe
+                if ($el.is('#bte-theme-css-variables, #bte-theme-css-variables-draft')) {
+                    console.log('⛔ Skipping CSS Manager style:', $el.attr('id'));
+                    return false;
+                }
+
+                // Не пропускаємо інші <style> теги - вони потрібні для PageBuilder
                 if ($el.is('script, link[rel="stylesheet"]')) {
                     return false;
                 }
@@ -129,6 +138,12 @@ define([
             console.log('✅ Restored inline styles for', inlineStyles.size, 'elements');
 
             this._syncBodyClasses();
+
+            // Копіювати CSS Manager styles ПІСЛЯ переміщення контенту
+            this._copyCssManagerStyles();
+
+            // Синхронізувати disabled атрибут з CSS Manager styles
+            this._setupCssManagerSync();
 
             $('body').css({
                 margin: 0,
@@ -238,7 +253,10 @@ define([
             return iframeDocument || null;
         },
 
-        _copyHead: function() {
+        /**
+         * Копіювати stylesheets з head
+         */
+        _copyHeadStyles: function() {
             if (!iframeDocument) {
                 return;
             }
@@ -247,17 +265,92 @@ define([
             var linkCount = 0;
             var styleCount = 0;
 
+            // Копіювати link теги
             $('head link[rel="stylesheet"]').each(function() {
                 $iframeHead.append($(this).clone());
                 linkCount++;
             });
 
-            $('head style').each(function() {
+            // Копіювати style теги з head (окрім CSS Manager styles)
+            $('head style').not('#bte-theme-css-variables, #bte-theme-css-variables-draft, #bte-live-preview').each(function() {
                 $iframeHead.append($(this).clone());
                 styleCount++;
             });
 
             console.log('📄 Copied to iframe head:', linkCount, 'link tags,', styleCount, 'style tags');
+        },
+
+        /**
+         * Копіювати CSS Manager style теги в правильному порядку
+         * Note: #bte-live-preview НЕ копіюється - він створюється безпосередньо в iframe через css-preview-manager.js
+         */
+        _copyCssManagerStyles: function() {
+            if (!iframeDocument) {
+                return;
+            }
+
+            var $iframeBody = $(iframeDocument.body);
+            var cssManagerStyleCount = 0;
+
+            // Копіювати ТІЛЬКИ published та draft styles (live-preview створюється окремо)
+            var styleIds = [
+                'bte-theme-css-variables',        // 1. Published (базові стилі)
+                'bte-theme-css-variables-draft'   // 2. Draft (незбережені зміни)
+                // 3. Live preview створюється динамічно через CssPreviewManager
+            ];
+
+            styleIds.forEach(function(styleId) {
+                var $original = $('#' + styleId);
+                if (!$original.length) {
+                    console.warn('⚠️ CSS Manager style not found:', styleId);
+                    return;
+                }
+
+                var $clone = $original.clone();
+                
+                // Зберегти посилання на оригінал та клон для синхронізації disabled
+                $original.data('iframe-clone', $clone[0]);
+                
+                $iframeBody.append($clone);
+                cssManagerStyleCount++;
+                console.log('📋 Copied CSS Manager style to iframe:', styleId);
+            });
+
+            console.log('📄 Copied CSS Manager styles to iframe body:', cssManagerStyleCount);
+        },
+
+        /**
+         * Налаштувати синхронізацію disabled атрибута для CSS Manager styles
+         * Note: live-preview створюється безпосередньо в iframe, тому не потребує синхронізації
+         */
+        _setupCssManagerSync: function() {
+            var self = this;
+            
+            // Observer для disabled атрибута (published та draft)
+            var disabledObserver = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'disabled') {
+                        var $original = $(mutation.target);
+                        var clone = $original.data('iframe-clone');
+                        
+                        if (clone) {
+                            var isDisabled = $original.prop('disabled');
+                            $(clone).prop('disabled', isDisabled);
+                            console.log('🔄 Synced disabled attribute for', $original.attr('id'), '→', isDisabled);
+                        }
+                    }
+                });
+            });
+
+            // Спостерігати за змінами disabled атрибута для published та draft
+            $('#bte-theme-css-variables, #bte-theme-css-variables-draft').each(function() {
+                disabledObserver.observe(this, {
+                    attributes: true,
+                    attributeFilter: ['disabled']
+                });
+            });
+
+            console.log('👁️ CSS Manager sync observer initialized');
         },
 
         _syncBodyClasses: function() {
