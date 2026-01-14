@@ -233,6 +233,7 @@ define([
 
         /**
          * Load live preview changes from localStorage
+         * Note: Field sync is handled by panel.js after config loads
          * @private
          */
         _loadFromLocalStorage: function() {
@@ -243,11 +244,7 @@ define([
                     if (Object.keys(changes).length > 0) {
                         this._updateStyles();
                         console.log('📥 Loaded live preview from localStorage:', Object.keys(changes).length, 'variables');
-                        
-                        // Sync form fields with loaded changes (delayed to let fields render first)
-                        setTimeout(function() {
-                            this.syncFieldsFromChanges();
-                        }.bind(this), 100);
+                        // Note: syncFieldsFromChanges() is called by panel.js after fields are rendered
                     }
                 }
             } catch (e) {

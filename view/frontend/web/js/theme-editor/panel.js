@@ -164,6 +164,19 @@ define([
                 CssPreviewManager.init();
                 // CSS Manager has retry logic, will wait for iframe to be ready
                 CssManager.init(self.storeId, self.themeId);
+                
+                // Sync panel status with CssManager status (from localStorage)
+                // This ensures panel loads the correct config matching the CSS state
+                setTimeout(function() {
+                    var cssManagerStatus = CssManager.getCurrentStatus();
+                    if (cssManagerStatus && cssManagerStatus !== self.options.status) {
+                        console.log('🔄 Syncing panel status with CssManager:', self.options.status, '→', cssManagerStatus);
+                        self.options.status = cssManagerStatus;
+                        
+                        // Note: Publication Selector already reads from localStorage in _loadConfig()
+                        // So UI should already match. If not, it will sync on first publicationStatusChanged event.
+                    }
+                }, 100);
             }, 500);
         },
 
