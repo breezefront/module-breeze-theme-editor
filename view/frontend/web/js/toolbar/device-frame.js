@@ -85,7 +85,8 @@ define([
                     return false;
                 }
 
-                if ($el.is('script, link[rel="stylesheet"], style')) {
+                // Не пропускаємо <style> теги - вони потрібні для PageBuilder
+                if ($el.is('script, link[rel="stylesheet"]')) {
                     return false;
                 }
 
@@ -95,10 +96,37 @@ define([
             console.log('📦 Moving', $content.length, 'elements to iframe');
             console.log('✅ Toolbar and panels remain in main body');
 
+            // Зберегти inline styles перед переміщенням
+            var inlineStyles = new Map();
+            $content.each(function() {
+                var element = this;
+                var styleAttr = element.getAttribute('style');
+                if (styleAttr) {
+                    inlineStyles.set(element, styleAttr);
+                }
+                
+                // Також зберегти styles для всіх дочірніх елементів
+                $(element).find('[style]').each(function() {
+                    var childStyleAttr = this.getAttribute('style');
+                    if (childStyleAttr) {
+                        inlineStyles.set(this, childStyleAttr);
+                    }
+                });
+            });
+
+            console.log('💾 Preserved inline styles for', inlineStyles.size, 'elements');
+
             var $iframeBody = $(iframeDocument.body);
             $content.each(function() {
                 $iframeBody.append(this);
             });
+
+            // Відновити inline styles після переміщення
+            inlineStyles.forEach(function(styleAttr, element) {
+                element.setAttribute('style', styleAttr);
+            });
+
+            console.log('✅ Restored inline styles for', inlineStyles.size, 'elements');
 
             this._syncBodyClasses();
 
@@ -216,20 +244,39 @@ define([
             }
 
             var $iframeHead = $(iframeDocument.head);
+            var linkCount = 0;
+            var styleCount = 0;
 
-            $('head link[rel="stylesheet"], head style').each(function() {
+            $('head link[rel="stylesheet"]').each(function() {
                 $iframeHead.append($(this).clone());
+                linkCount++;
             });
 
-            console.log('📄 Copied stylesheets to iframe');
+            $('head style').each(function() {
+                $iframeHead.append($(this).clone());
+                styleCount++;
+            });
+
+            console.log('📄 Copied to iframe head:', linkCount, 'link tags,', styleCount, 'style tags');
         },
 
         _syncBodyClasses: function() {
-            if (iframeDocument) {
+            if (!iframeDocument) {
                 return;
             }
 
-            var mainBodyClasses = $('body').attr('class') || '';
+            var $mainBody = $('body');
+            var $iframeBody = $(iframeDocument.body);
+
+            // Копіювати id атрибут (важливо для PageBuilder селекторів типу #html-body)
+            var bodyId = $mainBody.attr('id');
+            if (bodyId) {
+                $iframeBody.attr('id', bodyId);
+                console.log('🆔 Copied body id to iframe:', bodyId);
+            }
+
+            // Копіювати класи
+            var mainBodyClasses = $mainBody.attr('class') || '';
 
             mainBodyClasses = mainBodyClasses
                 .replace(/breeze-theme-editor-active/g, '')
@@ -238,7 +285,7 @@ define([
                 .replace(/breeze-device-\w+/g, '')
                 .trim();
 
-            $(iframeDocument.body).attr('class', mainBodyClasses);
+            $iframeBody.attr('class', mainBodyClasses);
 
             console.log('🔄 Synced body classes to iframe');
         },
