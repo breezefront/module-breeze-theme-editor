@@ -146,6 +146,9 @@ define([
                 self._updateChangesCount();
                 self._refreshAllBadges();
                 
+                // Clear live preview changes (they're now saved to draft)
+                CssPreviewManager.reset();
+                
                 // Reload page to get fresh published CSS
                 // (Draft CSS in DOM is now outdated, published CSS needs server regeneration)
                 console.log('🔄 Reloading page to apply published CSS...');
