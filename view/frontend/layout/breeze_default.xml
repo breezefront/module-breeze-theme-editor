@@ -13,5 +13,14 @@
             </argument>
           </arguments>
         </referenceBlock>
+        
+        <!-- Test Runner (activated with ?jstest=true URL parameter) -->
+        <referenceContainer name="after.body.start">
+            <block 
+                class="Swissup\BreezeThemeEditor\Block\TestRunner" 
+                name="breeze.test.runner" 
+                template="Swissup_BreezeThemeEditor::test-runner.phtml"
+            />
+        </referenceContainer>
     </body>
 </page>
