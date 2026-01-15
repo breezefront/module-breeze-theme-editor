@@ -44,7 +44,8 @@ define([
 
             $styleElement = $('<style>', {
                 id: 'bte-live-preview',
-                type: 'text/css'
+                type: 'text/css',
+                media: 'all'
             });
 
             // Insert in correct order (live-preview має найвищий пріоритет)

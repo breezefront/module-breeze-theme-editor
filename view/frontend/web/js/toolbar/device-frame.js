@@ -308,49 +308,64 @@ define([
 
                 var $clone = $original.clone();
                 
-                // Зберегти посилання на оригінал та клон для синхронізації disabled
+                // IMPORTANT: Preserve both media and disabled attributes from original
+                // Copy media attribute (primary disable method)
+                var mediaAttr = $original.attr('media') || 'all';
+                $clone.attr('media', mediaAttr);
+                
+                // Copy disabled state (fallback)
+                var isDisabled = $original.prop('disabled');
+                $clone.prop('disabled', isDisabled);
+                
+                // Зберегти посилання на оригінал та клон для синхронізації
                 $original.data('iframe-clone', $clone[0]);
                 
                 $iframeBody.append($clone);
                 cssManagerStyleCount++;
-                console.log('📋 Copied CSS Manager style to iframe:', styleId);
+                console.log('📋 Copied CSS Manager style to iframe:', styleId, '(media:', mediaAttr, ', disabled:', isDisabled + ')');
             });
 
             console.log('📄 Copied CSS Manager styles to iframe body:', cssManagerStyleCount);
         },
 
         /**
-         * Налаштувати синхронізацію disabled атрибута для CSS Manager styles
+         * Налаштувати синхронізацію media та disabled атрибутів для CSS Manager styles
          * Note: live-preview створюється безпосередньо в iframe, тому не потребує синхронізації
          */
         _setupCssManagerSync: function() {
             var self = this;
             
-            // Observer для disabled атрибута (published та draft)
-            var disabledObserver = new MutationObserver(function(mutations) {
+            // Observer для media та disabled атрибутів (published та draft)
+            var styleObserver = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
-                    if (mutation.type === 'attributes' && mutation.attributeName === 'disabled') {
+                    if (mutation.type === 'attributes') {
                         var $original = $(mutation.target);
                         var clone = $original.data('iframe-clone');
                         
                         if (clone) {
-                            var isDisabled = $original.prop('disabled');
-                            $(clone).prop('disabled', isDisabled);
-                            console.log('🔄 Synced disabled attribute for', $original.attr('id'), '→', isDisabled);
+                            if (mutation.attributeName === 'media') {
+                                var mediaAttr = $original.attr('media') || 'all';
+                                $(clone).attr('media', mediaAttr);
+                                console.log('🔄 Synced media attribute for', $original.attr('id'), '→', mediaAttr);
+                            } else if (mutation.attributeName === 'disabled') {
+                                var isDisabled = $original.prop('disabled');
+                                $(clone).prop('disabled', isDisabled);
+                                console.log('🔄 Synced disabled attribute for', $original.attr('id'), '→', isDisabled);
+                            }
                         }
                     }
                 });
             });
 
-            // Спостерігати за змінами disabled атрибута для published та draft
+            // Спостерігати за змінами media та disabled атрибутів для published та draft
             $('#bte-theme-css-variables, #bte-theme-css-variables-draft').each(function() {
-                disabledObserver.observe(this, {
+                styleObserver.observe(this, {
                     attributes: true,
-                    attributeFilter: ['disabled']
+                    attributeFilter: ['media', 'disabled']
                 });
             });
 
-            console.log('👁️ CSS Manager sync observer initialized');
+            console.log('👁️ CSS Manager sync observer initialized (media + disabled)');
         },
 
         _syncBodyClasses: function() {

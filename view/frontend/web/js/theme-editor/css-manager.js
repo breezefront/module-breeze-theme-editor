@@ -101,6 +101,26 @@ define([
         },
 
         /**
+         * Enable style element (make it active)
+         * @private
+         */
+        _enableStyle: function($style) {
+            if (!$style || !$style.length) return;
+            $style.attr('media', 'all');        // Primary method (HTML5 standard)
+            $style.prop('disabled', false);     // Fallback for older browsers
+        },
+
+        /**
+         * Disable style element (make it inactive)
+         * @private
+         */
+        _disableStyle: function($style) {
+            if (!$style || !$style.length) return;
+            $style.attr('media', 'not all');    // Primary method (HTML5 standard)
+            $style.prop('disabled', true);      // Fallback for older browsers
+        },
+
+        /**
          * Apply CSS state based on localStorage
          * @private
          */
@@ -151,17 +171,13 @@ define([
             }
 
             // Enable published CSS
-            $publishedStyle.prop('disabled', false);
+            this._enableStyle($publishedStyle);
 
             // Disable draft CSS
-            if ($draftStyle && $draftStyle.length) {
-                $draftStyle.prop('disabled', true);
-            }
+            this._disableStyle($draftStyle);
 
             // Disable live preview (NOT editable in PUBLISHED mode)
-            if ($livePreviewStyle && $livePreviewStyle.length) {
-                $livePreviewStyle.prop('disabled', true);
-            }
+            this._disableStyle($livePreviewStyle);
 
             // Remove publication CSS
             this._removePublicationStyle();
@@ -193,17 +209,13 @@ define([
             }
 
             // Enable published CSS (base)
-            if ($publishedStyle && $publishedStyle.length) {
-                $publishedStyle.prop('disabled', false);
-            }
+            this._enableStyle($publishedStyle);
 
             // Enable draft CSS
-            $draftStyle.prop('disabled', false);
+            this._enableStyle($draftStyle);
 
             // Enable live preview (editable in DRAFT mode)
-            if ($livePreviewStyle && $livePreviewStyle.length) {
-                $livePreviewStyle.prop('disabled', false);
-            }
+            this._enableStyle($livePreviewStyle);
 
             // Remove publication CSS
             this._removePublicationStyle();
@@ -242,19 +254,13 @@ define([
             }
 
             // Disable published CSS
-            if ($publishedStyle && $publishedStyle.length) {
-                $publishedStyle.prop('disabled', true);
-            }
+            this._disableStyle($publishedStyle);
 
             // Disable draft CSS
-            if ($draftStyle && $draftStyle.length) {
-                $draftStyle.prop('disabled', true);
-            }
+            this._disableStyle($draftStyle);
 
             // Disable live preview (NOT editable in PUBLICATION mode)
-            if ($livePreviewStyle && $livePreviewStyle.length) {
-                $livePreviewStyle.prop('disabled', true);
-            }
+            this._disableStyle($livePreviewStyle);
 
             // Fetch publication CSS via GraphQL
             return getCss(storeId, themeId, 'PUBLICATION', publicationId)
@@ -298,7 +304,8 @@ define([
             // Create new style element
             $publicationStyle = $('<style>', {
                 id: 'bte-publication-css',
-                type: 'text/css'
+                type: 'text/css',
+                media: 'all'
             }).text(css);
 
             // Insert AFTER draft but BEFORE live-preview (правильний порядок пріоритету)
