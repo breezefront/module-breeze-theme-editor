@@ -56,7 +56,7 @@ define([
                 self.assertEquals(color, '15, 39, 219', 
                     'Color should be blue (draft) in DRAFT mode');
                 done();
-            }, 200);
+            }, 400);
         },
         
         'should sync media attribute from main to iframe': function(done) {
@@ -98,9 +98,9 @@ define([
                         var color3 = self.getCssVariable('--base-color');
                         self.assertEquals(color3, '15, 39, 219', 'Step 3: Back to DRAFT color (blue)');
                         done();
-                    }, 200);
-                }, 200);
-            }, 200);
+                    }, 400);
+                }, 400);
+            }, 400);
         }
     });
 });

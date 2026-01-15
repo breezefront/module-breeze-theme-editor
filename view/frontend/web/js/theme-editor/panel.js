@@ -126,6 +126,11 @@ define([
                 
                 self.options.status = data.status;
                 self._loadConfig();
+                
+                // Update field editability after status change
+                setTimeout(function() {
+                    self._updateFieldsEditability();
+                }, 100);
             });
 
             $(document).on('loadThemeEditorFromPublication', function (e, data) {
@@ -267,8 +272,63 @@ define([
 
             console.log('📋 Rendered', sections.length, 'sections');
             
+            // Disable fields if in read-only mode (PUBLISHED or PUBLICATION)
+            this._updateFieldsEditability();
+            
             // Initialize preset selector
             this._initPresetSelector();
+        },
+
+        /**
+         * Update field editability based on current mode
+         */
+        _updateFieldsEditability: function() {
+            var isEditable = CssManager.isEditable();
+            var status = this.options.status;
+            
+            console.log('🔒 Updating fields editability:', {status: status, isEditable: isEditable});
+            
+            if (isEditable) {
+                // Enable all fields (DRAFT mode)
+                this._enableAllFields();
+                this.$saveButton.prop('disabled', false);
+                this.$resetButton.prop('disabled', false);
+            } else {
+                // Disable all fields (PUBLISHED or PUBLICATION mode)
+                this._disableAllFields();
+                this.$saveButton.prop('disabled', true);
+                this.$resetButton.prop('disabled', true);
+                
+                // Show info message
+                var mode = status === 'PUBLICATION' ? 'PUBLICATION' : 'PUBLISHED';
+                console.log('🔒 Fields disabled in ' + mode + ' mode');
+            }
+        },
+        
+        /**
+         * Enable all input fields
+         */
+        _enableAllFields: function() {
+            // Enable all standard inputs
+            this.$sectionsContainer.find('input, select, textarea, button').not('.bte-accordion-header').prop('disabled', false);
+            
+            // Remove disabled visual state
+            this.$sectionsContainer.find('.bte-field-wrapper').removeClass('bte-field-disabled');
+            
+            console.log('✅ All fields enabled');
+        },
+        
+        /**
+         * Disable all input fields
+         */
+        _disableAllFields: function() {
+            // Disable all standard inputs
+            this.$sectionsContainer.find('input, select, textarea, button').not('.bte-accordion-header').prop('disabled', true);
+            
+            // Add disabled visual state
+            this.$sectionsContainer.find('.bte-field-wrapper').addClass('bte-field-disabled');
+            
+            console.log('🔒 All fields disabled');
         },
 
         /**

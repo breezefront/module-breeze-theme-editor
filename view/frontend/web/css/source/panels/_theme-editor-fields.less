@@ -475,3 +475,41 @@
         min-width: auto;
     }
 }
+
+// ============================================================================
+// DISABLED STATE (Read-only modes: PUBLISHED, PUBLICATION)
+// ============================================================================
+
+.bte-field-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+    
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.05);
+        backdrop-filter: blur(0.5px);
+        border-radius: 6px;
+        pointer-events: none;
+    }
+    
+    input,
+    select,
+    textarea,
+    button,
+    .bte-color-picker,
+    .bte-range-slider,
+    .bte-toggle {
+        cursor: not-allowed !important;
+    }
+    
+    .bte-field-label {
+        opacity: 0.7;
+    }
+}
+

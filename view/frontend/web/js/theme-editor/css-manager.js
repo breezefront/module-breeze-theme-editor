@@ -14,6 +14,18 @@ define([
     var storeId = null;
     var themeId = null;
 
+    /**
+     * Reset live preview changes (lazy loaded to avoid circular dependency)
+     * css-manager.js ↔ css-preview-manager.js have circular dependency,
+     * so we load CssPreviewManager dynamically only when needed
+     */
+    function resetLivePreview() {
+        require(['Swissup_BreezeThemeEditor/js/theme-editor/css-preview-manager'], function(CssPreviewManager) {
+            CssPreviewManager.reset();
+            console.log('↺ Live preview reset via lazy loading');
+        });
+    }
+
     return {
         /**
          * Initialize CSS manager
@@ -178,6 +190,9 @@ define([
 
             // Disable live preview (NOT editable in PUBLISHED mode)
             this._disableStyle($livePreviewStyle);
+            
+            // Clear live preview changes (unsaved changes should not persist)
+            resetLivePreview();
 
             // Remove publication CSS
             this._removePublicationStyle();
@@ -261,6 +276,9 @@ define([
 
             // Disable live preview (NOT editable in PUBLICATION mode)
             this._disableStyle($livePreviewStyle);
+            
+            // Clear live preview changes (unsaved changes should not persist)
+            resetLivePreview();
 
             // Fetch publication CSS via GraphQL
             return getCss(storeId, themeId, 'PUBLICATION', publicationId)
