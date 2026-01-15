@@ -11,8 +11,11 @@ define([
     'Swissup_BreezeThemeEditor/js/toolbar/highlight-toggle',
     'Swissup_BreezeThemeEditor/js/toolbar/toolbar-toggle',
     'Swissup_BreezeThemeEditor/js/toolbar/exit-button',
+    'Swissup_BreezeThemeEditor/js/theme-editor/css-manager',
     'domReady!'
-], function ($, mageTemplate, toolbarTemplate) {
+], function ($, mageTemplate, toolbarTemplate, AdminLink, Navigation, PublicationSelector, 
+             ScopeSelector, PageSelector, DeviceSwitcher, HighlightToggle, ToolbarToggle, 
+             ExitButton, CssManager) {
     'use strict';
 
     return function (config, element) {
@@ -202,6 +205,14 @@ define([
                 activeDevice: components.deviceSwitcher.activeDevice
             });
         }
+
+        // Initialize CSS Manager early (after Device Frame is ready)
+        // This allows Publication Selector to switch CSS modes before Theme Editor Panel opens
+        // Device Frame initializes after 50ms, needs ~500ms for iframe setup and CSS copying
+        setTimeout(function() {
+            console.log('🎨 Early CSS Manager initialization...');
+            CssManager.init(config.storeId, config.themeId);
+        }, 600);
 
         // Highlight Toggle
         if (components.highlightToggle) {

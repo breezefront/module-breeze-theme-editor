@@ -165,8 +165,15 @@ define([
             var self = this;
             setTimeout(function() {
                 CssPreviewManager.init();
-                // CSS Manager has retry logic, will wait for iframe to be ready
-                CssManager.init(self.storeId, self.themeId);
+                
+                // CSS Manager may already be initialized early in toolbar.js
+                // Only initialize if not already done
+                if (!CssManager.getCurrentStatus()) {
+                    console.log('⏳ CSS Manager not initialized yet, initializing now...');
+                    CssManager.init(self.storeId, self.themeId);
+                } else {
+                    console.log('✅ CSS Manager already initialized (early init from toolbar)');
+                }
                 
                 // Sync panel status with CssManager status (from localStorage)
                 // This ensures panel loads the correct config matching the CSS state
