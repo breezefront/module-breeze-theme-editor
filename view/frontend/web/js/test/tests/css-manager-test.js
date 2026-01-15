@@ -11,15 +11,39 @@ define([
     
     return TestFramework.suite('CSS Manager', {
         
-        'should be initialized': function() {
-            var status = CssManager.getCurrentStatus();
-            this.assertNotNull(status, 'CSS Manager should have status');
+        'should be initialized': function(done) {
+            var self = this;
+            
+            // Wait for CSS Manager to initialize
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                } else {
+                    var status = CssManager.getCurrentStatus();
+                    self.assertNotNull(status, 'CSS Manager should have status');
+                }
+                done(err);
+            });
         },
         
-        'should have valid status': function() {
-            var status = CssManager.getCurrentStatus();
-            this.assertContains(['DRAFT', 'PUBLISHED', 'PUBLICATION'], status, 
-                'Status should be one of: DRAFT, PUBLISHED, PUBLICATION');
+        'should have valid status': function(done) {
+            var self = this;
+            
+            // Wait for CSS Manager to initialize
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                } else {
+                    var status = CssManager.getCurrentStatus();
+                    self.assertContains(['DRAFT', 'PUBLISHED', 'PUBLICATION'], status, 
+                        'Status should be one of: DRAFT, PUBLISHED, PUBLICATION');
+                }
+                done(err);
+            });
         },
         
         'should be editable in DRAFT mode': function() {

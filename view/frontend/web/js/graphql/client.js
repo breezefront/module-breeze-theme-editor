@@ -84,6 +84,16 @@ define([
          * @returns {Object}
          */
         _handleSuccess: function(response) {
+            // GUARD: Check if response exists
+            if (!response) {
+                console.error('❌ GraphQL Response is null or undefined');
+                var error = new Error('Empty response from server');
+                error.graphqlErrors = [];
+                error.extensions = null;
+                throw error;
+            }
+
+            // Handle GraphQL errors in response
             if (response.errors && response.errors.length > 0) {
                 console.error('GraphQL Errors:', response.errors);
 
@@ -96,6 +106,12 @@ define([
                 error.extensions = firstError.extensions || null;
 
                 throw error;
+            }
+
+            // GUARD: Check if data exists when no errors
+            if (!response.data) {
+                console.warn('⚠️ GraphQL response has no data field:', response);
+                return null;
             }
 
             return response.data;
@@ -117,25 +133,37 @@ define([
 
             var message = 'Network error';
             var extensions = null;
+            var graphqlErrors = [];
 
-            try {
-                var response = JSON.parse(xhr.responseText);
-                if (response.errors && response.errors.length > 0) {
-                    var firstError = response.errors[0];
-                    message = firstError.message;
+            // GUARD: Check if responseText exists and is not empty
+            if (xhr && xhr.responseText) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    
+                    // GUARD: Check if response exists after parsing
+                    if (response && response.errors && response.errors.length > 0) {
+                        var firstError = response.errors[0];
+                        message = firstError.message;
+                        graphqlErrors = response.errors;
 
-                    // Parse extensions with debugMessage
-                    if (firstError.extensions) {
-                        extensions = firstError.extensions;
+                        // Parse extensions with debugMessage
+                        if (firstError.extensions) {
+                            extensions = firstError.extensions;
+                        }
                     }
+                } catch (e) {
+                    // JSON parse failed - use status/error as fallback
+                    message = error || status || 'Network error';
                 }
-            } catch (e) {
-                message = error || status;
+            } else {
+                // No response body - likely network issue
+                message = error || status || 'Network error';
             }
 
-            // Create error object with extensions
+            // Create error object with extensions and graphqlErrors
             var errorObj = new Error(message);
             errorObj.extensions = extensions;
+            errorObj.graphqlErrors = graphqlErrors;
 
             throw errorObj;
         }
