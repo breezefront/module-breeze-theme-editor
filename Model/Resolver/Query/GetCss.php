@@ -6,12 +6,14 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Magento\Framework\Api\SearchCriteriaBuilderFactory;
 use Swissup\BreezeThemeEditor\Model\Service\CssGenerator;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 
 /**
  * GraphQL resolver for getThemeEditorCss query
@@ -25,7 +27,9 @@ class GetCss implements ResolverInterface
         private ThemeResolver $themeResolver,
         private UserResolver $userResolver,
         private ValueService $valueService,
-        private ConfigProvider $configProvider
+        private ConfigProvider $configProvider,
+        private ChangelogRepositoryInterface $changelogRepository,
+        private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory
     ) {}
 
     public function resolve(
@@ -89,29 +93,69 @@ class GetCss implements ResolverInterface
     private function generateCssFromPublication(int $themeId, int $storeId, int $publicationId): string
     {
         try {
-            // Get config WITH inheritance
-            $config = $this->configProvider->getConfigurationWithInheritance($themeId);
-            $sections = $config['sections'] ?? [];
+            // Get changelog entries for this publication
+            $changelog = $this->getPublicationChangelog($publicationId);
 
-            // Build field lookup map: section.setting → field config
-            $fieldMap = [];
-            foreach ($sections as $section) {
-                foreach ($section['settings'] ?? [] as $setting) {
-                    $key = $section['id'] . '.' . $setting['id'];
-                    $fieldMap[$key] = $setting;
-                }
+            if (empty($changelog)) {
+                // No changes in publication, return empty CSS
+                return ":root {\n}\n";
             }
 
-            // Get values from publication (use special status code for publication query)
-            // Note: We need to query publication_values table, not regular values table
-            // For now, fallback to PUBLISHED status
-            // TODO: Implement proper publication values loading when publication feature is complete
-            
-            // Temporary: Just use PUBLISHED CSS
-            return $this->cssGenerator->generate($themeId, $storeId, 'PUBLISHED');
+            // Build values map: 'section.setting' => 'value'
+            $valuesMap = $this->buildValuesMapFromChangelog($changelog);
+
+            // Generate CSS from values map
+            return $this->cssGenerator->generateFromValuesMap($themeId, $valuesMap);
             
         } catch (\Exception $e) {
             return "/* Error generating CSS from publication: {$e->getMessage()} */";
         }
+    }
+
+    /**
+     * Get changelog entries for publication
+     *
+     * @param int $publicationId
+     * @return array
+     */
+    private function getPublicationChangelog(int $publicationId): array
+    {
+        $searchCriteriaBuilder = $this->searchCriteriaBuilderFactory->create();
+
+        $searchCriteria = $searchCriteriaBuilder
+            ->addFilter('publication_id', $publicationId)
+            ->create();
+
+        $result = $this->changelogRepository->getList($searchCriteria);
+
+        $changelog = [];
+        foreach ($result->getItems() as $change) {
+            $changelog[] = [
+                'section_code' => $change->getSectionCode(),
+                'setting_code' => $change->getSettingCode(),
+                'old_value' => $change->getOldValue(),
+                'new_value' => $change->getNewValue()
+            ];
+        }
+
+        return $changelog;
+    }
+
+    /**
+     * Build values map from changelog (use new_value)
+     *
+     * @param array $changelog
+     * @return array Map of 'section.setting' => 'value'
+     */
+    private function buildValuesMapFromChangelog(array $changelog): array
+    {
+        $valuesMap = [];
+
+        foreach ($changelog as $change) {
+            $key = $change['section_code'] . '.' . $change['setting_code'];
+            $valuesMap[$key] = $change['new_value'];
+        }
+
+        return $valuesMap;
     }
 }

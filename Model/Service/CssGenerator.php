@@ -96,6 +96,74 @@ class CssGenerator
     }
 
     /**
+     * Generate CSS from values map (for publications)
+     * 
+     * @param int $themeId
+     * @param array $valuesMap Map of 'section.setting' => 'value'
+     * @return string CSS code with :root { ... }
+     */
+    public function generateFromValuesMap(int $themeId, array $valuesMap): string
+    {
+        if (empty($valuesMap)) {
+            return '';
+        }
+
+        // Get config WITH inheritance
+        $config = $this->configProvider->getConfigurationWithInheritance($themeId);
+        $sections = $config['sections'] ?? [];
+
+        // Build field lookup map: section.setting → field config
+        $fieldMap = [];
+        foreach ($sections as $section) {
+            foreach ($section['settings'] ?? [] as $setting) {
+                $key = $section['id'] . '.' . $setting['id'];
+                $fieldMap[$key] = $setting;
+            }
+        }
+
+        $css = ":root {\n";
+
+        foreach ($valuesMap as $key => $rawValue) {
+            if ($rawValue === null || $rawValue === '') {
+                continue;
+            }
+
+            // Lookup field in map
+            $field = $fieldMap[$key] ?? null;
+
+            if (!$field) {
+                continue;
+            }
+
+            $default = $field['default'] ?? null;
+            if ($default !== null && $this->valuesAreEqual($rawValue, $default)) {
+                continue; // Use Breeze default, don't override
+            }
+
+            $cssVar = $field['css_var'] ?? null;
+
+            if (!$cssVar) {
+                continue;
+            }
+
+            $fieldType = $field['type'] ?? null;
+            $formattedValue = $this->formatValue($rawValue, $fieldType);
+            $comment = $this->getComment($rawValue, $fieldType);
+            $important = $field['important'] ?? false;
+
+            $css .= "    $cssVar: $formattedValue" . ($important ? ' !important' : '') . ";";
+            if ($comment) {
+                $css .= "  /* $comment */";
+            }
+            $css .= "\n";
+        }
+
+        $css .= "}\n";
+
+        return $css;
+    }
+
+    /**
      * Format value based on field type
      * @param mixed $value
      * @param string|null $fieldType
