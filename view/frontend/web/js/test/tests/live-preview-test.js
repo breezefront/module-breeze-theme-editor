@@ -36,15 +36,32 @@ define([
             });
         },
         
-        'live preview should have media="all" when active': function() {
-            var $livePreview = this.$iframe().find('#bte-live-preview');
+        'live preview should have media="all" when active': function(done) {
+            var self = this;
+            var CssManager = require('Swissup_BreezeThemeEditor/js/theme-editor/css-manager');
             
-            if ($livePreview.length > 0) {
-                this.assertEquals($livePreview.attr('media'), 'all', 
-                    'Live preview should have media="all"');
-            } else {
-                this.assert(true, 'Live preview not created yet');
-            }
+            // Ensure we're in DRAFT mode first (live preview is only active in DRAFT)
+            var currentStatus = CssManager.getCurrentStatus();
+            console.log('🧪 Current status:', currentStatus, '- switching to DRAFT for test...');
+            
+            CssManager.switchTo('DRAFT');
+            
+            setTimeout(function() {
+                var $livePreview = self.$iframe().find('#bte-live-preview');
+                
+                if ($livePreview.length > 0) {
+                    var mediaAttr = $livePreview.attr('media');
+                    console.log('📝 Live preview media attribute:', mediaAttr);
+                    
+                    self.assertEquals(mediaAttr, 'all', 
+                        'Live preview should have media="all" in DRAFT mode (current: ' + mediaAttr + ')');
+                } else {
+                    console.warn('⚠️ Live preview not created yet');
+                    self.assert(true, 'Live preview not created yet');
+                }
+                
+                done();
+            }, 300);
         },
         
         'live preview should be inserted in correct order': function() {
@@ -78,6 +95,11 @@ define([
                 if ($livePreview.length > 0) {
                     self.assertEquals($livePreview.attr('media'), 'not all', 
                         'Live preview should be disabled in PUBLISHED mode');
+                    
+                    // NEW: Also check that content is empty
+                    var cssContent = $livePreview.text();
+                    self.assertStringContains(cssContent, ':root {}',
+                        'Live preview content should be empty in PUBLISHED mode');
                 } else {
                     self.assert(true, 'Live preview not created yet');
                 }
