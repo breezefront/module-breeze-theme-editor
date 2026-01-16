@@ -68,6 +68,35 @@ define([
             this.updateBadge();
             $button.removeClass('status-draft status-published status-historical')
                 .addClass(this._getStatusClass());
+            
+            // Update Publish button visibility and label
+            this.updatePublishButton();
+        },
+        
+        updatePublishButton: function() {
+            var $group = this.element.find('.dropdown-item-group');
+            var $wrapper = $group.find('.dropdown-publish-button-wrapper');
+            
+            if (this._shouldShowPublishButton()) {
+                // Show/update button
+                if ($wrapper.length === 0) {
+                    // Create button if doesn't exist
+                    var html = '<div class="dropdown-publish-button-wrapper">' +
+                               '  <button type="button" class="dropdown-publish-button" data-action="publish">' +
+                               '    <span class="publish-icon">💾</span>' +
+                               '    <span class="publish-label">' + this._getPublishButtonLabel() + '</span>' +
+                               '  </button>' +
+                               '</div>';
+                    $group.append(html);
+                } else {
+                    // Update existing button label
+                    $wrapper.find('.publish-label').text(this._getPublishButtonLabel());
+                    $wrapper.show();
+                }
+            } else {
+                // Hide button if no changes
+                $wrapper.hide();
+            }
         },
 
         _getLabel: function() {
