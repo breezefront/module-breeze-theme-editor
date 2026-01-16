@@ -6,14 +6,16 @@ define([
     'jquery',
     'mage/template',
     'mage/translate',
-    'text!Swissup_BreezeThemeEditor/template/toolbar/publication-selector.html'
-], function ($, mageTemplate, $t, publicationSelectorTemplate) {
+    'text!Swissup_BreezeThemeEditor/template/toolbar/publication-selector.html',
+    'text!Swissup_BreezeThemeEditor/template/toolbar/publication-selector-publish-button.html'
+], function ($, mageTemplate, $t, publicationSelectorTemplate, publishButtonTemplate) {
     'use strict';
 
     function Renderer(element, options) {
         this.element = element;
         this.options = options;
         this.template = mageTemplate(publicationSelectorTemplate);
+        this.publishButtonTemplate = mageTemplate(publishButtonTemplate);
     }
 
     Renderer.prototype = {
@@ -80,13 +82,12 @@ define([
             if (this._shouldShowPublishButton()) {
                 // Show/update button
                 if ($wrapper.length === 0) {
-                    // Create button if doesn't exist
-                    var html = '<div class="dropdown-publish-button-wrapper">' +
-                               '  <button type="button" class="dropdown-publish-button" data-action="publish">' +
-                               '    <span class="publish-icon">💾</span>' +
-                               '    <span class="publish-label">' + this._getPublishButtonLabel() + '</span>' +
-                               '  </button>' +
-                               '</div>';
+                    // Create button from template
+                    var html = this.publishButtonTemplate({
+                        data: {
+                            label: this._getPublishButtonLabel()
+                        }
+                    });
                     $group.append(html);
                 } else {
                     // Update existing button label
