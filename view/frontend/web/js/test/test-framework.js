@@ -3,7 +3,10 @@
  * 
  * Lightweight testing framework with support for sync/async tests
  */
-define(['jquery'], function($) {
+define([
+    'jquery',
+    'Swissup_BreezeThemeEditor/js/test/helpers/mock-helper'
+], function($, MockHelper) {
     'use strict';
     
     var config = {
@@ -151,6 +154,59 @@ define(['jquery'], function($) {
             },
             
             /**
+             * Enable mock system for GraphQL queries
+             * Call this at the start of tests that need mocking
+             */
+            enableMocks: function() {
+                MockHelper.activate();
+            },
+            
+            /**
+             * Mock getCss GraphQL query
+             * 
+             * @param {Object} params - {storeId, themeId, status, publicationId}
+             * @param {Object} mockResponse - Mock data to return
+             * 
+             * @example
+             * this.mockGetCss({
+             *     storeId: 21,
+             *     themeId: 21,
+             *     status: 'PUBLICATION',
+             *     publicationId: 999
+             * }, fixtures.publicationGreenButton);
+             */
+            mockGetCss: function(params, mockResponse) {
+                MockHelper.mockGetCss(params, mockResponse);
+            },
+            
+            /**
+             * Mock any GraphQL operation
+             * 
+             * @param {String} operationName - GraphQL operation name
+             * @param {Object} variables - Query variables
+             * @param {Object} mockResponse - Mock data to return
+             */
+            mockOperation: function(operationName, variables, mockResponse) {
+                MockHelper.mockOperation(operationName, variables, mockResponse);
+            },
+            
+            /**
+             * Clear all registered mocks
+             * Call this after each test for cleanup
+             */
+            clearMocks: function() {
+                MockHelper.clearMocks();
+            },
+            
+            /**
+             * Disable mock system and restore original GraphQL client
+             * Call this at the end of test suite
+             */
+            disableMocks: function() {
+                MockHelper.deactivate();
+            },
+            
+            /**
              * Open Theme Editor panel if not already open
              */
             openPanel: function(callback) {
@@ -254,6 +310,13 @@ define(['jquery'], function($) {
         
         if (config.onTestComplete) {
             config.onTestComplete(result);
+        }
+        
+        // Clear mocks after each test to prevent pollution
+        try {
+            MockHelper.clearMocks();
+        } catch (e) {
+            // Mock helper not available, ignore
         }
         
         if (callback) {
@@ -372,6 +435,14 @@ define(['jquery'], function($) {
             
             function runNext() {
                 if (index >= suites.length) {
+                    // Deactivate mock system after all tests complete
+                    try {
+                        MockHelper.deactivate();
+                        console.log('✅ Mock system deactivated after all tests');
+                    } catch (e) {
+                        // Mock helper not available, ignore
+                    }
+                    
                     if (config.onSuiteComplete) {
                         config.onSuiteComplete(results);
                     }
