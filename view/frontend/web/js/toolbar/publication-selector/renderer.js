@@ -106,7 +106,7 @@ define([
         },
 
         _shouldShowPublishButton: function() {
-            return this.options.currentStatus === 'DRAFT' && this.options.draftChangesCount > 0;
+            return this.options.draftChangesCount > 0;
         },
 
         _getPublishButtonLabel: function() {
