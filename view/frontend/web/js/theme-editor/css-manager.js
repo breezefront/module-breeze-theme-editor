@@ -399,6 +399,28 @@ define([
         },
 
         /**
+         * Refresh iframe document reference after navigation
+         * This must be called when iframe loads a new page
+         */
+        refreshIframeDocument: function() {
+            iframeDocument = DeviceFrame.getDocument();
+            
+            if (!iframeDocument) {
+                console.error('❌ CSS Manager: Cannot refresh - iframe document not available');
+                return false;
+            }
+            
+            // Update style element references
+            $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
+            $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
+            $livePreviewStyle = $(iframeDocument).find('#bte-live-preview');
+            $publicationStyle = null; // Reset publication style
+            
+            console.log('🔄 CSS Manager: iframe document refreshed');
+            return true;
+        },
+
+        /**
          * Get current status
          */
         getCurrentStatus: function() {

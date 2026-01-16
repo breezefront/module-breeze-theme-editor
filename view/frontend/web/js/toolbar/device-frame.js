@@ -157,6 +157,9 @@ define([
             // Синхронізувати URL батьківського вікна з iframe
             this._syncIframeUrl();
 
+            // Setup iframe navigation handler to re-inject CSS after page load
+            this._setupNavigationHandler();
+
             return $iframe;
         },
 
@@ -306,6 +309,12 @@ define([
                     return;
                 }
 
+                // Remove old clone from iframe if exists (cleanup after navigation)
+                var $oldClone = $(iframeDocument).find('#' + styleId);
+                if ($oldClone.length) {
+                    $oldClone.remove();
+                }
+
                 var $clone = $original.clone();
                 
                 // IMPORTANT: Preserve both media and disabled attributes from original
@@ -318,6 +327,7 @@ define([
                 $clone.prop('disabled', isDisabled);
                 
                 // Зберегти посилання на оригінал та клон для синхронізації
+                // IMPORTANT: Update the reference to the NEW clone
                 $original.data('iframe-clone', $clone[0]);
                 
                 $iframeBody.append($clone);
@@ -396,6 +406,67 @@ define([
             $iframeBody.attr('class', mainBodyClasses);
 
             console.log('🔄 Synced body classes to iframe');
+        },
+
+        /**
+         * Setup handler to re-inject CSS styles after iframe navigation
+         */
+        _setupNavigationHandler: function() {
+            if (!$iframe || !$iframe[0]) {
+                console.warn('⚠️ Cannot setup navigation handler: iframe not initialized');
+                return;
+            }
+
+            var self = this;
+            var isInitialLoad = true;
+
+            // Listen to iframe load event
+            $iframe.on('load', function() {
+                // Skip initial load (already handled in init)
+                if (isInitialLoad) {
+                    isInitialLoad = false;
+                    console.log('📍 Initial iframe load - skipping re-injection');
+                    return;
+                }
+
+                console.log('🔄 Iframe navigated - re-injecting CSS Manager styles...');
+
+                // Update iframe references
+                iframeDocument = $iframe[0].contentDocument || $iframe[0].contentWindow.document;
+                iframeWindow = $iframe[0].contentWindow;
+
+                // Re-inject CSS Manager styles into the new document
+                self._copyCssManagerStyles();
+
+                // Re-setup sync observers
+                self._setupCssManagerSync();
+
+                // Notify CSS Manager to refresh its iframe document reference
+                require(['Swissup_BreezeThemeEditor/js/theme-editor/css-manager'], function(CssManager) {
+                    if (CssManager && CssManager.refreshIframeDocument) {
+                        CssManager.refreshIframeDocument();
+                        
+                        // Re-apply current state (DRAFT/PUBLISHED/PUBLICATION)
+                        var currentStatus = CssManager.getCurrentStatus();
+                        if (currentStatus) {
+                            console.log('🔄 Re-applying CSS state:', currentStatus);
+                            CssManager.switchTo(currentStatus);
+                        }
+                    }
+                });
+
+                // Notify CSS Preview Manager to re-create live preview style
+                require(['Swissup_BreezeThemeEditor/js/theme-editor/css-preview-manager'], function(CssPreviewManager) {
+                    if (CssPreviewManager && CssPreviewManager.recreateLivePreviewStyle) {
+                        CssPreviewManager.recreateLivePreviewStyle();
+                        console.log('✅ Live preview style re-created after navigation');
+                    }
+                });
+
+                console.log('✅ CSS Manager styles re-injected after navigation');
+            });
+
+            console.log('✅ Navigation handler setup complete');
         },
 
         /**

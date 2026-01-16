@@ -416,6 +416,30 @@ define([
         },
 
         /**
+         * Re-create live preview style element after iframe navigation
+         * Called by DeviceFrame when iframe loads new page
+         */
+        recreateLivePreviewStyle: function() {
+            // Update iframe reference
+            iframeDocument = DeviceFrame.getDocument();
+            if (!iframeDocument) {
+                console.warn('⚠️ Cannot recreate live preview: iframe not initialized');
+                return false;
+            }
+
+            // Re-create style element
+            this._createStyleElement();
+
+            // Re-apply existing changes
+            if (Object.keys(changes).length > 0) {
+                this._updateStyles();
+                console.log('✅ Re-applied', Object.keys(changes).length, 'live preview changes after navigation');
+            }
+
+            return true;
+        },
+
+        /**
          * Destroy preview manager
          */
         destroy: function() {
