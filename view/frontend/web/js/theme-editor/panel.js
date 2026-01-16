@@ -216,6 +216,9 @@ define([
                         setTimeout(function() {
                             CssPreviewManager.syncFieldsFromChanges(self.element);
                         }, 100);
+                    } else {
+                        // Clear live preview in read-only modes (PUBLISHED)
+                        CssPreviewManager.reset();
                     }
                 })
                 .catch(function(error) {
@@ -235,6 +238,10 @@ define([
             getConfigFromPublication(this.storeId, this.themeId, publicationId)
                 .then(function(config) {
                     console.log('✅ Config loaded from publication:', config);
+                    
+                    // Clear live preview changes (publication mode is read-only)
+                    CssPreviewManager.reset();
+                    
                     PanelState.init(config);
                     self._renderSections(config.sections);
                     self._hideLoader();

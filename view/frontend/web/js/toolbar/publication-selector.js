@@ -178,10 +178,17 @@ define([
 
             this.renderer.updateButton();
             this._closeDropdown();
-            this.element.trigger('loadThemeEditorFromPublication', {publicationId: publicationId});
             
-            // Update CSS manager with publication CSS
-            CssManager.switchTo('PUBLICATION', publicationId);
+            // Update CSS manager with publication CSS first, then load config
+            CssManager.switchTo('PUBLICATION', publicationId).then(function() {
+                console.log('✅ CSS switched to publication, now loading config');
+                // Trigger config load after CSS is ready
+                $(document).trigger('loadThemeEditorFromPublication', {publicationId: publicationId});
+            }).catch(function(error) {
+                console.error('❌ Failed to switch CSS to publication:', error);
+                // Still try to load config even if CSS fails
+                $(document).trigger('loadThemeEditorFromPublication', {publicationId: publicationId});
+            });
         },
 
         _loadMore: function(e) {
