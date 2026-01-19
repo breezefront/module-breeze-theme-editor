@@ -16,7 +16,8 @@ define([
             CssManager.switchTo('DRAFT');
             
             setTimeout(function() {
-                self.assertTrue(CssManager.isEditable(), 
+                var isEditable = CssManager.isEditable();
+                self.assertEquals(isEditable, true, 
                     'DRAFT mode should be editable');
                 done();
             }, 100);
@@ -27,7 +28,8 @@ define([
             CssManager.switchTo('PUBLISHED');
             
             setTimeout(function() {
-                self.assertFalse(CssManager.isEditable(), 
+                var isEditable = CssManager.isEditable();
+                self.assertEquals(isEditable, false, 
                     'PUBLISHED mode should be read-only');
                 done();
             }, 100);
@@ -37,7 +39,8 @@ define([
             var status = CssManager.getCurrentStatus();
             
             if (status === 'PUBLICATION') {
-                this.assertFalse(CssManager.isEditable(), 
+                var isEditable = CssManager.isEditable();
+                this.assertEquals(isEditable, false, 
                     'PUBLICATION mode should be read-only');
             } else {
                 this.assert(true, 'Not in PUBLICATION mode - test skipped');
@@ -55,10 +58,10 @@ define([
             var isEditable = CssManager.isEditable();
             
             if (status === 'DRAFT') {
-                this.assertTrue(isEditable, 
+                this.assertEquals(isEditable, true, 
                     'When status is DRAFT, isEditable should be true');
             } else {
-                this.assertFalse(isEditable, 
+                this.assertEquals(isEditable, false, 
                     'When status is not DRAFT, isEditable should be false');
             }
         }

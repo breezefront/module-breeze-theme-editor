@@ -18,7 +18,8 @@ define([
             
             if (status === 'PUBLICATION') {
                 var $publication = this.$iframe().find('#bte-publication-css');
-                this.assertTrue($publication.length > 0, 
+                var exists = $publication.length > 0;
+                this.assertEquals(exists, true, 
                     'Publication CSS style should exist in PUBLICATION mode');
             } else {
                 // Not in PUBLICATION mode - skip test
@@ -30,7 +31,8 @@ define([
             var status = CssManager.getCurrentStatus();
             
             if (status === 'PUBLICATION') {
-                this.assertFalse(CssManager.isEditable(), 
+                var isEditable = CssManager.isEditable();
+                this.assertEquals(isEditable, false, 
                     'PUBLICATION mode should be read-only');
             } else {
                 this.assert(true, 'Not in PUBLICATION mode - test skipped');
@@ -109,8 +111,8 @@ define([
                             'Live preview should have media="not all" in PUBLICATION mode');
                         
                         // Assert: Should NOT contain old draft changes
-                        self.assertFalse(
-                            cssContentAfter.indexOf('rgb(180, 24, 24)') !== -1,
+                        var hasOldDraft = cssContentAfter.indexOf('rgb(180, 24, 24)') !== -1;
+                        self.assertEquals(hasOldDraft, false,
                             'Live preview should NOT contain old draft changes (rgb(180, 24, 24))'
                         );
                         
@@ -229,19 +231,20 @@ define([
                             
                             console.log('📝 Live preview in publication:', publicationCssContent.substring(0, 80));
                             
-                            self.assertFalse(
-                                publicationCssContent.indexOf('rgb(180, 24, 24)') !== -1,
+                            var hasDraftChanges = publicationCssContent.indexOf('rgb(180, 24, 24)') !== -1;
+                            self.assertEquals(hasDraftChanges, false,
                                 'Publication mode should NOT show current draft changes (rgb(180, 24, 24))'
                             );
                             
-                            self.assertFalse(
-                                publicationCssContent.indexOf('--test-publication-isolation') !== -1,
+                            var hasTestVar = publicationCssContent.indexOf('--test-publication-isolation') !== -1;
+                            self.assertEquals(hasTestVar, false,
                                 'Publication mode should NOT show test variable from draft'
                             );
                             
                             // Assert 2: Publication CSS should exist
                             var $publicationStyle = self.$iframe().find('#bte-publication-css');
-                            self.assertTrue($publicationStyle.length > 0, 
+                            var styleExists = $publicationStyle.length > 0;
+                            self.assertEquals(styleExists, true, 
                                 'Publication CSS element should exist');
                             
                             self.assertEquals($publicationStyle.attr('media'), 'all',
@@ -293,7 +296,7 @@ define([
                     
                     console.log('📝 Live preview content:', cssContent.substring(0, 50));
                     
-                    self.assertTrue(isEmpty, 
+                    self.assertEquals(isEmpty, true, 
                         'Live preview should remain empty in PUBLICATION mode. Content: ' + cssContent.substring(0, 100));
                     
                     done();

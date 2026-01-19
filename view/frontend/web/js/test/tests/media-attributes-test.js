@@ -12,24 +12,28 @@ define([
         
         'published style should have media="all" in main document': function() {
             var $published = this.$('#bte-theme-css-variables');
-            this.assertTrue($published.length > 0, 'Published style should exist');
+            var exists = $published.length > 0;
+            this.assertEquals(exists, true, 'Published style should exist');
             this.assertEquals($published.attr('media'), 'all', 'Published should have media="all"');
         },
         
         'draft style should exist in main document': function() {
             var $draft = this.$('#bte-theme-css-variables-draft');
-            this.assertTrue($draft.length > 0, 'Draft style should exist');
+            var exists = $draft.length > 0;
+            this.assertEquals(exists, true, 'Draft style should exist');
         },
         
         'published style should have media="all" in iframe': function() {
             var $published = this.$iframe().find('#bte-theme-css-variables');
-            this.assertTrue($published.length > 0, 'Published style should exist in iframe');
+            var exists = $published.length > 0;
+            this.assertEquals(exists, true, 'Published style should exist in iframe');
             this.assertEquals($published.attr('media'), 'all', 'Iframe published should have media="all"');
         },
         
         'draft style should exist in iframe': function() {
             var $draft = this.$iframe().find('#bte-theme-css-variables-draft');
-            this.assertTrue($draft.length > 0, 'Draft style should exist in iframe');
+            var exists = $draft.length > 0;
+            this.assertEquals(exists, true, 'Draft style should exist in iframe');
         },
         
         'live-preview style should have media="all" when created': function() {
@@ -50,9 +54,9 @@ define([
             // If media="not all", disabled should be true
             // If media="all", disabled should be false
             if (mediaAttr === 'not all') {
-                this.assertTrue(disabledProp, 'disabled should be true when media="not all"');
+                this.assertEquals(disabledProp, true, 'disabled should be true when media="not all"');
             } else if (mediaAttr === 'all') {
-                this.assertFalse(disabledProp, 'disabled should be false when media="all"');
+                this.assertEquals(disabledProp, false, 'disabled should be false when media="all"');
             }
         }
     });

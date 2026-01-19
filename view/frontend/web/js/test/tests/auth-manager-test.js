@@ -63,7 +63,7 @@ define([
             
             var token = localStorage.getItem(STORAGE_KEY);
             
-            this.assertNull(token, 'Token should be null after clearing');
+            this.assertEquals(token, null, 'Token should be null after clearing');
         },
         
         /**
@@ -73,13 +73,15 @@ define([
             // Clear token
             localStorage.removeItem(STORAGE_KEY);
             
-            this.assertFalse(AuthManager.hasToken(), 
+            var hasToken = AuthManager.hasToken();
+            this.assertEquals(hasToken, false, 
                 'hasToken() should return false when no token exists');
             
             // Add token to localStorage
             localStorage.setItem(STORAGE_KEY, testToken);
             
-            this.assertTrue(AuthManager.hasToken(), 
+            hasToken = AuthManager.hasToken();
+            this.assertEquals(hasToken, true, 
                 'hasToken() should return true when token exists in localStorage');
             
             // Cleanup
@@ -96,10 +98,9 @@ define([
             var targetUrl = 'https://example.com/checkout';
             var urlWithToken = AuthManager.addTokenToUrl(targetUrl);
             
-            this.assertTrue(
-                urlWithToken.indexOf('breeze_theme_editor_access_token=' + testToken) !== -1,
-                'Token should be added to URL'
-            );
+            var tokenInUrl = urlWithToken.indexOf('breeze_theme_editor_access_token=' + testToken) !== -1;
+            this.assertEquals(tokenInUrl, true, 
+                'Token should be added to URL');
             
             // Cleanup
             localStorage.removeItem(STORAGE_KEY);
@@ -114,20 +115,17 @@ define([
             var targetUrl = 'https://example.com/checkout?foo=bar&baz=qux';
             var urlWithToken = AuthManager.addTokenToUrl(targetUrl);
             
-            this.assertTrue(
-                urlWithToken.indexOf('breeze_theme_editor_access_token=' + testToken) !== -1,
-                'Token should be added to URL with existing params'
-            );
+            var tokenInUrl = urlWithToken.indexOf('breeze_theme_editor_access_token=' + testToken) !== -1;
+            this.assertEquals(tokenInUrl, true, 
+                'Token should be added to URL with existing params');
             
-            this.assertTrue(
-                urlWithToken.indexOf('foo=bar') !== -1,
-                'Existing params should be preserved'
-            );
+            var hasFoo = urlWithToken.indexOf('foo=bar') !== -1;
+            this.assertEquals(hasFoo, true, 
+                'Existing params should be preserved');
             
-            this.assertTrue(
-                urlWithToken.indexOf('baz=qux') !== -1,
-                'All existing params should be preserved'
-            );
+            var hasBaz = urlWithToken.indexOf('baz=qux') !== -1;
+            this.assertEquals(hasBaz, true, 
+                'All existing params should be preserved');
             
             // Cleanup
             localStorage.removeItem(STORAGE_KEY);

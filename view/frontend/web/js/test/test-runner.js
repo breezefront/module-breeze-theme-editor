@@ -60,7 +60,8 @@ define([
                 // Auto-run if requested
                 if (config.autoRun) {
                     console.log('▶ Auto-running tests...');
-                    setTimeout(runAllTests, 500);
+                    // Wait 2s to allow CSS Manager initialization (needs ~1.5s total)
+                    setTimeout(runAllTests, 2000);
                 }
             });
         }

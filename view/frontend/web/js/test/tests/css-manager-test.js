@@ -49,7 +49,8 @@ define([
         'should be editable in DRAFT mode': function() {
             var status = CssManager.getCurrentStatus();
             if (status === 'DRAFT') {
-                this.assertTrue(CssManager.isEditable(), 'DRAFT mode should be editable');
+                var isEditable = CssManager.isEditable();
+                this.assertEquals(isEditable, true, 'DRAFT mode should be editable');
             }
         },
         
@@ -58,7 +59,8 @@ define([
             CssManager.switchTo('PUBLISHED');
             
             setTimeout(function() {
-                self.assertFalse(CssManager.isEditable(), 'PUBLISHED mode should be read-only');
+                var isEditable = CssManager.isEditable();
+                self.assertEquals(isEditable, false, 'PUBLISHED mode should be read-only');
                 done();
             }, 100);
         },
