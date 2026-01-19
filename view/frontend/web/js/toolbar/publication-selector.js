@@ -8,8 +8,9 @@ define([
     'Swissup_BreezeThemeEditor/js/toolbar/publication-selector/renderer',
     'Swissup_BreezeThemeEditor/js/toolbar/publication-selector/metadata-loader',
     'Swissup_BreezeThemeEditor/js/toolbar/publication-selector/publish-handler',
-    'Swissup_BreezeThemeEditor/js/theme-editor/css-manager'
-], function ($, widget, Renderer, MetadataLoader, PublishHandler, CssManager) {
+    'Swissup_BreezeThemeEditor/js/theme-editor/css-manager',
+    'Swissup_BreezeThemeEditor/js/theme-editor/storage-helper'
+], function ($, widget, Renderer, MetadataLoader, PublishHandler, CssManager, StorageHelper) {
     'use strict';
 
     $.widget('swissup.publicationSelector', {
@@ -45,14 +46,20 @@ define([
                 this.options.themeId = this.options.themeId || editorConfig.themeId;
             }
 
-            this.options.currentStatus = localStorage.getItem('bte_current_status') || 'DRAFT';
-            this.options.currentPublicationId = parseInt(localStorage.getItem('bte_current_publication_id')) || null;
-            this.options.currentPublicationTitle = localStorage.getItem('bte_current_publication_title') || null;
+            // Initialize storage helper
+            if (this.options.storeId && this.options.themeId) {
+                StorageHelper.init(this.options.storeId, this.options.themeId);
+            }
+
+            this.options.currentStatus = StorageHelper.getCurrentStatus();
+            this.options.currentPublicationId = StorageHelper.getCurrentPublicationId();
+            this.options.currentPublicationTitle = StorageHelper.getCurrentPublicationTitle();
 
             console.log('📊 Config:', {
                 storeId: this.options.storeId,
                 themeId: this.options.themeId,
-                currentStatus: this.options.currentStatus
+                currentStatus: this.options.currentStatus,
+                'StorageHelper status': StorageHelper.getCurrentStatus()
             });
         },
 
@@ -138,9 +145,8 @@ define([
             var status = $(e.currentTarget).data('status');
             console.log('🔄 Switching to status:', status);
 
-            localStorage.setItem('bte_current_status', status);
-            localStorage.removeItem('bte_current_publication_id');
-            localStorage.removeItem('bte_current_publication_title');
+            StorageHelper.setCurrentStatus(status);
+            StorageHelper.clearCurrentPublication();
 
             this.options.currentStatus = status;
             this.options.currentPublicationId = null;
@@ -168,9 +174,9 @@ define([
                 return;
             }
 
-            localStorage.setItem('bte_current_status', 'PUBLICATION');
-            localStorage.setItem('bte_current_publication_id', publicationId);
-            localStorage.setItem('bte_current_publication_title', publication.title);
+            StorageHelper.setCurrentStatus('PUBLICATION');
+            StorageHelper.setCurrentPublicationId(publicationId);
+            StorageHelper.setCurrentPublicationTitle(publication.title);
 
             this.options.currentStatus = 'PUBLICATION';
             this.options.currentPublicationId = publicationId;

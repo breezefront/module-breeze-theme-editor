@@ -12,7 +12,8 @@ define([
     'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
-    'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values'
+    'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values',
+    'Swissup_BreezeThemeEditor/js/theme-editor/storage-helper'
 ], function (
     $,
     widget,
@@ -27,7 +28,8 @@ define([
     Toastify,
     getConfig,
     getConfigFromPublication,
-    saveValues
+    saveValues,
+    StorageHelper
 ) {
     'use strict';
 
@@ -43,24 +45,26 @@ define([
             console.log('✅ Initializing Theme Editor Panel');
 
             var config = $('body').data('breeze-editor-config');
-
             if (config) {
                 this.storeId = config.storeId;
                 this.themeId = config.themeId;
                 this.themeName = config.themeName || 'current theme';
                 this.adminUrl = config.adminUrl || '/admin';
-                console.log('📊 Panel config:', {
+                var scopeLabel = {
                     storeId: this.storeId,
-                    themeId: this.themeId,
-                    themeName: this.themeName,
-                    adminUrl: this.adminUrl
-                });
+                    themeName: this.themeName
+                };
+                this.options.title = this.options.title.replace('%1', scopeLabel.storeId).replace('%2', scopeLabel.themeName);
             } else {
-                console.error('❌ Breeze editor config not found in body data!');
                 this.storeId = this.options.storeId || 1;
                 this.themeId = this.options.themeId || 0;
                 this.themeName = 'current theme';
                 this.adminUrl = '/admin';
+            }
+
+            // Initialize storage helper
+            if (this.storeId && this.themeId) {
+                StorageHelper.init(this.storeId, this.themeId);
             }
 
             this.template = mageTemplate(panelTemplate);
@@ -69,7 +73,7 @@ define([
             this._initPreview();
             
             // Read current mode from localStorage (sync with Publication Selector)
-            var currentStatus = localStorage.getItem('bte_current_status') || 'DRAFT';
+            var currentStatus = StorageHelper.getCurrentStatus();
             this.options.status = currentStatus;
             
             console.log('📍 Panel initializing with mode:', currentStatus);
@@ -77,7 +81,7 @@ define([
             // Load config based on current mode
             if (currentStatus === 'PUBLICATION') {
                 // PUBLICATION mode: load from specific historical publication
-                var publicationId = parseInt(localStorage.getItem('bte_current_publication_id'), 10);
+                var publicationId = StorageHelper.getCurrentPublicationId();
                 if (publicationId && !isNaN(publicationId)) {
                     console.log('📥 Loading config from publication #' + publicationId);
                     this._loadConfigFromPublication(publicationId);

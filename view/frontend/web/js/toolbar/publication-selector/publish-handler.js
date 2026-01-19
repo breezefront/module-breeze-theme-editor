@@ -7,8 +7,9 @@ define([
     'mage/translate',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/publish',
     'Swissup_BreezeThemeEditor/js/theme-editor/panel-state',
-    'Swissup_BreezeThemeEditor/js/lib/toastify'
-], function ($, $t, publishMutation, PanelState, Toastify) {
+    'Swissup_BreezeThemeEditor/js/lib/toastify',
+    'Swissup_BreezeThemeEditor/js/theme-editor/storage-helper'
+], function ($, $t, publishMutation, PanelState, Toastify, StorageHelper) {
     'use strict';
 
     function PublishHandler(options, renderer, metadataLoader) {
@@ -103,9 +104,9 @@ define([
             this.options.draftChangesCount = 0;
 
             // Switch to PUBLISHED status (since draft was deleted)
-            localStorage.setItem('bte_current_status', 'PUBLISHED');
-            localStorage.removeItem('bte_current_publication_id');
-            localStorage.removeItem('bte_current_publication_title');
+            StorageHelper.setCurrentStatus('PUBLISHED');
+            StorageHelper.clearCurrentPublication();
+            
             this.options.currentStatus = 'PUBLISHED';
             this.options.currentPublicationId = null;
             this.options.currentPublicationTitle = null;

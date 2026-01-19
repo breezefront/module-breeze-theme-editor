@@ -1,8 +1,9 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/toolbar/device-frame',
-    'Swissup_BreezeThemeEditor/js/graphql/queries/get-css'
-], function ($, DeviceFrame, getCss) {
+    'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
+    'Swissup_BreezeThemeEditor/js/theme-editor/storage-helper'
+], function ($, DeviceFrame, getCss, StorageHelper) {
     'use strict';
 
     var iframeDocument = null;
@@ -40,6 +41,9 @@ define([
             
             storeId = store;
             themeId = theme;
+            
+            // Initialize storage helper with store/theme context
+            StorageHelper.init(store, theme);
             
             // Validate parameters
             if (!storeId || !themeId) {
@@ -92,11 +96,9 @@ define([
          * @private
          */
         _getStoredStatus: function() {
-            try {
-                return localStorage.getItem('bte_current_status') || 'DRAFT';
-            } catch (e) {
-                return 'DRAFT';
-            }
+            var status = StorageHelper.getCurrentStatus();
+            console.log('🔍 Getting stored status from localStorage:', status);
+            return status;
         },
 
         /**
@@ -104,12 +106,7 @@ define([
          * @private
          */
         _getStoredPublicationId: function() {
-            try {
-                var id = localStorage.getItem('bte_current_publication_id');
-                return id ? parseInt(id, 10) : null;
-            } catch (e) {
-                return null;
-            }
+            return StorageHelper.getCurrentPublicationId();
         },
 
         /**
@@ -199,6 +196,7 @@ define([
 
             currentStatus = 'PUBLISHED';
             console.log('📘 CSS Manager: Showing PUBLISHED (read-only mode)');
+            console.trace('📘 showPublished() call stack');
             return true;
         },
 
@@ -237,6 +235,7 @@ define([
 
             currentStatus = 'DRAFT';
             console.log('📗 CSS Manager: Showing DRAFT (editable mode)');
+            console.trace('📗 showDraft() call stack');
             return true;
         },
 
