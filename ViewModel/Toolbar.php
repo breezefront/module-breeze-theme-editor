@@ -226,13 +226,22 @@ class Toolbar implements ArgumentInterface
     {
         $currentFullActionName = $this->request->getFullActionName();
         $pages = $this->pageUrlProvider->getAvailablePages();
+        $token = $this->getAccessToken();
 
         $result = [];
         foreach ($pages as $actionName => $data) {
+            $url = $data['url'];
+            
+            // Add access token to URL for navigation persistence
+            if ($token) {
+                $separator = strpos($url, '?') !== false ? '&' : '?';
+                $url .= $separator . $this->accessToken->getParamName() . '=' . urlencode($token);
+            }
+            
             $result[] = [
                 'id' => $actionName,
                 'title' => (string)$data['title'],
-                'url' => $data['url'],
+                'url' => $url,
                 'active' => $actionName === $currentFullActionName
             ];
         }
