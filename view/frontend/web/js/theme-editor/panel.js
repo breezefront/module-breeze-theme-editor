@@ -67,7 +67,31 @@ define([
             this._render();
             this._bind();
             this._initPreview();
-            this._loadConfig();
+            
+            // Read current mode from localStorage (sync with Publication Selector)
+            var currentStatus = localStorage.getItem('bte_current_status') || 'DRAFT';
+            this.options.status = currentStatus;
+            
+            console.log('📍 Panel initializing with mode:', currentStatus);
+            
+            // Load config based on current mode
+            if (currentStatus === 'PUBLICATION') {
+                // PUBLICATION mode: load from specific historical publication
+                var publicationId = parseInt(localStorage.getItem('bte_current_publication_id'), 10);
+                if (publicationId && !isNaN(publicationId)) {
+                    console.log('📥 Loading config from publication #' + publicationId);
+                    this._loadConfigFromPublication(publicationId);
+                } else {
+                    // Fallback: no valid publication ID found
+                    console.warn('⚠️ PUBLICATION mode but no valid publication ID, falling back to DRAFT');
+                    this.options.status = 'DRAFT';
+                    this._loadConfig();
+                }
+            } else {
+                // DRAFT or PUBLISHED mode: load via standard config query
+                console.log('📥 Loading config with status:', currentStatus);
+                this._loadConfig();
+            }
         },
 
         _render: function () {
@@ -197,15 +221,19 @@ define([
 
         /**
          * Load theme config from GraphQL
+         * Used for DRAFT and PUBLISHED modes
+         * For PUBLICATION mode (historical), use _loadConfigFromPublication() instead
          */
         _loadConfig: function() {
             var self = this;
 
             this._showLoader('Loading configuration...');
+            
+            console.log('📥 Loading config with status:', this.options.status);
 
             getConfig(this.storeId, this.themeId, this.options.status)
                 .then(function(data) {
-                    console.log('✅ Config loaded:', data);
+                    console.log('✅ Config loaded for status "' + self.options.status + '":', data);
                     var config = data.breezeThemeEditorConfig;
                     PanelState.init(config);
                     self._renderSections(config.sections);
@@ -229,7 +257,9 @@ define([
         },
 
         /**
-         * Load config from specific publication
+         * Load config from specific publication (historical snapshot)
+         * Used for PUBLICATION mode
+         * For DRAFT/PUBLISHED modes, use _loadConfig() instead
          */
         _loadConfigFromPublication: function(publicationId) {
             var self = this;
