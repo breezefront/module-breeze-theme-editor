@@ -71,14 +71,14 @@ define([], function() {
         },
         
         /**
-         * Mock: Published CSS (base theme)
+         * Mock: Published CSS (base theme with red color)
          * Use for testing PUBLISHED mode
          */
         publishedBase: {
             getThemeEditorCss: {
                 css: `:root {
     --button-primary-bg: 25, 118, 210;  /* Default blue */
-    --base-color: 17, 24, 39;            /* Default dark */
+    --base-color: 180, 24, 24;           /* Red color (published) */
 }`,
                 status: 'PUBLISHED',
                 hasContent: true
@@ -86,14 +86,14 @@ define([], function() {
         },
         
         /**
-         * Mock: Draft CSS with changes
+         * Mock: Draft CSS with changes (blue color)
          * Use for testing DRAFT mode
          */
         draftWithChanges: {
             getThemeEditorCss: {
                 css: `:root {
-    --button-primary-bg: 220, 38, 38;  /* Red (modified) */
-    --base-color: 180, 24, 24;         /* Dark red (modified) */
+    --button-primary-bg: 220, 38, 38;  /* Red button (modified) */
+    --base-color: 15, 39, 219;          /* Blue color (draft) */
 }`,
                 status: 'DRAFT',
                 hasContent: true
