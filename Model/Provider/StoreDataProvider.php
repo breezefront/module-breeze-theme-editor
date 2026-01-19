@@ -4,6 +4,7 @@ namespace Swissup\BreezeThemeEditor\Model\Provider;
 
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\UrlInterface;
+use Swissup\BreezeThemeEditor\Model\Data\AccessToken;
 
 class StoreDataProvider
 {
@@ -18,15 +19,23 @@ class StoreDataProvider
     private $urlBuilder;
 
     /**
+     * @var AccessToken
+     */
+    private $accessToken;
+
+    /**
      * @param StoreManagerInterface $storeManager
      * @param UrlInterface $urlBuilder
+     * @param AccessToken $accessToken
      */
     public function __construct(
         StoreManagerInterface $storeManager,
-        UrlInterface $urlBuilder
+        UrlInterface $urlBuilder,
+        AccessToken $accessToken
     ) {
         $this->storeManager = $storeManager;
         $this->urlBuilder = $urlBuilder;
+        $this->accessToken = $accessToken;
     }
 
     /**
@@ -101,11 +110,20 @@ class StoreDataProvider
     {
         try {
             // Get current URL on target store
-            return $store->getCurrentUrl(false);
+            $url = $store->getCurrentUrl(false);
         } catch (\Exception $e) {
             // Fallback to base URL
-            return $store->getBaseUrl();
+            $url = $store->getBaseUrl();
         }
+        
+        // Add access token for toolbar persistence
+        $token = $this->accessToken->getToken();
+        if ($token) {
+            $separator = strpos($url, '?') !== false ? '&' : '?';
+            $url .= $separator . $this->accessToken->getParamName() . '=' . urlencode($token);
+        }
+        
+        return $url;
     }
 
     /**
