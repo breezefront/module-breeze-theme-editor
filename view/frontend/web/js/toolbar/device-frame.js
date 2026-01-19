@@ -1,6 +1,7 @@
 define([
-    'jquery'
-], function ($) {
+    'jquery',
+    'Swissup_BreezeThemeEditor/js/auth-manager'
+], function ($, AuthManager) {
     'use strict';
 
     var $iframe;
@@ -526,8 +527,8 @@ define([
                     return;
                 }
 
-                // Зберегти access token з батьківського URL
-                var accessToken = parentUrl.searchParams.get('breeze_theme_editor_access_token');
+                // Отримати token з AuthManager (може бути з URL або localStorage)
+                var accessToken = AuthManager.getToken();
 
                 // Видалити старий token з iframe URL якщо є
                 url.searchParams.delete('breeze_theme_editor_access_token');

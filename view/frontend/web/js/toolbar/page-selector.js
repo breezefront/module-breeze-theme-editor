@@ -2,8 +2,9 @@ define([
     'jquery',
     'jquery-ui-modules/widget',
     'mage/template',
-    'text!Swissup_BreezeThemeEditor/template/toolbar/page-selector.html'
-], function ($, widget, mageTemplate, pageSelectorTemplate) {
+    'text!Swissup_BreezeThemeEditor/template/toolbar/page-selector.html',
+    'Swissup_BreezeThemeEditor/js/auth-manager'
+], function ($, widget, mageTemplate, pageSelectorTemplate, AuthManager) {
     'use strict';
 
     $.widget('swissup.breezePageSelector', {
@@ -106,41 +107,13 @@ define([
             }]);
 
             // Redirect with access token
-            var urlWithToken = this._addAccessToken(pageUrl);
+            var urlWithToken = AuthManager.addTokenToUrl(pageUrl);
             console.log('➡️ Redirecting to:', urlWithToken);
 
             // Додати невелику затримку для відображення стану
             setTimeout(function() {
                 window.location.href = urlWithToken;
             }, 100);
-        },
-
-        /**
-         * Get access token from current URL
-         *
-         * @return {string|null}
-         */
-        _getAccessToken: function() {
-            var urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('breeze_theme_editor_access_token');
-        },
-
-        /**
-         * Add access token to URL to keep editor active
-         *
-         * @param {string} url
-         * @return {string}
-         */
-        _addAccessToken: function(url) {
-            var token = this._getAccessToken();
-
-            if (!token) {
-                console.warn('Access token not found in current URL');
-                return url;
-            }
-
-            var separator = url.indexOf('?') !== -1 ? '&' : '?';
-            return url + separator + 'breeze_theme_editor_access_token=' + encodeURIComponent(token);
         },
 
         _destroy: function () {

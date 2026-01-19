@@ -50,6 +50,7 @@ class TestRunner extends Template
     public function getTestModules()
     {
         return [
+            'Swissup_BreezeThemeEditor/js/test/tests/auth-manager-test',
             'Swissup_BreezeThemeEditor/js/test/tests/css-manager-test',
             'Swissup_BreezeThemeEditor/js/test/tests/media-attributes-test',
             'Swissup_BreezeThemeEditor/js/test/tests/mode-switching-test',

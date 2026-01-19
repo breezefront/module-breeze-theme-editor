@@ -2,6 +2,7 @@ define([
     'jquery',
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/toolbar.html',
+    'Swissup_BreezeThemeEditor/js/auth-manager',
     'Swissup_BreezeThemeEditor/js/toolbar/admin-link',
     'Swissup_BreezeThemeEditor/js/toolbar/navigation',
     'Swissup_BreezeThemeEditor/js/toolbar/publication-selector',
@@ -13,7 +14,7 @@ define([
     'Swissup_BreezeThemeEditor/js/toolbar/exit-button',
     'Swissup_BreezeThemeEditor/js/theme-editor/css-manager',
     'domReady!'
-], function ($, mageTemplate, toolbarTemplate, AdminLink, Navigation, PublicationSelector, 
+], function ($, mageTemplate, toolbarTemplate, AuthManager, AdminLink, Navigation, PublicationSelector, 
              ScopeSelector, PageSelector, DeviceSwitcher, HighlightToggle, ToolbarToggle, 
              ExitButton, CssManager) {
     'use strict';
@@ -28,6 +29,14 @@ define([
 
         if ($mainBody.data('breeze-toolbar-initialized')) {
             console.warn('⚠️ Toolbar already initialized');
+            return;
+        }
+
+        // Initialize auth manager and get token
+        var accessToken = AuthManager.init();
+
+        if (!accessToken) {
+            console.error('❌ No access token available - toolbar cannot initialize');
             return;
         }
 
@@ -48,7 +57,7 @@ define([
             themeName: config.themeName,
             websiteId: config.websiteId,
             graphqlEndpoint: config.graphqlEndpoint,
-            accessToken: config.accessToken,
+            accessToken: accessToken, // Use token from AuthManager
             adminUrl: config.components && config.components.adminLink ? config.components.adminLink.adminUrl : '/admin'
         });
 
