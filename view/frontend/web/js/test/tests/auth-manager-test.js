@@ -2,7 +2,7 @@
  * Auth Manager Tests
  *
  * Tests token storage and retrieval from localStorage.
- * Simplified version without window.location modification.
+ * Uses mocks to isolate from real URL parameters.
  */
 define([
     'Swissup_BreezeThemeEditor/js/test/test-framework',
@@ -12,6 +12,9 @@ define([
     
     var STORAGE_KEY = 'bte_access_token';
     var testToken = 'test_token_12345';
+    
+    // Store original methods for mocking
+    var originalGetTokenFromUrl = null;
     
     return TestFramework.suite('Auth Manager', {
         
@@ -67,61 +70,67 @@ define([
         },
         
         /**
-         * Test hasToken() method
-         * Note: hasToken() checks URL first, then localStorage
-         * In test environment, URL contains token, so we test getTokenFromStorage() directly
+         * Test hasToken() method with mock to isolate from URL
          */
         'Should check if token exists': function() {
+            // Mock getTokenFromUrl to return null (isolate from real URL)
+            originalGetTokenFromUrl = AuthManager.getTokenFromUrl;
+            AuthManager.getTokenFromUrl = function() { return null; };
+            
             // Clear token from localStorage
             localStorage.removeItem(STORAGE_KEY);
             
-            var tokenFromStorage = AuthManager.getTokenFromStorage();
-            this.assertEquals(tokenFromStorage, null, 
-                'getTokenFromStorage() should return null when no token in localStorage');
+            var hasToken = AuthManager.hasToken();
+            this.assertEquals(hasToken, false, 
+                'hasToken() should return false when no token exists');
             
             // Add token to localStorage
             localStorage.setItem(STORAGE_KEY, testToken);
             
-            tokenFromStorage = AuthManager.getTokenFromStorage();
-            this.assertEquals(tokenFromStorage, testToken, 
-                'getTokenFromStorage() should return token when it exists in localStorage');
+            hasToken = AuthManager.hasToken();
+            this.assertEquals(hasToken, true, 
+                'hasToken() should return true when token exists');
             
             // Cleanup
             localStorage.removeItem(STORAGE_KEY);
+            AuthManager.getTokenFromUrl = originalGetTokenFromUrl;
         },
         
         /**
-         * Test adding token to URL
-         * Note: In test environment, URL contains real token (from URL param)
-         * getToken() prioritizes URL token over localStorage, so we test with real token
+         * Test adding token to URL with mock to use testToken
          */
         'Should add token to URL': function() {
+            // Mock getToken to return testToken
+            var originalGetToken = AuthManager.getToken;
+            AuthManager.getToken = function() { return testToken; };
+            
             var targetUrl = 'https://example.com/checkout';
             var urlWithToken = AuthManager.addTokenToUrl(targetUrl);
             
-            // Check that token parameter exists (any token value)
-            var hasTokenParam = urlWithToken.indexOf('breeze_theme_editor_access_token=') !== -1;
-            this.assertEquals(hasTokenParam, true, 
-                'Token parameter should be added to URL');
+            // Check that testToken was added
+            var hasTestToken = urlWithToken.indexOf('breeze_theme_editor_access_token=' + testToken) !== -1;
+            this.assertEquals(hasTestToken, true, 
+                'Token should be added to URL');
             
-            // Check that URL was actually modified
-            var urlWasModified = urlWithToken !== targetUrl;
-            this.assertEquals(urlWasModified, true,
-                'URL should be modified to include token');
+            // Restore original
+            AuthManager.getToken = originalGetToken;
         },
         
         /**
-         * Test adding token to URL with existing query params
-         * Note: Uses real token from URL parameter, not testToken
+         * Test adding token to URL with existing query params and mock
          */
         'Should add token to URL with existing params': function() {
+            // Mock getToken to return testToken
+            var originalGetToken = AuthManager.getToken;
+            AuthManager.getToken = function() { return testToken; };
+            
             var targetUrl = 'https://example.com/checkout?foo=bar&baz=qux';
             var urlWithToken = AuthManager.addTokenToUrl(targetUrl);
             
-            // Check that token parameter exists (any token value)
-            var hasTokenParam = urlWithToken.indexOf('breeze_theme_editor_access_token=') !== -1;
-            this.assertEquals(hasTokenParam, true, 
-                'Token parameter should be added to URL with existing params');
+            // Check that testToken was added
+            var hasTestToken = urlWithToken.indexOf('breeze_theme_editor_access_token=' + testToken) !== -1;
+            this.assertEquals(hasTestToken, true, 
+                'Token should be added to URL with existing params');
             
             // Check that existing params are preserved
             var hasFoo = urlWithToken.indexOf('foo=bar') !== -1;
@@ -131,6 +140,9 @@ define([
             var hasBaz = urlWithToken.indexOf('baz=qux') !== -1;
             this.assertEquals(hasBaz, true, 
                 'All existing params should be preserved');
+            
+            // Restore original
+            AuthManager.getToken = originalGetToken;
         }
     });
 });
