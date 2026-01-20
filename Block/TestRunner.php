@@ -59,6 +59,11 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/live-preview-test',
             'Swissup_BreezeThemeEditor/js/test/tests/edit-restrictions-test',
             'Swissup_BreezeThemeEditor/js/test/tests/error-handling-test',
+            // Palette System Tests (32 tests)
+            'Swissup_BreezeThemeEditor/js/test/tests/palette-manager-test',
+            'Swissup_BreezeThemeEditor/js/test/tests/palette-graphql-test',
+            'Swissup_BreezeThemeEditor/js/test/tests/palette-section-renderer-test',
+            'Swissup_BreezeThemeEditor/js/test/tests/palette-integration-test',
         ];
     }
 }
