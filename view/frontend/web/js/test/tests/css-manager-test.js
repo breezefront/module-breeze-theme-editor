@@ -67,13 +67,26 @@ define([
         
         'should switch to DRAFT mode': function(done) {
             var self = this;
-            CssManager.switchTo('DRAFT');
             
-            setTimeout(function() {
-                self.assertEquals(CssManager.getCurrentStatus(), 'DRAFT', 
-                    'Should switch to DRAFT status');
-                done();
-            }, 100);
+            // First ensure CSS Manager is initialized
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                    done(err);
+                    return;
+                }
+                
+                // Now switch to DRAFT
+                CssManager.switchTo('DRAFT');
+                
+                setTimeout(function() {
+                    self.assertEquals(CssManager.getCurrentStatus(), 'DRAFT', 
+                        'Should switch to DRAFT status');
+                    done();
+                }, 100);
+            });
         }
     });
 });

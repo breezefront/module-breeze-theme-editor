@@ -17,10 +17,21 @@ define([
             this.assertEquals($published.attr('media'), 'all', 'Published should have media="all"');
         },
         
-        'draft style should exist in main document': function() {
-            var $draft = this.$('#bte-theme-css-variables-draft');
-            var exists = $draft.length > 0;
-            this.assertEquals(exists, true, 'Draft style should exist');
+        'draft style should exist in main document': function(done) {
+            var self = this;
+            
+            // Wait for draft style to be created by CSS Manager
+            this.waitFor(function() {
+                return self.$('#bte-theme-css-variables-draft').length > 0;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('Draft style not created: ' + err.message);
+                } else {
+                    var $draft = self.$('#bte-theme-css-variables-draft');
+                    self.assertEquals($draft.length > 0, true, 'Draft style should exist');
+                }
+                done(err);
+            });
         },
         
         'published style should have media="all" in iframe': function() {
@@ -30,20 +41,40 @@ define([
             this.assertEquals($published.attr('media'), 'all', 'Iframe published should have media="all"');
         },
         
-        'draft style should exist in iframe': function() {
-            var $draft = this.$iframe().find('#bte-theme-css-variables-draft');
-            var exists = $draft.length > 0;
-            this.assertEquals(exists, true, 'Draft style should exist in iframe');
+        'draft style should exist in iframe': function(done) {
+            var self = this;
+            
+            // Wait for draft style to be created in iframe
+            this.waitFor(function() {
+                return self.$iframe().find('#bte-theme-css-variables-draft').length > 0;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('Draft style not created in iframe: ' + err.message);
+                } else {
+                    var $draft = self.$iframe().find('#bte-theme-css-variables-draft');
+                    self.assertEquals($draft.length > 0, true, 'Draft style should exist in iframe');
+                }
+                done(err);
+            });
         },
         
-        'live-preview style should have media="all" when created': function() {
-            var $livePreview = this.$iframe().find('#bte-live-preview');
-            if ($livePreview.length > 0) {
-                this.assertEquals($livePreview.attr('media'), 'all', 'Live preview should have media="all"');
-            } else {
-                // Live preview might not be created yet - that's OK
-                this.assert(true, 'Live preview not created yet (will be created when panel opens)');
-            }
+        'live-preview style should have media="all" when created': function(done) {
+            var self = this;
+            
+            // Wait for live preview to be created (happens when panel opens)
+            this.waitFor(function() {
+                return self.$iframe().find('#bte-live-preview').length > 0;
+            }, 3000, function(err) {
+                if (err) {
+                    // Live preview might not be created yet - that's OK
+                    self.assert(true, 'Live preview not created yet (will be created when panel opens)');
+                    done();
+                } else {
+                    var $livePreview = self.$iframe().find('#bte-live-preview');
+                    self.assertEquals($livePreview.attr('media'), 'all', 'Live preview should have media="all"');
+                    done();
+                }
+            });
         },
         
         'disabled attribute should also be set as fallback': function() {

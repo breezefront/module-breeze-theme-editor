@@ -51,7 +51,13 @@ define([
             this.element.html(paletteTemplate);
 
             // Cache selectors
+            this.$header = this.element.find('.bte-palette-header');
+            this.$content = this.element.find('.bte-palette-content');
             this.$grid = this.element.find('.bte-palette-grid');
+            
+            // Open by default
+            this.$header.addClass('active');
+            this.$content.addClass('active').show();
 
             // Render palettes
             this._renderPalettes();
@@ -164,6 +170,21 @@ define([
         _bind: function () {
             var self = this;
 
+            // Toggle accordion
+            this.$header.on('click', function() {
+                var isActive = self.$header.hasClass('active');
+                
+                if (isActive) {
+                    self.$header.removeClass('active');
+                    self.$content.removeClass('active').slideUp(200);
+                } else {
+                    self.$header.addClass('active');
+                    self.$content.addClass('active').slideDown(200);
+                }
+                
+                console.log('🔄 Palette accordion toggled:', !isActive);
+            });
+
             // Click on swatch container → trigger hidden input
             this.$grid.on('click', '.bte-palette-swatch', function(e) {
                 if ($(e.target).hasClass('bte-swatch-input')) {
@@ -222,6 +243,7 @@ define([
          * Destroy widget
          */
         _destroy: function () {
+            this.$header.off('click');
             this.$grid.off('click', '.bte-palette-swatch');
             this.$grid.off('change', '.bte-swatch-input');
             this._super();

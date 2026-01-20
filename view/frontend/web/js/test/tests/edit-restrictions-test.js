@@ -13,14 +13,26 @@ define([
         
         'DRAFT mode should be editable': function(done) {
             var self = this;
-            CssManager.switchTo('DRAFT');
             
-            setTimeout(function() {
-                var isEditable = CssManager.isEditable();
-                self.assertEquals(isEditable, true, 
-                    'DRAFT mode should be editable');
-                done();
-            }, 100);
+            // First ensure CSS Manager is initialized
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                    done(err);
+                    return;
+                }
+                
+                CssManager.switchTo('DRAFT');
+                
+                setTimeout(function() {
+                    var isEditable = CssManager.isEditable();
+                    self.assertEquals(isEditable, true, 
+                        'DRAFT mode should be editable');
+                    done();
+                }, 100);
+            });
         },
         
         'PUBLISHED mode should be read-only': function(done) {

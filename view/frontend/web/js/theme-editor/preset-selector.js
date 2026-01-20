@@ -50,6 +50,8 @@ define([
             this.element.html(html);
 
             // Cache selectors
+            this.$header = this.element.find('.bte-preset-header');
+            this.$content = this.element.find('.bte-preset-content');
             this.$select = this.element.find('.bte-preset-select');
             this.$preview = this.element.find('.bte-preset-preview');
             this.$description = this.element.find('.bte-preset-description');
@@ -61,6 +63,10 @@ define([
             this.$dialogConfirm = this.element.find('.bte-dialog-confirm');
             this.$dialogCancel = this.element.find('.bte-dialog-cancel');
             this.$unsavedCount = this.element.find('.bte-unsaved-count');
+            
+            // Collapsed by default
+            this.$header.removeClass('active');
+            this.$content.removeClass('active').hide();
 
             console.log('📋 Preset Selector rendered');
         },
@@ -69,6 +75,23 @@ define([
          * Bind event handlers
          */
         _bind: function () {
+            var self = this;
+            
+            // Toggle accordion
+            this.$header.on('click', function() {
+                var isActive = self.$header.hasClass('active');
+                
+                if (isActive) {
+                    self.$header.removeClass('active');
+                    self.$content.removeClass('active').slideUp(200);
+                } else {
+                    self.$header.addClass('active');
+                    self.$content.addClass('active').slideDown(200);
+                }
+                
+                console.log('🔄 Preset accordion toggled:', !isActive);
+            });
+            
             this.$select.on('change', $.proxy(this._onPresetSelected, this));
             this.$applyBtn.on('click', $.proxy(this._onApplyClick, this));
             this.$cancelBtn.on('click', $.proxy(this._onCancelClick, this));

@@ -76,56 +76,67 @@ define([
             
             console.log('🧪 TEST: Live preview should be cleared when switching to PUBLICATION mode');
             
-            // Setup: Set live preview variables (simulating draft changes)
-            CssPreviewManager.setVariable('--test-color', 'rgb(255, 0, 0)', 'color');
-            CssPreviewManager.setVariable('--base-color', 'rgb(180, 24, 24)', 'color');
-            
-            setTimeout(function() {
-                // Verify changes are present before switching
-                var $livePreview = self.$iframe().find('#bte-live-preview');
-                var cssContentBefore = $livePreview.text();
-                
-                if (cssContentBefore.indexOf('--test-color') === -1) {
-                    self.fail('Setup failed: Live preview variables were not set properly. Content: ' + cssContentBefore.substring(0, 100));
-                    done();
+            // First ensure CSS Manager is initialized
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                    done(err);
                     return;
                 }
                 
-                console.log('✅ Live preview setup complete, contains draft changes');
+                // Setup: Set live preview variables (simulating draft changes)
+                CssPreviewManager.setVariable('--test-color', 'rgb(255, 0, 0)', 'color');
+                CssPreviewManager.setVariable('--base-color', 'rgb(180, 24, 24)', 'color');
                 
-                // Action: Switch to PUBLICATION mode (using publication ID 1)
-                CssManager.switchTo('PUBLICATION', 1).then(function() {
+                setTimeout(function() {
+                    // Verify changes are present before switching
+                    var $livePreview = self.$iframe().find('#bte-live-preview');
+                    var cssContentBefore = $livePreview.text();
                     
-                    setTimeout(function() {
-                        // Assert: Live preview should be empty
-                        var $livePreviewAfter = self.$iframe().find('#bte-live-preview');
-                        var cssContentAfter = $livePreviewAfter.text();
-                        
-                        console.log('📝 Live preview content after switch:', cssContentAfter.substring(0, 50));
-                        
-                        self.assertStringContains(cssContentAfter, ':root {}', 
-                            'Live preview should be empty (":root {}") after switching to PUBLICATION');
-                        
-                        // Assert: Live preview should be disabled
-                        self.assertEquals($livePreviewAfter.attr('media'), 'not all', 
-                            'Live preview should have media="not all" in PUBLICATION mode');
-                        
-                        // Assert: Should NOT contain old draft changes
-                        var hasOldDraft = cssContentAfter.indexOf('rgb(180, 24, 24)') !== -1;
-                        self.assertEquals(hasOldDraft, false,
-                            'Live preview should NOT contain old draft changes (rgb(180, 24, 24))'
-                        );
-                        
-                        console.log('✅ Test passed: Live preview cleared successfully');
+                    if (cssContentBefore.indexOf('--test-color') === -1) {
+                        self.fail('Setup failed: Live preview variables were not set properly. Content: ' + cssContentBefore.substring(0, 100));
                         done();
-                    }, 500);
+                        return;
+                    }
                     
-                }).catch(function(err) {
-                    console.error('❌ Failed to switch to PUBLICATION:', err);
-                    self.fail('Failed to switch to PUBLICATION: ' + err);
-                    done();
-                });
-            }, 300);
+                    console.log('✅ Live preview setup complete, contains draft changes');
+                    
+                    // Action: Switch to PUBLICATION mode (using publication ID 1)
+                    CssManager.switchTo('PUBLICATION', 1).then(function() {
+                        
+                        setTimeout(function() {
+                            // Assert: Live preview should be empty
+                            var $livePreviewAfter = self.$iframe().find('#bte-live-preview');
+                            var cssContentAfter = $livePreviewAfter.text();
+                            
+                            console.log('📝 Live preview content after switch:', cssContentAfter.substring(0, 50));
+                            
+                            self.assertStringContains(cssContentAfter, ':root {}', 
+                                'Live preview should be empty (":root {}") after switching to PUBLICATION');
+                            
+                            // Assert: Live preview should be disabled
+                            self.assertEquals($livePreviewAfter.attr('media'), 'not all', 
+                                'Live preview should have media="not all" in PUBLICATION mode');
+                            
+                            // Assert: Should NOT contain old draft changes
+                            var hasOldDraft = cssContentAfter.indexOf('rgb(180, 24, 24)') !== -1;
+                            self.assertEquals(hasOldDraft, false,
+                                'Live preview should NOT contain old draft changes (rgb(180, 24, 24))'
+                            );
+                            
+                            console.log('✅ Test passed: Live preview cleared successfully');
+                            done();
+                        }, 500);
+                        
+                    }).catch(function(err) {
+                        console.error('❌ Failed to switch to PUBLICATION:', err);
+                        self.fail('Failed to switch to PUBLICATION: ' + err);
+                        done();
+                    });
+                }, 300);
+            });
         },
         
         'live preview should be cleared when switching to PUBLISHED mode': function(done) {
@@ -134,34 +145,44 @@ define([
             
             console.log('🧪 TEST: Live preview should be cleared when switching to PUBLISHED mode');
             
-            // First, switch back to DRAFT to set up test
-            CssManager.switchTo('DRAFT');
-            
-            setTimeout(function() {
-                // Setup: Set a live preview variable
-                CssPreviewManager.setVariable('--link-color', 'rgb(140, 24, 24)', 'color');
+            // First ensure CSS Manager is initialized
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                    done(err);
+                    return;
+                }
+                
+                // First, switch back to DRAFT to set up test
+                CssManager.switchTo('DRAFT');
                 
                 setTimeout(function() {
-                    var $livePreviewBefore = self.$iframe().find('#bte-live-preview');
-                    var cssContentBefore = $livePreviewBefore.text();
-                    
-                    if (cssContentBefore.indexOf('--link-color') === -1) {
-                        self.fail('Setup failed: Live preview variable was not set. Content: ' + cssContentBefore.substring(0, 100));
-                        done();
-                        return;
-                    }
-                    
-                    console.log('✅ Live preview setup complete for PUBLISHED test');
-                    
-                    // Action: Switch to PUBLISHED mode
-                    CssManager.switchTo('PUBLISHED');
+                    // Setup: Set a live preview variable
+                    CssPreviewManager.setVariable('--link-color', 'rgb(140, 24, 24)', 'color');
                     
                     setTimeout(function() {
-                        // Assert: Live preview should be empty
-                        var $livePreview = self.$iframe().find('#bte-live-preview');
-                        var cssContent = $livePreview.text();
+                        var $livePreviewBefore = self.$iframe().find('#bte-live-preview');
+                        var cssContentBefore = $livePreviewBefore.text();
                         
-                        console.log('📝 Live preview content after PUBLISHED switch:', cssContent.substring(0, 50));
+                        if (cssContentBefore.indexOf('--link-color') === -1) {
+                            self.fail('Setup failed: Live preview variable was not set. Content: ' + cssContentBefore.substring(0, 100));
+                            done();
+                            return;
+                        }
+                        
+                        console.log('✅ Live preview setup complete for PUBLISHED test');
+                        
+                        // Action: Switch to PUBLISHED mode
+                        CssManager.switchTo('PUBLISHED');
+                        
+                        setTimeout(function() {
+                            // Assert: Live preview should be empty
+                            var $livePreview = self.$iframe().find('#bte-live-preview');
+                            var cssContent = $livePreview.text();
+                            
+                            console.log('📝 Live preview content after PUBLISHED switch:', cssContent.substring(0, 50));
                         
                         self.assertStringContains(cssContent, ':root {}', 
                             'Live preview should be empty after switching to PUBLISHED');
@@ -182,45 +203,55 @@ define([
             
             console.log('🧪 TEST: Publication should show historical CSS (WITH MOCKS)');
             
-            // === SETUP: Enable mocks ===
-            this.enableMocks();
-            
-            // Mock publicationId=999 with green button CSS
-            this.mockGetCss({
-                storeId: 21,
-                themeId: 21,
-                status: 'PUBLICATION',
-                publicationId: 999
-            }, fixtures.publicationGreenButton);
-            
-            console.log('🎭 Mock registered for publicationId=999');
-            
-            // === SETUP: Switch to DRAFT and create draft changes ===
-            CssManager.switchTo('DRAFT');
-            
-            setTimeout(function() {
-                // Create draft changes
-                CssPreviewManager.setVariable('--base-color', 'rgb(180, 24, 24)', 'color');
-                CssPreviewManager.setVariable('--test-publication-isolation', 'rgb(99, 99, 99)', 'color');
+            // First ensure CSS Manager is initialized
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                    done(err);
+                    return;
+                }
+                
+                // === SETUP: Enable mocks ===
+                self.enableMocks();
+                
+                // Mock publicationId=999 with green button CSS
+                self.mockGetCss({
+                    storeId: 21,
+                    themeId: 21,
+                    status: 'PUBLICATION',
+                    publicationId: 999
+                }, fixtures.publicationGreenButton);
+                
+                console.log('🎭 Mock registered for publicationId=999');
+                
+                // === SETUP: Switch to DRAFT and create draft changes ===
+                CssManager.switchTo('DRAFT');
                 
                 setTimeout(function() {
-                    var $livePreviewBefore = self.$iframe().find('#bte-live-preview');
-                    var draftCssContent = $livePreviewBefore.text();
+                    // Create draft changes
+                    CssPreviewManager.setVariable('--base-color', 'rgb(180, 24, 24)', 'color');
+                    CssPreviewManager.setVariable('--test-publication-isolation', 'rgb(99, 99, 99)', 'color');
                     
-                    if (draftCssContent.indexOf('rgb(180, 24, 24)') === -1) {
-                        self.fail('Setup failed: Draft changes were not applied. Content: ' + draftCssContent.substring(0, 100));
-                        self.clearMocks();
-                        done();
-                        return;
-                    }
-                    
-                    console.log('✅ Draft changes present:', draftCssContent.substring(0, 100));
-                    
-                    // === ACTION: Switch to MOCKED PUBLICATION ===
-                    console.log('🔄 Switching to PUBLICATION (MOCKED, id=999)...');
-                    
-                    CssManager.switchTo('PUBLICATION', 999).then(function() {
-                        console.log('✅ Switched to PUBLICATION (MOCKED)');
+                    setTimeout(function() {
+                        var $livePreviewBefore = self.$iframe().find('#bte-live-preview');
+                        var draftCssContent = $livePreviewBefore.text();
+                        
+                        if (draftCssContent.indexOf('rgb(180, 24, 24)') === -1) {
+                            self.fail('Setup failed: Draft changes were not applied. Content: ' + draftCssContent.substring(0, 100));
+                            self.clearMocks();
+                            done();
+                            return;
+                        }
+                        
+                        console.log('✅ Draft changes present:', draftCssContent.substring(0, 100));
+                        
+                        // === ACTION: Switch to MOCKED PUBLICATION ===
+                        console.log('🔄 Switching to PUBLICATION (MOCKED, id=999)...');
+                        
+                        CssManager.switchTo('PUBLICATION', 999).then(function() {
+                            console.log('✅ Switched to PUBLICATION (MOCKED)');
                         
                         setTimeout(function() {
                             // === ASSERTIONS ===

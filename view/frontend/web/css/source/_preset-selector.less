@@ -10,17 +10,53 @@
     margin: 16px 0;
     border-radius: 6px;
     
+    .bte-preset-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        padding: 8px 0;
+        margin-bottom: 12px;
+        transition: background 0.2s;
+        
+        &:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        &.active {
+            .bte-preset-arrow {
+                transform: rotate(180deg);
+            }
+        }
+    }
+    
     .bte-preset-label {
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-bottom: 10px;
         font-weight: 500;
         font-size: 14px;
         color: @bte-toolbar-text;
         
         .bte-icon {
             font-size: 16px;
+        }
+    }
+    
+    .bte-preset-arrow {
+        font-size: 18px;
+        transition: transform 0.2s;
+        flex-shrink: 0;
+        color: @bte-toolbar-text;
+    }
+    
+    .bte-preset-content {
+        display: none;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+        
+        &.active {
+            display: block;
         }
     }
     

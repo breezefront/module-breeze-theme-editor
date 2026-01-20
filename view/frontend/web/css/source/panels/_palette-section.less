@@ -5,17 +5,54 @@
 
 .bte-palette-section {
     padding: 16px;
-    background: #ffffff;
-    border-bottom: 1px solid #e5e7eb;
+    background: rgba(255, 255, 255, 0.03); // Dark background like preset selector
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 16px 0;
+    border-radius: 6px;
 
     // Header
     .bte-palette-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         margin-bottom: 12px;
+        cursor: pointer;
+        padding: 8px 0;
+        transition: background 0.2s;
+        
+        &:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        &.active {
+            .bte-palette-arrow {
+                transform: rotate(180deg);
+            }
+        }
 
         .bte-palette-title {
             font-size: 14px;
             font-weight: 600;
-            color: #111827;
+            color: @bte-toolbar-text; // Light text for dark background
+            display: block;
+        }
+        
+        .bte-palette-arrow {
+            font-size: 18px;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+            color: @bte-toolbar-text;
+        }
+    }
+    
+    // Content (collapsible)
+    .bte-palette-content {
+        display: none;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+        
+        &.active {
             display: block;
         }
     }
@@ -37,7 +74,7 @@
 
         // Separator between groups (thick border)
         &.bte-palette-group-separator {
-            border-top: 3px solid #d1d5db; // Dark gray border
+            border-top: 3px solid rgba(255, 255, 255, 0.15); // Dark theme separator
             padding-top: 12px;
             margin-top: 12px;
         }
@@ -47,7 +84,7 @@
             grid-column: 1 / -1;
             font-size: 11px;
             font-weight: 600;
-            color: #6b7280;
+            color: rgba(255, 255, 255, 0.5); // Muted text for dark theme
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 4px;
@@ -59,7 +96,7 @@
     .bte-palette-swatch {
         width: 40px;
         height: 40px;
-        border: 2px solid #d1d5db;
+        border: 2px solid rgba(255, 255, 255, 0.2); // Dark theme border
         border-radius: 4px;
         cursor: pointer;
         position: relative;
@@ -68,14 +105,14 @@
 
         // Hover effect
         &:hover {
-            border-color: #9ca3af;
+            border-color: rgba(255, 255, 255, 0.4);
             transform: scale(1.05);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         // Active/selected state
         &.selected {
-            border: 3px solid #2563eb; // Thick blue border
+            border: 3px solid #1979c3; // Blue border matching theme
             border-width: 3px;
         }
 
@@ -103,7 +140,7 @@
 
     // No palettes message
     .bte-no-palettes {
-        color: #6b7280;
+        color: rgba(255, 255, 255, 0.5);
         font-size: 13px;
         font-style: italic;
         margin: 0;

@@ -33,20 +33,32 @@ define([
             // This was broken before the race condition fix
             
             var self = this;
-            CssManager.switchTo('PUBLISHED');
             
-            setTimeout(function() {
-                self.assertEquals(CssManager.getCurrentStatus(), 'PUBLISHED',
-                    'Should be able to switch to PUBLISHED without opening panel');
+            // First ensure CSS Manager is initialized
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                    done(err);
+                    return;
+                }
                 
-                CssManager.switchTo('DRAFT');
+                CssManager.switchTo('PUBLISHED');
                 
                 setTimeout(function() {
-                    self.assertEquals(CssManager.getCurrentStatus(), 'DRAFT',
-                        'Should be able to switch to DRAFT without opening panel');
-                    done();
+                    self.assertEquals(CssManager.getCurrentStatus(), 'PUBLISHED',
+                        'Should be able to switch to PUBLISHED without opening panel');
+                    
+                    CssManager.switchTo('DRAFT');
+                    
+                    setTimeout(function() {
+                        self.assertEquals(CssManager.getCurrentStatus(), 'DRAFT',
+                            'Should be able to switch to DRAFT without opening panel');
+                        done();
+                    }, 100);
                 }, 100);
-            }, 100);
+            });
         },
         
         'live preview style should be created when panel opens': function(done) {

@@ -40,28 +40,39 @@ define([
             var self = this;
             var CssManager = require('Swissup_BreezeThemeEditor/js/theme-editor/css-manager');
             
-            // Ensure we're in DRAFT mode first (live preview is only active in DRAFT)
-            var currentStatus = CssManager.getCurrentStatus();
-            console.log('🧪 Current status:', currentStatus, '- switching to DRAFT for test...');
-            
-            CssManager.switchTo('DRAFT');
-            
-            setTimeout(function() {
-                var $livePreview = self.$iframe().find('#bte-live-preview');
-                
-                if ($livePreview.length > 0) {
-                    var mediaAttr = $livePreview.attr('media');
-                    console.log('📝 Live preview media attribute:', mediaAttr);
-                    
-                    self.assertEquals(mediaAttr, 'all', 
-                        'Live preview should have media="all" in DRAFT mode (current: ' + mediaAttr + ')');
-                } else {
-                    console.warn('⚠️ Live preview not created yet');
-                    self.assert(true, 'Live preview not created yet');
+            // First ensure CSS Manager is initialized
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                    done(err);
+                    return;
                 }
                 
-                done();
-            }, 300);
+                // Ensure we're in DRAFT mode first (live preview is only active in DRAFT)
+                var currentStatus = CssManager.getCurrentStatus();
+                console.log('🧪 Current status:', currentStatus, '- switching to DRAFT for test...');
+                
+                CssManager.switchTo('DRAFT');
+                
+                setTimeout(function() {
+                    var $livePreview = self.$iframe().find('#bte-live-preview');
+                    
+                    if ($livePreview.length > 0) {
+                        var mediaAttr = $livePreview.attr('media');
+                        console.log('📝 Live preview media attribute:', mediaAttr);
+                        
+                        self.assertEquals(mediaAttr, 'all', 
+                            'Live preview should have media="all" in DRAFT mode (current: ' + mediaAttr + ')');
+                    } else {
+                        console.warn('⚠️ Live preview not created yet');
+                        self.assert(true, 'Live preview not created yet');
+                    }
+                    
+                    done();
+                }, 300);
+            });
         },
         
         'live preview should be inserted in correct order': function() {
@@ -112,20 +123,31 @@ define([
             var self = this;
             var CssManager = require('Swissup_BreezeThemeEditor/js/theme-editor/css-manager');
             
-            CssManager.switchTo('DRAFT');
-            
-            setTimeout(function() {
-                var $livePreview = self.$iframe().find('#bte-live-preview');
-                
-                if ($livePreview.length > 0) {
-                    self.assertEquals($livePreview.attr('media'), 'all', 
-                        'Live preview should be enabled in DRAFT mode');
-                } else {
-                    self.assert(true, 'Live preview not created yet');
+            // First ensure CSS Manager is initialized
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                    done(err);
+                    return;
                 }
                 
-                done();
-            }, 200);
+                CssManager.switchTo('DRAFT');
+                
+                setTimeout(function() {
+                    var $livePreview = self.$iframe().find('#bte-live-preview');
+                    
+                    if ($livePreview.length > 0) {
+                        self.assertEquals($livePreview.attr('media'), 'all', 
+                            'Live preview should be enabled in DRAFT mode');
+                    } else {
+                        self.assert(true, 'Live preview not created yet');
+                    }
+                    
+                    done();
+                }, 200);
+            });
         }
     });
 });

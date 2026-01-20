@@ -1,31 +1,36 @@
 <!-- Preset Selector Widget -->
 <div class="bte-preset-selector">
-    <div class="bte-preset-label">
-        <span>📋 Apply Preset:</span>
+    <div class="bte-preset-header">
+        <div class="bte-preset-label">
+            <span>📋 Apply Preset</span>
+        </div>
+        <i class="bte-icon-chevron-down bte-preset-arrow"></i>
     </div>
     
-    <div class="bte-preset-dropdown">
-        <select class="bte-preset-select">
-            <option value="">Select a preset...</option>
-        </select>
-    </div>
-    
-    <!-- Expanded Preview (hidden by default) -->
-    <div class="bte-preset-preview" style="display: none;">
-        <div class="bte-preset-description"></div>
-        
-        <div class="bte-preset-warning">
-            <span>⚠️</span>
-            <span class="bte-preset-changes-count"></span>
+    <div class="bte-preset-content">
+        <div class="bte-preset-dropdown">
+            <select class="bte-preset-select">
+                <option value="">Select a preset...</option>
+            </select>
         </div>
         
-        <div class="bte-preset-actions">
-            <button type="button" class="bte-button bte-button-secondary bte-preset-cancel">
-                Cancel
-            </button>
-            <button type="button" class="bte-button bte-button-primary bte-preset-apply">
-                Apply Preset
-            </button>
+        <!-- Expanded Preview (hidden by default) -->
+        <div class="bte-preset-preview" style="display: none;">
+            <div class="bte-preset-description"></div>
+            
+            <div class="bte-preset-warning">
+                <span>⚠️</span>
+                <span class="bte-preset-changes-count"></span>
+            </div>
+            
+            <div class="bte-preset-actions">
+                <button type="button" class="bte-button bte-button-secondary bte-preset-cancel">
+                    Cancel
+                </button>
+                <button type="button" class="bte-button bte-button-primary bte-preset-apply">
+                    Apply Preset
+                </button>
+            </div>
         </div>
     </div>
 </div>

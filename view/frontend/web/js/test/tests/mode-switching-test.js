@@ -13,26 +13,52 @@ define([
         
         'should switch to PUBLISHED mode': function(done) {
             var self = this;
-            CssManager.switchTo('PUBLISHED');
             
-            setTimeout(function() {
-                var $draftIframe = self.$iframe().find('#bte-theme-css-variables-draft');
-                self.assertEquals($draftIframe.attr('media'), 'not all', 
-                    'Draft should be disabled (media="not all") in PUBLISHED mode');
-                done();
-            }, 200);
+            // First ensure CSS Manager is initialized
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                    done(err);
+                    return;
+                }
+                
+                // Now switch to PUBLISHED
+                CssManager.switchTo('PUBLISHED');
+                
+                setTimeout(function() {
+                    var $draftIframe = self.$iframe().find('#bte-theme-css-variables-draft');
+                    self.assertEquals($draftIframe.attr('media'), 'not all', 
+                        'Draft should be disabled (media="not all") in PUBLISHED mode');
+                    done();
+                }, 200);
+            });
         },
         
         'should switch to DRAFT mode': function(done) {
             var self = this;
-            CssManager.switchTo('DRAFT');
             
-            setTimeout(function() {
-                var $draftIframe = self.$iframe().find('#bte-theme-css-variables-draft');
-                self.assertEquals($draftIframe.attr('media'), 'all', 
-                    'Draft should be enabled (media="all") in DRAFT mode');
-                done();
-            }, 200);
+            // First ensure CSS Manager is initialized
+            this.waitFor(function() {
+                return CssManager.getCurrentStatus() !== null;
+            }, 2000, function(err) {
+                if (err) {
+                    self.fail('CSS Manager not initialized: ' + err.message);
+                    done(err);
+                    return;
+                }
+                
+                // Now switch to DRAFT
+                CssManager.switchTo('DRAFT');
+                
+                setTimeout(function() {
+                    var $draftIframe = self.$iframe().find('#bte-theme-css-variables-draft');
+                    self.assertEquals($draftIframe.attr('media'), 'all', 
+                        'Draft should be enabled (media="all") in DRAFT mode');
+                    done();
+                }, 200);
+            });
         },
         
         'should sync media attribute from main to iframe': function(done) {
