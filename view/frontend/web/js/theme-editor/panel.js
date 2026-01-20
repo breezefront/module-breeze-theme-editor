@@ -9,6 +9,7 @@ define([
     'Swissup_BreezeThemeEditor/js/theme-editor/css-manager',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers',
     'Swissup_BreezeThemeEditor/js/theme-editor/preset-selector',
+    'Swissup_BreezeThemeEditor/js/theme-editor/sections/palette-section-renderer',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
@@ -25,6 +26,7 @@ define([
     CssManager,
     FieldHandlers,
     PresetSelector,
+    PaletteSection,
     Toastify,
     getConfig,
     getConfigFromPublication,
@@ -113,6 +115,7 @@ define([
             this.$resetButton = this.element.find('.bte-reset-button');
             this.$saveButton = this.element.find('.bte-save-button');
             this.$sectionsContainer = this.element.find('.bte-sections-container');
+            this.$paletteContainer = this.element.find('.bte-palette-container');
             this.$presetContainer = this.element.find('.bte-preset-container');
             this.$loader = this.element.find('.bte-panel-loader');
             this.$error = this.element.find('.bte-panel-error');
@@ -239,6 +242,7 @@ define([
                 .then(function(data) {
                     console.log('✅ Config loaded for status "' + self.options.status + '":', data);
                     var config = data.breezeThemeEditorConfig;
+                    self.config = config; // Store config for palette initialization
                     PanelState.init(config);
                     self._renderSections(config.sections);
                     self._hideLoader();
@@ -272,6 +276,8 @@ define([
             getConfigFromPublication(this.storeId, this.themeId, publicationId)
                 .then(function(config) {
                     console.log('✅ Config loaded from publication:', config);
+                    
+                    self.config = config; // Store config for palette initialization
                     
                     // Clear live preview changes (publication mode is read-only)
                     CssPreviewManager.reset();
@@ -315,6 +321,9 @@ define([
             
             // Disable fields if in read-only mode (PUBLISHED or PUBLICATION)
             this._updateFieldsEditability();
+            
+            // Initialize color palettes (always visible, before presets)
+            this._initPaletteSection();
             
             // Initialize preset selector
             this._initPresetSelector();
@@ -717,7 +726,36 @@ define([
         },
 
         /**
-         * Initialize preset selector widget
+         * Initialize palette section
+         */
+        _initPaletteSection: function() {
+            var self = this;
+            
+            if (!this.$paletteContainer || this.$paletteContainer.length === 0) {
+                console.log('⚠️ Palette container not found');
+                return;
+            }
+            
+            // Check if config has palettes
+            if (!this.config || !this.config.palettes || this.config.palettes.length === 0) {
+                console.log('ℹ️ No palettes in config, hiding palette section');
+                this.$paletteContainer.hide();
+                return;
+            }
+            
+            console.log('🎨 Initializing Palette Section with', this.config.palettes.length, 'palettes');
+            
+            this.$paletteContainer.paletteSection({
+                palettes: this.config.palettes,
+                storeId: this.storeId,
+                themeId: this.themeId
+            });
+            
+            console.log('✅ Palette section initialized');
+        },
+
+        /**
+         * Initialize preset selector
          */
         _initPresetSelector: function() {
             var self = this;

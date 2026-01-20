@@ -1,0 +1,247 @@
+// ============================================================================
+// Palette Section Styles
+// Matrix layout with color swatches (5 per row)
+// ============================================================================
+
+.bte-palette-section {
+    padding: 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+
+    // Header
+    .bte-palette-header {
+        margin-bottom: 12px;
+
+        .bte-palette-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+            display: block;
+        }
+    }
+
+    // Grid container
+    .bte-palette-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 40px); // 5 columns, 40px each
+        gap: 8px; // 8px gap between swatches
+        justify-content: start;
+    }
+
+    // Group container
+    .bte-palette-group {
+        grid-column: 1 / -1; // Span all columns
+        display: grid;
+        grid-template-columns: repeat(5, 40px);
+        gap: 8px;
+
+        // Separator between groups (thick border)
+        &.bte-palette-group-separator {
+            border-top: 3px solid #d1d5db; // Dark gray border
+            padding-top: 12px;
+            margin-top: 12px;
+        }
+
+        // Group label (optional, can be hidden)
+        .bte-palette-group-label {
+            grid-column: 1 / -1;
+            font-size: 11px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            display: none; // Hidden by default (tooltip shows label)
+        }
+    }
+
+    // Individual color swatch
+    .bte-palette-swatch {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #d1d5db;
+        border-radius: 4px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s ease;
+        overflow: hidden;
+
+        // Hover effect
+        &:hover {
+            border-color: #9ca3af;
+            transform: scale(1.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        // Active/selected state
+        &.selected {
+            border: 3px solid #2563eb; // Thick blue border
+            border-width: 3px;
+        }
+
+        // Visual color square
+        .bte-swatch-visual {
+            width: 100%;
+            height: 100%;
+            pointer-events: none; // Click goes through to container
+        }
+
+        // Hidden color input
+        .bte-swatch-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+    }
+
+    // No palettes message
+    .bte-no-palettes {
+        color: #6b7280;
+        font-size: 13px;
+        font-style: italic;
+        margin: 0;
+        padding: 8px 0;
+    }
+}
+
+// ============================================================================
+// Quick Select Palette (under color fields)
+// Same matrix layout, but embedded in field
+// ============================================================================
+
+.bte-field-palette-quick-select {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e5e7eb;
+
+    .bte-quick-select-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    // Reuse palette grid styles
+    .bte-palette-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 32px); // Slightly smaller for field context
+        gap: 6px;
+        justify-content: start;
+    }
+
+    .bte-palette-group {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(5, 32px);
+        gap: 6px;
+
+        &.bte-palette-group-separator {
+            border-top: 2px solid #d1d5db; // Thinner border for compact view
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+
+        .bte-palette-group-label {
+            display: none; // Always hidden in Quick Select
+        }
+    }
+
+    .bte-palette-swatch {
+        width: 32px;
+        height: 32px;
+        border: 2px solid #d1d5db;
+        border-radius: 3px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.15s ease;
+
+        &:hover {
+            border-color: #9ca3af;
+            transform: scale(1.08);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        }
+
+        // Selected state in Quick Select
+        &.selected {
+            border: 3px solid #2563eb;
+            border-width: 3px;
+        }
+
+        .bte-swatch-visual {
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        // No hidden input in Quick Select (direct click handler)
+    }
+}
+
+// ============================================================================
+// Dark mode support (optional, if theme has dark mode)
+// ============================================================================
+
+@media (prefers-color-scheme: dark) {
+    .bte-palette-section {
+        background: #1f2937;
+        border-bottom-color: #374151;
+
+        .bte-palette-header .bte-palette-title {
+            color: #f3f4f6;
+        }
+
+        .bte-palette-swatch {
+            border-color: #4b5563;
+
+            &:hover {
+                border-color: #6b7280;
+            }
+
+            &.selected {
+                border-color: #3b82f6;
+            }
+        }
+
+        .bte-palette-group.bte-palette-group-separator {
+            border-top-color: #4b5563;
+        }
+
+        .bte-no-palettes {
+            color: #9ca3af;
+        }
+    }
+
+    .bte-field-palette-quick-select {
+        border-top-color: #374151;
+
+        .bte-quick-select-label {
+            color: #9ca3af;
+        }
+
+        .bte-palette-swatch {
+            border-color: #4b5563;
+
+            &:hover {
+                border-color: #6b7280;
+            }
+
+            &.selected {
+                border-color: #3b82f6;
+            }
+        }
+
+        .bte-palette-group.bte-palette-group-separator {
+            border-top-color: #4b5563;
+        }
+    }
+}

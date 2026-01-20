@@ -62,8 +62,9 @@ class SavePaletteValue implements \Magento\Framework\GraphQl\Query\ResolverInter
         // Get current user ID for storing the palette value
         $userId = $this->userResolver->getCurrentUserId();
 
-        // Save palette value to database
+        // Save palette value to database using saveMultiple (handles INSERT or UPDATE automatically)
         // Section: "_palette", Setting: CSS variable name (e.g., "--color-brand-primary")
+        // Note: saveMultiple() uses insertOnDuplicate(), so it will UPDATE if record exists
         /** @var ValueInterface $valueModel */
         $valueModel = $this->valueRepository->create();
         $valueModel->setThemeId($themeId);
@@ -75,7 +76,8 @@ class SavePaletteValue implements \Magento\Framework\GraphQl\Query\ResolverInter
         $valueModel->setUserId($userId); // Use current user ID
 
         try {
-            $this->valueRepository->save($valueModel);
+            // Use saveMultiple() which uses insertOnDuplicate() - handles both INSERT and UPDATE
+            $this->valueRepository->saveMultiple([$valueModel]);
         } catch (\Exception $e) {
             return [
                 'success' => false,
