@@ -59,6 +59,9 @@ class SavePaletteValue implements \Magento\Framework\GraphQl\Query\ResolverInter
             ];
         }
 
+        // Get current user ID for storing the palette value
+        $userId = $this->userResolver->getCurrentUserId();
+
         // Save palette value to database
         // Section: "_palette", Setting: CSS variable name (e.g., "--color-brand-primary")
         /** @var ValueInterface $valueModel */
@@ -69,7 +72,7 @@ class SavePaletteValue implements \Magento\Framework\GraphQl\Query\ResolverInter
         $valueModel->setSectionCode('_palette');
         $valueModel->setSettingCode($cssVar);
         $valueModel->setValue($rgbValue);
-        $valueModel->setUserId(null); // Palette values are global (not user-specific)
+        $valueModel->setUserId($userId); // Use current user ID
 
         try {
             $this->valueRepository->save($valueModel);
