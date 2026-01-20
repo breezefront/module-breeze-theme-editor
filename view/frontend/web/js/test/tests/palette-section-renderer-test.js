@@ -19,7 +19,7 @@ define([
          */
         beforeEach: function() {
             // Initialize PaletteManager with mock data
-            PaletteManager.init({ palettes: [fixtures.mockPaletteConfig] });
+            PaletteManager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
         },
         
         /**
@@ -124,7 +124,7 @@ define([
             
             // Initialize with empty palette should not throw
             var manager = Object.create(PaletteManager);
-            manager.init({ palettes: [emptyPalette] });
+            manager.init({ palettes: [emptyPalette], storeId: 1, themeId: 1 });
             
             var keys = Object.keys(manager.palettes);
             this.assertEquals(keys.length, 0, 

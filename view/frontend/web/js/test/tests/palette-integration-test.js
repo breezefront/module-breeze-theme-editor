@@ -105,7 +105,7 @@ define([
          * Test 6: Should support subscriber pattern for state sync
          */
         'should sync state across multiple subscribers': function(done) {
-            PaletteManager.init({ palettes: [fixtures.mockPaletteConfig] });
+            PaletteManager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
             
             var subscriber1Called = false;
             var subscriber2Called = false;

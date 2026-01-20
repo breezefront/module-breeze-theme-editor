@@ -17,7 +17,7 @@ define([
          */
         'should initialize with empty palettes': function() {
             var manager = Object.create(PaletteManager);
-            manager.init({ palettes: [] });
+            manager.init({ palettes: [], storeId: 1, themeId: 1 });
             
             var keys = Object.keys(manager.palettes);
             this.assertEquals(keys.length, 0, 
@@ -29,7 +29,7 @@ define([
          */
         'should index colors by cssVar after initialization': function() {
             var manager = Object.create(PaletteManager);
-            manager.init({ palettes: [fixtures.mockPaletteConfig] });
+            manager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
             
             // Check that primary color is indexed
             var color = manager.getColor('--color-brand-primary');
@@ -79,7 +79,7 @@ define([
          */
         'should find matching color by HEX value': function() {
             var manager = Object.create(PaletteManager);
-            manager.init({ palettes: [fixtures.mockPaletteConfig] });
+            manager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
             
             // Find color by HEX value (returns cssVar string, not object)
             var cssVar = manager.findMatchingColor('#1979c3');
@@ -94,7 +94,7 @@ define([
          */
         'should update color value and notify subscribers': function(done) {
             var manager = Object.create(PaletteManager);
-            manager.init({ palettes: [fixtures.mockPaletteConfig] });
+            manager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
             
             var notified = false;
             var notifiedCssVar = null;
@@ -176,7 +176,7 @@ define([
          */
         'should notify all subscribers on color change': function(done) {
             var manager = Object.create(PaletteManager);
-            manager.init({ palettes: [fixtures.mockPaletteConfig] });
+            manager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
             
             var subscriber1Called = false;
             var subscriber2Called = false;
