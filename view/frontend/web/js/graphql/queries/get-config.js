@@ -77,6 +77,25 @@ define([
                     description
                     preview
                 }
+                palettes {
+                    id
+                    label
+                    description
+                    groups {
+                        id
+                        label
+                        description
+                        colors {
+                            id
+                            label
+                            description
+                            cssVar
+                            default
+                            value
+                            usageCount
+                        }
+                    }
+                }
             }
         }
     `;

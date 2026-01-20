@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 
 /**
  * Abstract base class for Config resolvers
@@ -14,7 +15,8 @@ abstract class AbstractConfigResolver
 {
     public function __construct(
         protected SerializerInterface $serializer,
-        protected ConfigProvider $configProvider
+        protected ConfigProvider $configProvider,
+        protected PaletteProvider $paletteProvider
     ) {}
 
     /**
@@ -229,5 +231,16 @@ abstract class AbstractConfigResolver
         }
 
         return is_string($value) ? $value : $this->serializer->serialize($value);
+    }
+
+    /**
+     * Format palettes for GraphQL response
+     *
+     * @param int $themeId
+     * @return array
+     */
+    protected function formatPalettes(int $themeId): array
+    {
+        return $this->paletteProvider->getPalettes($themeId);
     }
 }

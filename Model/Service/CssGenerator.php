@@ -31,10 +31,6 @@ class CssGenerator
         $statusId = $this->statusProvider->getStatusId($status);
         $values = $this->valueService->getValuesByTheme($themeId, $storeId, $statusId, null);
 
-        if (empty($values)) {
-            return '';
-        }
-
         // Get config WITH inheritance
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $sections = $config['sections'] ?? [];
@@ -49,6 +45,42 @@ class CssGenerator
         }
 
         $css = ":root {\n";
+
+        // ========================================
+        // 1. INJECT PALETTE CSS VARIABLES FIRST
+        // ========================================
+        $palettes = $config['palettes'] ?? [];
+        if (!empty($palettes)) {
+            foreach ($palettes as $paletteId => $palette) {
+                $groups = $palette['groups'] ?? [];
+                foreach ($groups as $groupId => $group) {
+                    $colors = $group['colors'] ?? [];
+                    foreach ($colors as $color) {
+                        $cssVar = $color['css_var'] ?? null;
+                        $default = $color['default'] ?? null;
+                        
+                        if ($cssVar && $default) {
+                            $formattedValue = $this->hexToRgb($default);
+                            $label = $color['label'] ?? $color['id'] ?? 'Unknown';
+                            $css .= "    $cssVar: $formattedValue;  /* Palette: $label */\n";
+                        }
+                    }
+                }
+            }
+            
+            // Add blank line separator after palette colors
+            if (!empty($palettes)) {
+                $css .= "\n";
+            }
+        }
+
+        // ========================================
+        // 2. INJECT USER-MODIFIED FIELD VALUES
+        // ========================================
+        if (empty($values)) {
+            $css .= "}\n";
+            return $css;
+        }
 
         foreach ($values as $value) {
             $sectionCode = $value['section_code'];
@@ -104,10 +136,6 @@ class CssGenerator
      */
     public function generateFromValuesMap(int $themeId, array $valuesMap): string
     {
-        if (empty($valuesMap)) {
-            return '';
-        }
-
         // Get config WITH inheritance
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $sections = $config['sections'] ?? [];
@@ -122,6 +150,42 @@ class CssGenerator
         }
 
         $css = ":root {\n";
+
+        // ========================================
+        // 1. INJECT PALETTE CSS VARIABLES FIRST
+        // ========================================
+        $palettes = $config['palettes'] ?? [];
+        if (!empty($palettes)) {
+            foreach ($palettes as $paletteId => $palette) {
+                $groups = $palette['groups'] ?? [];
+                foreach ($groups as $groupId => $group) {
+                    $colors = $group['colors'] ?? [];
+                    foreach ($colors as $color) {
+                        $cssVar = $color['css_var'] ?? null;
+                        $default = $color['default'] ?? null;
+                        
+                        if ($cssVar && $default) {
+                            $formattedValue = $this->hexToRgb($default);
+                            $label = $color['label'] ?? $color['id'] ?? 'Unknown';
+                            $css .= "    $cssVar: $formattedValue;  /* Palette: $label */\n";
+                        }
+                    }
+                }
+            }
+            
+            // Add blank line separator after palette colors
+            if (!empty($palettes)) {
+                $css .= "\n";
+            }
+        }
+
+        // ========================================
+        // 2. INJECT USER-MODIFIED FIELD VALUES
+        // ========================================
+        if (empty($valuesMap)) {
+            $css .= "}\n";
+            return $css;
+        }
 
         foreach ($valuesMap as $key => $rawValue) {
             if ($rawValue === null || $rawValue === '') {

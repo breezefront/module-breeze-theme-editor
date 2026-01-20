@@ -137,12 +137,17 @@ type Mutation {
     importBreezeThemeEditorSettings(
         input: ImportBreezeThemeEditorSettingsInput!
     ): ImportBreezeThemeEditorSettingsOutput @doc(description: "Import settings from JSON") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\ImportSettings")
+
+    saveBreezeThemeEditorPaletteValue(
+        input: SaveBreezeThemeEditorPaletteValueInput!
+    ): SaveBreezeThemeEditorPaletteValueOutput @doc(description: "Save palette color value") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\SavePaletteValue")
 }
 
 type BreezeThemeEditorConfig {
     version: String!
     sections: [BreezeThemeEditorSection! ]!
     presets: [BreezeThemeEditorPreset!]!
+    palettes: [BreezeThemeEditorPalette!]! @doc(description: "Color palette system")
     metadata: BreezeThemeEditorMetadata @doc(description: "Theme metadata")
 }
 
@@ -156,6 +161,30 @@ type BreezeThemeEditorMetadata {
     lastPublished: String @doc(description: "Last publication date")
     hasUnpublishedChanges: Boolean!
     draftChangesCount: Int @doc(description: "Number of changed settings in draft")
+}
+
+type BreezeThemeEditorPalette {
+    id: String!
+    label: String!
+    description: String
+    groups: [BreezeThemeEditorPaletteGroup!]!
+}
+
+type BreezeThemeEditorPaletteGroup {
+    id: String!
+    label: String!
+    description: String
+    colors: [BreezeThemeEditorPaletteColor!]!
+}
+
+type BreezeThemeEditorPaletteColor {
+    id: String!
+    label: String!
+    description: String
+    cssVar: String!
+    value: String! @doc(description: "Current RGB value (e.g., '25, 121, 195')")
+    default: String! @doc(description: "Default hex value (e.g., '#1979c3')")
+    usageCount: Int! @doc(description: "Number of fields referencing this color")
 }
 
 type BreezeThemeEditorSection {
@@ -370,6 +399,13 @@ input ImportBreezeThemeEditorSettingsInput {
     overwriteExisting: Boolean
 }
 
+input SaveBreezeThemeEditorPaletteValueInput {
+    storeId: Int!
+    themeId: Int @doc(description: "Optional: override auto-detected theme")
+    cssVar: String! @doc(description: "CSS variable name (e.g., '--color-brand-primary')")
+    value: String! @doc(description: "RGB value (e.g., '25, 121, 195')")
+}
+
 type SaveBreezeThemeEditorValuesOutput {
     success: Boolean!
     message: String
@@ -440,4 +476,10 @@ type ImportBreezeThemeEditorSettingsOutput {
     importedCount: Int
     skippedCount: Int
     errors: [String!]
+}
+
+type SaveBreezeThemeEditorPaletteValueOutput {
+    success: Boolean!
+    message: String
+    affectedFields: Int! @doc(description: "Number of fields that use this color")
 }

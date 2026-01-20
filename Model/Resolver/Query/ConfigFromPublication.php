@@ -10,6 +10,7 @@ use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\Api\SearchCriteriaBuilderFactory;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
@@ -19,12 +20,13 @@ class ConfigFromPublication extends AbstractConfigResolver implements ResolverIn
     public function __construct(
         SerializerInterface $serializer,
         ConfigProvider $configProvider,
+        PaletteProvider $paletteProvider,
         private ThemeResolver $themeResolver,
         private PublicationRepositoryInterface $publicationRepository,
         private ChangelogRepositoryInterface $changelogRepository,
         private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory
     ) {
-        parent::__construct($serializer, $configProvider);
+        parent::__construct($serializer, $configProvider, $paletteProvider);
     }
 
     public function resolve(
@@ -83,6 +85,7 @@ class ConfigFromPublication extends AbstractConfigResolver implements ResolverIn
             'version' => $config['version'],
             'sections' => $sections,
             'presets' => $this->formatPresets($config['presets'] ?? []),
+            'palettes' => $this->formatPalettes($themeId),
             'metadata' => $metadata
         ];
     }

@@ -8,6 +8,7 @@ use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
@@ -19,13 +20,14 @@ class Config extends AbstractConfigResolver implements ResolverInterface
     public function __construct(
         SerializerInterface $serializer,
         ConfigProvider $configProvider,
+        PaletteProvider $paletteProvider,
         private ValueInheritanceResolver $valueInheritanceResolver,
         private StatusProvider $statusProvider,
         private CompareProvider $compareProvider,
         private ThemeResolver $themeResolver,
         private UserResolver $userResolver
     ) {
-        parent::__construct($serializer, $configProvider);
+        parent::__construct($serializer, $configProvider, $paletteProvider);
     }
 
     public function resolve(
@@ -92,6 +94,7 @@ class Config extends AbstractConfigResolver implements ResolverInterface
             'version' => $config['version'],
             'sections' => $sections,
             'presets' => $this->formatPresets($config['presets'] ?? []),
+            'palettes' => $this->formatPalettes($themeId),
             'metadata' => $metadata
         ];
     }

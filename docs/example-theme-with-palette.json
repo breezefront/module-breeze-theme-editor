@@ -1,0 +1,132 @@
+{
+  "version": "1.0",
+  "sections": [
+    {
+      "id": "general",
+      "name": "General",
+      "icon": "settings",
+      "settings": [
+        {
+          "id": "primary_color",
+          "label": "Primary Color",
+          "type": "color",
+          "default": "var(--color-brand-primary)",
+          "description": "Main brand color",
+          "css_var": "--button-primary-bg"
+        },
+        {
+          "id": "secondary_color",
+          "label": "Secondary Color",
+          "type": "color",
+          "default": "var(--color-brand-secondary)",
+          "description": "Secondary brand color",
+          "css_var": "--button-secondary-bg"
+        },
+        {
+          "id": "accent_color",
+          "label": "Accent Color",
+          "type": "color",
+          "default": "var(--color-brand-accent)",
+          "description": "Accent color for CTAs",
+          "css_var": "--link-color"
+        }
+      ]
+    }
+  ],
+  "presets": [],
+  "palettes": {
+    "default": {
+      "label": "Default Palette",
+      "description": "Main color system for the theme",
+      "groups": {
+        "brand": {
+          "label": "Brand Colors",
+          "description": "Main brand identity colors",
+          "colors": [
+            {
+              "id": "primary",
+              "label": "Primary",
+              "description": "Main brand color for buttons, headers",
+              "css_var": "--color-brand-primary",
+              "default": "#1979c3"
+            },
+            {
+              "id": "secondary",
+              "label": "Secondary",
+              "description": "Secondary brand color for accents",
+              "css_var": "--color-brand-secondary",
+              "default": "#111827"
+            },
+            {
+              "id": "accent",
+              "label": "Accent",
+              "description": "Accent color for highlights and CTAs",
+              "css_var": "--color-brand-accent",
+              "default": "#f59e0b"
+            }
+          ]
+        },
+        "neutral": {
+          "label": "Neutral Colors",
+          "description": "Grayscale colors for backgrounds, text, borders",
+          "colors": [
+            {
+              "id": "0",
+              "label": "White",
+              "css_var": "--color-neutral-0",
+              "default": "#ffffff"
+            },
+            {
+              "id": "50",
+              "label": "Gray 50",
+              "css_var": "--color-neutral-50",
+              "default": "#f9fafb"
+            },
+            {
+              "id": "100",
+              "label": "Gray 100",
+              "css_var": "--color-neutral-100",
+              "default": "#f3f4f6"
+            },
+            {
+              "id": "900",
+              "label": "Black",
+              "css_var": "--color-neutral-900",
+              "default": "#111827"
+            }
+          ]
+        },
+        "state": {
+          "label": "State Colors",
+          "description": "Colors for messages, alerts, validation",
+          "colors": [
+            {
+              "id": "success",
+              "label": "Success",
+              "css_var": "--color-state-success",
+              "default": "#10b981"
+            },
+            {
+              "id": "warning",
+              "label": "Warning",
+              "css_var": "--color-state-warning",
+              "default": "#f59e0b"
+            },
+            {
+              "id": "error",
+              "label": "Error",
+              "css_var": "--color-state-error",
+              "default": "#ef4444"
+            },
+            {
+              "id": "info",
+              "label": "Info",
+              "css_var": "--color-state-info",
+              "default": "#3b82f6"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
