@@ -26,11 +26,13 @@ define([
             }, 2000, function(err) {
                 if (err) {
                     self.fail('Draft style not created: ' + err.message);
-                } else {
-                    var $draft = self.$('#bte-theme-css-variables-draft');
-                    self.assertEquals($draft.length > 0, true, 'Draft style should exist');
+                    done();
+                    return;
                 }
-                done(err);
+                
+                var $draft = self.$('#bte-theme-css-variables-draft');
+                self.assertEquals($draft.length > 0, true, 'Draft style should exist');
+                done();
             });
         },
         
@@ -50,11 +52,13 @@ define([
             }, 2000, function(err) {
                 if (err) {
                     self.fail('Draft style not created in iframe: ' + err.message);
-                } else {
-                    var $draft = self.$iframe().find('#bte-theme-css-variables-draft');
-                    self.assertEquals($draft.length > 0, true, 'Draft style should exist in iframe');
+                    done();
+                    return;
                 }
-                done(err);
+                
+                var $draft = self.$iframe().find('#bte-theme-css-variables-draft');
+                self.assertEquals($draft.length > 0, true, 'Draft style should exist in iframe');
+                done();
             });
         },
         

@@ -82,7 +82,7 @@ define([
             }, 2000, function(err) {
                 if (err) {
                     self.fail('CSS Manager not initialized: ' + err.message);
-                    done(err);
+                    done();
                     return;
                 }
                 
@@ -151,7 +151,7 @@ define([
             }, 2000, function(err) {
                 if (err) {
                     self.fail('CSS Manager not initialized: ' + err.message);
-                    done(err);
+                    done();
                     return;
                 }
                 
@@ -209,7 +209,7 @@ define([
             }, 2000, function(err) {
                 if (err) {
                     self.fail('CSS Manager not initialized: ' + err.message);
-                    done(err);
+                    done();
                     return;
                 }
                 
