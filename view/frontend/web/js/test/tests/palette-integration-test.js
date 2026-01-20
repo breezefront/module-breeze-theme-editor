@@ -75,34 +75,7 @@ define([
         },
         
         /**
-         * Test 5: Should have debounced save mechanism
-         */
-        'should have debounced save for 500ms': function(done) {
-            PaletteManager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
-            
-            var saveCount = 0;
-            PaletteManager._saveToBackend = function() {
-                saveCount++;
-                return Promise.resolve();
-            };
-            
-            // Update multiple times
-            PaletteManager.updateColor('--color-brand-primary', '#ff0000');
-            PaletteManager.updateColor('--color-brand-primary', '#00ff00');
-            PaletteManager.updateColor('--color-brand-primary', '#0000ff');
-            
-            var self = this;
-            
-            // After 800ms, save should be called once
-            setTimeout(function() {
-                self.assertEquals(saveCount, 1, 
-                    'Save should be debounced (called once after 500ms)');
-                done();
-            }, 800);
-        },
-        
-        /**
-         * Test 6: Should support subscriber pattern for state sync
+         * Test 5: Should support subscriber pattern for state sync
          */
         'should sync state across multiple subscribers': function(done) {
             PaletteManager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });

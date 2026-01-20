@@ -15,26 +15,14 @@ define([
     return TestFramework.suite('Palette Section Renderer', {
         
         /**
-         * Setup: Initialize PaletteManager
-         */
-        beforeEach: function() {
-            // Initialize PaletteManager with mock data
-            PaletteManager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
-        },
-        
-        /**
-         * Teardown: Clean up
-         */
-        afterEach: function() {
-            // Reset PaletteManager
-            PaletteManager.palettes = {};
-            PaletteManager.listeners = [];
-        },
-        
-        /**
          * Test 1: PaletteManager should be initialized
          */
         'PaletteManager should be initialized with test data': function() {
+            // Initialize fresh for this test
+            PaletteManager.palettes = {};
+            PaletteManager.listeners = [];
+            PaletteManager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
+            
             var keys = Object.keys(PaletteManager.palettes);
             this.assert(keys.length > 0, 
                 'PaletteManager should have indexed colors');
@@ -135,11 +123,23 @@ define([
          * Test 9: Color update should modify value
          */
         'updating color should change its value': function(done) {
+            // Initialize fresh for this test
+            PaletteManager.palettes = {};
+            PaletteManager.listeners = [];
+            PaletteManager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
+            
+            // Update color
             PaletteManager.updateColor('--color-brand-primary', '#ff0000');
             
             var self = this;
             setTimeout(function() {
                 var color = PaletteManager.getColor('--color-brand-primary');
+                if (!color) {
+                    self.fail('Color not found after update');
+                    done();
+                    return;
+                }
+                
                 self.assertEquals(color.value, '255, 0, 0', 
                     'Color value should be updated');
                 self.assertEquals(color.hex, '#ff0000', 
