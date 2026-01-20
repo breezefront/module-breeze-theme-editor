@@ -1,0 +1,231 @@
+/**
+ * Palette Manager Tests
+ * 
+ * Unit tests for PaletteManager state management and color conversion logic
+ */
+define([
+    'Swissup_BreezeThemeEditor/js/test/test-framework',
+    'Swissup_BreezeThemeEditor/js/test/test-fixtures',
+    'Swissup_BreezeThemeEditor/js/theme-editor/palette-manager'
+], function(TestFramework, fixtures, PaletteManager) {
+    'use strict';
+    
+    return TestFramework.suite('Palette Manager', {
+        
+        /**
+         * Test 1: Should initialize with empty palettes
+         */
+        'should initialize with empty palettes': function() {
+            var manager = Object.create(PaletteManager);
+            manager.init([]);
+            
+            this.assertEquals(manager.palettes.length, 0, 
+                'Palettes array should be empty after init with empty array');
+        },
+        
+        /**
+         * Test 2: Should index colors by cssVar after initialization
+         */
+        'should index colors by cssVar after initialization': function() {
+            var manager = Object.create(PaletteManager);
+            manager.init([fixtures.mockPaletteConfig]);
+            
+            // Check that primary color is indexed
+            var color = manager.getColor('--color-brand-primary');
+            
+            this.assertNotNull(color, 'Color should be found by cssVar');
+            this.assertEquals(color.id, 'primary', 'Color ID should match');
+            this.assertEquals(color.label, 'Primary', 'Color label should match');
+            this.assertEquals(color.value, '25, 121, 195', 'Color value should match');
+        },
+        
+        /**
+         * Test 3: Should convert HEX to RGB correctly
+         */
+        'should convert HEX to RGB correctly': function() {
+            var manager = Object.create(PaletteManager);
+            
+            // Test various HEX colors
+            this.assertEquals(manager.hexToRgb('#1979c3'), '25, 121, 195', 
+                'Should convert #1979c3 to RGB');
+            this.assertEquals(manager.hexToRgb('#ffffff'), '255, 255, 255', 
+                'Should convert white to RGB');
+            this.assertEquals(manager.hexToRgb('#000000'), '0, 0, 0', 
+                'Should convert black to RGB');
+            this.assertEquals(manager.hexToRgb('#ffa500'), '255, 165, 0', 
+                'Should convert orange to RGB');
+        },
+        
+        /**
+         * Test 4: Should convert RGB to HEX correctly
+         */
+        'should convert RGB to HEX correctly': function() {
+            var manager = Object.create(PaletteManager);
+            
+            // Test various RGB colors
+            this.assertEquals(manager.rgbToHex('25, 121, 195'), '#1979c3', 
+                'Should convert RGB to #1979c3');
+            this.assertEquals(manager.rgbToHex('255, 255, 255'), '#ffffff', 
+                'Should convert white RGB to HEX');
+            this.assertEquals(manager.rgbToHex('0, 0, 0'), '#000000', 
+                'Should convert black RGB to HEX');
+            this.assertEquals(manager.rgbToHex('255, 165, 0'), '#ffa500', 
+                'Should convert orange RGB to HEX');
+        },
+        
+        /**
+         * Test 5: Should find matching color by HEX value
+         */
+        'should find matching color by HEX value': function() {
+            var manager = Object.create(PaletteManager);
+            manager.init([fixtures.mockPaletteConfig]);
+            
+            // Find color by HEX value
+            var color = manager.findMatchingColor('#1979c3');
+            
+            this.assertNotNull(color, 'Should find color by HEX value');
+            this.assertEquals(color.cssVar, '--color-brand-primary', 
+                'Should return correct color object');
+        },
+        
+        /**
+         * Test 6: Should update color value and notify subscribers
+         */
+        'should update color value and notify subscribers': function(done) {
+            var manager = Object.create(PaletteManager);
+            manager.init([fixtures.mockPaletteConfig]);
+            
+            var notified = false;
+            var notifiedCssVar = null;
+            var notifiedValue = null;
+            
+            // Subscribe to changes
+            manager.subscribe(function(cssVar, rgbValue, hexValue) {
+                notified = true;
+                notifiedCssVar = cssVar;
+                notifiedValue = rgbValue;
+            });
+            
+            // Update color
+            manager.updateColor('--color-brand-primary', '#ff0000');
+            
+            var self = this;
+            
+            // Wait a bit for notification
+            setTimeout(function() {
+                self.assertEquals(notified, true, 'Subscriber should be notified');
+                self.assertEquals(notifiedCssVar, '--color-brand-primary', 
+                    'Notified CSS var should match');
+                self.assertEquals(notifiedValue, '255, 0, 0', 
+                    'Notified RGB value should match');
+                
+                // Verify color was updated in index
+                var color = manager.getColor('--color-brand-primary');
+                self.assertEquals(color.value, '255, 0, 0', 
+                    'Color value should be updated in index');
+                
+                done();
+            }, 50);
+        },
+        
+        /**
+         * Test 7: Should debounce save for 500ms
+         */
+        'should debounce save for 500ms': function(done) {
+            var manager = Object.create(PaletteManager);
+            manager.init([fixtures.mockPaletteConfig]);
+            
+            var saveCount = 0;
+            
+            // Mock _saveToBackend to count calls
+            manager._saveToBackend = function() {
+                saveCount++;
+                return Promise.resolve();
+            };
+            
+            var self = this;
+            
+            // Update color multiple times rapidly
+            manager.updateColor('--color-brand-primary', '#ff0000');
+            
+            setTimeout(function() {
+                manager.updateColor('--color-brand-primary', '#00ff00');
+            }, 100);
+            
+            setTimeout(function() {
+                manager.updateColor('--color-brand-primary', '#0000ff');
+            }, 200);
+            
+            // After 300ms, save should not have been called yet
+            setTimeout(function() {
+                self.assertEquals(saveCount, 0, 
+                    'Save should not be called within debounce period');
+            }, 300);
+            
+            // After 800ms (500ms after last update), save should be called once
+            setTimeout(function() {
+                self.assertEquals(saveCount, 1, 
+                    'Save should be called once after debounce period');
+                done();
+            }, 800);
+        },
+        
+        /**
+         * Test 8: Should notify all subscribers on color change
+         */
+        'should notify all subscribers on color change': function(done) {
+            var manager = Object.create(PaletteManager);
+            manager.init([fixtures.mockPaletteConfig]);
+            
+            var subscriber1Called = false;
+            var subscriber2Called = false;
+            
+            // Add multiple subscribers
+            manager.subscribe(function() {
+                subscriber1Called = true;
+            });
+            
+            manager.subscribe(function() {
+                subscriber2Called = true;
+            });
+            
+            // Update color
+            manager.updateColor('--color-brand-accent', '#ff6600');
+            
+            var self = this;
+            
+            setTimeout(function() {
+                self.assertEquals(subscriber1Called, true, 
+                    'First subscriber should be notified');
+                self.assertEquals(subscriber2Called, true, 
+                    'Second subscriber should be notified');
+                done();
+            }, 50);
+        },
+        
+        /**
+         * Test 9: Should handle invalid color formats gracefully
+         */
+        'should handle invalid color formats gracefully': function() {
+            var manager = Object.create(PaletteManager);
+            
+            // Test invalid HEX formats
+            var result1 = manager.hexToRgb('invalid');
+            this.assertEquals(result1, '0, 0, 0', 
+                'Invalid HEX should return black');
+            
+            var result2 = manager.hexToRgb('#gggggg');
+            this.assertEquals(result2, '0, 0, 0', 
+                'Invalid HEX characters should return black');
+            
+            // Test invalid RGB formats
+            var result3 = manager.rgbToHex('invalid');
+            this.assertEquals(result3, '#000000', 
+                'Invalid RGB should return black HEX');
+            
+            var result4 = manager.rgbToHex('999, 999, 999');
+            this.assertEquals(result4, '#ffffff', 
+                'RGB values > 255 should be clamped to 255');
+        }
+    });
+});

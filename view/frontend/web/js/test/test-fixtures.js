@@ -151,6 +151,166 @@ define([], function() {
          * Mock: Network error
          * Use for testing network failure scenarios
          */
-        networkError: new Error('Network request failed')
+        networkError: new Error('Network request failed'),
+        
+        // =====================================================================
+        // PALETTE MOCK FIXTURES
+        // =====================================================================
+        
+        /**
+         * Mock: Color palette configuration
+         * Use for testing palette UI and state management
+         */
+        mockPaletteConfig: {
+            id: 'default',
+            label: 'Default Palette',
+            groups: [
+                {
+                    id: 'brand',
+                    label: 'Brand Colors',
+                    colors: [
+                        {
+                            id: 'primary',
+                            label: 'Primary',
+                            cssVar: '--color-brand-primary',
+                            value: '25, 121, 195',
+                            default: '25, 121, 195',
+                            usageCount: 5
+                        },
+                        {
+                            id: 'accent',
+                            label: 'Accent',
+                            cssVar: '--color-brand-accent',
+                            value: '255, 165, 0',
+                            default: '255, 165, 0',
+                            usageCount: 3
+                        },
+                        {
+                            id: 'secondary',
+                            label: 'Secondary',
+                            cssVar: '--color-brand-secondary',
+                            value: '108, 117, 125',
+                            default: '108, 117, 125',
+                            usageCount: 2
+                        }
+                    ]
+                },
+                {
+                    id: 'semantic',
+                    label: 'Semantic Colors',
+                    colors: [
+                        {
+                            id: 'success',
+                            label: 'Success',
+                            cssVar: '--color-semantic-success',
+                            value: '40, 167, 69',
+                            default: '40, 167, 69',
+                            usageCount: 1
+                        },
+                        {
+                            id: 'error',
+                            label: 'Error',
+                            cssVar: '--color-semantic-error',
+                            value: '220, 53, 69',
+                            default: '220, 53, 69',
+                            usageCount: 4
+                        }
+                    ]
+                }
+            ]
+        },
+        
+        /**
+         * Mock: Full config with palettes
+         * Use for testing GraphQL config query with palette data
+         */
+        mockConfigWithPalettes: {
+            breezeThemeEditorConfig: {
+                sections: [],
+                palettes: [
+                    {
+                        id: 'default',
+                        label: 'Default Palette',
+                        groups: [
+                            {
+                                id: 'brand',
+                                label: 'Brand Colors',
+                                colors: [
+                                    {
+                                        id: 'primary',
+                                        label: 'Primary',
+                                        cssVar: '--color-brand-primary',
+                                        value: '25, 121, 195',
+                                        default: '25, 121, 195',
+                                        usageCount: 5
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        
+        /**
+         * Mock: Save palette value - Success response
+         * Use for testing successful palette color save mutation
+         */
+        mockSavePaletteSuccess: {
+            saveBreezeThemeEditorPaletteValue: {
+                success: true,
+                message: 'Color saved successfully',
+                affectedFields: ['button_color', 'link_color', 'header_bg']
+            }
+        },
+        
+        /**
+         * Mock: Save palette value - Validation error (invalid CSS var)
+         * Use for testing CSS variable name validation
+         */
+        mockSavePaletteValidationErrorCssVar: {
+            saveBreezeThemeEditorPaletteValue: {
+                success: false,
+                message: 'Invalid CSS variable name. Must start with --color-',
+                affectedFields: []
+            }
+        },
+        
+        /**
+         * Mock: Save palette value - Validation error (invalid RGB format)
+         * Use for testing RGB value format validation
+         */
+        mockSavePaletteValidationErrorRgb: {
+            saveBreezeThemeEditorPaletteValue: {
+                success: false,
+                message: 'Invalid RGB format. Expected format: "R, G, B" (e.g., "255, 0, 0")',
+                affectedFields: []
+            }
+        },
+        
+        /**
+         * Mock: Save palette value - GraphQL error
+         * Use for testing GraphQL error handling during save
+         */
+        mockSavePaletteGraphqlError: {
+            errors: [
+                {
+                    message: 'Unable to save palette value',
+                    extensions: {
+                        category: 'graphql-input-error'
+                    }
+                }
+            ]
+        },
+        
+        /**
+         * Mock: Empty palette configuration
+         * Use for testing empty state handling
+         */
+        mockEmptyPalette: {
+            id: 'empty',
+            label: 'Empty Palette',
+            groups: []
+        }
     };
 });
