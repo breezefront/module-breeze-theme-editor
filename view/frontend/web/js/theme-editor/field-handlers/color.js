@@ -113,6 +113,10 @@ define([
             // === CREATE POPUP CONTAINER ===
             var $popup = $('<div class="bte-color-popup"></div>');
             
+            // === CLOSE BUTTON ===
+            var $closeBtn = $('<button type="button" class="bte-popup-close" aria-label="Close">&times;</button>');
+            $popup.append($closeBtn);
+            
             // === LEFT SIDE: Custom Grouped Palette Grid ===
             // Wrap paletteData in { data: ... } for Underscore.js template
             var paletteHtml = _.template(paletteGridTemplate)({ data: paletteData });
@@ -126,6 +130,25 @@ define([
             
             // Append popup to body
             $('body').append($popup);
+            
+            // === CLOSE BUTTON HANDLER ===
+            $closeBtn.on('click', function() {
+                console.log('🔴 Close button clicked');
+                self._closeAllPopups();
+            });
+            
+            // === OUTSIDE CLICK HANDLER (specific to this popup) ===
+            setTimeout(function() {
+                $(document).on('click.bte-popup-' + Date.now(), function(e) {
+                    var $target = $(e.target);
+                    // Close if clicked outside popup, trigger, and NOT on Pickr elements
+                    if (!$target.closest('.bte-color-popup').length && 
+                        !$target.closest('.bte-color-trigger').length &&
+                        !$target.closest('.pcr-app').length) {
+                        self._closeAllPopups();
+                    }
+                });
+            }, 100); // Delay to prevent immediate close
             
             // === LAZY LOAD PICKR ===
             require(['pickr'], function(Pickr) {
