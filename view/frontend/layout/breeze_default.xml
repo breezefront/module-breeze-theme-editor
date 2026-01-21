@@ -4,21 +4,24 @@
     <body>
         <referenceBlock name="breeze.js">
           <arguments>
-            <argument name="bundles" xsi:type="array">
-              <item name="dynamic" xsi:type="array">
-                <item name="items" xsi:type="array">
-                  <item name="Swissup_BreezeThemeEditor/js/*" xsi:type="string">Swissup_BreezeThemeEditor/js/*</item>
-                </item>
-              </item>
-            </argument>
+              <argument name="better_compatibility" xsi:type="array">
+                    <item name="Swissup_BreezeThemeEditor" xsi:type="boolean">true</item>
+              </argument>
+<!--            <argument name="bundles" xsi:type="array">-->
+<!--              <item name="dynamic" xsi:type="array">-->
+<!--                <item name="items" xsi:type="array">-->
+<!--                  <item name="Swissup_BreezeThemeEditor/js/*" xsi:type="string">Swissup_BreezeThemeEditor/js/*</item>-->
+<!--                </item>-->
+<!--              </item>-->
+<!--            </argument>-->
           </arguments>
         </referenceBlock>
-        
+
         <!-- Test Runner (activated with ?jstest=true URL parameter) -->
         <referenceContainer name="after.body.start">
-            <block 
-                class="Swissup\BreezeThemeEditor\Block\TestRunner" 
-                name="breeze.test.runner" 
+            <block
+                class="Swissup\BreezeThemeEditor\Block\TestRunner"
+                name="breeze.test.runner"
                 template="Swissup_BreezeThemeEditor::test-runner.phtml"
             />
         </referenceContainer>
