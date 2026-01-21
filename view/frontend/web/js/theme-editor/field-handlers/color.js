@@ -3,9 +3,8 @@ define([
     'underscore',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/base',
     'Swissup_BreezeThemeEditor/js/theme-editor/palette-manager',
-    'pickr',  // Use alias defined in requirejs-config.js
     'text!Swissup_BreezeThemeEditor/template/theme-editor/partials/palette-grid.html'
-], function ($, _, BaseHandler, PaletteManager, Pickr, paletteGridTemplate) {
+], function ($, _, BaseHandler, PaletteManager, paletteGridTemplate) {
     'use strict';
 
     /**
@@ -128,8 +127,16 @@ define([
             // Append popup to body
             $('body').append($popup);
             
-            // === INITIALIZE PICKR ===
-            var pickr = Pickr.create({
+            // === LAZY LOAD PICKR ===
+            require(['pickr'], function(Pickr) {
+                if (!Pickr) {
+                    console.error('❌ Pickr failed to load');
+                    self._closeAllPopups();
+                    return;
+                }
+                
+                // === INITIALIZE PICKR ===
+                var pickr = Pickr.create({
                 el: $pickrEl[0],
                 theme: 'nano',
                 container: $pickrContainer[0],
@@ -241,6 +248,8 @@ define([
             });
             
             console.log('🎨 Color popup opened with Pickr');
+            
+            }); // End of require(['pickr'])
         },
 
         /**
