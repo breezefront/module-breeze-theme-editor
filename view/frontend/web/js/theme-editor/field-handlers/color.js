@@ -202,7 +202,7 @@ define([
             });
             
             // Position popup to the right of trigger
-            this._positionPopup($popup, $trigger);
+            self._positionPopup($popup, $trigger);
             
             // Store references
             $trigger.data('popup-instance', {
