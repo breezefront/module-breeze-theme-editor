@@ -19,6 +19,10 @@ define([
             }
         }
 
+        // Pass palette configuration for Quick Select
+        data.palette = field.palette || null;
+        data.paletteId = field.palette || null;
+
         return data;
     };
 

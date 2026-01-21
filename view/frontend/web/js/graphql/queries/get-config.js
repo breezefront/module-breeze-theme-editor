@@ -36,6 +36,7 @@ define([
                         required
                         placeholder
                         helpText
+                        palette
                         validation {
                             minLength
                             maxLength

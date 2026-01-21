@@ -240,6 +240,36 @@ define([
         },
 
         /**
+         * Highlight a specific color swatch (called from Quick Select)
+         * 
+         * @param {String} cssVar - CSS variable to highlight
+         */
+        highlightColor: function(cssVar) {
+            // Remove previous highlights
+            this.$grid.find('.bte-palette-swatch').removeClass('quick-select-active');
+            
+            // Add highlight to matching swatch
+            var $swatch = this.$grid.find('.bte-palette-swatch[data-css-var="' + cssVar + '"]');
+            if ($swatch.length) {
+                $swatch.addClass('quick-select-active');
+                
+                // Scroll into view if needed
+                var swatchTop = $swatch.position().top;
+                var containerScrollTop = this.$content.scrollTop();
+                var containerHeight = this.$content.height();
+                
+                // If swatch is not visible, scroll to it
+                if (swatchTop < 0 || swatchTop > containerHeight) {
+                    this.$content.animate({
+                        scrollTop: containerScrollTop + swatchTop - 50
+                    }, 300);
+                }
+                
+                console.log('✨ Highlighted palette color:', cssVar);
+            }
+        },
+
+        /**
          * Destroy widget
          */
         _destroy: function () {
@@ -249,6 +279,15 @@ define([
             this._super();
         }
     });
+
+    // Expose highlightColor as a static method for external access
+    $.swissup.paletteSection.highlightColor = function(cssVar) {
+        // Find the active palette section widget instance
+        var $paletteSection = $('.bte-palette-section');
+        if ($paletteSection.length && $paletteSection.data('swissup-paletteSection')) {
+            $paletteSection.paletteSection('highlightColor', cssVar);
+        }
+    };
 
     return $.swissup.paletteSection;
 });

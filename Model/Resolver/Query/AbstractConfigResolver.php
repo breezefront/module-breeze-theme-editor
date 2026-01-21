@@ -50,6 +50,7 @@ abstract class AbstractConfigResolver
                     'validation' => $this->formatValidation($setting),
                     'placeholder' => $setting['placeholder'] ?? null,
                     'helpText' => $setting['help_text'] ?? null,
+                    'palette' => $setting['palette'] ?? null,
                     'params' => $this->formatParams($setting),
                     'dependsOn' => $this->formatDependency($setting)
                 ];

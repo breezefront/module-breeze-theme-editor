@@ -209,6 +209,7 @@ type BreezeThemeEditorField {
     validation: BreezeThemeEditorFieldValidation
     placeholder: String
     helpText: String
+    palette: String @doc(description: "Palette ID for Quick Select (color fields only)")
     params: BreezeThemeEditorFieldParams @doc(description: "Type-specific parameters")
     dependsOn: BreezeThemeEditorFieldDependency @doc(description: "Show only if condition met")
 }

@@ -41,6 +41,15 @@
                 data-type="color"
             />
         </div>
+
+        <% if (data.palette) { %>
+            <div class="bte-field-palette-quick-select" data-palette="<%= data.palette %>">
+                <div class="bte-quick-select-label">Quick Select</div>
+                <div class="bte-palette-grid" data-palette-id="<%= data.palette %>">
+                    <!-- Swatches will be rendered dynamically by handler -->
+                </div>
+            </div>
+        <% } %>
     </div>
 
     <% if (data.helpText) { %>
