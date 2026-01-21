@@ -141,10 +141,11 @@ define([
             setTimeout(function() {
                 $(document).on('click.bte-popup-' + Date.now(), function(e) {
                     var $target = $(e.target);
-                    // Close if clicked outside popup, trigger, and NOT on Pickr elements
+                    // Close if clicked outside popup, trigger, Pickr elements, and palette swatches
                     if (!$target.closest('.bte-color-popup').length && 
                         !$target.closest('.bte-color-trigger').length &&
-                        !$target.closest('.pcr-app').length) {
+                        !$target.closest('.pcr-app').length &&
+                        !$target.closest('.bte-palette-swatch').length) {
                         self._closeAllPopups();
                     }
                 });
@@ -254,18 +255,28 @@ define([
             
             // Handle swatch clicks
             $popup.on('click', '.bte-palette-swatch', function(e) {
+                e.stopPropagation(); // Prevent outside click handler
+                
                 var $swatch = $(e.currentTarget);
                 var hex = $swatch.data('hex');
                 var cssVar = $swatch.data('css-var');
                 
+                console.log('🎨 Palette swatch clicked:', cssVar, '→', hex);
+                
                 // Update Pickr color (will trigger 'change' event)
-                pickr.setColor(hex, false); // silent=false
+                try {
+                    if (pickr && pickr.setColor) {
+                        pickr.setColor(hex, false); // silent=false
+                    } else {
+                        console.warn('⚠️ Pickr instance not available');
+                    }
+                } catch (err) {
+                    console.error('❌ Error setting Pickr color:', err);
+                }
                 
                 // Highlight selected swatch
                 $popup.find('.bte-palette-swatch').removeClass('selected');
                 $swatch.addClass('selected');
-                
-                console.log('🎨 Palette swatch clicked:', cssVar, '→', hex);
                 
                 // Popup stays open (as per your preference)
             });
