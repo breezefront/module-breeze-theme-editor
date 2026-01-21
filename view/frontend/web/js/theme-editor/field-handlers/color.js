@@ -262,16 +262,30 @@ define([
                 var cssVar = $swatch.data('css-var');
                 
                 console.log('🎨 Palette swatch clicked:', cssVar, '→', hex);
+                console.log('🔍 Pickr debug:', {
+                    exists: !!pickr,
+                    hasSetColor: pickr && typeof pickr.setColor === 'function',
+                    hasRoot: pickr && !!pickr._root,
+                    hasInteraction: pickr && pickr._root && !!pickr._root.interaction,
+                    isOpen: pickr && typeof pickr.isOpen === 'function' ? pickr.isOpen() : 'N/A'
+                });
                 
                 // Update Pickr color (will trigger 'change' event)
                 try {
-                    if (pickr && pickr.setColor) {
+                    if (pickr && pickr._root && pickr._root.interaction && pickr.setColor) {
+                        console.log('✅ Calling pickr.setColor()...');
                         pickr.setColor(hex, false); // silent=false
+                        console.log('✅ pickr.setColor() completed');
                     } else {
-                        console.warn('⚠️ Pickr instance not available');
+                        console.warn('⚠️ Pickr instance not ready:', {
+                            pickr: !!pickr,
+                            root: pickr && !!pickr._root,
+                            interaction: pickr && pickr._root && !!pickr._root.interaction
+                        });
                     }
                 } catch (err) {
                     console.error('❌ Error setting Pickr color:', err);
+                    console.error('Pickr state:', pickr);
                 }
                 
                 // Highlight selected swatch
