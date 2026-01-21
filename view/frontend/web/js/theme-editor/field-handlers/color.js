@@ -115,7 +115,8 @@ define([
             var $popup = $('<div class="bte-color-popup"></div>');
             
             // === LEFT SIDE: Custom Grouped Palette Grid ===
-            var paletteHtml = _.template(paletteGridTemplate)(paletteData);
+            // Wrap paletteData in { data: ... } for Underscore.js template
+            var paletteHtml = _.template(paletteGridTemplate)({ data: paletteData });
             $popup.append(paletteHtml);
             
             // === RIGHT SIDE: Pickr Widget Container ===
