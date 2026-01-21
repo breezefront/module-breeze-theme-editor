@@ -262,35 +262,29 @@ define([
                 var cssVar = $swatch.data('css-var');
                 
                 console.log('🎨 Palette swatch clicked:', cssVar, '→', hex);
-                console.log('🔍 Pickr debug:', {
-                    exists: !!pickr,
-                    hasSetColor: pickr && typeof pickr.setColor === 'function',
-                    hasRoot: pickr && !!pickr._root,
-                    hasInteraction: pickr && pickr._root && !!pickr._root.interaction,
-                    isOpen: pickr && typeof pickr.isOpen === 'function' ? pickr.isOpen() : 'N/A'
-                });
                 
-                // Update Pickr color (will trigger 'change' event)
+                // Update text input and trigger preview FIRST (before Pickr)
+                $textInput.val(hex);
+                $trigger.find('.bte-color-preview').css('background-color', hex);
+                
+                // Update Pickr color (SILENT to avoid triggering events that close popup)
                 try {
                     if (pickr && pickr._root && pickr._root.interaction && pickr.setColor) {
-                        console.log('✅ Calling pickr.setColor()...');
-                        pickr.setColor(hex, false); // silent=false
-                        console.log('✅ pickr.setColor() completed');
+                        pickr.setColor(hex, true); // silent=true (no events)
+                        console.log('✅ Pickr color updated (silent)');
                     } else {
-                        console.warn('⚠️ Pickr instance not ready:', {
-                            pickr: !!pickr,
-                            root: pickr && !!pickr._root,
-                            interaction: pickr && pickr._root && !!pickr._root.interaction
-                        });
+                        console.warn('⚠️ Pickr instance not ready, skipping Pickr update');
                     }
                 } catch (err) {
                     console.error('❌ Error setting Pickr color:', err);
-                    console.error('Pickr state:', pickr);
                 }
                 
                 // Highlight selected swatch
                 $popup.find('.bte-palette-swatch').removeClass('selected');
                 $swatch.addClass('selected');
+                
+                // Trigger change event to save
+                BaseHandler.handleChange($textInput, callback);
                 
                 // Popup stays open (as per your preference)
             });
