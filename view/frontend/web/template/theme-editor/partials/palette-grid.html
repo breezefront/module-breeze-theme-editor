@@ -1,0 +1,25 @@
+<!-- Grouped Palette Grid Template for Color Picker Popup -->
+<div class="bte-popup-palette">
+    <% data.groups.forEach(function(group, groupIndex) { %>
+        <!-- Group separator (not before first group) -->
+        <% if (groupIndex > 0) { %>
+            <div class="bte-palette-group-separator"></div>
+        <% } %>
+        
+        <!-- Group label -->
+        <div class="bte-palette-group-label"><%= group.label %></div>
+        
+        <!-- Swatches grid (8 columns) -->
+        <div class="bte-palette-group-grid">
+            <% group.colors.forEach(function(color) { %>
+                <div class="bte-palette-swatch" 
+                     data-css-var="<%= color.cssVar %>" 
+                     data-hex="<%= color.hex %>" 
+                     title="<%= color.label %> (<%= color.hex %>)">
+                    <div class="bte-swatch-visual" 
+                         style="background-color: <%= color.hex %>;"></div>
+                </div>
+            <% }); %>
+        </div>
+    <% }); %>
+</div>

@@ -92,6 +92,58 @@ define([
         },
 
         /**
+         * Get palette with full group structure for popup grid
+         * 
+         * @param {String} paletteId - Palette identifier (e.g., 'default')
+         * @returns {Object|null} - { id, groups: [{id, label, colors: [...]}] }
+         */
+        getPaletteWithGroups: function(paletteId) {
+            var groups = {};
+            
+            // Collect colors by group from flat indexed palette
+            Object.keys(this.palettes).forEach(function(cssVar) {
+                var color = this.palettes[cssVar];
+                
+                // Skip if different palette
+                if (color.paletteId !== paletteId) {
+                    return;
+                }
+                
+                // Initialize group if not exists
+                if (!groups[color.groupId]) {
+                    groups[color.groupId] = {
+                        id: color.groupId,
+                        label: color.groupLabel,
+                        colors: []
+                    };
+                }
+                
+                // Add color to group
+                groups[color.groupId].colors.push({
+                    id: color.id,
+                    label: color.label,
+                    cssVar: color.cssVar,
+                    hex: color.hex,
+                    value: color.value
+                });
+            }.bind(this));
+            
+            // Convert groups object to array
+            var groupsArray = Object.values(groups);
+            
+            // Sort groups by predefined order (brand, neutral, state)
+            var groupOrder = { brand: 1, neutral: 2, state: 3 };
+            groupsArray.sort(function(a, b) {
+                return (groupOrder[a.id] || 999) - (groupOrder[b.id] || 999);
+            });
+            
+            return groupsArray.length > 0 ? {
+                id: paletteId,
+                groups: groupsArray
+            } : null;
+        },
+
+        /**
          * Get all palettes
          * 
          * @returns {Object}

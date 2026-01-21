@@ -156,82 +156,6 @@
 }
 
 // ============================================================================
-// Quick Select Palette (under color fields)
-// Same matrix layout, but embedded in field
-// ============================================================================
-
-.bte-field-palette-quick-select {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #e5e7eb;
-
-    .bte-quick-select-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
-        display: block;
-    }
-
-    // Reuse palette grid styles
-    .bte-palette-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 32px); // Slightly smaller for field context
-        gap: 6px;
-        justify-content: start;
-    }
-
-    .bte-palette-group {
-        grid-column: 1 / -1;
-        display: grid;
-        grid-template-columns: repeat(5, 32px);
-        gap: 6px;
-
-        &.bte-palette-group-separator {
-            border-top: 2px solid #d1d5db; // Thinner border for compact view
-            padding-top: 8px;
-            margin-top: 8px;
-        }
-
-        .bte-palette-group-label {
-            display: none; // Always hidden in Quick Select
-        }
-    }
-
-    .bte-palette-swatch {
-        width: 32px;
-        height: 32px;
-        border: 2px solid #d1d5db;
-        border-radius: 3px;
-        cursor: pointer;
-        position: relative;
-        transition: all 0.15s ease;
-
-        &:hover {
-            border-color: #9ca3af;
-            transform: scale(1.08);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-        }
-
-        // Selected state in Quick Select
-        &.selected {
-            border: 3px solid #2563eb;
-            border-width: 3px;
-        }
-
-        .bte-swatch-visual {
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        // No hidden input in Quick Select (direct click handler)
-    }
-}
-
-// ============================================================================
 // Dark mode support (optional, if theme has dark mode)
 // ============================================================================
 
@@ -262,30 +186,6 @@
 
         .bte-no-palettes {
             color: #9ca3af;
-        }
-    }
-
-    .bte-field-palette-quick-select {
-        border-top-color: #374151;
-
-        .bte-quick-select-label {
-            color: #9ca3af;
-        }
-
-        .bte-palette-swatch {
-            border-color: #4b5563;
-
-            &:hover {
-                border-color: #6b7280;
-            }
-
-            &.selected {
-                border-color: #3b82f6;
-            }
-        }
-
-        .bte-palette-group.bte-palette-group-separator {
-            border-top-color: #4b5563;
         }
     }
 }

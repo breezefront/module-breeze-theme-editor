@@ -90,7 +90,8 @@
 }
 
 .bte-field-color {
-    .bte-color-picker {
+    // Clickable color trigger (replaces native input)
+    .bte-color-trigger {
         width: 60px;
         height: 40px;
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -99,15 +100,24 @@
         cursor: pointer;
         padding: 4px;
         flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s;
 
         &:hover {
             border-color: rgba(255, 255, 255, 0.3);
         }
 
-        &:focus {
-            outline: none;
+        &:active {
             border-color: #1979c3;
         }
+    }
+
+    .bte-color-preview {
+        width: 100%;
+        height: 100%;
+        border-radius: 2px;
+        pointer-events: none;
     }
 
     .bte-color-input {
@@ -131,6 +141,204 @@
 
         &::placeholder {
             color: rgba(255, 255, 255, 0.4);
+        }
+    }
+}
+
+// ============================================================================
+// COLOR POPUP (Custom Container + Pickr Widget)
+// ============================================================================
+
+.bte-color-popup {
+    position: absolute;
+    background: @bte-toolbar-bg;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    padding: 16px;
+    display: flex;
+    gap: 16px;
+    z-index: 10000;
+    max-height: 90vh;
+    overflow: hidden;
+}
+
+// ============================================================================
+// LEFT SIDE: Custom Grouped Palette Grid
+// ============================================================================
+
+.bte-popup-palette {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 8px;
+    min-width: 220px; // 8 columns × 24px + gaps
+    
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 3px;
+        
+        &:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    }
+}
+
+.bte-palette-group-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.bte-palette-group-separator {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 8px 0;
+    border-radius: 2px;
+}
+
+.bte-palette-group-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 24px);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.bte-popup-palette .bte-palette-swatch {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s ease;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: scale(1.15);
+        z-index: 1;
+    }
+
+    &.selected {
+        border-color: #1979c3;
+        border-width: 3px;
+        box-shadow: 0 0 0 2px rgba(25, 121, 195, 0.3);
+    }
+
+    .bte-swatch-visual {
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        border-radius: 1px;
+    }
+}
+
+// ============================================================================
+// RIGHT SIDE: Pickr Widget Container
+// ============================================================================
+
+.bte-popup-pickr-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.bte-pickr-widget {
+    // Pickr will inject its DOM here
+}
+
+// ============================================================================
+// PICKR THEME OVERRIDES (Dark theme adaptation)
+// ============================================================================
+
+// Override Pickr's default light theme to match our dark sidebar
+.pcr-app {
+    background: @bte-toolbar-bg !important;
+    border: none !important;
+    box-shadow: none !important;
+    
+    // Color palette (Box for Saturation/Value)
+    .pcr-selection {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        
+        .pcr-color-preview {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .pcr-color-chooser {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        // Hue slider
+        .pcr-hue {
+            background: linear-gradient(to bottom,
+                #f00 0%, #ff0 17%, #0f0 33%,
+                #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        // Opacity slider (if not locked)
+        .pcr-opacity {
+            background: linear-gradient(to right,
+                transparent, currentColor);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    }
+    
+    // Interaction bar (buttons + input)
+    .pcr-interaction {
+        background: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        
+        input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: @bte-toolbar-text;
+            font-family: 'Courier New', monospace;
+            
+            &:hover {
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+            
+            &:focus {
+                border-color: #1979c3;
+                outline: none;
+            }
+        }
+        
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            color: @bte-toolbar-text;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            
+            &:hover {
+                background: rgba(255, 255, 255, 0.15);
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+            
+            &.pcr-save {
+                background: #1979c3;
+                border-color: #1979c3;
+                
+                &:hover {
+                    background: #1565a8;
+                }
+            }
         }
     }
 }

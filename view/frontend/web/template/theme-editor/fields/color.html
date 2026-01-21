@@ -17,18 +17,17 @@
 
     <div class="bte-field-control">
         <div class="bte-color-picker-wrapper">
-            <input
-                type="color"
-                id="field-<%= data.sectionCode %>-<%= data.code %>"
-                class="bte-color-picker"
-                value="<%= data.hexValue || data.value %>"
-                data-section="<%= data.sectionCode %>"
-                data-field="<%= data.code %>"
-                data-css-var="<%= data.cssVar %>"
-                data-type="color"
-                data-default="<%= data.default %>"
-                <%= data.required ? 'required' : '' %>
-            />
+            <div class="bte-color-trigger" 
+                 data-section="<%= data.sectionCode %>"
+                 data-field="<%= data.code %>"
+                 data-css-var="<%= data.cssVar %>"
+                 data-palette="<%= data.palette %>"
+                 data-type="color"
+                 data-default="<%= data.default %>"
+                 <%= data.required ? 'data-required="true"' : '' %>>
+                <div class="bte-color-preview" 
+                     style="background-color: <%= data.hexValue || data.value %>;"></div>
+            </div>
             <input
                 type="text"
                 class="bte-color-input"
@@ -41,15 +40,6 @@
                 data-type="color"
             />
         </div>
-
-        <% if (data.palette) { %>
-            <div class="bte-field-palette-quick-select" data-palette="<%= data.palette %>">
-                <div class="bte-quick-select-label">Quick Select</div>
-                <div class="bte-palette-grid" data-palette-id="<%= data.palette %>">
-                    <!-- Swatches will be rendered dynamically by handler -->
-                </div>
-            </div>
-        <% } %>
     </div>
 
     <% if (data.helpText) { %>
