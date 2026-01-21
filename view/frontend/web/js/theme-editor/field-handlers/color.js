@@ -3,7 +3,7 @@ define([
     'underscore',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/base',
     'Swissup_BreezeThemeEditor/js/theme-editor/palette-manager',
-    'Swissup_BreezeThemeEditor/js/lib/pickr.min',
+    'pickr',  // Use alias defined in requirejs-config.js
     'text!Swissup_BreezeThemeEditor/template/theme-editor/partials/palette-grid.html'
 ], function ($, _, BaseHandler, PaletteManager, Pickr, paletteGridTemplate) {
     'use strict';
