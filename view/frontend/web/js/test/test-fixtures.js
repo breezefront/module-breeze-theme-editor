@@ -311,6 +311,95 @@ define([], function() {
             id: 'empty',
             label: 'Empty Palette',
             groups: []
+        },
+        
+        // =====================================================================
+        // COLOR FIELD PALETTE REFERENCE FIXTURES
+        // =====================================================================
+        
+        /**
+         * Mock: Palette config for color field tests
+         * Use for testing palette reference tracking in color fields
+         */
+        mockColorFieldPalette: {
+            id: 'brand-colors',
+            label: 'Brand Colors',
+            groups: [
+                {
+                    id: 'primary',
+                    label: 'Primary Colors',
+                    colors: [
+                        {
+                            id: 'primary',
+                            label: 'Primary Blue',
+                            cssVar: '--color-brand-primary',
+                            value: '25, 121, 195',
+                            hex: '#1979c3',
+                            default: '25, 121, 195',
+                            usageCount: 5
+                        },
+                        {
+                            id: 'secondary',
+                            label: 'Secondary Green',
+                            cssVar: '--color-brand-secondary',
+                            value: '40, 167, 69',
+                            hex: '#28a745',
+                            default: '40, 167, 69',
+                            usageCount: 3
+                        }
+                    ]
+                },
+                {
+                    id: 'semantic',
+                    label: 'Semantic Colors',
+                    colors: [
+                        {
+                            id: 'error',
+                            label: 'Error Red',
+                            cssVar: '--color-semantic-error',
+                            value: '220, 53, 69',
+                            hex: '#dc3545',
+                            default: '220, 53, 69',
+                            usageCount: 2
+                        }
+                    ]
+                }
+            ]
+        },
+        
+        /**
+         * Mock: Palette with duplicate HEX colors
+         * Use for testing priority of palette ref vs hex matching
+         */
+        mockPaletteWithDuplicates: {
+            id: 'duplicate-test',
+            label: 'Duplicate Test',
+            groups: [
+                {
+                    id: 'test',
+                    label: 'Test Colors',
+                    colors: [
+                        {
+                            id: 'blue-primary',
+                            label: 'Blue Primary',
+                            cssVar: '--color-blue-primary',
+                            value: '25, 121, 195',
+                            hex: '#1979c3',
+                            default: '25, 121, 195',
+                            usageCount: 3
+                        },
+                        {
+                            id: 'blue-500',
+                            label: 'Blue 500',
+                            cssVar: '--color-blue-500',
+                            value: '25, 121, 195',
+                            hex: '#1979c3', // Same HEX!
+                            default: '25, 121, 195',
+                            usageCount: 1
+                        }
+                    ]
+                }
+            ]
         }
     };
 });

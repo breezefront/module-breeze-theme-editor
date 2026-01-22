@@ -130,45 +130,61 @@ define([
         },
         
         /**
-         * Test 7: Should debounce save for 500ms
+         * Test 7: Should track dirty state when color changes
          */
-        'should debounce save for 500ms': function(done) {
+        'should track dirty state when color changes': function(done) {
             var manager = Object.create(PaletteManager);
             manager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
             
-            var saveCount = 0;
-            
-            // Mock _saveToBackend to count calls
-            manager._saveToBackend = function() {
-                saveCount++;
-                return Promise.resolve();
-            };
-            
             var self = this;
             
-            // Update color multiple times rapidly
+            // Test 1: Initially no dirty changes
+            self.assertEquals(manager.getDirtyCount(), 0, 
+                'Should have no dirty changes initially');
+            self.assertEquals(manager.hasDirtyChanges(), false, 
+                'hasDirtyChanges should return false initially');
+            
+            // Test 2: Update color -> should track dirty state
             manager.updateColor('--color-brand-primary', '#ff0000');
             
-            setTimeout(function() {
-                manager.updateColor('--color-brand-primary', '#00ff00');
-            }, 100);
+            self.assertEquals(manager.getDirtyCount(), 1, 
+                'Should have 1 dirty change after first update');
+            self.assertEquals(manager.hasDirtyChanges(), true, 
+                'hasDirtyChanges should return true');
             
-            setTimeout(function() {
-                manager.updateColor('--color-brand-primary', '#0000ff');
-            }, 200);
+            // Test 3: Update same color again -> count stays 1
+            manager.updateColor('--color-brand-primary', '#00ff00');
             
-            // After 300ms, save should not have been called yet (debounce = 500ms)
-            setTimeout(function() {
-                self.assertEquals(saveCount, 0, 
-                    'Save should not be called within debounce period');
-            }, 300);
+            self.assertEquals(manager.getDirtyCount(), 1, 
+                'Should still have 1 dirty change (same cssVar)');
             
-            // After 800ms (500ms after last update), save should be called once
-            setTimeout(function() {
-                self.assertEquals(saveCount, 1, 
-                    'Save should be called once after debounce period');
-                done();
-            }, 800);
+            // Test 4: Update different color -> count increases
+            manager.updateColor('--color-brand-secondary', '#0000ff');
+            
+            self.assertEquals(manager.getDirtyCount(), 2, 
+                'Should have 2 dirty changes (different cssVars)');
+            
+            // Test 5: getDirtyChanges should format correctly
+            var changes = manager.getDirtyChanges();
+            
+            self.assertEquals(changes.length, 2, 
+                'getDirtyChanges should return 2 items');
+            self.assertEquals(changes[0].sectionCode, 'palette', 
+                'Should have sectionCode="palette"');
+            self.assertNotNull(changes[0].fieldCode, 
+                'Should have fieldCode (cssVar)');
+            self.assertNotNull(changes[0].value, 
+                'Should have value (RGB)');
+            
+            // Test 6: markAsSaved should clear dirty state
+            manager.markAsSaved();
+            
+            self.assertEquals(manager.getDirtyCount(), 0, 
+                'Should clear dirty state after markAsSaved');
+            self.assertEquals(manager.hasDirtyChanges(), false, 
+                'hasDirtyChanges should return false after markAsSaved');
+            
+            done();
         },
         
         /**

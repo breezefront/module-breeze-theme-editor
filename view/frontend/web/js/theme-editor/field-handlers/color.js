@@ -131,6 +131,45 @@ define([
             // Append popup to body
             $('body').append($popup);
             
+            // === HIGHLIGHT MATCHING SWATCH (if color was picked from palette) ===
+            (function highlightMatchingSwatch() {
+                var currentColorValue = currentColor; // currentColor from line 104
+                var paletteRef = $textInput.attr('data-palette-ref') || $trigger.attr('data-palette-ref');
+                
+                console.log('🔍 Looking for matching swatch:', {
+                    currentColor: currentColorValue,
+                    paletteRef: paletteRef
+                });
+                
+                // Priority 1: Match by palette reference (exact source)
+                if (paletteRef) {
+                    var $matchedSwatch = $popup.find('.bte-palette-swatch[data-css-var="' + paletteRef + '"]');
+                    if ($matchedSwatch.length) {
+                        $matchedSwatch.addClass('selected');
+                        console.log('✨ Pre-selected palette swatch by ref:', paletteRef);
+                        return; // Done
+                    } else {
+                        console.warn('⚠️ Palette ref not found in current palette:', paletteRef);
+                        // Fallback to hex matching below
+                    }
+                }
+                
+                // Priority 2: Match by hex (fallback for legacy or manual colors)
+                if (currentColorValue && self.isValidHex(currentColorValue)) {
+                    var currentColorLower = currentColorValue.toLowerCase();
+                    $popup.find('.bte-palette-swatch').each(function() {
+                        var $swatch = $(this);
+                        var swatchHex = $swatch.data('hex');
+                        
+                        if (swatchHex && swatchHex.toLowerCase() === currentColorLower) {
+                            $swatch.addClass('selected');
+                            console.log('✨ Pre-selected palette swatch by hex:', swatchHex);
+                            return false; // Stop loop
+                        }
+                    });
+                }
+            })();
+            
             // === CLOSE BUTTON HANDLER ===
             $closeBtn.on('click', function() {
                 console.log('🔴 Close button clicked');
@@ -223,6 +262,11 @@ define([
                 // Update trigger preview
                 $trigger.find('.bte-color-preview').css('background-color', hex);
                 
+                // 🆕 Remove palette reference (manual color change)
+                $textInput.removeAttr('data-palette-ref');
+                $trigger.removeAttr('data-palette-ref');
+                console.log('🔓 Palette reference removed (manual change)');
+                
                 // Trigger change event
                 BaseHandler.handleChange($textInput, callback);
             });
@@ -233,6 +277,12 @@ define([
                     var hex = color.toHEXA().toString();
                     $textInput.val(hex);
                     $trigger.find('.bte-color-preview').css('background-color', hex);
+                    
+                    // 🆕 Remove palette reference (manual save)
+                    $textInput.removeAttr('data-palette-ref');
+                    $trigger.removeAttr('data-palette-ref');
+                    console.log('🔓 Palette reference removed (manual save)');
+                    
                     BaseHandler.handleChange($textInput, callback);
                 }
                 
@@ -266,6 +316,11 @@ define([
                 // Update text input and trigger preview FIRST (before Pickr)
                 $textInput.val(hex);
                 $trigger.find('.bte-color-preview').css('background-color', hex);
+                
+                // 🆕 Store palette reference for future highlighting
+                $textInput.attr('data-palette-ref', cssVar);
+                $trigger.attr('data-palette-ref', cssVar);
+                console.log('🔗 Palette reference saved:', cssVar, '→', hex);
                 
                 // Update Pickr color (SILENT to avoid triggering events that close popup)
                 try {
