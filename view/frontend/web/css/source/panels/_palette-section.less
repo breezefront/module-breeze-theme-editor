@@ -137,14 +137,14 @@
     // Swatches grid (8 columns)
     .bte-palette-group-grid {
         display: grid;
-        grid-template-columns: repeat(8, 32px); // 8 columns × 32px
-        gap: 6px;
+        grid-template-columns: repeat(8, 30px); // 8 columns × 30px (fits 320px panel)
+        gap: 5px;
     }
 
     // Individual color swatch
     .bte-palette-swatch {
-        width: 32px;  // Changed from 40px for 8-column layout
-        height: 32px; // Changed from 40px
+        width: 30px;  // 30px for 8-column layout (fits 320px panel)
+        height: 30px;
         border: 2px solid rgba(255, 255, 255, 0.2); // Dark theme border
         border-radius: 4px;
         cursor: pointer;

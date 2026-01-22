@@ -4,6 +4,7 @@ define([
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/theme-editor/panel.html',
     'Swissup_BreezeThemeEditor/js/theme-editor/panel-state',
+    'Swissup_BreezeThemeEditor/js/theme-editor/palette-manager',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderer',
     'Swissup_BreezeThemeEditor/js/theme-editor/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/theme-editor/css-manager',
@@ -21,6 +22,7 @@ define([
     mageTemplate,
     panelTemplate,
     PanelState,
+    PaletteManager,
     FieldRenderer,
     CssPreviewManager,
     CssManager,
@@ -430,13 +432,7 @@ define([
          */
         _updateChangesCount: function() {
             var fieldChanges = PanelState.getChangesCount();
-            
-            // Include palette changes in count
-            var paletteChanges = 0;
-            if (typeof PaletteManager !== 'undefined' && PaletteManager.getDirtyCount) {
-                paletteChanges = PaletteManager.getDirtyCount();
-            }
-            
+            var paletteChanges = PaletteManager.getDirtyCount();
             var totalChanges = fieldChanges + paletteChanges;
             
             // Update button text
