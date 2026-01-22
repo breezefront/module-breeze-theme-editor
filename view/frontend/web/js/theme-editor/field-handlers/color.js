@@ -36,8 +36,20 @@ define([
                     
                     // Update Pickr instance if popup is open
                     var popupInstance = $trigger.data('popup-instance');
-                    if (popupInstance && popupInstance.pickr) {
-                        popupInstance.pickr.setColor(value, true); // silent=true (no events)
+                    if (popupInstance) {
+                        if (popupInstance.pickr) {
+                            popupInstance.pickr.setColor(value, true); // silent=true (no events)
+                        }
+                        
+                        // 🆕 Remove palette reference and selected class
+                        $textInput.removeAttr('data-palette-ref');
+                        $trigger.removeAttr('data-palette-ref');
+                        
+                        if (popupInstance.$popup) {
+                            popupInstance.$popup.find('.bte-palette-swatch').removeClass('selected');
+                        }
+                        
+                        console.log('🔓 Palette reference removed (manual text input)');
                     }
                     
                     // Save change
@@ -265,6 +277,10 @@ define([
                 // 🆕 Remove palette reference (manual color change)
                 $textInput.removeAttr('data-palette-ref');
                 $trigger.removeAttr('data-palette-ref');
+                
+                // 🆕 Remove selected class from all swatches
+                $popup.find('.bte-palette-swatch').removeClass('selected');
+                
                 console.log('🔓 Palette reference removed (manual change)');
                 
                 // Trigger change event
@@ -281,6 +297,10 @@ define([
                     // 🆕 Remove palette reference (manual save)
                     $textInput.removeAttr('data-palette-ref');
                     $trigger.removeAttr('data-palette-ref');
+                    
+                    // 🆕 Remove selected class from all swatches
+                    $popup.find('.bte-palette-swatch').removeClass('selected');
+                    
                     console.log('🔓 Palette reference removed (manual save)');
                     
                     BaseHandler.handleChange($textInput, callback);

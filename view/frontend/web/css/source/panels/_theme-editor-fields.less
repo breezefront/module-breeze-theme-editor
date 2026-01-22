@@ -295,6 +295,11 @@
 // PICKR THEME OVERRIDES (Dark theme adaptation)
 // ============================================================================
 
+// Hide Pickr's default trigger button (we have our own .bte-color-trigger)
+.bte-popup-pickr-container .pickr .pcr-button {
+    display: none !important;
+}
+
 // Override Pickr's default light theme to match our dark sidebar
 .pcr-app {
     background: @bte-toolbar-bg !important;
