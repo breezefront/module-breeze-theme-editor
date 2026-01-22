@@ -145,6 +145,11 @@ define([
                 FieldHandlers.updateBadges(self.element, fieldData.sectionCode, fieldData.fieldCode);
             });
 
+            // ✅ Listen for palette changes to update counter
+            $(document).on('paletteColorChanged', function() {
+                self._updateChangesCount();
+            });
+
             // ✅ Publication selector events
             $(document).on('publicationStatusChanged', function (e, data) {
                 console.log('🔄 Publication status changed to:', data.status);
@@ -424,9 +429,23 @@ define([
          * Update changes count badge
          */
         _updateChangesCount: function() {
-            var count = PanelState.getChangesCount();
-            this.$saveButton.text('Save (' + count + ')');
-            this.$resetButton.prop('disabled', count === 0);
+            var fieldChanges = PanelState.getChangesCount();
+            
+            // Include palette changes in count
+            var paletteChanges = 0;
+            if (typeof PaletteManager !== 'undefined' && PaletteManager.getDirtyCount) {
+                paletteChanges = PaletteManager.getDirtyCount();
+            }
+            
+            var totalChanges = fieldChanges + paletteChanges;
+            
+            // Update button text
+            this.$saveButton.text('Save (' + totalChanges + ')');
+            
+            // Enable/disable reset button based on changes
+            this.$resetButton.prop('disabled', totalChanges === 0);
+            
+            console.log('📊 Changes count updated:', fieldChanges, 'fields +', paletteChanges, 'palette =', totalChanges);
         },
 
         /**
@@ -458,12 +477,21 @@ define([
          * Save changes
          */
         _save: function () {
-            if (!PanelState.hasChanges()) {
+            // Check both field changes AND palette changes
+            if (!PanelState.hasChanges() && !PaletteManager.hasDirtyChanges()) {
                 this._showToast('notice', 'No changes to save');
                 return;
             }
 
+            // Combine field changes + palette changes
             var values = PanelState.getChangesForSave();
+            var paletteChanges = PaletteManager.getDirtyChanges();
+            
+            if (paletteChanges.length > 0) {
+                values = values.concat(paletteChanges);
+                console.log('💾 Including', paletteChanges.length, 'palette changes in save');
+            }
+            
             var self = this;
 
             console.log('💾 Saving values:', values);
@@ -480,6 +508,10 @@ define([
 
                         console.log('💾 Changes count BEFORE markAsSaved:', PanelState.getChangesCount());
                         PanelState.markAsSaved();
+                        
+                        // Mark palette as saved
+                        PaletteManager.markAsSaved();
+                        
                         console.log('💾 Changes count AFTER markAsSaved:', PanelState.getChangesCount());
 
                         self._refreshAllBadges();

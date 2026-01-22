@@ -108,24 +108,33 @@ define([
          */
         _renderGroup: function (group, index) {
             var self = this;
-            var $group = $('<div class="bte-palette-group"></div>');
-
-            // Add thick border separator (except for first group)
+            
+            // Group container wrapper
+            var $groupContainer = $('<div class="bte-palette-group-container"></div>');
+            
+            // Add separator (except first group)
             if (index > 0) {
-                $group.addClass('bte-palette-group-separator');
+                var $separator = $('<div class="bte-palette-group-separator"></div>');
+                $groupContainer.append($separator);
             }
-
-            // Add group label (optional, can be hidden via CSS)
+            
+            // Group label (SHOW, not hide)
             var $label = $('<div class="bte-palette-group-label">' + group.label + '</div>');
-            $group.append($label);
-
+            $groupContainer.append($label);
+            
+            // Swatches grid wrapper (8 columns)
+            var $swatchGrid = $('<div class="bte-palette-group-grid"></div>');
+            
             // Render colors in this group
             group.colors.forEach(function(color) {
                 var $swatch = self._createSwatch(color);
-                $group.append($swatch);
+                $swatchGrid.append($swatch);
             });
-
-            this.$grid.append($group);
+            
+            $groupContainer.append($swatchGrid);
+            this.$grid.append($groupContainer);
+            
+            console.log('✅ Rendered group:', group.label, 'with', group.colors.length, 'colors (8-column layout)');
         },
 
         /**
@@ -209,12 +218,102 @@ define([
                 // Update visual
                 var $swatch = $input.closest('.bte-palette-swatch');
                 $swatch.find('.bte-swatch-visual').css('background-color', hexValue);
+                
+                // Mark swatch as dirty (yellow border)
+                $swatch.addClass('bte-swatch-dirty');
 
-                // Update via PaletteManager (handles save & notifications)
+                // Update via PaletteManager (NO auto-save now)
                 PaletteManager.updateColor(cssVar, hexValue);
+                
+                // Trigger event to update panel changes count & reset button
+                $(document).trigger('paletteColorChanged');
+            });
+
+            // Reset button handler
+            this.element.on('click', '.bte-palette-reset-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation(); // Don't trigger accordion toggle
+                
+                if (!PaletteManager.hasDirtyChanges()) {
+                    console.log('⚠️ No changes to reset');
+                    return;
+                }
+                
+                // Confirm with user
+                var count = PaletteManager.getDirtyCount();
+                var confirmMsg = 'Reset ' + count + ' palette color' + (count > 1 ? 's' : '') + ' to saved values?';
+                
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
+                
+                // Revert changes
+                var reverted = PaletteManager.revertDirtyChanges();
+                
+                console.log('↩️ Palette changes reverted:', reverted);
+                
+                // Show toast notification
+                require(['Swissup_BreezeThemeEditor/js/lib/toastify'], function(Toastify) {
+                    Toastify.show('info', reverted + ' palette color' + (reverted > 1 ? 's' : '') + ' reset');
+                });
+            });
+
+            // Listen for palette changes to update reset button
+            $(document).on('paletteColorChanged', function() {
+                self._updateResetButton();
+            });
+
+            // Listen for revert to update UI
+            $(document).on('paletteChangesReverted', function(e, data) {
+                // Remove all dirty classes
+                self.$grid.find('.bte-palette-swatch').removeClass('bte-swatch-dirty');
+                
+                // Update all swatch visuals to saved values
+                self.$grid.find('.bte-palette-swatch').each(function() {
+                    var $swatch = $(this);
+                    var cssVar = $swatch.attr('data-css-var');
+                    var color = PaletteManager.getColor(cssVar);
+                    
+                    if (color) {
+                        $swatch.find('.bte-swatch-visual').css('background-color', color.hex);
+                        $swatch.find('.bte-swatch-input').val(color.hex);
+                    }
+                });
+                
+                // Hide reset button
+                self._updateResetButton();
+                
+                // Update panel changes count
+                $(document).trigger('paletteColorChanged');
+            });
+
+            // Listen for save to clear dirty state
+            $(document).on('themeEditorDraftSaved', function() {
+                self.$grid.find('.bte-palette-swatch').removeClass('bte-swatch-dirty');
+                self._updateResetButton();
+                console.log('✅ Palette dirty indicators cleared after save');
             });
 
             console.log('✅ Palette Section events bound');
+        },
+
+        /**
+         * Show/hide reset button based on dirty state
+         */
+        _updateResetButton: function() {
+            var hasDirty = PaletteManager.hasDirtyChanges();
+            var count = PaletteManager.getDirtyCount();
+            
+            var $resetBtn = this.element.find('.bte-palette-reset-btn');
+            
+            if (hasDirty && count > 0) {
+                // Show button with count
+                $resetBtn.show().find('.bte-reset-count').text('(' + count + ')');
+                console.log('🔄 Reset button shown:', count, 'dirty colors');
+            } else {
+                // Hide button
+                $resetBtn.hide();
+            }
         },
 
         /**
@@ -276,6 +375,11 @@ define([
             this.$header.off('click');
             this.$grid.off('click', '.bte-palette-swatch');
             this.$grid.off('change', '.bte-swatch-input');
+            
+            // Cleanup new handlers
+            this.element.off('click', '.bte-palette-reset-btn');
+            $(document).off('paletteColorChanged paletteChangesReverted');
+            
             this._super();
         }
     });

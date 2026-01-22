@@ -38,6 +38,51 @@
             display: block;
         }
         
+        // Header actions container
+        .bte-palette-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        // Reset button in header
+        .bte-palette-reset-btn {
+            background: rgba(251, 191, 36, 0.15); // Yellow tint
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            color: #fbbf24;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: none; // Hidden by default
+            white-space: nowrap;
+
+            &:hover {
+                background: rgba(251, 191, 36, 0.25);
+                border-color: rgba(251, 191, 36, 0.6);
+                transform: scale(1.05);
+            }
+
+            &:active {
+                transform: scale(0.98);
+            }
+
+            .bte-icon-reset {
+                font-style: normal;
+                font-size: 14px;
+                margin-right: 4px;
+            }
+
+            .bte-reset-count {
+                font-size: 10px;
+                opacity: 0.8;
+                margin-left: 2px;
+            }
+        }
+        
         .bte-palette-arrow {
             font-size: 18px;
             transition: transform 0.2s;
@@ -57,45 +102,49 @@
         }
     }
 
-    // Grid container
+    // Grid container (flex layout for groups)
     .bte-palette-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 40px); // 5 columns, 40px each
-        gap: 8px; // 8px gap between swatches
-        justify-content: start;
+        display: flex;
+        flex-direction: column;
+        gap: 16px; // Space between groups
     }
 
-    // Group container
-    .bte-palette-group {
-        grid-column: 1 / -1; // Span all columns
-        display: grid;
-        grid-template-columns: repeat(5, 40px);
+    // Group container wrapper
+    .bte-palette-group-container {
+        display: flex;
+        flex-direction: column;
         gap: 8px;
+    }
 
-        // Separator between groups (thick border)
-        &.bte-palette-group-separator {
-            border-top: 3px solid rgba(255, 255, 255, 0.15); // Dark theme separator
-            padding-top: 12px;
-            margin-top: 12px;
-        }
+    // Group separator (line between groups)
+    .bte-palette-group-separator {
+        height: 2px;
+        background: rgba(255, 255, 255, 0.15);
+        margin: 8px 0 16px 0;
+    }
 
-        // Group label (optional, can be hidden)
-        .bte-palette-group-label {
-            grid-column: 1 / -1;
-            font-size: 11px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.5); // Muted text for dark theme
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-            display: none; // Hidden by default (tooltip shows label)
-        }
+    // Group label (SHOW, not hide)
+    .bte-palette-group-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        display: block; // Changed from display: none
+    }
+
+    // Swatches grid (8 columns)
+    .bte-palette-group-grid {
+        display: grid;
+        grid-template-columns: repeat(8, 32px); // 8 columns × 32px
+        gap: 6px;
     }
 
     // Individual color swatch
     .bte-palette-swatch {
-        width: 40px;
-        height: 40px;
+        width: 32px;  // Changed from 40px for 8-column layout
+        height: 32px; // Changed from 40px
         border: 2px solid rgba(255, 255, 255, 0.2); // Dark theme border
         border-radius: 4px;
         cursor: pointer;
@@ -121,6 +170,17 @@
             border-color: #10b981; // Green to differentiate from user selection
             border-width: 3px;
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        // Dirty state (unsaved changes) - YELLOW BORDER
+        &.bte-swatch-dirty {
+            border: 2px solid #fbbf24 !important; // Yellow border (Tailwind yellow-400)
+            box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3); // Yellow glow
+            
+            &:hover {
+                border-color: #f59e0b !important; // Darker yellow on hover
+                box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4);
+            }
         }
 
         // Visual color square

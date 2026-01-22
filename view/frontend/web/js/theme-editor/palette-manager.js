@@ -19,7 +19,7 @@ define([
         storeId: null,
         themeId: null,
         listeners: [],
-        saveTimeouts: {}, // Debounce timeouts per cssVar
+        dirtyColors: {}, // Track unsaved changes with original values
 
         /**
          * Initialize palette manager
@@ -177,70 +177,30 @@ define([
 
             var rgbValue = this.hexToRgb(hexValue);
 
+            // Save original value on FIRST change
+            if (!this.dirtyColors[cssVar]) {
+                this.dirtyColors[cssVar] = {
+                    original: {
+                        hex: color.hex,
+                        rgb: color.value
+                    },
+                    hex: hexValue,
+                    rgb: rgbValue
+                };
+            } else {
+                // Subsequent change - update new value, keep original
+                this.dirtyColors[cssVar].hex = hexValue;
+                this.dirtyColors[cssVar].rgb = rgbValue;
+            }
+
             // Update local state
             color.value = rgbValue;
             color.hex = hexValue;
 
-            console.log('🎨 Updating palette color:', cssVar, '=', hexValue);
+            console.log('🎨 Updating palette color:', cssVar, '=', hexValue, '(not saved yet)');
 
-            // Debounced save to backend
-            this._debouncedSave(cssVar, rgbValue);
-
-            // Notify subscribers immediately (for UI updates)
+            // Notify subscribers immediately (for live CSS preview)
             this.notify(cssVar, hexValue, rgbValue);
-        },
-
-        /**
-         * Debounced save to backend (500ms)
-         * 
-         * @param {String} cssVar
-         * @param {String} rgbValue
-         */
-        _debouncedSave: function(cssVar, rgbValue) {
-            // Clear existing timeout for this color
-            if (this.saveTimeouts[cssVar]) {
-                clearTimeout(this.saveTimeouts[cssVar]);
-            }
-
-            // Set new timeout
-            this.saveTimeouts[cssVar] = setTimeout(function() {
-                this._saveToBackend(cssVar, rgbValue);
-            }.bind(this), 500); // 500ms debounce
-        },
-
-        /**
-         * Save color to backend
-         * 
-         * @param {String} cssVar
-         * @param {String} rgbValue
-         */
-        _saveToBackend: function(cssVar, rgbValue) {
-            console.log('💾 Saving palette color to backend:', cssVar, '=', rgbValue);
-
-            savePaletteValueMutation(this.storeId, this.themeId, cssVar, rgbValue)
-                .then(function(data) {
-                    var result = data.saveBreezeThemeEditorPaletteValue;
-
-                    if (!result.success) {
-                        console.error('❌ Failed to save palette color:', result.message);
-                        Toastify.show('error', 'Failed to save color: ' + result.message);
-                        return;
-                    }
-
-                    console.log('✅ Palette color saved:', cssVar, 'affected', result.affectedFields, 'fields');
-                    
-                    // Show success notification
-                    var color = this.getColor(cssVar);
-                    var message = color.label + ' updated';
-                    if (result.affectedFields > 0) {
-                        message += ' (' + result.affectedFields + ' fields affected)';
-                    }
-                    Toastify.show('success', message);
-                }.bind(this))
-                .catch(function(error) {
-                    console.error('❌ Failed to save palette color:', error);
-                    Toastify.show('error', 'Failed to save color: ' + error.message);
-                });
         },
 
         /**
@@ -279,6 +239,91 @@ define([
                     console.error('❌ Error in palette listener:', e);
                 }
             });
+        },
+
+        /**
+         * Get dirty palette changes formatted for saveValues mutation
+         * @returns {Array} [{sectionCode: 'palette', fieldCode: cssVar, value: rgb}]
+         */
+        getDirtyChanges: function() {
+            var changes = [];
+            for (var cssVar in this.dirtyColors) {
+                var dirty = this.dirtyColors[cssVar];
+                changes.push({
+                    sectionCode: 'palette',
+                    fieldCode: cssVar,
+                    value: dirty.rgb
+                });
+            }
+            console.log('📦 Palette dirty changes:', changes.length);
+            return changes;
+        },
+
+        /**
+         * Clear dirty state after successful save
+         */
+        markAsSaved: function() {
+            var count = Object.keys(this.dirtyColors).length;
+            this.dirtyColors = {};
+            console.log('✅ Palette marked as saved, cleared', count, 'dirty colors');
+        },
+
+        /**
+         * Check if there are unsaved palette changes
+         * @returns {Boolean}
+         */
+        hasDirtyChanges: function() {
+            return Object.keys(this.dirtyColors).length > 0;
+        },
+
+        /**
+         * Get count of dirty colors
+         * @returns {Number}
+         */
+        getDirtyCount: function() {
+            return Object.keys(this.dirtyColors).length;
+        },
+
+        /**
+         * Revert all dirty changes back to saved values
+         * @returns {Number} Count of reverted colors
+         */
+        revertDirtyChanges: function() {
+            if (!this.hasDirtyChanges()) {
+                console.log('⚠️ No dirty changes to revert');
+                return 0;
+            }
+            
+            var revertedCount = 0;
+            
+            // Restore each dirty color to its original saved value
+            for (var cssVar in this.dirtyColors) {
+                var dirty = this.dirtyColors[cssVar];
+                var color = this.getColor(cssVar);
+                
+                if (color && dirty.original) {
+                    // Revert to original value
+                    color.value = dirty.original.rgb;
+                    color.hex = dirty.original.hex;
+                    
+                    // Notify subscribers to update UI (CSS preview)
+                    this.notify(cssVar, dirty.original.hex, dirty.original.rgb);
+                    
+                    revertedCount++;
+                }
+            }
+            
+            // Clear dirty state
+            this.dirtyColors = {};
+            
+            console.log('↩️ Reverted', revertedCount, 'palette changes');
+            
+            // Trigger event for UI update
+            if (typeof $ !== 'undefined') {
+                $(document).trigger('paletteChangesReverted', { count: revertedCount });
+            }
+            
+            return revertedCount;
         },
 
         /**
