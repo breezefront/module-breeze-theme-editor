@@ -165,8 +165,8 @@
 
 .bte-popup-close {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: -2px;
+    right: -2px;
     width: 24px;
     height: 24px;
     background: transparent;
@@ -181,7 +181,7 @@
     justify-content: center;
     border-radius: 4px;
     transition: all 0.2s ease;
-    z-index: 10;
+    z-index: 10005; // Much higher to ensure visibility above all popup content
     
     &:hover {
         background: rgba(255, 255, 255, 0.1);
