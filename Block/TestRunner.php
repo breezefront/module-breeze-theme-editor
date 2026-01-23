@@ -66,6 +66,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/palette-integration-test',
             // Color Field Palette Reference Tests (10 tests)
             'Swissup_BreezeThemeEditor/js/test/tests/color-field-palette-ref-test',
+            // Cascade Behavior Tests (7 tests)
+            'Swissup_BreezeThemeEditor/js/test/tests/cascade-behavior-test',
             // Note: Pickr color picker tests removed - Pickr functionality tested manually
         ];
     }
