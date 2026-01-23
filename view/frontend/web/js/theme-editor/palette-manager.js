@@ -35,6 +35,8 @@ define([
             this.storeId = config.storeId || StorageHelper.getStoreId();
             this.themeId = config.themeId || StorageHelper.getThemeId();
             this.palettes = this._indexPalettes(config.palettes);
+            this.dirtyColors = {}; // Reset dirty state on init (important for test isolation)
+            this.listeners = []; // Reset listeners on init
 
             console.log('✅ Palette Manager initialized with', Object.keys(this.palettes).length, 'palettes');
         },
