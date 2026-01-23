@@ -274,14 +274,28 @@ define([
                 // Update trigger preview
                 $trigger.find('.bte-color-preview').css('background-color', hex);
                 
-                // 🆕 Remove palette reference (manual color change)
-                $textInput.removeAttr('data-palette-ref');
-                $trigger.removeAttr('data-palette-ref');
+                // Check if this is a palette cascade update (from PaletteManager)
+                var isPaletteUpdate = $textInput.data('is-palette-update');
+                if (isPaletteUpdate) {
+                    console.log('✅ Palette cascade - preserving reference (change)');
+                    return; // Don't remove palette-ref, don't trigger save
+                }
                 
-                // 🆕 Remove selected class from all swatches
-                $popup.find('.bte-palette-swatch').removeClass('selected');
+                // Check if this is a palette selection (programmatic change)
+                var isPaletteSelection = $textInput.data('is-palette-selection');
                 
-                console.log('🔓 Palette reference removed (manual change)');
+                if (!isPaletteSelection) {
+                    // 🆕 Remove palette reference (manual color change)
+                    $textInput.removeAttr('data-palette-ref');
+                    $trigger.removeAttr('data-palette-ref');
+                    
+                    // 🆕 Remove selected class from all swatches
+                    $popup.find('.bte-palette-swatch').removeClass('selected');
+                    
+                    console.log('🔓 Palette reference removed (manual change)');
+                } else {
+                    console.log('✅ Palette reference preserved (palette selection)');
+                }
                 
                 // Trigger change event
                 BaseHandler.handleChange($textInput, callback);
@@ -289,11 +303,29 @@ define([
             
             // On save button click
             pickr.on('save', function(color) {
-                if (color) {
-                    var hex = color.toHEXA().toString();
-                    $textInput.val(hex);
-                    $trigger.find('.bte-color-preview').css('background-color', hex);
-                    
+                if (!color) {
+                    // Close popup after save
+                    self._closeAllPopups();
+                    return;
+                }
+                
+                // Check if this is a palette cascade update (from PaletteManager)
+                var isPaletteUpdate = $textInput.data('is-palette-update');
+                if (isPaletteUpdate) {
+                    console.log('✅ Palette cascade - preserving reference (save)');
+                    // Close popup after save
+                    self._closeAllPopups();
+                    return; // Don't remove palette-ref, don't trigger save
+                }
+                
+                var hex = color.toHEXA().toString();
+                $textInput.val(hex);
+                $trigger.find('.bte-color-preview').css('background-color', hex);
+                
+                // Check if this is a palette selection
+                var isPaletteSelection = $textInput.data('is-palette-selection');
+                
+                if (!isPaletteSelection) {
                     // 🆕 Remove palette reference (manual save)
                     $textInput.removeAttr('data-palette-ref');
                     $trigger.removeAttr('data-palette-ref');
@@ -302,9 +334,11 @@ define([
                     $popup.find('.bte-palette-swatch').removeClass('selected');
                     
                     console.log('🔓 Palette reference removed (manual save)');
-                    
-                    BaseHandler.handleChange($textInput, callback);
+                } else {
+                    console.log('✅ Palette reference preserved (palette selection on save)');
                 }
+                
+                BaseHandler.handleChange($textInput, callback);
                 
                 // Close popup after save
                 self._closeAllPopups();
@@ -342,6 +376,10 @@ define([
                 $trigger.attr('data-palette-ref', cssVar);
                 console.log('🔗 Palette reference saved:', cssVar, '→', hex);
                 
+                // Set flag to prevent removal in pickr.on('change') and pickr.on('save')
+                $textInput.data('is-palette-selection', true);
+                $trigger.data('is-palette-selection', true);
+                
                 // Update Pickr color (SILENT to avoid triggering events that close popup)
                 try {
                     if (pickr && pickr._root && pickr._root.interaction && pickr.setColor) {
@@ -358,8 +396,24 @@ define([
                 $popup.find('.bte-palette-swatch').removeClass('selected');
                 $swatch.addClass('selected');
                 
+                // Debug logging for color field save
+                console.log('💾 Color field save:', {
+                    hex: hex,
+                    paletteRef: cssVar,
+                    willSaveAs: $textInput.attr('data-palette-ref') || hex,
+                    hasPaletteRef: !!$textInput.attr('data-palette-ref')
+                });
+                
                 // Trigger change event to save
                 BaseHandler.handleChange($textInput, callback);
+                
+                // Clear flag after change is processed
+                // Use setTimeout to ensure flag is cleared after all events complete
+                setTimeout(function() {
+                    $textInput.removeData('is-palette-selection');
+                    $trigger.removeData('is-palette-selection');
+                    console.log('🧹 Palette selection flag cleared');
+                }, 50);
                 
                 // Popup stays open (as per your preference)
             });
@@ -410,6 +464,12 @@ define([
                     $(this).removeData('popup-instance');
                 }
             });
+            
+            // Safety cleanup: clear any remaining palette selection flags
+            $('.bte-color-input').removeData('is-palette-selection');
+            $('.bte-color-input').removeData('is-palette-update');
+            $('.bte-color-trigger').removeData('is-palette-selection');
+            $('.bte-color-trigger').removeData('is-palette-update');
         },
 
         /**

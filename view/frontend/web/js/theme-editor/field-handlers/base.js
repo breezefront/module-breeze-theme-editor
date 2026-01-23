@@ -105,6 +105,15 @@ define([
                 return $input.is(':checked') ? $input.val() : null;
             }
 
+            // For color fields: check if user selected from palette
+            if ($input.hasClass('bte-color-input')) {
+                var paletteRef = $input.attr('data-palette-ref');
+                if (paletteRef) {
+                    console.log('🔗 Using palette reference:', paletteRef);
+                    return paletteRef; // Return --color-brand-amber-primary (without var())
+                }
+            }
+
             return $input.val();
         },
 

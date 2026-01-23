@@ -24,8 +24,79 @@ define([
             // Load saved changes from localStorage
             this._loadFromLocalStorage();
             
+            // Subscribe to palette changes for cascade behavior
+            this._subscribeToPaletteChanges();
+            
             console.log('✅ CSS Preview Manager initialized');
             return true;
+        },
+
+        /**
+         * Subscribe to palette color changes
+         * Updates CSS variables in live preview when palette colors change
+         */
+        _subscribeToPaletteChanges: function() {
+            var self = this;
+            
+            // Lazy require to avoid circular dependency
+            require(['Swissup_BreezeThemeEditor/js/theme-editor/palette-manager'], function(PaletteManager) {
+                PaletteManager.subscribe(function(cssVar, hexValue, rgbValue) {
+                    console.log('🎨 Palette cascade:', cssVar, '→', hexValue);
+                    
+                    // Update CSS variable in live preview
+                    self.setVariable(cssVar, rgbValue, 'color');
+                    
+                    // Update color fields that reference this palette color
+                    self._updateFieldsReferencingPalette(cssVar, hexValue);
+                });
+                
+                console.log('✅ Subscribed to palette changes');
+            });
+        },
+
+        /**
+         * Update color fields that reference a specific palette color
+         * Updates input values and Pickr instances to reflect new palette color
+         * 
+         * @param {String} cssVar - Palette CSS variable (e.g., "--color-brand-primary")
+         * @param {String} hexValue - New HEX value (e.g., "#1979c3")
+         */
+        _updateFieldsReferencingPalette: function(cssVar, hexValue) {
+            // Find all color inputs with this palette reference
+            var $inputs = $('.bte-color-input[data-palette-ref="' + cssVar + '"]');
+            
+            if ($inputs.length === 0) {
+                return;
+            }
+            
+            console.log('🔄 Updating', $inputs.length, 'field(s) referencing', cssVar);
+            
+            $inputs.each(function() {
+                var $input = $(this);
+                var $trigger = $input.siblings('.bte-color-trigger');
+                
+                // Update input value
+                $input.val(hexValue);
+                
+                // Update preview box background
+                $trigger.find('.bte-color-preview').css('background-color', hexValue);
+                
+                // Update Pickr instance if exists
+                var pickrInstance = $trigger.data('pickr');
+                if (pickrInstance) {
+                    // Set flag to prevent palette-ref removal
+                    $input.data('is-palette-update', true);
+                    $trigger.data('is-palette-update', true);
+                    
+                    pickrInstance.setColor(hexValue, true); // silent=true
+                    
+                    // Clear flag after short delay
+                    setTimeout(function() {
+                        $input.removeData('is-palette-update');
+                        $trigger.removeData('is-palette-update');
+                    }, 50);
+                }
+            });
         },
 
         /**
@@ -115,7 +186,7 @@ define([
             fieldType = fieldType.toLowerCase();
             switch (fieldType) {
                 case 'color':
-                    return this._hexToRgb(value);
+                    return this._formatColorValue(value);
                 case 'font_picker':
                     return this._formatFont(value);
                 case 'toggle':
@@ -150,6 +221,31 @@ define([
             var g = parseInt(hex.substring(2, 4), 16);
             var b = parseInt(hex.substring(4, 6), 16);
             return r + ', ' + g + ', ' + b;
+        },
+
+        /**
+         * Format color value: palette reference or HEX
+         * Matches backend CssGenerator::formatColor() logic
+         */
+        _formatColorValue: function(value) {
+            if (!value) {
+                return value;
+            }
+            
+            value = String(value);
+            
+            // Palette reference: --color-brand-primary → var(--color-brand-primary)
+            if (value.startsWith('--')) {
+                return 'var(' + value + ')';
+            }
+            
+            // Already wrapped: var(--color-test) → var(--color-test)
+            if (value.startsWith('var(')) {
+                return value;
+            }
+            
+            // HEX color: #ffffff → 255, 255, 255
+            return this._hexToRgb(value);
         },
 
         /**

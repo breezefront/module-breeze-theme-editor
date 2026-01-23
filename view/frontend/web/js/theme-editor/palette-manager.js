@@ -250,7 +250,7 @@ define([
             for (var cssVar in this.dirtyColors) {
                 var dirty = this.dirtyColors[cssVar];
                 changes.push({
-                    sectionCode: 'palette',
+                    sectionCode: '_palette',
                     fieldCode: cssVar,
                     value: dirty.rgb
                 });
