@@ -24,6 +24,7 @@
                  data-palette="<%= data.palette %>"
                  data-type="color"
                  data-default="<%= data.default %>"
+                 <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>
                  <%= data.required ? 'data-required="true"' : '' %>>
                 <div class="bte-color-preview" 
                      style="background-color: <%= data.hexValue || data.value %>;"></div>
@@ -38,6 +39,7 @@
                 data-field="<%= data.code %>"
                 data-css-var="<%= data.cssVar %>"
                 data-type="color"
+                <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>
             />
         </div>
     </div>
