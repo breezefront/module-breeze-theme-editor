@@ -147,6 +147,24 @@ define([
                 FieldHandlers.updateBadges(self.element, fieldData.sectionCode, fieldData.fieldCode);
             });
 
+            // ✅ Listen for PanelState events (field-reset, etc.)
+            PanelState.addListener(function(eventType, data) {
+                if (eventType === 'field-reset') {
+                    console.log('🔄 Panel handling field-reset event:', data);
+                    
+                    // Update field badges (hide "Changed" badge and reset button)
+                    FieldHandlers.updateBadges(self.element, data.sectionCode, data.fieldCode);
+                    
+                    // Update Save button counter
+                    self._updateChangesCount();
+                    
+                    // Update CSS preview
+                    if (CssPreviewManager.isActive()) {
+                        CssPreviewManager.updatePreview();
+                    }
+                }
+            });
+
             // ✅ Listen for palette changes to update counter
             $(document).on('paletteColorChanged', function() {
                 self._updateChangesCount();

@@ -36,6 +36,9 @@ define([
             SpacingHandler.init($element, callback);
             RepeaterHandler.init($element, callback);
 
+            // Attach reset button handlers
+            BaseHandler.attachResetHandler($element);
+
             console.log('✅ All field handlers initialized');
         },
 

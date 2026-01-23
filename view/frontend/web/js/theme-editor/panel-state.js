@@ -22,6 +22,11 @@ define([], function() {
         fieldsMap: {},
 
         /**
+         * Event listeners
+         */
+        listeners: [],
+
+        /**
          * Initialize state with config
          *
          * @param {Object} config - Theme config from GraphQL
@@ -30,6 +35,7 @@ define([], function() {
             this.config = config;
             this.values = {};
             this.fieldsMap = {};
+            this.listeners = []; // Reset listeners on init
 
             // Build values map and fields lookup
             if (config && config.sections) {
@@ -263,13 +269,98 @@ define([], function() {
         },
 
         /**
+         * Reset single field to draft value (clear dirty state)
+         * 
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         * @returns {*} Draft value that was restored, or undefined if failed
+         */
+        resetField: function(sectionCode, fieldCode) {
+            var key = sectionCode + '.' + fieldCode;
+            var state = this.values[key];
+            
+            if (!state) {
+                console.warn('⚠️ PanelState: Field not found:', key);
+                return undefined;
+            }
+            
+            // Restore saved value (draft value)
+            var draftValue = state.savedValue;
+            state.value = draftValue;
+            state.isDirty = false;
+            
+            console.log('↺ PanelState: Field reset:', key, '→', draftValue);
+            
+            // Notify listeners
+            this.notifyListeners('field-reset', {
+                sectionCode: sectionCode,
+                fieldCode: fieldCode,
+                value: draftValue
+            });
+            
+            return draftValue;
+        },
+
+        /**
+         * Get draft value for field (savedValue)
+         * 
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         * @returns {*} Draft value or undefined
+         */
+        getDraftValue: function(sectionCode, fieldCode) {
+            var key = sectionCode + '.' + fieldCode;
+            var state = this.values[key];
+            
+            return state ? state.savedValue : undefined;
+        },
+
+        /**
          * Clear all state
          */
         clear:  function() {
             this.config = null;
             this.values = {};
             this.fieldsMap = {};
+            this.listeners = [];
             console.log('🗑️ State cleared');
+        },
+
+        /**
+         * Add event listener
+         * 
+         * @param {Function} callback - Called with (eventType, data)
+         */
+        addListener: function(callback) {
+            this.listeners.push(callback);
+        },
+
+        /**
+         * Remove event listener
+         * 
+         * @param {Function} callback
+         */
+        removeListener: function(callback) {
+            var index = this.listeners.indexOf(callback);
+            if (index !== -1) {
+                this.listeners.splice(index, 1);
+            }
+        },
+
+        /**
+         * Notify all listeners
+         * 
+         * @param {String} eventType - Event type (e.g., 'field-reset')
+         * @param {Object} data - Event data
+         */
+        notifyListeners: function(eventType, data) {
+            this.listeners.forEach(function(callback) {
+                try {
+                    callback(eventType, data);
+                } catch (err) {
+                    console.error('❌ Listener error:', err);
+                }
+            });
         }
     };
 

@@ -97,7 +97,7 @@ define([
                 required: !!field.required,
                 isModified: isModified,
                 isDirty: isDirty,
-                badgesHtml: this.renderBadges(isDirty, isModified),
+                badgesHtml: this.renderBadges(isDirty, isModified, sectionCode, fieldCode),
                 validation: field.validation || {},
                 params: field.params || {},
                 fieldId: 'field-' + fieldCode
@@ -109,9 +109,11 @@ define([
          *
          * @param {Boolean} isDirty - Has unsaved changes
          * @param {Boolean} isModified - Different from default (saved)
+         * @param {String} sectionCode
+         * @param {String} fieldCode
          * @returns {String} HTML
          */
-        renderBadges: function(isDirty, isModified) {
+        renderBadges: function(isDirty, isModified, sectionCode, fieldCode) {
             var html = '';
 
             // ✅ Dirty badge (unsaved changes) - higher priority, shown first
@@ -119,6 +121,13 @@ define([
                 html += '<span class="bte-badge bte-badge-dirty" title="You have unsaved changes for this field">' +
                         '<span class="bte-badge-icon">●</span> Changed' +
                         '</span>';
+                
+                // Reset button - only show when isDirty
+                html += '<button type="button" class="bte-field-reset-btn" ' +
+                        'data-field-code="' + fieldCode + '" ' +
+                        'data-section-code="' + sectionCode + '" ' +
+                        'title="Discard unsaved changes" ' +
+                        'aria-label="Reset field to draft value">↺</button>';
             }
 
             // ✅ Modified badge (saved but not default)
@@ -174,11 +183,11 @@ define([
                 return false;
             }
 
-            // Remove old badges
-            $header.find('.bte-badge').remove();
+            // Remove old badges and reset button
+            $header.find('.bte-badge, .bte-field-reset-btn').remove();
 
             // Generate and append new badges
-            var badgesHtml = this.renderBadges(fieldState.isDirty, fieldState.isModified);
+            var badgesHtml = this.renderBadges(fieldState.isDirty, fieldState.isModified, sectionCode, fieldCode);
 
             if (badgesHtml) {
                 $header.append(badgesHtml);

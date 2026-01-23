@@ -197,6 +197,104 @@ define([
             }
 
             return true;
+        },
+
+        /**
+         * Handle field reset button click
+         * Restores draft value and clears dirty state
+         * 
+         * @param {jQuery} $resetBtn - Reset button element
+         */
+        handleFieldReset: function($resetBtn) {
+            var fieldCode = $resetBtn.data('field-code');
+            var sectionCode = $resetBtn.data('section-code');
+            
+            console.log('↺ Reset clicked:', sectionCode + '.' + fieldCode);
+            
+            // Show confirmation dialog
+            if (!window.confirm('Discard unsaved changes?')) {
+                console.log('↺ Reset cancelled by user');
+                return;
+            }
+            
+            // Get draft value from PanelState
+            var draftValue = PanelState.getDraftValue(sectionCode, fieldCode);
+            
+            if (draftValue === undefined) {
+                console.warn('⚠️ No draft value found for', sectionCode + '.' + fieldCode);
+                return;
+            }
+            
+            // Reset field in state (removes dirty flag)
+            var restoredValue = PanelState.resetField(sectionCode, fieldCode);
+            
+            if (restoredValue === undefined) {
+                console.error('❌ Failed to reset field');
+                return;
+            }
+            
+            // Update field UI
+            this.updateFieldUIAfterReset(sectionCode, fieldCode, restoredValue);
+            
+            console.log('✅ Field reset complete:', sectionCode + '.' + fieldCode, '→', restoredValue);
+        },
+
+        /**
+         * Update field UI after reset
+         * Basic implementation - override in specific handlers if needed
+         * 
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         * @param {*} value - Restored draft value
+         */
+        updateFieldUIAfterReset: function(sectionCode, fieldCode, value) {
+            var $field = this._findFieldElement(sectionCode, fieldCode);
+            
+            if (!$field.length) {
+                console.warn('⚠️ Field element not found for UI update');
+                return;
+            }
+            
+            var $wrapper = $field.closest('.bte-field');
+            var $input = $wrapper.find('input, select, textarea').first();
+            
+            if ($input.length) {
+                // Update input value
+                $input.val(value);
+                
+                // Trigger change to update any dependent UI
+                $input.trigger('change');
+                
+                console.log('✅ Field UI updated:', fieldCode, '=', value);
+            }
+        },
+
+        /**
+         * Find field element by section and field code
+         * Helper method
+         * 
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         * @returns {jQuery}
+         */
+        _findFieldElement: function(sectionCode, fieldCode) {
+            return $('[data-field="' + fieldCode + '"][data-section="' + sectionCode + '"]');
+        },
+
+        /**
+         * Attach event handlers for reset button
+         * Call this in specific field handlers' initialization
+         * 
+         * @param {jQuery} $container - Container element
+         */
+        attachResetHandler: function($container) {
+            var self = this;
+            
+            $container.on('click', '.bte-field-reset-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                self.handleFieldReset($(this));
+            });
         }
     };
 });

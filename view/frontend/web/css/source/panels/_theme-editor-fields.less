@@ -58,6 +58,36 @@
     letter-spacing: 0.5px;
 }
 
+// Reset button (appears after "Changed" badge)
+.bte-field-reset-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    line-height: 1;
+    padding: 2px 6px;
+    margin-left: 4px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+    
+    &:hover {
+        color: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    &:active {
+        background: rgba(255, 255, 255, 0.15);
+        transform: scale(0.95);
+    }
+    
+    &:focus {
+        outline: 1px solid rgba(255, 255, 255, 0.3);
+        outline-offset: 2px;
+    }
+}
+
 .bte-field-description {
     font-size: 12px;
     color: rgba(255, 255, 255, 0.6);

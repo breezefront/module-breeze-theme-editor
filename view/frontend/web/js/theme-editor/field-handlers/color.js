@@ -484,8 +484,106 @@ define([
             // Remove event listeners
             $element.off('click', '.bte-color-trigger');
             $element.off('input', '.bte-color-input');
+            $element.off('click', '.bte-field-reset-btn');
             $(document).off('click.bte-color-popup');
             $(document).off('keydown.bte-color-popup');
+        },
+
+        /**
+         * Update color field UI after reset
+         * Special handling for palette references and Pickr instances
+         * 
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         * @param {*} value - Restored draft value (HEX or palette ref)
+         */
+        updateFieldUIAfterReset: function(sectionCode, fieldCode, value) {
+            var $field = this._findFieldElement(sectionCode, fieldCode);
+            
+            if (!$field.length) {
+                console.warn('⚠️ Color field element not found');
+                return;
+            }
+            
+            var $wrapper = $field.closest('.bte-field');
+            var $input = $wrapper.find('.bte-color-input');
+            var $preview = $wrapper.find('.bte-color-preview');
+            
+            // Check if value is palette reference
+            var isPaletteRef = typeof value === 'string' && value.startsWith('--color-');
+            var hexValue;
+            
+            if (isPaletteRef) {
+                // Resolve palette ref to HEX
+                hexValue = this._resolvePaletteRef(value);
+                
+                // Update input and preserve palette ref attribute
+                $input.val(hexValue);
+                $input.attr('data-palette-ref', value);
+                
+                console.log('↺ Color reset with palette ref:', value, '→', hexValue);
+            } else {
+                // Regular HEX color
+                hexValue = value;
+                
+                // Update input and remove palette ref
+                $input.val(hexValue);
+                $input.removeAttr('data-palette-ref');
+                
+                console.log('↺ Color reset with HEX:', hexValue);
+            }
+            
+            // Update preview boxes
+            $preview.each(function() {
+                $(this).css('background-color', hexValue);
+            });
+            
+            // Update Pickr instance if exists
+            var popupInstance = $field.data('popup-instance');
+            if (popupInstance && popupInstance.pickr) {
+                popupInstance.pickr.setColor(hexValue, true); // silent: true
+                console.log('↺ Pickr updated:', hexValue);
+            }
+            
+            // Trigger change event for CSS preview
+            $input.trigger('change');
+        },
+
+        /**
+         * Resolve palette reference to HEX color
+         * 
+         * @param {String} paletteRef - CSS variable name (--color-*)
+         * @returns {String} HEX color
+         */
+        _resolvePaletteRef: function(paletteRef) {
+            try {
+                // Try CSS variables
+                var rootStyle = getComputedStyle(document.documentElement);
+                var rgbValue = rootStyle.getPropertyValue(paletteRef).trim();
+                
+                if (rgbValue) {
+                    // CSS variable format: "234, 179, 8" → convert to HEX
+                    var parts = rgbValue.split(',').map(function(p) {
+                        return parseInt(p.trim(), 10);
+                    });
+                    
+                    if (parts.length === 3 && parts.every(function(n) { 
+                        return !isNaN(n) && n >= 0 && n <= 255; 
+                    })) {
+                        var hex = '#' + parts.map(function(n) {
+                            return ('0' + n.toString(16)).slice(-2);
+                        }).join('');
+                        
+                        return hex;
+                    }
+                }
+            } catch (e) {
+                console.warn('⚠️ Error resolving palette ref:', paletteRef, e);
+            }
+            
+            // Fallback to black
+            console.warn('⚠️ Could not resolve palette ref, using black:', paletteRef);
+            return '#000000';
         }
     };
 });
