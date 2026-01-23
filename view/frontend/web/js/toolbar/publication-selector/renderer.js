@@ -100,6 +100,30 @@ define([
             }
         },
 
+        /**
+         * Update checkmarks in dropdown to reflect current active item
+         * Removes all existing checkmarks and adds one to the active item
+         */
+        updateCheckmarks: function() {
+            // Remove all existing checkmarks
+            this.element.find('.item-check').remove();
+            
+            var currentStatus = this.options.currentStatus;
+            var currentPublicationId = this.options.currentPublicationId;
+            
+            // Add checkmark to active item based on current status
+            if (currentStatus === 'DRAFT') {
+                this.element.find('[data-status="DRAFT"]').append('<span class="item-check">✓</span>');
+            } else if (currentStatus === 'PUBLISHED') {
+                this.element.find('[data-status="PUBLISHED"]').append('<span class="item-check">✓</span>');
+            } else if (currentStatus === 'PUBLICATION' && currentPublicationId) {
+                this.element.find('[data-publication-id="' + currentPublicationId + '"]')
+                    .append('<span class="item-check">✓</span>');
+            }
+            
+            console.log('✓ Checkmarks updated for status:', currentStatus, currentPublicationId || '');
+        },
+
         _getLabel: function() {
             if (this.options.currentStatus === 'DRAFT') return $t('Draft');
             if (this.options.currentStatus === 'PUBLISHED') return $t('Published');

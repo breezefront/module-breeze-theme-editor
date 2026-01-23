@@ -114,6 +114,10 @@ define([
                         minute: '2-digit'
                     });
                     var safeTitle = $('<div>').text(pub.title).html();
+                    
+                    // Check if this publication is currently active
+                    var isActive = this.options.currentStatus === 'PUBLICATION' 
+                                   && this.options.currentPublicationId === pub.publicationId;
 
                     html += '<a href="#" class="dropdown-item" data-publication-id="' + pub.publicationId + '">';
                     html += '  <span class="item-icon">📦</span>';
@@ -121,11 +125,22 @@ define([
                     html += '    <span class="item-title">' + safeTitle + '</span>';
                     html += '    <span class="item-meta">' + dateStr + '</span>';
                     html += '  </span>';
+                    
+                    // Add checkmark if this publication is active
+                    if (isActive) {
+                        html += '  <span class="item-check">✓</span>';
+                    }
+                    
                     html += '</a>';
-                });
+                }.bind(this)); // Bind context to access this.options
             }
 
             this.renderer.element.find('.publications-list').html(html);
+            
+            // Update checkmarks after rendering publications list
+            if (this.renderer.updateCheckmarks) {
+                this.renderer.updateCheckmarks();
+            }
         },
 
         renderPublicationsError: function() {

@@ -153,6 +153,7 @@ define([
             this.options.currentPublicationTitle = null;
 
             this.renderer.updateButton();
+            this.renderer.updateCheckmarks();
             this._closeDropdown();
             this.element.trigger('publicationStatusChanged', {status: status});
             
@@ -183,6 +184,7 @@ define([
             this.options.currentPublicationTitle = publication.title;
 
             this.renderer.updateButton();
+            this.renderer.updateCheckmarks();
             this._closeDropdown();
             
             // Update CSS manager with publication CSS first, then load config
