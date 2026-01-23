@@ -245,7 +245,7 @@ define([
 
         /**
          * Get dirty palette changes formatted for saveValues mutation
-         * @returns {Array} [{sectionCode: 'palette', fieldCode: cssVar, value: rgb}]
+         * @returns {Array} [{sectionCode: '_palette', fieldCode: cssVar, value: rgb}]
          */
         getDirtyChanges: function() {
             var changes = [];

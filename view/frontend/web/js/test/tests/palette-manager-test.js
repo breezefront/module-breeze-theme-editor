@@ -167,8 +167,8 @@ define([
             
             this.assertEquals(changes.length, 2, 
                 'getDirtyChanges should return 2 items');
-            this.assertEquals(changes[0].sectionCode, 'palette', 
-                'Should have sectionCode="palette"');
+            this.assertEquals(changes[0].sectionCode, '_palette', 
+                'Should have sectionCode="_palette" (special backend section)');
             this.assertNotNull(changes[0].fieldCode, 
                 'Should have fieldCode (cssVar)');
             this.assertNotNull(changes[0].value, 
