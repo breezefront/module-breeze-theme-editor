@@ -132,59 +132,55 @@ define([
         /**
          * Test 7: Should track dirty state when color changes
          */
-        'should track dirty state when color changes': function(done) {
+        'should track dirty state when color changes': function() {
             var manager = Object.create(PaletteManager);
             manager.init({ palettes: [fixtures.mockPaletteConfig], storeId: 1, themeId: 1 });
             
-            var self = this;
-            
             // Test 1: Initially no dirty changes
-            self.assertEquals(manager.getDirtyCount(), 0, 
+            this.assertEquals(manager.getDirtyCount(), 0, 
                 'Should have no dirty changes initially');
-            self.assertEquals(manager.hasDirtyChanges(), false, 
+            this.assertEquals(manager.hasDirtyChanges(), false, 
                 'hasDirtyChanges should return false initially');
             
             // Test 2: Update color -> should track dirty state
             manager.updateColor('--color-brand-primary', '#ff0000');
             
-            self.assertEquals(manager.getDirtyCount(), 1, 
+            this.assertEquals(manager.getDirtyCount(), 1, 
                 'Should have 1 dirty change after first update');
-            self.assertEquals(manager.hasDirtyChanges(), true, 
+            this.assertEquals(manager.hasDirtyChanges(), true, 
                 'hasDirtyChanges should return true');
             
             // Test 3: Update same color again -> count stays 1
             manager.updateColor('--color-brand-primary', '#00ff00');
             
-            self.assertEquals(manager.getDirtyCount(), 1, 
+            this.assertEquals(manager.getDirtyCount(), 1, 
                 'Should still have 1 dirty change (same cssVar)');
             
             // Test 4: Update different color -> count increases
             manager.updateColor('--color-brand-secondary', '#0000ff');
             
-            self.assertEquals(manager.getDirtyCount(), 2, 
+            this.assertEquals(manager.getDirtyCount(), 2, 
                 'Should have 2 dirty changes (different cssVars)');
             
             // Test 5: getDirtyChanges should format correctly
             var changes = manager.getDirtyChanges();
             
-            self.assertEquals(changes.length, 2, 
+            this.assertEquals(changes.length, 2, 
                 'getDirtyChanges should return 2 items');
-            self.assertEquals(changes[0].sectionCode, 'palette', 
+            this.assertEquals(changes[0].sectionCode, 'palette', 
                 'Should have sectionCode="palette"');
-            self.assertNotNull(changes[0].fieldCode, 
+            this.assertNotNull(changes[0].fieldCode, 
                 'Should have fieldCode (cssVar)');
-            self.assertNotNull(changes[0].value, 
+            this.assertNotNull(changes[0].value, 
                 'Should have value (RGB)');
             
             // Test 6: markAsSaved should clear dirty state
             manager.markAsSaved();
             
-            self.assertEquals(manager.getDirtyCount(), 0, 
+            this.assertEquals(manager.getDirtyCount(), 0, 
                 'Should clear dirty state after markAsSaved');
-            self.assertEquals(manager.hasDirtyChanges(), false, 
+            this.assertEquals(manager.hasDirtyChanges(), false, 
                 'hasDirtyChanges should return false after markAsSaved');
-            
-            done();
         },
         
         /**
