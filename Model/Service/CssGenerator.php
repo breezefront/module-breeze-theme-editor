@@ -47,10 +47,10 @@ class CssGenerator
         $css = ":root {\n";
 
         // ========================================
-        // 1. INJECT PALETTE CSS VARIABLES FIRST
+        // 1. INJECT PALETTE CSS VARIABLES FIRST (ONLY FOR PUBLISHED)
         // ========================================
         $palettes = $config['palettes'] ?? [];
-        if (!empty($palettes)) {
+        if (!empty($palettes) && $status === 'PUBLISHED') {
             foreach ($palettes as $paletteId => $palette) {
                 $groups = $palette['groups'] ?? [];
                 foreach ($groups as $groupId => $group) {
@@ -69,10 +69,9 @@ class CssGenerator
             }
             
             // Add blank line separator after palette colors
-            if (!empty($palettes)) {
-                $css .= "\n";
-            }
+            $css .= "\n";
         }
+        // For DRAFT: palette colors will be added below from DB (section "_palette")
 
         // ========================================
         // 2. INJECT USER-MODIFIED FIELD VALUES
@@ -82,12 +81,53 @@ class CssGenerator
             return $css;
         }
 
+        // CRITICAL: Process _palette changes FIRST (before other fields)
+        // This ensures palette variables are defined before they're referenced via var()
+        $hasPaletteChanges = false;
+        
+        foreach ($values as $value) {
+            $sectionCode = $value['section_code'];
+            
+            // Skip non-palette entries in this pass
+            if ($sectionCode !== '_palette') {
+                continue;
+            }
+            
+            $settingCode = $value['setting_code'];
+            $rawValue = $value['value'] ?? null;
+
+            if ($rawValue === null || $rawValue === '') {
+                continue;
+            }
+
+            $cssVar = $settingCode; // CSS var = setting code (e.g., --color-brand-primary)
+            $formattedValue = $rawValue; // RGB already in correct format (e.g., "200, 118, 4")
+            
+            // Extract label from CSS variable name
+            $label = str_replace('--color-brand-', '', $cssVar);
+            $label = ucwords(str_replace('-', ' ', $label)); // Format: "Amber Primary"
+            
+            $css .= "    $cssVar: $formattedValue;  /* Palette: $label */\n";
+            $hasPaletteChanges = true;
+        }
+
+        // Add blank line separator after palette colors (if any were added)
+        if ($hasPaletteChanges) {
+            $css .= "\n";
+        }
+
+        // Now process all OTHER field values (which may reference palette variables)
         foreach ($values as $value) {
             $sectionCode = $value['section_code'];
             $settingCode = $value['setting_code'];
             $rawValue = $value['value'] ?? null;
 
             if ($rawValue === null || $rawValue === '') {
+                continue;
+            }
+
+            // Skip _palette entries (already processed above)
+            if ($sectionCode === '_palette') {
                 continue;
             }
 
@@ -187,8 +227,60 @@ class CssGenerator
             return $css;
         }
 
+        // CRITICAL: Process _palette changes FIRST (before other fields)
+        // This ensures palette variables are defined before they're referenced via var()
+        $hasPaletteChanges = false;
+
         foreach ($valuesMap as $key => $rawValue) {
             if ($rawValue === null || $rawValue === '') {
+                continue;
+            }
+
+            // Parse section.setting format
+            $parts = explode('.', $key, 2);
+            if (count($parts) !== 2) {
+                continue;
+            }
+            
+            [$sectionCode, $settingCode] = $parts;
+
+            // Skip non-palette entries in this pass
+            if ($sectionCode !== '_palette') {
+                continue;
+            }
+
+            $cssVar = $settingCode; // e.g., --color-brand-primary
+            $formattedValue = $rawValue; // Already in RGB format: "200, 118, 4"
+            
+            // Generate friendly label for comment
+            $label = str_replace('--color-brand-', '', $cssVar);
+            $label = ucwords(str_replace('-', ' ', $label));
+            
+            $css .= "    $cssVar: $formattedValue;  /* Palette: $label */\n";
+            $hasPaletteChanges = true;
+        }
+
+        // Add blank line separator after palette colors (if any were added)
+        if ($hasPaletteChanges) {
+            $css .= "\n";
+        }
+
+        // Now process all OTHER field values (which may reference palette variables)
+        foreach ($valuesMap as $key => $rawValue) {
+            if ($rawValue === null || $rawValue === '') {
+                continue;
+            }
+
+            // Parse section.setting format
+            $parts = explode('.', $key, 2);
+            if (count($parts) !== 2) {
+                continue;
+            }
+            
+            [$sectionCode, $settingCode] = $parts;
+
+            // Skip _palette entries (already processed above)
+            if ($sectionCode === '_palette') {
                 continue;
             }
 
@@ -242,7 +334,7 @@ class CssGenerator
         $fieldType = strtolower($fieldType);
 
         return match ($fieldType) {
-            'color' => $this->hexToRgb($value),
+            'color' => $this->formatColor($value),
             'font_picker' => $this->formatFont($value),
             'toggle', 'checkbox' => ($value === true || $value === '1' || $value === 1) ? '1' : '0',
             'number', 'range' => (string)$value, // Numbers don't need escaping
@@ -350,6 +442,32 @@ class CssGenerator
         $b = hexdec(substr($hex, 4, 2));
 
         return "$r, $g, $b";
+    }
+
+    /**
+     * Format color value - handle palette references and HEX
+     * Supports:
+     * - Palette references: --color-brand-primary → var(--color-brand-primary)
+     * - Already wrapped: var(--color-test) → var(--color-test)
+     * - HEX colors: #ffffff → 255, 255, 255
+     * 
+     * @param string $value
+     * @return string
+     */
+    private function formatColor(string $value): string
+    {
+        // If it's a palette reference (starts with --)
+        if (str_starts_with($value, '--')) {
+            return 'var(' . $value . ')';  // --color-brand-primary → var(--color-brand-primary)
+        }
+        
+        // If already wrapped in var() - return as-is (backward compatibility)
+        if (str_starts_with($value, 'var(')) {
+            return $value;
+        }
+        
+        // If it's HEX - convert to RGB
+        return $this->hexToRgb($value);  // #ffffff → 255, 255, 255
     }
 
     /**
