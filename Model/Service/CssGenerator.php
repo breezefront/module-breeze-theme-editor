@@ -117,6 +117,24 @@ class CssGenerator
         }
 
         // Now process all OTHER field values (which may reference palette variables)
+        $css .= $this->generateCssFromFields($values, $fieldMap);
+
+        $css .= "}\n";
+
+        return $css;
+    }
+
+    /**
+     * Generate CSS rules from field values
+     *
+     * @param array $values
+     * @param array $fieldMap
+     * @return string
+     */
+    private function generateCssFromFields(array $values, array $fieldMap): string
+    {
+        $css = '';
+        
         foreach ($values as $value) {
             $sectionCode = $value['section_code'];
             $settingCode = $value['setting_code'];
@@ -161,9 +179,7 @@ class CssGenerator
             }
             $css .= "\n";
         }
-
-        $css .= "}\n";
-
+        
         return $css;
     }
 
@@ -266,53 +282,20 @@ class CssGenerator
         }
 
         // Now process all OTHER field values (which may reference palette variables)
-        foreach ($valuesMap as $key => $rawValue) {
-            if ($rawValue === null || $rawValue === '') {
-                continue;
-            }
-
-            // Parse section.setting format
+        // Convert valuesMap to same format as $values array
+        $values = [];
+        foreach ($valuesMap as $key => $value) {
             $parts = explode('.', $key, 2);
-            if (count($parts) !== 2) {
-                continue;
+            if (count($parts) === 2) {
+                $values[] = [
+                    'section_code' => $parts[0],
+                    'setting_code' => $parts[1],
+                    'value' => $value
+                ];
             }
-            
-            [$sectionCode, $settingCode] = $parts;
-
-            // Skip _palette entries (already processed above)
-            if ($sectionCode === '_palette') {
-                continue;
-            }
-
-            // Lookup field in map
-            $field = $fieldMap[$key] ?? null;
-
-            if (!$field) {
-                continue;
-            }
-
-            $default = $field['default'] ?? null;
-            if ($default !== null && $this->valuesAreEqual($rawValue, $default)) {
-                continue; // Use Breeze default, don't override
-            }
-
-            $cssVar = $field['css_var'] ?? null;
-
-            if (!$cssVar) {
-                continue;
-            }
-
-            $fieldType = $field['type'] ?? null;
-            $formattedValue = $this->formatValue($rawValue, $fieldType);
-            $comment = $this->getComment($rawValue, $fieldType);
-            $important = $field['important'] ?? false;
-
-            $css .= "    $cssVar: $formattedValue" . ($important ? ' !important' : '') . ";";
-            if ($comment) {
-                $css .= "  /* $comment */";
-            }
-            $css .= "\n";
         }
+        
+        $css .= $this->generateCssFromFields($values, $fieldMap);
 
         $css .= "}\n";
 

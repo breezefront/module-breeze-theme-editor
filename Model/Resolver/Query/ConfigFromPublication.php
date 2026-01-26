@@ -17,6 +17,8 @@ use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 
 class ConfigFromPublication extends AbstractConfigResolver implements ResolverInterface
 {
+    use PublicationChangelogTrait;
+
     public function __construct(
         SerializerInterface $serializer,
         ConfigProvider $configProvider,
@@ -88,46 +90,5 @@ class ConfigFromPublication extends AbstractConfigResolver implements ResolverIn
             'palettes' => $this->formatPalettes($themeId),
             'metadata' => $metadata
         ];
-    }
-
-    /**
-     * Get changelog entries for publication
-     */
-    private function getPublicationChangelog(int $publicationId): array
-    {
-        $searchCriteriaBuilder = $this->searchCriteriaBuilderFactory->create();
-
-        $searchCriteria = $searchCriteriaBuilder
-            ->addFilter('publication_id', $publicationId)
-            ->create();
-
-        $result = $this->changelogRepository->getList($searchCriteria);
-
-        $changelog = [];
-        foreach ($result->getItems() as $change) {
-            $changelog[] = [
-                'section_code' => $change->getSectionCode(),
-                'setting_code' => $change->getSettingCode(),
-                'old_value' => $change->getOldValue(),
-                'new_value' => $change->getNewValue()
-            ];
-        }
-
-        return $changelog;
-    }
-
-    /**
-     * Build values map from changelog (use newValue)
-     */
-    private function buildValuesMapFromChangelog(array $changelog): array
-    {
-        $valuesMap = [];
-
-        foreach ($changelog as $change) {
-            $key = $change['section_code'] . '.' . $change['setting_code'];
-            $valuesMap[$key] = $change['new_value'];
-        }
-
-        return $valuesMap;
     }
 }
