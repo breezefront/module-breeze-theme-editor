@@ -114,30 +114,20 @@ define([
          * @returns {String} HTML
          */
         renderBadges: function(isDirty, isModified, sectionCode, fieldCode) {
-            var html = '';
-
-            // ✅ Dirty badge (unsaved changes) - higher priority, shown first
-            if (isDirty) {
-                html += '<span class="bte-badge bte-badge-dirty" title="You have unsaved changes for this field">' +
-                        '<span class="bte-badge-icon">●</span> Changed' +
-                        '</span>';
-                
-                // Reset button - only show when isDirty
-                html += '<button type="button" class="bte-field-reset-btn" ' +
-                        'data-field-code="' + fieldCode + '" ' +
-                        'data-section-code="' + sectionCode + '" ' +
-                        'title="Discard unsaved changes" ' +
-                        'aria-label="Reset field to draft value">↺</button>';
+            // Lazy load and cache badge template
+            if (!this._badgeTemplate) {
+                this._badgeTemplate = mageTemplate($('#field-badges-template').html());
             }
 
-            // ✅ Modified badge (saved but not default)
-            if (isModified) {
-                html += '<span class="bte-badge bte-badge-modified" title="This field has been customized from its default value">' +
-                        'Modified' +
-                        '</span>';
-            }
-
-            return html;
+            // Render badges using template
+            return this._badgeTemplate({
+                data: {
+                    isDirty: isDirty,
+                    isModified: isModified,
+                    sectionCode: sectionCode,
+                    fieldCode: fieldCode
+                }
+            });
         },
 
         /**

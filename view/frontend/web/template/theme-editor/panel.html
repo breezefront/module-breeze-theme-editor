@@ -62,3 +62,21 @@
         </button>
     </div>
 </div>
+
+<!-- Field Badges Template -->
+<script type="text/x-magento-template" id="field-badges-template">
+    <% if (data.isDirty) { %>
+        <span class="bte-badge bte-badge-dirty" title="You have unsaved changes for this field">
+            <span class="bte-badge-icon">●</span> Changed
+        </span>
+        <button type="button" 
+                class="bte-field-reset-btn" 
+                data-field-code="<%= data.fieldCode %>" 
+                data-section-code="<%= data.sectionCode %>" 
+                title="Discard unsaved changes" 
+                aria-label="Reset field to draft value">↺</button>
+    <% } %>
+    <% if (data.isModified) { %>
+        <span class="bte-badge bte-badge-modified" title="This field has been customized from its default value">Modified</span>
+    <% } %>
+</script>
