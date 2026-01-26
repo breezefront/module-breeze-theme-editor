@@ -16,6 +16,13 @@ define([
      */
     return {
         /**
+         * Handler registry - injected by field-handlers.js
+         * Maps field types to specialized handlers
+         * @private
+         */
+        _handlerRegistry: null,
+
+        /**
          * Handle field change (called by specific handlers)
          *
          * @param {jQuery} $input - Input element
@@ -202,6 +209,7 @@ define([
         /**
          * Handle field reset button click
          * Restores draft value and clears dirty state
+         * Uses specialized handlers from registry if available
          * 
          * @param {jQuery} $resetBtn - Reset button element
          */
@@ -233,8 +241,21 @@ define([
                 return;
             }
             
-            // Update field UI
-            this.updateFieldUIAfterReset(sectionCode, fieldCode, restoredValue);
+            // Find field element to determine type
+            var $field = this._findFieldElement(sectionCode, fieldCode);
+            var fieldType = $field.attr('data-type');
+            
+            // Get specialized handler for this field type
+            var handler = this._getHandlerForType(fieldType);
+            
+            // Call specialized updateFieldUIAfterReset if available, otherwise use base implementation
+            if (handler && handler.updateFieldUIAfterReset && handler !== this) {
+                console.log('↺ Using specialized handler for type:', fieldType);
+                handler.updateFieldUIAfterReset(sectionCode, fieldCode, restoredValue);
+            } else {
+                console.log('↺ Using base handler for type:', fieldType);
+                this.updateFieldUIAfterReset(sectionCode, fieldCode, restoredValue);
+            }
             
             console.log('✅ Field reset complete:', sectionCode + '.' + fieldCode, '→', restoredValue);
         },
@@ -270,6 +291,21 @@ define([
         },
 
         /**
+         * Get specialized handler for field type from registry
+         * 
+         * @param {String} fieldType - Field type (e.g., 'COLOR', 'RANGE', 'TEXT')
+         * @returns {Object|null} Handler object or null if not found
+         * @private
+         */
+        _getHandlerForType: function(fieldType) {
+            if (!this._handlerRegistry) {
+                return null;
+            }
+            
+            return this._handlerRegistry[fieldType] || null;
+        },
+
+        /**
          * Find field element by section and field code
          * Helper method
          * 
@@ -286,9 +322,16 @@ define([
          * Call this in specific field handlers' initialization
          * 
          * @param {jQuery} $container - Container element
+         * @param {Object} handlerRegistry - Map of field types to handlers (optional)
          */
-        attachResetHandler: function($container) {
+        attachResetHandler: function($container, handlerRegistry) {
             var self = this;
+            
+            // Store registry for later use in handleFieldReset
+            if (handlerRegistry) {
+                this._handlerRegistry = handlerRegistry;
+                console.log('✅ Handler registry attached with', Object.keys(handlerRegistry).length, 'types');
+            }
             
             $container.on('click', '.bte-field-reset-btn', function(e) {
                 e.preventDefault();

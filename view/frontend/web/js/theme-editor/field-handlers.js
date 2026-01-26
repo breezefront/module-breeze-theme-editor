@@ -19,6 +19,30 @@ define([
      */
     return {
         /**
+         * Handler registry - maps field types to their handlers
+         * Used for specialized operations like reset, validation, etc.
+         */
+        handlersByType: {
+            'COLOR': ColorHandler,
+            'RANGE': RangeHandler,
+            'NUMBER': NumberHandler,
+            'RADIO': RadioHandler,
+            'TEXT': SimpleHandler,
+            'TEXTAREA': SimpleHandler,
+            'SELECT': SimpleHandler,
+            'TOGGLE': SimpleHandler,
+            'CHECKBOX': SimpleHandler,
+            'IMAGE_UPLOAD': ImageUploadHandler,
+            'SPACING': SpacingHandler,
+            'REPEATER': RepeaterHandler,
+            'FONT_PICKER': SimpleHandler,
+            'COLOR_SCHEME': SimpleHandler,
+            'CODE': SimpleHandler,
+            'ICON_SET_PICKER': SimpleHandler,
+            'SOCIAL_LINKS': SimpleHandler
+        },
+
+        /**
          * Initialize all field handlers
          *
          * @param {jQuery} $element - Panel element
@@ -36,8 +60,8 @@ define([
             SpacingHandler.init($element, callback);
             RepeaterHandler.init($element, callback);
 
-            // Attach reset button handlers
-            BaseHandler.attachResetHandler($element);
+            // Attach reset button handlers with registry for smart dispatching
+            BaseHandler.attachResetHandler($element, this.handlersByType);
 
             console.log('✅ All field handlers initialized');
         },
