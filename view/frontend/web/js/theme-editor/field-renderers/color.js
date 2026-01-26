@@ -14,9 +14,9 @@ define([
         
         // Check if value is a palette reference (--color-brand-*)
         if (typeof value === 'string' && value.startsWith('--color-')) {
-            // This is a palette reference
+            // This is a palette reference - resolve via PaletteManager mapping
             data.paletteRef = value;
-            data.value = this._resolvePaletteColor(value, field.palette, field.default);
+            data.value = this._getPaletteHexFromMapping(value);
             data.hexValue = data.value;
             console.log('🎨 Resolved palette reference:', value, '→', data.value);
         } else {
@@ -39,85 +39,17 @@ define([
     };
 
     /**
-     * Resolve palette reference to actual HEX color
-     * Uses multiple sources with fallback chain:
-     * 1. CSS variables (live values from :root)
-     * 2. PaletteManager config (GraphQL data)
-     * 3. Field default value
-     * 4. Black (#000000)
+     * Resolve palette reference to HEX color using PaletteManager's flat index
+     * Simple and reliable - just looks up the color in the pre-built palette mapping
      * 
      * @param {String} paletteRef - CSS variable name (e.g., "--color-brand-amber-dark")
-     * @param {String} paletteId - Palette ID from field config (e.g., "default")
-     * @param {String} fallback - Fallback color if resolution fails
-     * @returns {String} HEX color
+     * @returns {String} HEX color (defaults to #000000 if not found)
      */
-    ColorRenderer._resolvePaletteColor = function(paletteRef, paletteId, fallback) {
-        // Strategy 1: Try CSS variables (most reliable for live values)
-        var hexFromCss = this._resolvePaletteColorFromCss(paletteRef);
-        if (hexFromCss && hexFromCss !== '#000000') {
-            console.log('✅ Resolved from CSS:', paletteRef, '→', hexFromCss);
-            return hexFromCss;
-        }
-        
-        // Strategy 2: Try PaletteManager (GraphQL config)
-        var hexFromConfig = this._resolvePaletteColorFromConfig(paletteRef, paletteId);
-        if (hexFromConfig && hexFromConfig !== '#000000') {
-            console.log('✅ Resolved from config:', paletteRef, '→', hexFromConfig);
-            return hexFromConfig;
-        }
-        
-        // Strategy 3: Use field default if it's a valid HEX
-        if (fallback && /^#[0-9A-Fa-f]{6}$/.test(fallback)) {
-            console.log('⚠️ Using fallback:', paletteRef, '→', fallback);
-            return fallback;
-        }
-        
-        // Strategy 4: Last resort - black
-        console.warn('⚠️ Could not resolve palette color, using black:', paletteRef);
-        return '#000000';
-    };
-
-    /**
-     * Resolve palette color from CSS variables
-     * @param {String} paletteRef - CSS variable name
-     * @returns {String|null} HEX color or null
-     */
-    ColorRenderer._resolvePaletteColorFromCss = function(paletteRef) {
-        try {
-            var rootStyle = getComputedStyle(document.documentElement);
-            var rgbValue = rootStyle.getPropertyValue(paletteRef).trim();
-            
-            if (rgbValue) {
-                // CSS variable format: "234, 179, 8" → convert to HEX
-                var parts = rgbValue.split(',').map(function(p) {
-                    return parseInt(p.trim(), 10);
-                });
-                
-                if (parts.length === 3 && parts.every(function(n) { 
-                    return !isNaN(n) && n >= 0 && n <= 255; 
-                })) {
-                    return '#' + parts.map(function(n) {
-                        return ('0' + n.toString(16)).slice(-2);
-                    }).join('');
-                }
-            }
-        } catch (e) {
-            console.warn('⚠️ Error reading CSS variable:', paletteRef, e);
-        }
-        
-        return null;
-    };
-
-    /**
-     * Resolve palette color from PaletteManager config
-     * @param {String} paletteRef - CSS variable name
-     * @param {String} paletteId - Palette ID (optional)
-     * @returns {String|null} HEX color or null
-     */
-    ColorRenderer._resolvePaletteColorFromConfig = function(paletteRef, paletteId) {
+    ColorRenderer._getPaletteHexFromMapping = function(paletteRef) {
         // Check if require is available
         if (typeof require === 'undefined') {
-            return null;
+            console.warn('⚠️ require not available for palette resolution');
+            return '#000000';
         }
         
         try {
@@ -125,35 +57,43 @@ define([
             
             if (!PaletteManager || !PaletteManager.palettes) {
                 console.warn('⚠️ PaletteManager not initialized');
-                return null;
+                return '#000000';
             }
             
-            // Look up color in indexed palette
+            // Look up in flat index: PaletteManager.palettes['--color-brand-amber-dark']
             var color = PaletteManager.palettes[paletteRef];
             
-            if (color) {
-                // Return current value or default as HEX
-                if (color.hex) {
-                    return color.hex;
-                }
-                
-                // If stored as RGB, convert to HEX
-                if (color.value) {
-                    return PaletteManager.rgbToHex(color.value);
-                }
-                
-                // Fallback to default
-                if (color.default) {
-                    return color.default.startsWith('#') 
-                        ? color.default 
-                        : PaletteManager.rgbToHex(color.default);
-                }
+            if (!color) {
+                console.warn('⚠️ Palette color not found:', paletteRef);
+                return '#000000';
             }
+            
+            // Return HEX value (created in PaletteManager from rgbToHex conversion)
+            if (color.hex) {
+                console.log('✅ Resolved palette ref:', paletteRef, '→', color.hex);
+                return color.hex;
+            }
+            
+            // Fallback to default if hex not available
+            if (color.default && color.default.startsWith('#')) {
+                console.log('✅ Using palette default:', paletteRef, '→', color.default);
+                return color.default;
+            }
+            
+            // Last resort: convert RGB value to HEX
+            if (color.value) {
+                var hex = PaletteManager.rgbToHex(color.value);
+                console.log('✅ Converted RGB to HEX:', paletteRef, '→', hex);
+                return hex;
+            }
+            
+            console.warn('⚠️ No valid color value found for:', paletteRef);
+            return '#000000';
+            
         } catch (e) {
-            console.warn('⚠️ Error accessing PaletteManager:', e);
+            console.error('❌ Error accessing PaletteManager:', e);
+            return '#000000';
         }
-        
-        return null;
     };
 
     return ColorRenderer;

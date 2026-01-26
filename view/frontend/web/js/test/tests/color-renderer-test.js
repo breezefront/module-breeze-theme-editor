@@ -179,36 +179,28 @@ define([
         },
         
         /**
-         * Test 8: _resolvePaletteColorFromCss should convert RGB to HEX
+         * Test 8: _getPaletteHexFromMapping should resolve colors from PaletteManager
          */
-        'should convert CSS RGB values to HEX': function() {
-            // Set up CSS variable
-            var $style = $('<style id="test-css-vars"></style>').appendTo('head');
-            $style.text(':root { --color-test-blue: 0, 0, 255; }');
+        'should resolve palette colors from flat index': function() {
+            // Initialize PaletteManager with test data
+            PaletteManager.init({
+                palettes: [fixtures.mockPaletteConfig],
+                storeId: 1,
+                themeId: 1
+            });
             
-            var hex = ColorRenderer._resolvePaletteColorFromCss('--color-test-blue');
+            var hex = ColorRenderer._getPaletteHexFromMapping('--color-brand-primary');
             
-            this.assertEquals(hex, '#0000ff',
-                'Should convert RGB "0, 0, 255" to #0000ff');
-            
-            // Cleanup
-            $style.remove();
+            this.assertNotNull(hex,
+                'Should resolve color from PaletteManager flat index');
+            this.assert(/^#[0-9a-f]{6}$/i.test(hex),
+                'Should return valid HEX color: ' + hex);
         },
         
         /**
-         * Test 9: _resolvePaletteColorFromCss should handle invalid CSS variables
+         * Test 9: _getPaletteHexFromMapping should handle nonexistent colors
          */
-        'should handle invalid CSS variables gracefully': function() {
-            var hex = ColorRenderer._resolvePaletteColorFromCss('--nonexistent-var');
-            
-            this.assertEquals(hex, null,
-                'Should return null for nonexistent CSS variable');
-        },
-        
-        /**
-         * Test 10: _resolvePaletteColorFromConfig should use PaletteManager
-         */
-        'should resolve from PaletteManager config': function() {
+        'should handle nonexistent palette colors gracefully': function() {
             // Initialize PaletteManager
             PaletteManager.init({
                 palettes: [fixtures.mockPaletteConfig],
@@ -216,16 +208,14 @@ define([
                 themeId: 1
             });
             
-            var hex = ColorRenderer._resolvePaletteColorFromConfig('--color-brand-primary', 'default');
+            var hex = ColorRenderer._getPaletteHexFromMapping('--nonexistent-color');
             
-            this.assertNotNull(hex,
-                'Should resolve color from PaletteManager');
-            this.assert(/^#[0-9a-f]{6}$/i.test(hex),
-                'Should return valid HEX color: ' + hex);
+            this.assertEquals(hex, '#000000',
+                'Should return #000000 for nonexistent palette color');
         },
         
         /**
-         * Test 11: prepareData should preserve palette configuration
+         * Test 10: prepareData should preserve palette configuration
          */
         'should preserve palette configuration in data': function() {
             var field = {
@@ -245,7 +235,7 @@ define([
         },
         
         /**
-         * Test 12: Should handle missing palette configuration
+         * Test 11: Should handle missing palette configuration
          */
         'should handle missing palette configuration': function() {
             var field = {
@@ -265,7 +255,7 @@ define([
         },
         
         /**
-         * Test 13: Should validate HEX color format strictly
+         * Test 12: Should validate HEX color format strictly
          */
         'should validate HEX color format strictly': function() {
             var testCases = [

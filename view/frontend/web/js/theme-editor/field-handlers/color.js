@@ -3,8 +3,9 @@ define([
     'underscore',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/base',
     'Swissup_BreezeThemeEditor/js/theme-editor/palette-manager',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/color',
     'text!Swissup_BreezeThemeEditor/template/theme-editor/partials/palette-grid.html'
-], function ($, _, BaseHandler, PaletteManager, paletteGridTemplate) {
+], function ($, _, BaseHandler, PaletteManager, ColorRenderer, paletteGridTemplate) {
     'use strict';
 
     /**
@@ -513,12 +514,22 @@ define([
             var isPaletteRef = typeof value === 'string' && value.startsWith('--color-');
             var hexValue;
             
+            console.log('🐛 DEBUG Reset: value =', value, 'isPaletteRef =', isPaletteRef);
+            
             if (isPaletteRef) {
                 // Resolve palette ref to HEX
+                console.log('🐛 DEBUG Reset: Calling _resolvePaletteRef with', value);
                 hexValue = this._resolvePaletteRef(value);
+                
+                console.log('🐛 DEBUG Reset: _resolvePaletteRef returned:', hexValue);
+                console.log('🐛 DEBUG Reset: hexValue type:', typeof hexValue);
+                console.log('🐛 DEBUG Reset: hexValue starts with #:', hexValue && hexValue.startsWith('#'));
                 
                 // Update input and preserve palette ref attribute
                 $input.val(hexValue);
+                
+                console.log('🐛 DEBUG Reset: After $input.val(), $input.val() =', $input.val());
+                
                 $input.attr('data-palette-ref', value);
                 
                 console.log('↺ Color reset with palette ref:', value, '→', hexValue);
@@ -551,39 +562,22 @@ define([
 
         /**
          * Resolve palette reference to HEX color
+         * Uses ColorRenderer's simple PaletteManager lookup
          * 
          * @param {String} paletteRef - CSS variable name (--color-*)
          * @returns {String} HEX color
          */
         _resolvePaletteRef: function(paletteRef) {
-            try {
-                // Try CSS variables
-                var rootStyle = getComputedStyle(document.documentElement);
-                var rgbValue = rootStyle.getPropertyValue(paletteRef).trim();
-                
-                if (rgbValue) {
-                    // CSS variable format: "234, 179, 8" → convert to HEX
-                    var parts = rgbValue.split(',').map(function(p) {
-                        return parseInt(p.trim(), 10);
-                    });
-                    
-                    if (parts.length === 3 && parts.every(function(n) { 
-                        return !isNaN(n) && n >= 0 && n <= 255; 
-                    })) {
-                        var hex = '#' + parts.map(function(n) {
-                            return ('0' + n.toString(16)).slice(-2);
-                        }).join('');
-                        
-                        return hex;
-                    }
-                }
-            } catch (e) {
-                console.warn('⚠️ Error resolving palette ref:', paletteRef, e);
-            }
+            console.log('🐛 DEBUG _resolvePaletteRef: input =', paletteRef);
+            console.log('🐛 DEBUG _resolvePaletteRef: ColorRenderer =', ColorRenderer);
+            console.log('🐛 DEBUG _resolvePaletteRef: ColorRenderer._getPaletteHexFromMapping =', typeof ColorRenderer._getPaletteHexFromMapping);
             
-            // Fallback to black
-            console.warn('⚠️ Could not resolve palette ref, using black:', paletteRef);
-            return '#000000';
+            var result = ColorRenderer._getPaletteHexFromMapping(paletteRef);
+            
+            console.log('🐛 DEBUG _resolvePaletteRef: ColorRenderer returned =', result);
+            console.log('🐛 DEBUG _resolvePaletteRef: result type =', typeof result);
+            
+            return result;
         }
     };
 });
