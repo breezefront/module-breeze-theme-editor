@@ -24,9 +24,15 @@ class ThemeCssVariables implements ArgumentInterface
 
     /**
      * Get generated CSS for current theme/store
+     * Only generates if Theme Editor is enabled
      */
     public function getInlineCssContent(): string
     {
+        // Check if Theme Editor is enabled
+        if (!$this->helper->isEnabled()) {
+            return '';
+        }
+
         try {
             $storeId = (int) $this->storeManager->getStore()->getId();
             $themeId = $this->themeResolver->getThemeIdByStoreId($storeId);
@@ -39,6 +45,10 @@ class ThemeCssVariables implements ArgumentInterface
 
     /**
      * Check if CSS should be rendered
+     * Returns false if:
+     * - Theme Editor is disabled
+     * - No custom CSS values exist (empty :root {})
+     * - Error occurred during generation
      */
     public function shouldRender(): bool
     {
