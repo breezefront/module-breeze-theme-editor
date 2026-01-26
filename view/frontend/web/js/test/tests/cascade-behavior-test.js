@@ -52,9 +52,9 @@ define([
             
             // Add fields with palette refs
             $container.append(
-                '<input class="bte-color-input" value="#1979c3" data-palette-ref="--color-brand-primary" />' +
-                '<input class="bte-color-input" value="#ff0000" data-palette-ref="--color-brand-secondary" />' +
-                '<input class="bte-color-input" value="#00ff00" />' // No palette ref
+                '<input class="bte-color-input" value="#1979c3" data-palette-ref="--color-brand-primary">' +
+                '<input class="bte-color-input" value="#ff0000" data-palette-ref="--color-brand-secondary">' +
+                '<input class="bte-color-input" value="#00ff00">' // No palette ref
             );
             
             // Find fields with specific palette ref
@@ -85,7 +85,7 @@ define([
             // Create test field
             var $container = $('<div id="cascade-test-container"></div>').appendTo('body');
             $container.append(
-                '<input class="bte-color-input" value="#1979c3" data-palette-ref="--color-brand-primary" />' +
+                '<input class="bte-color-input" value="#1979c3" data-palette-ref="--color-brand-primary">' +
                 '<div class="bte-color-preview" style="background-color: rgb(25, 121, 195);"></div>'
             );
             
@@ -144,7 +144,7 @@ define([
             // Create test field with palette ref
             var $container = $('<div id="cascade-test-container"></div>').appendTo('body');
             $container.append(
-                '<input class="bte-color-input" value="#1979c3" data-palette-ref="--color-brand-primary" />'
+                '<input class="bte-color-input" value="#1979c3" data-palette-ref="--color-brand-primary">'
             );
             
             var $input = $container.find('.bte-color-input');
@@ -195,7 +195,7 @@ define([
             // Create test field
             var $container = $('<div id="cascade-test-container"></div>').appendTo('body');
             $container.append(
-                '<input class="bte-color-input" value="#1979c3" data-palette-ref="--color-brand-primary" />'
+                '<input class="bte-color-input" value="#1979c3" data-palette-ref="--color-brand-primary">'
             );
             
             var $input = $container.find('.bte-color-input');
@@ -251,9 +251,9 @@ define([
             // Create multiple fields with same palette ref
             var $container = $('<div id="cascade-test-container"></div>').appendTo('body');
             $container.append(
-                '<input class="field-1" value="#1979c3" data-palette-ref="--color-brand-primary" />' +
-                '<input class="field-2" value="#1979c3" data-palette-ref="--color-brand-primary" />' +
-                '<input class="field-3" value="#1979c3" data-palette-ref="--color-brand-primary" />'
+                '<input class="field-1" value="#1979c3" data-palette-ref="--color-brand-primary">' +
+                '<input class="field-2" value="#1979c3" data-palette-ref="--color-brand-primary">' +
+                '<input class="field-3" value="#1979c3" data-palette-ref="--color-brand-primary">'
             );
             
             // Subscribe to updates
@@ -297,8 +297,8 @@ define([
             // Create fields with and without palette ref
             var $container = $('<div id="cascade-test-container"></div>').appendTo('body');
             $container.append(
-                '<input class="with-ref" value="#1979c3" data-palette-ref="--color-brand-primary" />' +
-                '<input class="without-ref" value="#aabbcc" />'
+                '<input class="with-ref" value="#1979c3" data-palette-ref="--color-brand-primary">' +
+                '<input class="without-ref" value="#aabbcc">'
             );
             
             var $withRef = $container.find('.with-ref');
