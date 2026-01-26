@@ -47,35 +47,10 @@ class CssGenerator
         $css = ":root {\n";
 
         // ========================================
-        // 1. INJECT PALETTE CSS VARIABLES FIRST (ONLY FOR PUBLISHED)
+        // INJECT USER-MODIFIED VALUES (including palette from DB)
         // ========================================
-        $palettes = $config['palettes'] ?? [];
-        if (!empty($palettes) && $status === 'PUBLISHED') {
-            foreach ($palettes as $paletteId => $palette) {
-                $groups = $palette['groups'] ?? [];
-                foreach ($groups as $groupId => $group) {
-                    $colors = $group['colors'] ?? [];
-                    foreach ($colors as $color) {
-                        $cssVar = $color['css_var'] ?? null;
-                        $default = $color['default'] ?? null;
-                        
-                        if ($cssVar && $default) {
-                            $formattedValue = $this->hexToRgb($default);
-                            $label = $color['label'] ?? $color['id'] ?? 'Unknown';
-                            $css .= "    $cssVar: $formattedValue;  /* Palette: $label */\n";
-                        }
-                    }
-                }
-            }
-            
-            // Add blank line separator after palette colors
-            $css .= "\n";
-        }
-        // For DRAFT: palette colors will be added below from DB (section "_palette")
-
-        // ========================================
-        // 2. INJECT USER-MODIFIED FIELD VALUES
-        // ========================================
+        // Note: Default palette colors are already available in Breeze base styles.
+        // Only custom/modified palette values from DB (section "_palette") are output here.
         if (empty($values)) {
             $css .= "}\n";
             return $css;
@@ -208,36 +183,10 @@ class CssGenerator
         $css = ":root {\n";
 
         // ========================================
-        // 1. INJECT PALETTE CSS VARIABLES FIRST
+        // INJECT USER-MODIFIED VALUES (including palette from DB)
         // ========================================
-        $palettes = $config['palettes'] ?? [];
-        if (!empty($palettes)) {
-            foreach ($palettes as $paletteId => $palette) {
-                $groups = $palette['groups'] ?? [];
-                foreach ($groups as $groupId => $group) {
-                    $colors = $group['colors'] ?? [];
-                    foreach ($colors as $color) {
-                        $cssVar = $color['css_var'] ?? null;
-                        $default = $color['default'] ?? null;
-                        
-                        if ($cssVar && $default) {
-                            $formattedValue = $this->hexToRgb($default);
-                            $label = $color['label'] ?? $color['id'] ?? 'Unknown';
-                            $css .= "    $cssVar: $formattedValue;  /* Palette: $label */\n";
-                        }
-                    }
-                }
-            }
-            
-            // Add blank line separator after palette colors
-            if (!empty($palettes)) {
-                $css .= "\n";
-            }
-        }
-
-        // ========================================
-        // 2. INJECT USER-MODIFIED FIELD VALUES
-        // ========================================
+        // Note: Default palette colors are already available in Breeze base styles.
+        // Only custom/modified palette values from DB (section "_palette") are output here.
         if (empty($valuesMap)) {
             $css .= "}\n";
             return $css;
