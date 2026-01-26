@@ -251,9 +251,10 @@ define([
             // Call specialized updateFieldUIAfterReset if available, otherwise use base implementation
             if (handler && handler.updateFieldUIAfterReset && handler !== this) {
                 console.log('↺ Using specialized handler for type:', fieldType);
-                // Use .call() to set 'this' context to BaseHandler
-                // This allows specialized handlers to access BaseHandler methods like _findFieldElement()
-                handler.updateFieldUIAfterReset.call(this, sectionCode, fieldCode, restoredValue);
+                // Pass $field and handler reference to avoid context issues
+                // This allows specialized handlers to access both BaseHandler methods (via this)
+                // and their own methods (via handler reference)
+                handler.updateFieldUIAfterReset.call(this, sectionCode, fieldCode, restoredValue, $field, handler);
             } else {
                 console.log('↺ Using base handler for type:', fieldType);
                 this.updateFieldUIAfterReset(sectionCode, fieldCode, restoredValue);

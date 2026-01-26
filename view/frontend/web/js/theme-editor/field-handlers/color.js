@@ -491,19 +491,62 @@ define([
         },
 
         /**
-         * Update color field UI after reset
-         * Special handling for palette references and Pickr instances
+         * Update field UI after reset
+         * Handles palette reference resolution for color fields
          * 
          * @param {String} sectionCode
          * @param {String} fieldCode
          * @param {*} value - Restored draft value (HEX or palette ref)
+         * @param {jQuery} $field - Field element (passed by BaseHandler to avoid re-finding)
+         * @param {Object} handlerRef - Reference to ColorHandler for accessing own methods
          */
-        updateFieldUIAfterReset: function(sectionCode, fieldCode, value) {
-            var $field = this._findFieldElement(sectionCode, fieldCode);
+        updateFieldUIAfterReset: function(sectionCode, fieldCode, value, $field, handlerRef) {
+            // Use provided $field or find it (for backward compatibility)
+            if (!$field || !$field.length) {
+                $field = this._findFieldElement(sectionCode, fieldCode);
+            }
             
             if (!$field.length) {
                 console.warn('⚠️ Color field element not found');
                 return;
+            }
+            
+            var $wrapper = $field.closest('.bte-field');
+            var $input = $wrapper.find('.bte-color-input');
+            var $preview = $wrapper.find('.bte-color-preview');
+            
+            // Check if value is palette reference
+            var isPaletteRef = typeof value === 'string' && value.startsWith('--color-');
+            var hexValue;
+            
+            console.log('🐛 DEBUG Reset: value =', value, 'isPaletteRef =', isPaletteRef);
+            
+            if (isPaletteRef) {
+                // Resolve palette ref to HEX using handlerRef to access ColorHandler methods
+                console.log('🐛 DEBUG Reset: Calling _resolvePaletteRef with', value);
+                hexValue = (handlerRef || this)._resolvePaletteRef(value);
+                
+                console.log('🐛 DEBUG Reset: _resolvePaletteRef returned:', hexValue);
+                console.log('🐛 DEBUG Reset: hexValue type:', typeof hexValue);
+                console.log('🐛 DEBUG Reset: hexValue starts with #:', hexValue && hexValue.startsWith('#'));
+                
+                // Update input and preserve palette ref attribute
+                $input.val(hexValue);
+                
+                console.log('🐛 DEBUG Reset: After $input.val(), $input.val() =', $input.val());
+                
+                $input.attr('data-palette-ref', value);
+                
+                console.log('↺ Color reset with palette ref:', value, '→', hexValue);
+            } else {
+                // Regular HEX color
+                hexValue = value;
+                
+                // Update input and remove palette ref
+                $input.val(hexValue);
+                $input.removeAttr('data-palette-ref');
+                
+                console.log('↺ Color reset with HEX:', hexValue);
             }
             
             var $wrapper = $field.closest('.bte-field');
