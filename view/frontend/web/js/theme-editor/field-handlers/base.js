@@ -243,7 +243,7 @@ define([
             
             // Find field element to determine type
             var $field = this._findFieldElement(sectionCode, fieldCode);
-            var fieldType = $field.attr('data-type');
+            var fieldType = ($field.attr('data-type') || '').toUpperCase();
             
             // Get specialized handler for this field type
             var handler = this._getHandlerForType(fieldType);
