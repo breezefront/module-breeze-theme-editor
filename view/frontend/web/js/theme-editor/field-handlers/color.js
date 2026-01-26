@@ -549,44 +549,6 @@ define([
                 console.log('↺ Color reset with HEX:', hexValue);
             }
             
-            var $wrapper = $field.closest('.bte-field');
-            var $input = $wrapper.find('.bte-color-input');
-            var $preview = $wrapper.find('.bte-color-preview');
-            
-            // Check if value is palette reference
-            var isPaletteRef = typeof value === 'string' && value.startsWith('--color-');
-            var hexValue;
-            
-            console.log('🐛 DEBUG Reset: value =', value, 'isPaletteRef =', isPaletteRef);
-            
-            if (isPaletteRef) {
-                // Resolve palette ref to HEX
-                console.log('🐛 DEBUG Reset: Calling _resolvePaletteRef with', value);
-                hexValue = this._resolvePaletteRef(value);
-                
-                console.log('🐛 DEBUG Reset: _resolvePaletteRef returned:', hexValue);
-                console.log('🐛 DEBUG Reset: hexValue type:', typeof hexValue);
-                console.log('🐛 DEBUG Reset: hexValue starts with #:', hexValue && hexValue.startsWith('#'));
-                
-                // Update input and preserve palette ref attribute
-                $input.val(hexValue);
-                
-                console.log('🐛 DEBUG Reset: After $input.val(), $input.val() =', $input.val());
-                
-                $input.attr('data-palette-ref', value);
-                
-                console.log('↺ Color reset with palette ref:', value, '→', hexValue);
-            } else {
-                // Regular HEX color
-                hexValue = value;
-                
-                // Update input and remove palette ref
-                $input.val(hexValue);
-                $input.removeAttr('data-palette-ref');
-                
-                console.log('↺ Color reset with HEX:', hexValue);
-            }
-            
             // Update preview boxes
             $preview.each(function() {
                 $(this).css('background-color', hexValue);
