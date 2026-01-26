@@ -268,6 +268,18 @@ define([
                     console.log('✅ Config loaded for status "' + self.options.status + '":', data);
                     var config = data.breezeThemeEditorConfig;
                     self.config = config; // Store config for palette initialization
+                    
+                    // Initialize PaletteManager BEFORE rendering sections
+                    // This ensures ColorRenderer can resolve palette references
+                    if (config.palettes && config.palettes.length > 0) {
+                        PaletteManager.init({
+                            palettes: config.palettes,
+                            storeId: self.storeId,
+                            themeId: self.themeId
+                        });
+                        console.log('✅ PaletteManager initialized with', config.palettes.length, 'palette(s)');
+                    }
+                    
                     PanelState.init(config);
                     self._renderSections(config.sections);
                     self._hideLoader();
@@ -303,6 +315,16 @@ define([
                     console.log('✅ Config loaded from publication:', config);
                     
                     self.config = config; // Store config for palette initialization
+                    
+                    // Initialize PaletteManager BEFORE rendering sections
+                    if (config.palettes && config.palettes.length > 0) {
+                        PaletteManager.init({
+                            palettes: config.palettes,
+                            storeId: self.storeId,
+                            themeId: self.themeId
+                        });
+                        console.log('✅ PaletteManager initialized with', config.palettes.length, 'palette(s)');
+                    }
                     
                     // Clear live preview changes (publication mode is read-only)
                     CssPreviewManager.reset();
