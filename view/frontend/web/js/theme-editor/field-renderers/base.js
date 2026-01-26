@@ -116,7 +116,23 @@ define([
         renderBadges: function(isDirty, isModified, sectionCode, fieldCode) {
             // Lazy load and cache badge template
             if (!this._badgeTemplate) {
-                this._badgeTemplate = mageTemplate($('#field-badges-template').html());
+                var templateString = 
+                    '<% if (data.isDirty) { %>' +
+                        '<span class="bte-badge bte-badge-dirty" title="You have unsaved changes for this field">' +
+                            '<span class="bte-badge-icon">●</span> Changed' +
+                        '</span>' +
+                        '<button type="button" ' +
+                                'class="bte-field-reset-btn" ' +
+                                'data-field-code="<%= data.fieldCode %>" ' +
+                                'data-section-code="<%= data.sectionCode %>" ' +
+                                'title="Discard unsaved changes" ' +
+                                'aria-label="Reset field to draft value">↺</button>' +
+                    '<% } %>' +
+                    '<% if (data.isModified) { %>' +
+                        '<span class="bte-badge bte-badge-modified" title="This field has been customized from its default value">Modified</span>' +
+                    '<% } %>';
+                
+                this._badgeTemplate = mageTemplate(templateString);
             }
 
             // Render badges using template
