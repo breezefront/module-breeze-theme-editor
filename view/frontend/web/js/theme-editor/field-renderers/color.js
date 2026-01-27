@@ -16,7 +16,7 @@ define([
         if (typeof value === 'string' && value.startsWith('--color-')) {
             // This is a palette reference - resolve via PaletteManager mapping
             data.paletteRef = value;
-            data.value = this._getPaletteHexFromMapping(value);
+            data.value = this._getPaletteHexFromMapping(value, data.default);
             data.hexValue = data.value;
             console.log('🎨 Resolved palette reference:', value, '→', data.value);
         } else {
@@ -43,13 +43,14 @@ define([
      * Simple and reliable - just looks up the color in the pre-built palette mapping
      * 
      * @param {String} paletteRef - CSS variable name (e.g., "--color-brand-amber-dark")
-     * @returns {String} HEX color (defaults to #000000 if not found)
+     * @param {String} fallbackDefault - Fallback value if palette ref not found (default: #000000)
+     * @returns {String} HEX color (defaults to fallbackDefault or #000000 if not found)
      */
-    ColorRenderer._getPaletteHexFromMapping = function(paletteRef) {
+    ColorRenderer._getPaletteHexFromMapping = function(paletteRef, fallbackDefault) {
         // Check if require is available
         if (typeof require === 'undefined') {
             console.warn('⚠️ require not available for palette resolution');
-            return '#000000';
+            return fallbackDefault || '#000000';
         }
         
         try {
@@ -57,15 +58,15 @@ define([
             
             if (!PaletteManager || !PaletteManager.palettes) {
                 console.warn('⚠️ PaletteManager not initialized');
-                return '#000000';
+                return fallbackDefault || '#000000';
             }
             
             // Look up in flat index: PaletteManager.palettes['--color-brand-amber-dark']
             var color = PaletteManager.palettes[paletteRef];
             
             if (!color) {
-                console.warn('⚠️ Palette color not found:', paletteRef);
-                return '#000000';
+                console.warn('⚠️ Palette color not found:', paletteRef, '- using fallback:', fallbackDefault || '#000000');
+                return fallbackDefault || '#000000';
             }
             
             // Return HEX value (created in PaletteManager from rgbToHex conversion)
@@ -88,11 +89,11 @@ define([
             }
             
             console.warn('⚠️ No valid color value found for:', paletteRef);
-            return '#000000';
+            return fallbackDefault || '#000000';
             
         } catch (e) {
             console.error('❌ Error accessing PaletteManager:', e);
-            return '#000000';
+            return fallbackDefault || '#000000';
         }
     };
 
