@@ -53,8 +53,15 @@ define([
         
         /**
          * Change field value and wait for state update
+         * @param {jQuery} $input - Input element
+         * @param {String} newValue - New value to set
+         * @param {Function} callback - Called with (error) or () when done
+         * @param {Object} options - { waitForBadge: true/false }
          */
-        changeFieldValue: function($input, newValue, callback) {
+        changeFieldValue: function($input, newValue, callback, options) {
+            options = options || {};
+            var waitForBadge = options.waitForBadge !== false; // default true
+            
             // Set new value
             $input.val(newValue);
             
@@ -64,23 +71,57 @@ define([
             // This will call ColorHandler's event handler → BaseHandler.handleChange() → panel.js callback → updateBadges()
             $input[0].dispatchEvent(new Event('input', { bubbles: true }));
             
-            // Wait for all callbacks and badge rendering to complete
-            setTimeout(function() {
-                console.log('🧪 Change complete, checking badges...');
-                callback();
-            }, 200);
+            if (!waitForBadge) {
+                setTimeout(function() {
+                    console.log('🧪 Change complete (no badge wait)');
+                    callback();
+                }, 200);
+                return;
+            }
+            
+            // Poll for badge appearance (max 2 seconds)
+            var $field = $input.closest('.bte-field');
+            var $header = $field.find('.bte-field-header');
+            var maxAttempts = 20; // 20 * 100ms = 2 seconds
+            var attempts = 0;
+            
+            var checkBadge = function() {
+                attempts++;
+                var badges = helpers.getBadgeState($header);
+                
+                if (badges.hasDirtyBadge && badges.hasResetButton) {
+                    console.log('✅ Badge appeared after', attempts * 100, 'ms');
+                    callback();
+                } else if (attempts >= maxAttempts) {
+                    console.warn('⚠️ Badge did not appear after 2 seconds. State:', badges);
+                    callback(new Error('Badge did not appear after field change. hasDirtyBadge=' + badges.hasDirtyBadge + ', hasResetButton=' + badges.hasResetButton));
+                } else {
+                    setTimeout(checkBadge, 100);
+                }
+            };
+            
+            // Start checking after initial delay
+            setTimeout(checkBadge, 100);
         },
         
         /**
          * Click reset button and wait
          */
         clickReset: function($field, callback) {
-            var $resetBtn = $field.find('.bte-field-reset-btn');
+            var $header = $field.find('.bte-field-header');
+            var $resetBtn = $header.find('.bte-field-reset-btn');
             
             if ($resetBtn.length === 0) {
-                callback(new Error('Reset button not found'));
+                // Provide detailed error with badge state
+                var badges = helpers.getBadgeState($header);
+                var errorMsg = 'Reset button not found. Badge state: ' + JSON.stringify(badges);
+                console.error('❌', errorMsg);
+                console.error('   $header HTML:', $header.html());
+                callback(new Error(errorMsg));
                 return;
             }
+            
+            console.log('🧪 Clicking reset button');
             
             // Click reset button
             $resetBtn.trigger('click');
@@ -306,7 +347,13 @@ define([
                 var newValue = '#0000FF'; // Blue color
                 
                 // Change field
-                helpers.changeFieldValue(field.$input, newValue, function() {
+                helpers.changeFieldValue(field.$input, newValue, function(err) {
+                    if (err) {
+                        self.fail(err.message);
+                        done();
+                        return;
+                    }
+                    
                     try {
                         var badgesBefore = helpers.getBadgeState(field.$header);
                         
@@ -373,7 +420,14 @@ define([
                 var newValue = '#FFFF00'; // Yellow color
                 
                 // Change field
-                helpers.changeFieldValue(field.$input, newValue, function() {
+                helpers.changeFieldValue(field.$input, newValue, function(err) {
+                    if (err) {
+                        self.fail(err.message);
+                        PanelState.removeListener(testListener);
+                        done();
+                        return;
+                    }
+                    
                     try {
                         // Click reset
                         helpers.clickReset(field.$field, function(err) {
