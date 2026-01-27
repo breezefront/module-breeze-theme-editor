@@ -60,6 +60,9 @@ class CssGenerator
         // This ensures palette variables are defined before they're referenced via var()
         $hasPaletteChanges = false;
         
+        // Extract palette defaults from config (ONCE before loop)
+        $paletteDefaults = $this->extractPaletteDefaults($config);
+        
         foreach ($values as $value) {
             $sectionCode = $value['section_code'];
             
@@ -76,6 +79,20 @@ class CssGenerator
             }
 
             $cssVar = $settingCode; // CSS var = setting code (e.g., --color-brand-primary)
+            
+            // Check if value differs from default
+            $default = $paletteDefaults[$cssVar] ?? null;
+            if ($default !== null) {
+                // Convert default HEX to RGB for comparison
+                $defaultRgb = $this->hexToRgb($default);
+                
+                // Skip if value equals default (use Breeze base style)
+                if ($this->valuesAreEqual($rawValue, $defaultRgb)) {
+                    continue;
+                }
+            }
+            
+            // Only output if different from default
             $formattedValue = $rawValue; // RGB already in correct format (e.g., "200, 118, 4")
             
             // Extract label from CSS variable name
@@ -196,6 +213,9 @@ class CssGenerator
         // This ensures palette variables are defined before they're referenced via var()
         $hasPaletteChanges = false;
 
+        // Extract palette defaults from config (ONCE before loop)
+        $paletteDefaults = $this->extractPaletteDefaults($config);
+
         foreach ($valuesMap as $key => $rawValue) {
             if ($rawValue === null || $rawValue === '') {
                 continue;
@@ -215,6 +235,20 @@ class CssGenerator
             }
 
             $cssVar = $settingCode; // e.g., --color-brand-primary
+            
+            // Check if value differs from default
+            $default = $paletteDefaults[$cssVar] ?? null;
+            if ($default !== null) {
+                // Convert default HEX to RGB for comparison
+                $defaultRgb = $this->hexToRgb($default);
+                
+                // Skip if value equals default (use Breeze base style)
+                if ($this->valuesAreEqual($rawValue, $defaultRgb)) {
+                    continue;
+                }
+            }
+            
+            // Only output if different from default
             $formattedValue = $rawValue; // Already in RGB format: "200, 118, 4"
             
             // Generate friendly label for comment
@@ -521,5 +555,35 @@ class CssGenerator
         }
 
         return '';
+    }
+
+    /**
+     * Extract palette default values from config
+     * Builds a map of css_var => default_hex for comparison
+     * 
+     * @param array $config Configuration array with palettes
+     * @return array Map of css_var => default_hex (e.g., ['--color-brand-primary' => '#1979c3'])
+     */
+    private function extractPaletteDefaults(array $config): array
+    {
+        $defaults = [];
+        $palettes = $config['palettes'] ?? [];
+        
+        foreach ($palettes as $palette) {
+            $groups = $palette['groups'] ?? [];
+            foreach ($groups as $group) {
+                $colors = $group['colors'] ?? [];
+                foreach ($colors as $color) {
+                    $cssVar = $color['css_var'] ?? null;
+                    $default = $color['default'] ?? null;
+                    
+                    if ($cssVar && $default) {
+                        $defaults[$cssVar] = $default;
+                    }
+                }
+            }
+        }
+        
+        return $defaults;
     }
 }

@@ -9,16 +9,13 @@ if (!$viewModel->shouldRender()) {
 
 $inlineCssContent = $viewModel->getInlineCssContent();
 $inlineCssContentDraft = $viewModel->getInlineCssContentDraft();
-$hasDraftCss = $viewModel->hasRealCssContent($inlineCssContentDraft);
 ?>
 <!-- Published CSS (always present for all users) -->
 <style id="bte-theme-css-variables" data-status="published" media="all">
 <?= /* @noEscape */ $inlineCssContent ?>
 </style>
 
-<?php if ($hasDraftCss): ?>
-<!-- Draft CSS (only for toolbar users, disabled by default) -->
+<!-- Draft CSS (always rendered for CSS Manager, disabled by default) -->
 <style id="bte-theme-css-variables-draft" data-status="draft" media="not all" disabled>
 <?= /* @noEscape */ $inlineCssContentDraft ?>
 </style>
-<?php endif; ?>

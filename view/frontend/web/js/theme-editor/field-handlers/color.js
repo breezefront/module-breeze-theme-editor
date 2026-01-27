@@ -77,11 +77,20 @@ define([
                 self._openPopup($(e.currentTarget), callback);
             });
             
-            // Close popup on outside click
+            // Close popup on outside click (with delay to prevent immediate close after opening)
             $(document).on('click.bte-color-popup', function(e) {
-                if (!$(e.target).closest('.bte-color-popup, .bte-color-trigger, .pcr-app').length) {
-                    self._closeAllPopups();
-                }
+                // Delay check to allow popup to fully render after trigger click
+                setTimeout(function() {
+                    // Check if any popup is currently open
+                    var hasOpenPopup = $('.bte-color-popup').length > 0;
+                    if (!hasOpenPopup) return;
+                    
+                    // Close if clicked outside popup or trigger
+                    // Note: .pcr-app is inside .bte-color-popup, so no need to check separately
+                    if (!$(e.target).closest('.bte-color-popup, .bte-color-trigger').length) {
+                        self._closeAllPopups();
+                    }
+                }, 10);
             });
             
             // Close popup on ESC key
@@ -199,20 +208,6 @@ define([
                 console.log('🔴 Close button clicked');
                 self._closeAllPopups();
             });
-            
-            // === OUTSIDE CLICK HANDLER (specific to this popup) ===
-            setTimeout(function() {
-                $(document).on('click.bte-popup-' + Date.now(), function(e) {
-                    var $target = $(e.target);
-                    // Close if clicked outside popup, trigger, Pickr elements, and palette swatches
-                    if (!$target.closest('.bte-color-popup').length && 
-                        !$target.closest('.bte-color-trigger').length &&
-                        !$target.closest('.pcr-app').length &&
-                        !$target.closest('.bte-palette-swatch').length) {
-                        self._closeAllPopups();
-                    }
-                });
-            }, 100); // Delay to prevent immediate close
             
             // === LAZY LOAD PICKR ===
             require(['pickr'], function(Pickr) {
