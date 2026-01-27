@@ -94,7 +94,7 @@ class Config extends AbstractConfigResolver implements ResolverInterface
             'version' => $config['version'],
             'sections' => $sections,
             'presets' => $this->formatPresets($config['presets'] ?? []),
-            'palettes' => $this->formatPalettes($themeId),
+            'palettes' => $this->formatPalettes($themeId, $valuesMap),
             'metadata' => $metadata
         ];
     }

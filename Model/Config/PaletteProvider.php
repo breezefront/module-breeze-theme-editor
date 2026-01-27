@@ -18,9 +18,10 @@ class PaletteProvider
      * Get all palettes for a theme
      *
      * @param int $themeId
+     * @param array $valuesMap - Map of 'section.setting' => value (for usage count)
      * @return array
      */
-    public function getPalettes(int $themeId): array
+    public function getPalettes(int $themeId, array $valuesMap = []): array
     {
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $palettes = $config['palettes'] ?? [];
@@ -31,7 +32,7 @@ class PaletteProvider
 
         $result = [];
         foreach ($palettes as $paletteId => $palette) {
-            $result[] = $this->processPalette($themeId, $paletteId, $palette);
+            $result[] = $this->processPalette($themeId, $paletteId, $palette, $valuesMap);
         }
 
         return $result;
@@ -42,9 +43,10 @@ class PaletteProvider
      *
      * @param int $themeId
      * @param string $paletteId
+     * @param array $valuesMap - Map of 'section.setting' => value (for usage count)
      * @return array|null
      */
-    public function getPaletteById(int $themeId, string $paletteId): ?array
+    public function getPaletteById(int $themeId, string $paletteId, array $valuesMap = []): ?array
     {
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $palettes = $config['palettes'] ?? [];
@@ -53,7 +55,7 @@ class PaletteProvider
             return null;
         }
 
-        return $this->processPalette($themeId, $paletteId, $palettes[$paletteId]);
+        return $this->processPalette($themeId, $paletteId, $palettes[$paletteId], $valuesMap);
     }
 
     /**
@@ -62,12 +64,13 @@ class PaletteProvider
      * @param int $themeId
      * @param string $paletteId
      * @param array $palette
+     * @param array $valuesMap - Map of 'section.setting' => value (for usage count)
      * @return array
      */
-    private function processPalette(int $themeId, string $paletteId, array $palette): array
+    private function processPalette(int $themeId, string $paletteId, array $palette, array $valuesMap = []): array
     {
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
-        $usageCounts = $this->calculateUsageCounts($config, $palette);
+        $usageCounts = $this->calculateUsageCounts($config, $palette, $valuesMap);
 
         $processedPalette = [
             'id' => $paletteId,
@@ -109,12 +112,14 @@ class PaletteProvider
 
     /**
      * Calculate how many fields use each palette color
+     * Checks ACTUAL saved values (from $valuesMap), not just config defaults
      *
      * @param array $config
      * @param array $palette
+     * @param array $valuesMap - Map of 'section.setting' => value
      * @return array Map of cssVar => count
      */
-    private function calculateUsageCounts(array $config, array $palette): array
+    private function calculateUsageCounts(array $config, array $palette, array $valuesMap = []): array
     {
         $usageCounts = [];
 
@@ -130,20 +135,32 @@ class PaletteProvider
             }
         }
 
-        // Count references in field defaults
+        // Count references in ACTUAL saved values (or fallback to defaults)
         $sections = $config['sections'] ?? [];
         foreach ($sections as $section) {
             $settings = $section['settings'] ?? [];
             foreach ($settings as $setting) {
-                $default = $setting['default'] ?? '';
+                $key = $section['id'] . '.' . $setting['id'];
                 
-                // Check if default value references a palette variable
-                if (is_string($default) && str_starts_with($default, 'var(--color-')) {
-                    // Extract CSS variable name from var(--color-brand-primary)
-                    if (preg_match('/var\((--color-[^)]+)\)/', $default, $matches)) {
-                        $cssVar = $matches[1];
+                // ✅ NEW: Use actual saved value, fallback to default
+                $currentValue = $valuesMap[$key] ?? $setting['default'] ?? '';
+                
+                // Check if value is a palette reference
+                if (is_string($currentValue)) {
+                    // Direct palette reference (e.g., "--color-brand-primary")
+                    if (str_starts_with($currentValue, '--color-')) {
+                        $cssVar = $currentValue;
                         if (isset($paletteCssVars[$cssVar])) {
                             $paletteCssVars[$cssVar]++;
+                        }
+                    }
+                    // Legacy var() format (e.g., "var(--color-brand-primary)")
+                    elseif (str_starts_with($currentValue, 'var(--color-')) {
+                        if (preg_match('/var\((--color-[^)]+)\)/', $currentValue, $matches)) {
+                            $cssVar = $matches[1];
+                            if (isset($paletteCssVars[$cssVar])) {
+                                $paletteCssVars[$cssVar]++;
+                            }
                         }
                     }
                 }

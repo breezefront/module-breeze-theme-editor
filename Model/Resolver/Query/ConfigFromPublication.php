@@ -87,7 +87,7 @@ class ConfigFromPublication extends AbstractConfigResolver implements ResolverIn
             'version' => $config['version'],
             'sections' => $sections,
             'presets' => $this->formatPresets($config['presets'] ?? []),
-            'palettes' => $this->formatPalettes($themeId),
+            'palettes' => $this->formatPalettes($themeId, $valuesMap),
             'metadata' => $metadata
         ];
     }

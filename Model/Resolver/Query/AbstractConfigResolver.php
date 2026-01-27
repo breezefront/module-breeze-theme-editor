@@ -238,10 +238,11 @@ abstract class AbstractConfigResolver
      * Format palettes for GraphQL response
      *
      * @param int $themeId
+     * @param array $valuesMap - Map of 'section.setting' => value (for usage count)
      * @return array
      */
-    protected function formatPalettes(int $themeId): array
+    protected function formatPalettes(int $themeId, array $valuesMap = []): array
     {
-        return $this->paletteProvider->getPalettes($themeId);
+        return $this->paletteProvider->getPalettes($themeId, $valuesMap);
     }
 }
