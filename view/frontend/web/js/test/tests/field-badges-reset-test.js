@@ -58,21 +58,17 @@ define([
             // Set new value
             $input.val(newValue);
             
-            // Call handleChange directly (bypassing event system)
-            // This ensures badges are updated
-            var updated = BaseHandler.handleChange($input, function(fieldData) {
-                console.log('✅ Field changed via handleChange:', fieldData);
-                
-                // Wait for badges to render
-                setTimeout(function() {
-                    callback();
-                }, 100);
-            });
+            console.log('🧪 Triggering input event on field:', $input.data('section') + '.' + $input.data('field'));
             
-            if (!updated) {
-                console.error('❌ handleChange returned false');
+            // Trigger 'input' event to run registered event handlers
+            // This will call ColorHandler's event handler → BaseHandler.handleChange() → panel.js callback → updateBadges()
+            $input[0].dispatchEvent(new Event('input', { bubbles: true }));
+            
+            // Wait for all callbacks and badge rendering to complete
+            setTimeout(function() {
+                console.log('🧪 Change complete, checking badges...');
                 callback();
-            }
+            }, 200);
         },
         
         /**
