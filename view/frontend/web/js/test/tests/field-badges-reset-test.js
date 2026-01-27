@@ -15,6 +15,78 @@ define([
 ], function($, TestFramework, PanelState, FieldHandlers) {
     'use strict';
     
+    /**
+     * Helper functions (outside test suite to avoid being run as tests)
+     */
+    var helpers = {
+        /**
+         * Find a color field in the panel
+         */
+        findColorField: function() {
+            var $panel = $('.bte-panel');
+            var $colorInput = $panel.find('.bte-color-input').first();
+            
+            if ($colorInput.length === 0) {
+                throw new Error('No color field found in panel. Make sure Theme Editor is open.');
+            }
+            
+            return {
+                $input: $colorInput,
+                $field: $colorInput.closest('.bte-field'),
+                $header: $colorInput.closest('.bte-field').find('.bte-field-header'),
+                sectionCode: $colorInput.attr('data-section'),
+                fieldCode: $colorInput.attr('data-field')
+            };
+        },
+        
+        /**
+         * Get badge state
+         */
+        getBadgeState: function($header) {
+            return {
+                hasDirtyBadge: $header.find('.bte-badge-dirty').length > 0,
+                hasModifiedBadge: $header.find('.bte-badge-modified').length > 0,
+                hasResetButton: $header.find('.bte-field-reset-btn').length > 0
+            };
+        },
+        
+        /**
+         * Change field value and wait for state update
+         */
+        changeFieldValue: function($input, newValue, callback) {
+            // Set new value
+            $input.val(newValue);
+            
+            // Trigger input event (this should call PanelState.setValue)
+            $input.trigger('input');
+            
+            // Wait for state update and badge render
+            setTimeout(function() {
+                callback();
+            }, 100);
+        },
+        
+        /**
+         * Click reset button and wait
+         */
+        clickReset: function($field, callback) {
+            var $resetBtn = $field.find('.bte-field-reset-btn');
+            
+            if ($resetBtn.length === 0) {
+                callback(new Error('Reset button not found'));
+                return;
+            }
+            
+            // Click reset button
+            $resetBtn.trigger('click');
+            
+            // Wait for reset to complete
+            setTimeout(function() {
+                callback();
+            }, 100);
+        }
+    };
+    
     return TestFramework.suite('Field Badges Reset', {
         
         /**
@@ -45,76 +117,6 @@ define([
                     done();
                 }, 500);
             });
-        },
-        
-        /**
-         * Helper: Find a color field in the panel
-         */
-        _findColorField: function() {
-            var $panel = $('.bte-panel');
-            var $colorInput = $panel.find('.bte-color-input').first();
-            
-            if ($colorInput.length === 0) {
-                throw new Error('No color field found in panel. Make sure Theme Editor is open.');
-            }
-            
-            return {
-                $input: $colorInput,
-                $field: $colorInput.closest('.bte-field'),
-                $header: $colorInput.closest('.bte-field').find('.bte-field-header'),
-                sectionCode: $colorInput.attr('data-section'),
-                fieldCode: $colorInput.attr('data-field')
-            };
-        },
-        
-        /**
-         * Helper: Get badge state
-         */
-        _getBadgeState: function($header) {
-            return {
-                hasDirtyBadge: $header.find('.bte-badge-dirty').length > 0,
-                hasModifiedBadge: $header.find('.bte-badge-modified').length > 0,
-                hasResetButton: $header.find('.bte-field-reset-btn').length > 0
-            };
-        },
-        
-        /**
-         * Helper: Change field value and wait for state update
-         */
-        _changeFieldValue: function($input, newValue, callback) {
-            var sectionCode = $input.attr('data-section');
-            var fieldCode = $input.attr('data-field');
-            
-            // Set new value
-            $input.val(newValue);
-            
-            // Trigger input event (this should call PanelState.setValue)
-            $input.trigger('input');
-            
-            // Wait for state update and badge render
-            setTimeout(function() {
-                callback();
-            }, 100);
-        },
-        
-        /**
-         * Helper: Click reset button and wait
-         */
-        _clickReset: function($field, callback) {
-            var $resetBtn = $field.find('.bte-field-reset-btn');
-            
-            if ($resetBtn.length === 0) {
-                callback(new Error('Reset button not found'));
-                return;
-            }
-            
-            // Click reset button
-            $resetBtn.trigger('click');
-            
-            // Wait for reset to complete
-            setTimeout(function() {
-                callback();
-            }, 100);
         },
         
         /**
@@ -155,7 +157,7 @@ define([
             var self = this;
             
             try {
-                var field = this._findColorField();
+                var field = helpers.findColorField();
                 var originalValue = field.$input.val();
                 var newValue = '#FF0000'; // Red color
                 
@@ -163,9 +165,9 @@ define([
                 field.$input.data('test-original-value', originalValue);
                 
                 // Change field value
-                this._changeFieldValue(field.$input, newValue, function() {
+                helpers.changeFieldValue(field.$input, newValue, function() {
                     try {
-                        var badges = self._getBadgeState(field.$header);
+                        var badges = helpers.getBadgeState(field.$header);
                         
                         // Check if badge appeared
                         self.assertTrue(badges.hasDirtyBadge, 
@@ -203,7 +205,7 @@ define([
             var self = this;
             
             try {
-                var field = this._findColorField();
+                var field = helpers.findColorField();
                 var originalValue = field.$input.data('test-original-value') || field.$input.val();
                 var newValue = '#00FF00'; // Green color
                 
@@ -212,9 +214,9 @@ define([
                 console.log('   Original value:', originalValue);
                 
                 // Step 1: Change field to show badge
-                this._changeFieldValue(field.$input, newValue, function() {
+                helpers.changeFieldValue(field.$input, newValue, function() {
                     try {
-                        var badgesBefore = self._getBadgeState(field.$header);
+                        var badgesBefore = helpers.getBadgeState(field.$header);
                         
                         console.log('   Badges before reset:', badgesBefore);
                         
@@ -225,7 +227,7 @@ define([
                             'Reset button should be visible before reset');
                         
                         // Step 2: Click reset button
-                        self._clickReset(field.$field, function(err) {
+                        helpers.clickReset(field.$field, function(err) {
                             if (err) {
                                 self.fail(err.message);
                                 done();
@@ -233,7 +235,7 @@ define([
                             }
                             
                             try {
-                                var badgesAfter = self._getBadgeState(field.$header);
+                                var badgesAfter = helpers.getBadgeState(field.$header);
                                 
                                 console.log('   Badges after reset:', badgesAfter);
                                 
@@ -285,7 +287,7 @@ define([
             var self = this;
             
             try {
-                var field = this._findColorField();
+                var field = helpers.findColorField();
                 
                 // Check if field is already modified
                 var state = PanelState.getFieldState(field.sectionCode, field.fieldCode);
@@ -299,15 +301,15 @@ define([
                 var newValue = '#0000FF'; // Blue color
                 
                 // Change field
-                this._changeFieldValue(field.$input, newValue, function() {
+                helpers.changeFieldValue(field.$input, newValue, function() {
                     try {
-                        var badgesBefore = self._getBadgeState(field.$header);
+                        var badgesBefore = helpers.getBadgeState(field.$header);
                         
                         self.assertTrue(badgesBefore.hasModifiedBadge, 
                             'Modified badge should be present before reset');
                         
                         // Click reset
-                        self._clickReset(field.$field, function(err) {
+                        helpers.clickReset(field.$field, function(err) {
                             if (err) {
                                 self.fail(err.message);
                                 done();
@@ -315,7 +317,7 @@ define([
                             }
                             
                             try {
-                                var badgesAfter = self._getBadgeState(field.$header);
+                                var badgesAfter = helpers.getBadgeState(field.$header);
                                 
                                 // Changed badge should disappear
                                 self.assertEquals(badgesAfter.hasDirtyBadge, false, 
@@ -362,14 +364,14 @@ define([
             PanelState.addListener(testListener);
             
             try {
-                var field = this._findColorField();
+                var field = helpers.findColorField();
                 var newValue = '#FFFF00'; // Yellow color
                 
                 // Change field
-                this._changeFieldValue(field.$input, newValue, function() {
+                helpers.changeFieldValue(field.$input, newValue, function() {
                     try {
                         // Click reset
-                        self._clickReset(field.$field, function(err) {
+                        helpers.clickReset(field.$field, function(err) {
                             if (err) {
                                 self.fail(err.message);
                                 PanelState.removeListener(testListener);
