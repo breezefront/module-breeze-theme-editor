@@ -30,6 +30,33 @@ define([
             console.log('✅ CSS Preview Manager initialized');
             return true;
         },
+        
+        /**
+         * Check if preview manager is active (iframe initialized)
+         * @returns {Boolean}
+         */
+        isActive: function() {
+            return iframeDocument !== null;
+        },
+        
+        /**
+         * Update CSS preview (refresh styles)
+         * Alias for _updateStyles() for public API
+         */
+        updatePreview: function() {
+            if (!this.isActive()) {
+                console.warn('⚠️ CSS Preview Manager not initialized');
+                return;
+            }
+            this._updateStyles();
+        },
+        
+        /**
+         * Refresh preview (alias for updatePreview)
+         */
+        refresh: function() {
+            this.updatePreview();
+        },
 
         /**
          * Subscribe to palette color changes
