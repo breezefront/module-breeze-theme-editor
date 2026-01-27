@@ -34,13 +34,21 @@ define([
                     value: value,
                     isValid: self.isValidHex(value),
                     section: $textInput.data('section'),
-                    field: $textInput.data('field')
+                    field: $textInput.data('field'),
+                    hasCallback: typeof callback === 'function'
                 });
                 
                 if (self.isValidHex(value)) {
                     // Update trigger preview
                     var $trigger = $textInput.siblings('.bte-color-trigger');
                     $trigger.find('.bte-color-preview').css('background-color', value);
+                    
+                    // 🆕 ALWAYS remove palette reference when user types manually
+                    // This fixes the badge issue - without this, BaseHandler.getInputValue()
+                    // reads the old palette-ref instead of the new typed value
+                    $textInput.removeAttr('data-palette-ref');
+                    $trigger.removeAttr('data-palette-ref');
+                    console.log('🔓 Palette reference removed (manual text input)');
                     
                     // Update Pickr instance if popup is open
                     var popupInstance = $trigger.data('popup-instance');
@@ -49,19 +57,15 @@ define([
                             popupInstance.pickr.setColor(value, true); // silent=true (no events)
                         }
                         
-                        // 🆕 Remove palette reference and selected class
-                        $textInput.removeAttr('data-palette-ref');
-                        $trigger.removeAttr('data-palette-ref');
-                        
                         if (popupInstance.$popup) {
                             popupInstance.$popup.find('.bte-palette-swatch').removeClass('selected');
                         }
-                        
-                        console.log('🔓 Palette reference removed (manual text input)');
                     }
                     
                     // Save change
+                    console.log('🎨 Calling BaseHandler.handleChange with callback:', typeof callback);
                     BaseHandler.handleChange($textInput, callback);
+                    console.log('🎨 BaseHandler.handleChange completed');
                 } else {
                     console.log('⏳ Waiting for valid HEX:', value);
                 }

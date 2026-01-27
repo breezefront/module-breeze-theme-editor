@@ -141,12 +141,15 @@ define([
             // ✅ Field changes with live badge updates
             FieldHandlers.init(this.element, function(fieldData) {
                 console.log('🔔 Panel callback triggered for:', fieldData.sectionCode + '.' + fieldData.fieldCode);
+                console.log('🔔 Panel callback fieldData:', JSON.stringify(fieldData));
                 
                 // Update changes counter
                 self._updateChangesCount();
 
                 // ✅ Update badges in real-time
-                FieldHandlers.updateBadges(self.element, fieldData.sectionCode, fieldData.fieldCode);
+                console.log('🔔 Calling FieldHandlers.updateBadges...');
+                var badgeUpdateResult = FieldHandlers.updateBadges(self.element, fieldData.sectionCode, fieldData.fieldCode);
+                console.log('🔔 FieldHandlers.updateBadges result:', badgeUpdateResult);
                 
                 console.log('✅ Badges updated');
             });

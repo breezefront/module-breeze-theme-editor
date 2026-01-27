@@ -32,6 +32,12 @@ define([
         handleChange: function($input, callback, options) {
             options = options || {};
 
+            console.log('🔄 BaseHandler.handleChange called:', {
+                hasInput: !!$input,
+                inputClass: $input.attr('class'),
+                hasCallback: typeof callback === 'function'
+            });
+
             var fieldData = this.extractFieldData($input);
 
             if (! fieldData.sectionCode || ! fieldData.fieldCode) {
@@ -54,7 +60,9 @@ define([
             }
 
             // Update state
+            console.log('🔄 Calling PanelState.setValue:', fieldData.sectionCode + '.' + fieldData.fieldCode, '=', fieldData.value);
             PanelState.setValue(fieldData.sectionCode, fieldData.fieldCode, fieldData.value);
+            console.log('🔄 PanelState.setValue completed');
 
             // Live preview
             if (fieldData.cssVar && ! options.skipPreview) {
@@ -62,8 +70,13 @@ define([
             }
 
             // Callback
+            console.log('🔄 About to call callback, type:', typeof callback);
             if (callback && typeof callback === 'function') {
+                console.log('🔄 Calling callback with fieldData:', fieldData);
                 callback(fieldData);
+                console.log('🔄 Callback completed');
+            } else {
+                console.warn('⚠️ Callback not called, type:', typeof callback);
             }
 
             console.log('🔄 Field changed:', {
