@@ -11,8 +11,9 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/test/test-framework',
     'Swissup_BreezeThemeEditor/js/theme-editor/panel-state',
-    'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers'
-], function($, TestFramework, PanelState, FieldHandlers) {
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers',
+    'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/base'
+], function($, TestFramework, PanelState, FieldHandlers, BaseHandler) {
     'use strict';
     
     /**
@@ -57,13 +58,21 @@ define([
             // Set new value
             $input.val(newValue);
             
-            // Trigger input event (this should call PanelState.setValue)
-            $input.trigger('input');
+            // Call handleChange directly (bypassing event system)
+            // This ensures badges are updated
+            var updated = BaseHandler.handleChange($input, function(fieldData) {
+                console.log('✅ Field changed via handleChange:', fieldData);
+                
+                // Wait for badges to render
+                setTimeout(function() {
+                    callback();
+                }, 100);
+            });
             
-            // Wait for state update and badge render
-            setTimeout(function() {
+            if (!updated) {
+                console.error('❌ handleChange returned false');
                 callback();
-            }, 100);
+            }
         },
         
         /**
