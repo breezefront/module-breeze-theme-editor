@@ -18,6 +18,36 @@ define([
     return TestFramework.suite('Field Badges Reset', {
         
         /**
+         * Test 0: Open Theme Editor panel
+         */
+        'panel should be opened before tests run': function(done) {
+            var self = this;
+            
+            console.log('🔓 Opening Theme Editor panel for tests...');
+            
+            this.openPanel(function(err) {
+                if (err) {
+                    self.fail('Failed to open Theme Editor panel: ' + err.message);
+                    done();
+                    return;
+                }
+                
+                console.log('✅ Panel opened successfully');
+                
+                // Wait additional time for fields to render
+                setTimeout(function() {
+                    var $colorInputs = $('.bte-panel .bte-color-input');
+                    console.log('   Color fields found:', $colorInputs.length);
+                    
+                    self.assert($colorInputs.length > 0, 
+                        'Panel should have color fields after opening');
+                    
+                    done();
+                }, 500);
+            });
+        },
+        
+        /**
          * Helper: Find a color field in the panel
          */
         _findColorField: function() {
