@@ -342,6 +342,7 @@ define([], function() {
          * @param {Function} callback - Called with (eventType, data)
          */
         addListener: function(callback) {
+            console.log('🐛 addListener called, total listeners:', this.listeners.length + 1);
             this.listeners.push(callback);
         },
 
@@ -364,6 +365,9 @@ define([], function() {
          * @param {Object} data - Event data
          */
         notifyListeners: function(eventType, data) {
+            console.log('🐛 notifyListeners called:', eventType, 'listeners count:', this.listeners.length);
+            console.log('🐛 Event data:', data);
+            
             this.listeners.forEach(function(callback) {
                 try {
                     callback(eventType, data);
