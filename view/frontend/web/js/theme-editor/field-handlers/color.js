@@ -356,8 +356,7 @@ define([
             
             // On cancel button click
             pickr.on('cancel', function() {
-                // Restore original color
-                pickr.setColor(currentColor);
+                // Restore original color (no need to call pickr.setColor - popup will be destroyed)
                 $textInput.val(currentColor);
                 $trigger.find('.bte-color-preview').css('background-color', currentColor);
                 
