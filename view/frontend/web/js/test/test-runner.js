@@ -235,7 +235,7 @@ define([
         }
         
         /**
-         * Copy results to clipboard
+         * Copy results to clipboard (summary + failed tests only)
          */
         function copyResultsToClipboard() {
             var results = TestFramework.getResults();
@@ -257,7 +257,7 @@ define([
             
             text += '\n';
             
-            // Failed tests
+            // Failed tests (detailed)
             if (results.failed > 0) {
                 text += '❌ Failed Tests:\n';
                 text += '───────────────────────────────────────\n';
@@ -272,21 +272,11 @@ define([
                 });
                 
                 text += '\n';
+            } else {
+                text += '✅ All tests passed!\n\n';
             }
             
-            // Passed tests
-            if (results.passed > 0) {
-                text += '✅ Passed Tests:\n';
-                text += '───────────────────────────────────────\n';
-                
-                details.forEach(function(result) {
-                    if (result.passed) {
-                        text += '  • ' + result.name + ' (' + result.duration + 'ms)\n';
-                    }
-                });
-            }
-            
-            text += '\n═══════════════════════════════════════\n';
+            text += '═══════════════════════════════════════\n';
             text += 'Generated: ' + new Date().toLocaleString() + '\n';
             
             // Copy to clipboard
