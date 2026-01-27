@@ -140,11 +140,15 @@ define([
 
             // ✅ Field changes with live badge updates
             FieldHandlers.init(this.element, function(fieldData) {
+                console.log('🔔 Panel callback triggered for:', fieldData.sectionCode + '.' + fieldData.fieldCode);
+                
                 // Update changes counter
                 self._updateChangesCount();
 
                 // ✅ Update badges in real-time
                 FieldHandlers.updateBadges(self.element, fieldData.sectionCode, fieldData.fieldCode);
+                
+                console.log('✅ Badges updated');
             });
 
             // ✅ Listen for PanelState events (field-reset, etc.)

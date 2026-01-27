@@ -30,6 +30,13 @@ define([
                 var $textInput = $(e.currentTarget);
                 var value = $textInput.val();
                 
+                console.log('🎨 ColorHandler input event:', {
+                    value: value,
+                    isValid: self.isValidHex(value),
+                    section: $textInput.data('section'),
+                    field: $textInput.data('field')
+                });
+                
                 if (self.isValidHex(value)) {
                     // Update trigger preview
                     var $trigger = $textInput.siblings('.bte-color-trigger');

@@ -196,7 +196,7 @@ define([
 
             currentStatus = 'PUBLISHED';
             console.log('📘 CSS Manager: Showing PUBLISHED (read-only mode)');
-            console.trace('📘 showPublished() call stack');
+            // console.trace('📘 showPublished() call stack');
             return true;
         },
 
@@ -235,7 +235,7 @@ define([
 
             currentStatus = 'DRAFT';
             console.log('📗 CSS Manager: Showing DRAFT (editable mode)');
-            console.trace('📗 showDraft() call stack');
+            // console.trace('📗 showDraft() call stack');
             return true;
         },
 

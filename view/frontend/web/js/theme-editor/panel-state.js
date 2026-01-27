@@ -122,7 +122,7 @@ define([], function() {
             var state = this.values[key];
 
             console.log('🐛 setValue called:', key, 'newValue:', newValue);
-            console.trace('🐛 Call stack:');
+            // console.trace('🐛 Call stack:');
 
             if (!state) {
                 console.warn('⚠️ Field not found:', key);
