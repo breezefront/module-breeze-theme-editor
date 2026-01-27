@@ -561,8 +561,8 @@ define([
                 console.log('↺ Pickr updated:', hexValue);
             }
             
-            // Trigger change event for CSS preview
-            $input.trigger('change');
+            // Note: CSS preview is updated via 'field-reset' event in panel.js
+            // No need to trigger 'change' event here, as it would cause isDirty to be set again
         },
 
         /**
