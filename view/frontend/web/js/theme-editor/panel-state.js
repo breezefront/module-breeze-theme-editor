@@ -121,6 +121,9 @@ define([], function() {
             var key = sectionCode + '.' + fieldCode;
             var state = this.values[key];
 
+            console.log('🐛 setValue called:', key, 'newValue:', newValue);
+            console.trace('🐛 Call stack:');
+
             if (!state) {
                 console.warn('⚠️ Field not found:', key);
                 return;
@@ -290,6 +293,13 @@ define([], function() {
             state.isDirty = false;
             
             console.log('↺ PanelState: Field reset:', key, '→', draftValue);
+            console.log('🐛 State after reset:', JSON.stringify({
+                value: state.value,
+                savedValue: state.savedValue,
+                defaultValue: state.defaultValue,
+                isDirty: state.isDirty,
+                isModified: state.isModified
+            }));
             
             // Notify listeners
             this.notifyListeners('field-reset', {

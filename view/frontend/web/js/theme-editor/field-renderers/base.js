@@ -161,6 +161,15 @@ define([
                 console.warn('⚠️ Field state not found:', sectionCode + '.' + fieldCode);
                 return false;
             }
+            
+            console.log('🐛 updateFieldBadges called:', sectionCode + '.' + fieldCode);
+            console.log('🐛 Field state:', JSON.stringify({
+                value: fieldState.value,
+                savedValue: fieldState.savedValue,
+                defaultValue: fieldState.defaultValue,
+                isDirty: fieldState.isDirty,
+                isModified: fieldState.isModified
+            }));
 
             // Find field container by input element
             var $input = $element.find('[data-section="' + sectionCode + '"][data-field="' + fieldCode + '"]');
