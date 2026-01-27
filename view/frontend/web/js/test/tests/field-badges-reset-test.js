@@ -68,8 +68,9 @@ define([
             console.log('🧪 Triggering input event on field:', $input.data('section') + '.' + $input.data('field'));
             
             // Trigger 'input' event to run registered event handlers
+            // Use jQuery .trigger() instead of native dispatchEvent() to work with delegated event handlers
             // This will call ColorHandler's event handler → BaseHandler.handleChange() → panel.js callback → updateBadges()
-            $input[0].dispatchEvent(new Event('input', { bubbles: true }));
+            $input.trigger('input');
             
             if (!waitForBadge) {
                 setTimeout(function() {
