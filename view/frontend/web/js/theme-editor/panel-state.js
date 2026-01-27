@@ -35,7 +35,7 @@ define([], function() {
             this.config = config;
             this.values = {};
             this.fieldsMap = {};
-            this.listeners = []; // Reset listeners on init
+            // Don't reset listeners - they should persist across config reloads
 
             // Build values map and fields lookup
             if (config && config.sections) {
