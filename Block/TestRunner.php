@@ -70,6 +70,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/cascade-behavior-test',
             // Color Field Renderer Tests (13 tests)
             'Swissup_BreezeThemeEditor/js/test/tests/color-renderer-test',
+            // Field Badges Reset Tests (6 tests)
+            'Swissup_BreezeThemeEditor/js/test/tests/field-badges-reset-test',
             // Note: Pickr color picker tests removed - Pickr functionality tested manually
         ];
     }
