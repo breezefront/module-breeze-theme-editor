@@ -65,12 +65,29 @@ define([
             // Set new value
             $input.val(newValue);
             
-            console.log('🧪 Triggering input event on field:', $input.data('section') + '.' + $input.data('field'));
+            var fieldInfo = {
+                section: $input.data('section'),
+                field: $input.data('field'),
+                selector: $input.attr('class'),
+                oldValue: $input.data('test-old-value') || 'unknown',
+                newValue: newValue
+            };
+            
+            console.log('🧪 Changing field:', fieldInfo);
+            console.log('🧪 Input element:', $input[0]);
+            console.log('🧪 Field container:', $input.closest('.bte-field')[0]);
+            
+            // Store old value for debugging
+            if (!$input.data('test-old-value')) {
+                $input.data('test-old-value', $input.val());
+            }
             
             // Trigger 'input' event to run registered event handlers
             // Use jQuery .trigger() instead of native dispatchEvent() to work with delegated event handlers
             // This will call ColorHandler's event handler → BaseHandler.handleChange() → panel.js callback → updateBadges()
+            console.log('🧪 Triggering input event...');
             $input.trigger('input');
+            console.log('🧪 Input event triggered');
             
             if (!waitForBadge) {
                 setTimeout(function() {
@@ -90,11 +107,14 @@ define([
                 attempts++;
                 var badges = helpers.getBadgeState($header);
                 
+                console.log('🧪 Check #' + attempts + ':', badges);
+                
                 if (badges.hasDirtyBadge && badges.hasResetButton) {
                     console.log('✅ Badge appeared after', attempts * 100, 'ms');
                     callback();
                 } else if (attempts >= maxAttempts) {
-                    console.warn('⚠️ Badge did not appear after 2 seconds. State:', badges);
+                    console.warn('⚠️ Badge did not appear after 2 seconds. Final state:', badges);
+                    console.warn('⚠️ Header HTML:', $header[0].outerHTML);
                     callback(new Error('Badge did not appear after field change. hasDirtyBadge=' + badges.hasDirtyBadge + ', hasResetButton=' + badges.hasResetButton));
                 } else {
                     setTimeout(checkBadge, 100);
