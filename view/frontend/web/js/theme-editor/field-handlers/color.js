@@ -263,6 +263,9 @@ define([
             // Position popup to the right of trigger
             self._positionPopup($popup, $trigger);
             
+            // Attach iframe click listener to close popup
+            self._attachIframeClickListener();
+            
             // Store references
             $trigger.data('popup-instance', {
                 $popup: $popup,
@@ -472,11 +475,54 @@ define([
                 }
             });
             
+            // Detach iframe click listener
+            var $iframe = $('#breeze-device-frame');
+            if ($iframe.length) {
+                var iframe = $iframe[0];
+                var iframeDoc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+                if (iframeDoc) {
+                    $(iframeDoc).off('click.bte-color-popup');
+                }
+            }
+            $iframe.off('load.bte-iframe-click');
+            
             // Safety cleanup: clear any remaining palette selection flags
             $('.bte-color-input').removeData('is-palette-selection');
             $('.bte-color-input').removeData('is-palette-update');
             $('.bte-color-trigger').removeData('is-palette-selection');
             $('.bte-color-trigger').removeData('is-palette-update');
+        },
+
+        /**
+         * Attach click listener to iframe preview to close popup
+         * Handles clicks inside .breeze-device-frame iframe
+         */
+        _attachIframeClickListener: function() {
+            var self = this;
+            var $iframe = $('#breeze-device-frame');
+            
+            if (!$iframe.length) {
+                return; // No iframe present
+            }
+            
+            var iframe = $iframe[0];
+            var iframeDoc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+            
+            if (!iframeDoc || iframeDoc.readyState !== 'complete') {
+                // Iframe not loaded yet - wait for load event
+                $iframe.off('load.bte-iframe-click').on('load.bte-iframe-click', function() {
+                    self._attachIframeClickListener(); // Retry after load
+                });
+                return;
+            }
+            
+            // Attach click listener to iframe document
+            $(iframeDoc).off('click.bte-color-popup').on('click.bte-color-popup', function() {
+                console.log('🖱️ Click detected inside iframe - closing popup');
+                self._closeAllPopups();
+            });
+            
+            console.log('✅ Iframe click listener attached');
         },
 
         /**
