@@ -59,8 +59,8 @@ define([
         'mock palette config should have groups and colors': function() {
             var palette = fixtures.mockPaletteConfig;
             
-            this.assertEquals(palette.groups.length, 2, 
-                'Mock palette should have 2 groups');
+            this.assertEquals(palette.groups.length, 3, 
+                'Mock palette should have 3 groups');
             
             var brandGroup = palette.groups[0];
             this.assertEquals(brandGroup.id, 'brand', 
