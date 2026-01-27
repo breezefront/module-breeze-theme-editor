@@ -565,6 +565,7 @@ define([
             
             var $wrapper = $field.closest('.bte-field');
             var $input = $wrapper.find('.bte-color-input');
+            var $trigger = $wrapper.find('.bte-color-trigger');
             var $preview = $wrapper.find('.bte-color-preview');
             
             // Check if value is palette reference
@@ -587,16 +588,19 @@ define([
                 
                 console.log('🐛 DEBUG Reset: After $input.val(), $input.val() =', $input.val());
                 
+                // Set palette ref on BOTH input and trigger
                 $input.attr('data-palette-ref', value);
+                $trigger.attr('data-palette-ref', value);
                 
                 console.log('↺ Color reset with palette ref:', value, '→', hexValue);
             } else {
                 // Regular HEX color
                 hexValue = value;
                 
-                // Update input and remove palette ref
+                // Update input and remove palette ref from BOTH input and trigger
                 $input.val(hexValue);
                 $input.removeAttr('data-palette-ref');
+                $trigger.removeAttr('data-palette-ref');
                 
                 console.log('↺ Color reset with HEX:', hexValue);
             }
