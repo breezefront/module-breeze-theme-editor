@@ -130,12 +130,15 @@ define([
         },
         
         /**
-         * Test 6: Should resolve from CSS variables if available
+         * Test 6: Should resolve from PaletteManager (not CSS variables directly)
          */
         'should resolve palette ref from CSS variables': function() {
-            // Set up CSS variable in DOM
-            var $style = $('<style id="test-css-vars"></style>').appendTo('head');
-            $style.text(':root { --color-test-red: 255, 0, 0; }');
+            // Initialize PaletteManager with test color
+            PaletteManager.init({
+                palettes: [fixtures.mockPaletteConfig],
+                storeId: 1,
+                themeId: 1
+            });
             
             var field = {
                 code: 'test_color',
@@ -151,9 +154,6 @@ define([
                 'Should have palette ref');
             this.assertEquals(data.hexValue, '#ff0000',
                 'Should resolve from CSS variable to red');
-            
-            // Cleanup
-            $style.remove();
         },
         
         /**

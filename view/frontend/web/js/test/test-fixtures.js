@@ -216,6 +216,20 @@ define([], function() {
                             usageCount: 4
                         }
                     ]
+                },
+                {
+                    id: 'test',
+                    label: 'Test Colors',
+                    colors: [
+                        {
+                            id: 'test-red',
+                            label: 'Test Red',
+                            cssVar: '--color-test-red',
+                            value: '255, 0, 0',
+                            default: '255, 0, 0',
+                            usageCount: 0
+                        }
+                    ]
                 }
             ]
         },
