@@ -140,7 +140,7 @@ define([
                     return;
                 }
                 
-                self.assertEquals(color.value, '255, 0, 0', 
+                self.assertEquals(color.value, '#ff0000', 
                     'Color value should be updated');
                 self.assertEquals(color.hex, '#ff0000', 
                     'Color hex should be updated');
