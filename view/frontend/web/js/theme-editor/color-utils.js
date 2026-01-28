@@ -29,7 +29,12 @@ define([], function () {
                 return hex;
             }
             
-            var hexStr = hex.toString();
+            var hexStr = hex.toString().trim();
+            
+            // If already RGB format (e.g., "255, 0, 0"), return as-is
+            if (/^\d+\s*,\s*\d+\s*,\s*\d+$/.test(hexStr)) {
+                return hexStr;
+            }
             
             // Handle rgb() format: rgb(255, 0, 0) → "255, 0, 0"
             if (hexStr.startsWith('rgb')) {

@@ -71,8 +71,8 @@ define([
                 PaletteManager.subscribe(function(cssVar, hexValue, rgbValue) {
                     console.log('🎨 Palette cascade:', cssVar, '→', hexValue);
                     
-                    // Update CSS variable in live preview
-                    self.setVariable(cssVar, rgbValue, 'color');
+                    // Update CSS variable in live preview (use hexValue - will be converted to RGB by _formatColorValue)
+                    self.setVariable(cssVar, hexValue, 'color');
                     
                     // Update color fields that reference this palette color
                     self._updateFieldsReferencingPalette(cssVar, hexValue);
@@ -99,9 +99,19 @@ define([
             
             console.log('🔄 Updating', $inputs.length, 'field(s) referencing', cssVar);
             
+            var self = this;
             $inputs.each(function() {
                 var $input = $(this);
                 var $trigger = $input.siblings('.bte-color-trigger');
+                
+                // Get field's CSS variable
+                var fieldCssVar = $input.attr('data-css-var');
+                
+                // Remove field's CSS variable from live preview (allow cascade to work via var())
+                if (fieldCssVar && changes[fieldCssVar]) {
+                    delete changes[fieldCssVar];
+                    console.log('🗑️ Removed', fieldCssVar, 'from live preview (uses palette ref)');
+                }
                 
                 // Update input value
                 $input.val(hexValue);
@@ -125,6 +135,9 @@ define([
                     }, 50);
                 }
             });
+            
+            // Update styles after removing field variables
+            this._updateStyles();
         },
 
         /**
