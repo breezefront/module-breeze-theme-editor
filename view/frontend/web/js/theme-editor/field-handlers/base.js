@@ -256,7 +256,11 @@ define([
             
             // Find field element to determine type
             var $field = this._findFieldElement(sectionCode, fieldCode);
-            var fieldType = ($field.attr('data-type') || '').toUpperCase();
+            var $wrapper = $field.closest('.bte-field');
+            var $input = $wrapper.find('input, select, textarea').first();
+            
+            // Look for data-type on input first (priority), then on $field itself
+            var fieldType = ($input.attr('data-type') || $field.attr('data-type') || '').toUpperCase();
             
             // Get specialized handler for this field type
             var handler = this._getHandlerForType(fieldType);
@@ -299,8 +303,8 @@ define([
                 // Update input value
                 $input.val(value);
                 
-                // Trigger change to update any dependent UI
-                $input.trigger('change');
+                // Don't trigger 'change' event - it would set isDirty=true again
+                // CSS preview is updated via 'field-reset' event listener in panel.js
                 
                 console.log('✅ Field UI updated:', fieldCode, '=', value);
             }
