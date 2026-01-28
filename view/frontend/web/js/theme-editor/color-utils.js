@@ -139,6 +139,96 @@ define([], function () {
          */
         compareRgb: function(rgb1, rgb2) {
             return this.normalizeRgb(rgb1) === this.normalizeRgb(rgb2);
+        },
+
+        /**
+         * Normalize HEX color format
+         * 
+         * Ensures consistent format for comparison and storage:
+         * - Adds # prefix if missing: "1979c3" → "#1979c3"
+         * - Converts to lowercase: "#1979C3" → "#1979c3"
+         * - Expands shorthand: "#fff" → "#ffffff"
+         * - Trims whitespace: " #1979c3 " → "#1979c3"
+         * 
+         * @param {String} hex - HEX color in any format
+         * @returns {String} Normalized HEX (e.g., "#1979c3")
+         */
+        normalizeHex: function(hex) {
+            if (!hex || typeof hex !== 'string') {
+                return '';
+            }
+            
+            // Trim and lowercase
+            hex = hex.trim().toLowerCase();
+            
+            // Add # prefix if missing
+            if (!hex.startsWith('#')) {
+                hex = '#' + hex;
+            }
+            
+            // Expand shorthand: #fff → #ffffff
+            if (hex.length === 4) {
+                hex = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+            }
+            
+            // Validate format
+            if (!hex.match(/^#[0-9a-f]{6}$/)) {
+                console.warn('⚠️ ColorUtils.normalizeHex: Invalid HEX format:', hex);
+                return '';
+            }
+            
+            return hex;
+        },
+
+        /**
+         * Check if string is a valid HEX color
+         * 
+         * Returns true for:
+         * - "#1979c3" (6-digit with #)
+         * - "1979c3" (6-digit without #)
+         * - "#fff" (3-digit shorthand)
+         * - "#FFF" (uppercase)
+         * 
+         * Returns false for:
+         * - "25, 121, 195" (RGB format)
+         * - "rgb(25, 121, 195)" (CSS rgb())
+         * - Invalid strings
+         * 
+         * @param {String} value - Color string to check
+         * @returns {Boolean} true if valid HEX color
+         */
+        isHexColor: function(value) {
+            if (!value || typeof value !== 'string') {
+                return false;
+            }
+            
+            var str = value.trim();
+            
+            // Remove # if present for validation
+            if (str.startsWith('#')) {
+                str = str.substring(1);
+            }
+            
+            // Check if 3 or 6 hex digits
+            return /^[0-9a-fA-F]{3}$/.test(str) || /^[0-9a-fA-F]{6}$/.test(str);
+        },
+
+        /**
+         * Check if string is RGB format
+         * 
+         * Returns true for:
+         * - "25, 121, 195"
+         * - "25,121,195"
+         * - " 25 , 121 , 195 "
+         * 
+         * @param {String} value - Color string to check
+         * @returns {Boolean} true if RGB format
+         */
+        isRgbColor: function(value) {
+            if (!value || typeof value !== 'string') {
+                return false;
+            }
+            return /^\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*$/.test(value);
         }
     };
 });
