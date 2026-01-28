@@ -39,6 +39,17 @@ define([
             this.dirtyColors = {}; // Reset dirty state on init (important for test isolation)
             this.listeners = []; // Reset listeners on init
 
+            // Convert legacy RGB dirty colors to HEX format (backward compatibility)
+            for (var cssVar in this.dirtyColors) {
+                var dirty = this.dirtyColors[cssVar];
+                if (dirty.original && dirty.original.value && ColorUtils.isRgbColor(dirty.original.value)) {
+                    dirty.original.value = ColorUtils.rgbToHex(dirty.original.value);
+                }
+                if (dirty.value && ColorUtils.isRgbColor(dirty.value)) {
+                    dirty.value = ColorUtils.rgbToHex(dirty.value);
+                }
+            }
+
             console.log('✅ Palette Manager initialized with', Object.keys(this.palettes).length, 'palettes');
         },
 
@@ -55,15 +66,21 @@ define([
             palettes.forEach(function(palette) {
                 palette.groups.forEach(function(group) {
                     group.colors.forEach(function(color) {
-                        // Store with full context
+                        // Convert legacy RGB to HEX if needed (backward compatibility)
+                        var hexValue = color.value;
+                        if (ColorUtils.isRgbColor(color.value)) {
+                            hexValue = ColorUtils.rgbToHex(color.value);
+                        }
+                        
+                        // Store with full context (all values in HEX format)
                         index[color.cssVar] = {
                             id: color.id,
                             label: color.label,
                             cssVar: color.cssVar,
-                            value: color.value,
+                            value: hexValue,  // HEX format (Breeze 3.0)
                             default: color.default,
                             usageCount: color.usageCount || 0,
-                            hex: ColorUtils.rgbToHex(color.value),
+                            hex: hexValue,  // Same as value, kept for backward compatibility
                             paletteId: palette.id,
                             groupId: group.id,
                             groupLabel: group.label
@@ -178,32 +195,30 @@ define([
                 return;
             }
 
-            var rgbValue = ColorUtils.hexToRgb(hexValue);
-
             // Save original value on FIRST change
             if (!this.dirtyColors[cssVar]) {
                 this.dirtyColors[cssVar] = {
                     original: {
                         hex: color.hex,
-                        rgb: color.value
+                        value: color.value  // HEX format
                     },
                     hex: hexValue,
-                    rgb: rgbValue
+                    value: hexValue  // HEX format
                 };
             } else {
                 // Subsequent change - update new value, keep original
                 this.dirtyColors[cssVar].hex = hexValue;
-                this.dirtyColors[cssVar].rgb = rgbValue;
+                this.dirtyColors[cssVar].value = hexValue;
             }
 
-            // Update local state
-            color.value = rgbValue;
+            // Update local state (both point to HEX)
+            color.value = hexValue;
             color.hex = hexValue;
 
             console.log('🎨 Updating palette color:', cssVar, '=', hexValue, '(not saved yet)');
 
             // Notify subscribers immediately (for live CSS preview)
-            this.notify(cssVar, hexValue, rgbValue);
+            this.notify(cssVar, hexValue);
         },
 
         /**
@@ -232,12 +247,11 @@ define([
          * 
          * @param {String} cssVar
          * @param {String} hexValue
-         * @param {String} rgbValue
          */
-        notify: function(cssVar, hexValue, rgbValue) {
+        notify: function(cssVar, hexValue) {
             this.listeners.forEach(function(callback) {
                 try {
-                    callback(cssVar, hexValue, rgbValue);
+                    callback(cssVar, hexValue);
                 } catch (e) {
                     console.error('❌ Error in palette listener:', e);
                 }
@@ -246,7 +260,7 @@ define([
 
         /**
          * Get dirty palette changes formatted for saveValues mutation
-         * @returns {Array} [{sectionCode: '_palette', fieldCode: cssVar, value: rgb}]
+         * @returns {Array} [{sectionCode: '_palette', fieldCode: cssVar, value: hex}]
          */
         getDirtyChanges: function() {
             var changes = [];
@@ -255,7 +269,7 @@ define([
                 changes.push({
                     sectionCode: '_palette',
                     fieldCode: cssVar,
-                    value: dirty.rgb
+                    value: dirty.value  // HEX format (Breeze 3.0)
                 });
             }
             console.log('📦 Palette dirty changes:', changes.length);
@@ -305,12 +319,12 @@ define([
                 var color = this.getColor(cssVar);
                 
                 if (color && dirty.original) {
-                    // Revert to original value
-                    color.value = dirty.original.rgb;
+                    // Revert to original HEX value
+                    color.value = dirty.original.value;
                     color.hex = dirty.original.hex;
                     
                     // Notify subscribers to update UI (CSS preview)
-                    this.notify(cssVar, dirty.original.hex, dirty.original.rgb);
+                    this.notify(cssVar, dirty.original.hex);
                     
                     revertedCount++;
                 }
@@ -404,8 +418,7 @@ define([
          * Compares current saved value with theme default value.
          * Used for showing "Modified" badge and orange border on swatches.
          * 
-         * Note: color.value is RGB format ("25, 121, 195")
-         *       color.default can be HEX format ("#1979c3") or RGB
+         * Note: Both color.value and color.default are now in HEX format ("#1979c3")
          * 
          * @param {String} cssVar - CSS variable name (e.g., "--color-brand-primary")
          * @returns {Boolean} true if saved value differs from default
@@ -416,18 +429,11 @@ define([
                 return false;
             }
             
-            // Normalize current value (RGB format)
-            var currentValue = ColorUtils.normalizeRgb(color.value);
+            // Normalize both values to lowercase HEX for comparison
+            var currentValue = ColorUtils.normalizeHex(color.value);
+            var defaultValue = ColorUtils.normalizeHex(color.default);
             
-            // Convert default to RGB if it's in HEX format
-            var defaultValue = color.default;
-            if (defaultValue.startsWith('#')) {
-                // Convert HEX to RGB for comparison
-                defaultValue = ColorUtils.hexToRgb(defaultValue);
-            }
-            defaultValue = ColorUtils.normalizeRgb(defaultValue);
-            
-            return currentValue !== defaultValue;
+            return currentValue.toLowerCase() !== defaultValue.toLowerCase();
         },
 
         /**
