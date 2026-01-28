@@ -92,13 +92,20 @@ class PaletteProvider
             foreach ($colors as $color) {
                 $colorId = $color['id'] ?? '';
                 $cssVar = $color['css_var'] ?? '';
+                
+                // Get saved value from database (section: _palette, setting: cssVar)
+                $paletteKey = '_palette.' . $cssVar;
+                $savedValue = $valuesMap[$paletteKey] ?? null;
+                
+                // Use saved value if exists, otherwise use default
+                $currentValue = $savedValue ?? $this->hexToRgb($color['default'] ?? '#000000');
 
                 $processedGroup['colors'][] = [
                     'id' => $colorId,
                     'label' => $color['label'] ?? $colorId,
                     'description' => $color['description'] ?? null,
                     'cssVar' => $cssVar,
-                    'value' => $this->hexToRgb($color['default'] ?? '#000000'),
+                    'value' => $currentValue,
                     'default' => $color['default'] ?? '#000000',
                     'usageCount' => $usageCounts[$cssVar] ?? 0
                 ];
