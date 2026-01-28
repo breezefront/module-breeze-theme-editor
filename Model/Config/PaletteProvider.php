@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Config;
 
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 
 /**
  * Provides color palette data from theme configuration
@@ -97,8 +98,20 @@ class PaletteProvider
                 $paletteKey = '_palette.' . $cssVar;
                 $savedValue = $valuesMap[$paletteKey] ?? null;
                 
-                // Use saved value if exists, otherwise use default
-                $currentValue = $savedValue ?? $this->hexToRgb($color['default'] ?? '#000000');
+                // Determine current value (HEX format)
+                if ($savedValue) {
+                    // Check if saved value is legacy RGB format
+                    if (preg_match('/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/', $savedValue)) {
+                        // Convert legacy RGB to HEX for backward compatibility
+                        $currentValue = ColorConverter::rgbToHex($savedValue);
+                    } else {
+                        // Already HEX format, use as-is
+                        $currentValue = $savedValue;
+                    }
+                } else {
+                    // No saved value, use default (already HEX)
+                    $currentValue = $color['default'] ?? '#000000';
+                }
 
                 $processedGroup['colors'][] = [
                     'id' => $colorId,
@@ -175,30 +188,5 @@ class PaletteProvider
         }
 
         return $paletteCssVars;
-    }
-
-    /**
-     * Convert HEX to RGB format (same as CssGenerator)
-     *
-     * @param string $hex
-     * @return string RGB format: "255, 0, 0"
-     */
-    private function hexToRgb(string $hex): string
-    {
-        if (!str_starts_with($hex, '#')) {
-            return $hex;
-        }
-
-        $hex = ltrim($hex, '#');
-
-        if (strlen($hex) === 3) {
-            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
-        }
-
-        $r = hexdec(substr($hex, 0, 2));
-        $g = hexdec(substr($hex, 2, 2));
-        $b = hexdec(substr($hex, 4, 2));
-
-        return "$r, $g, $b";
     }
 }
