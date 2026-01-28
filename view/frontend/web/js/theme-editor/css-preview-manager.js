@@ -1,8 +1,9 @@
 define([
     'jquery',
+    'Swissup_BreezeThemeEditor/js/theme-editor/color-utils',
     'Swissup_BreezeThemeEditor/js/toolbar/device-frame',
     'Swissup_BreezeThemeEditor/js/theme-editor/css-manager'
-], function ($, DeviceFrame, CssManager) {
+], function ($, ColorUtils, DeviceFrame, CssManager) {
     'use strict';
 
     var changes = {};
@@ -231,7 +232,8 @@ define([
         },
 
         /**
-         * Convert HEX → RGB
+         * Format color value: palette reference or HEX
+         * Matches backend CssGenerator::formatColor() logic
          */
         _hexToRgb: function(hex) {
             if (!hex) {
@@ -272,7 +274,7 @@ define([
             }
             
             // HEX color: #ffffff → 255, 255, 255
-            return this._hexToRgb(value);
+            return ColorUtils.hexToRgb(value);
         },
 
         /**
@@ -297,7 +299,7 @@ define([
         },
 
         /**
-         * Convert RGB → HEX
+         * Handle hover effect to highlight changed fields
          */
         rgbToHex: function(rgb) {
             if (!rgb) {
@@ -429,7 +431,7 @@ define([
                 // Convert value back to field format
                 if (fieldType === 'color') {
                     // Convert RGB back to HEX
-                    displayValue = this.rgbToHex(value);
+                    displayValue = ColorUtils.rgbToHex(value);
                 }
                 
                 // Update field value
@@ -529,13 +531,6 @@ define([
             this._updateStyles();
             console.log('📥 CSS Preview loaded', Object.keys(changes).length, 'variables');
             return true;
-        },
-
-        /**
-         * Public helper: HEX → RGB
-         */
-        hexToRgb: function(hex) {
-            return this._hexToRgb(hex);
         },
 
         /**

@@ -1,8 +1,9 @@
 define([
+    'Swissup_BreezeThemeEditor/js/theme-editor/color-utils',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-palette-value',
     'Swissup_BreezeThemeEditor/js/theme-editor/storage-helper',
     'Swissup_BreezeThemeEditor/js/lib/toastify'
-], function (savePaletteValueMutation, StorageHelper, Toastify) {
+], function (ColorUtils, savePaletteValueMutation, StorageHelper, Toastify) {
     'use strict';
 
     /**
@@ -62,7 +63,7 @@ define([
                             value: color.value,
                             default: color.default,
                             usageCount: color.usageCount || 0,
-                            hex: this.rgbToHex(color.value),
+                            hex: ColorUtils.rgbToHex(color.value),
                             paletteId: palette.id,
                             groupId: group.id,
                             groupLabel: group.label
@@ -177,7 +178,7 @@ define([
                 return;
             }
 
-            var rgbValue = this.hexToRgb(hexValue);
+            var rgbValue = ColorUtils.hexToRgb(hexValue);
 
             // Save original value on FIRST change
             if (!this.dirtyColors[cssVar]) {
@@ -330,61 +331,22 @@ define([
 
         /**
          * Convert HEX to RGB string
-         * 
+         * @deprecated Use ColorUtils.hexToRgb() directly
          * @param {String} hex - "#1979c3"
          * @returns {String} - "25, 121, 195"
          */
         hexToRgb: function(hex) {
-            // Remove # if present
-            hex = hex.replace(/^#/, '');
-
-            // Parse hex values
-            var r = parseInt(hex.substring(0, 2), 16);
-            var g = parseInt(hex.substring(2, 4), 16);
-            var b = parseInt(hex.substring(4, 6), 16);
-
-            return r + ', ' + g + ', ' + b;
+            return ColorUtils.hexToRgb(hex);
         },
 
         /**
          * Convert RGB string to HEX
-         * 
+         * @deprecated Use ColorUtils.rgbToHex() directly
          * @param {String} rgb - "25, 121, 195"
          * @returns {String} - "#1979c3"
          */
         rgbToHex: function(rgb) {
-            // Parse RGB values
-            var parts = rgb.split(',').map(function(part) {
-                return parseInt(part.trim(), 10);
-            });
-
-            if (parts.length !== 3) {
-                console.warn('⚠️ Invalid RGB format:', rgb);
-                return '#000000';
-            }
-
-            var r = parts[0];
-            var g = parts[1];
-            var b = parts[2];
-
-            // Convert to HEX
-            var hex = '#' + 
-                this._toHex(r) + 
-                this._toHex(g) + 
-                this._toHex(b);
-
-            return hex;
-        },
-
-        /**
-         * Convert single RGB component to HEX
-         * 
-         * @param {Number} c - RGB component (0-255)
-         * @returns {String} - HEX component (00-ff)
-         */
-        _toHex: function(c) {
-            var hex = c.toString(16);
-            return hex.length === 1 ? '0' + hex : hex;
+            return ColorUtils.rgbToHex(rgb);
         },
 
         /**
@@ -421,14 +383,14 @@ define([
 
             // Check if RGB format
             if (color.includes(',')) {
-                return this.rgbToHex(color);
+                return ColorUtils.rgbToHex(color);
             }
 
             // Check if rgb() or rgba() format
             if (color.startsWith('rgb')) {
                 var match = color.match(/\d+/g);
                 if (match && match.length >= 3) {
-                    return this.rgbToHex(match[0] + ', ' + match[1] + ', ' + match[2]);
+                    return ColorUtils.rgbToHex(match[0] + ', ' + match[1] + ', ' + match[2]);
                 }
             }
 

@@ -41,41 +41,7 @@ define([
         },
         
         /**
-         * Test 3: Should convert HEX to RGB correctly
-         */
-        'should convert HEX to RGB correctly': function() {
-            var manager = Object.create(PaletteManager);
-            
-            // Test various HEX colors
-            this.assertEquals(manager.hexToRgb('#1979c3'), '25, 121, 195', 
-                'Should convert #1979c3 to RGB');
-            this.assertEquals(manager.hexToRgb('#ffffff'), '255, 255, 255', 
-                'Should convert white to RGB');
-            this.assertEquals(manager.hexToRgb('#000000'), '0, 0, 0', 
-                'Should convert black to RGB');
-            this.assertEquals(manager.hexToRgb('#ffa500'), '255, 165, 0', 
-                'Should convert orange to RGB');
-        },
-        
-        /**
-         * Test 4: Should convert RGB to HEX correctly
-         */
-        'should convert RGB to HEX correctly': function() {
-            var manager = Object.create(PaletteManager);
-            
-            // Test various RGB colors
-            this.assertEquals(manager.rgbToHex('25, 121, 195'), '#1979c3', 
-                'Should convert RGB to #1979c3');
-            this.assertEquals(manager.rgbToHex('255, 255, 255'), '#ffffff', 
-                'Should convert white RGB to HEX');
-            this.assertEquals(manager.rgbToHex('0, 0, 0'), '#000000', 
-                'Should convert black RGB to HEX');
-            this.assertEquals(manager.rgbToHex('255, 165, 0'), '#ffa500', 
-                'Should convert orange RGB to HEX');
-        },
-        
-        /**
-         * Test 5: Should find matching color by HEX value
+         * Test 3: Should find matching color by HEX value
          */
         'should find matching color by HEX value': function() {
             var manager = Object.create(PaletteManager);
@@ -90,7 +56,7 @@ define([
         },
         
         /**
-         * Test 6: Should update color value and notify subscribers
+         * Test 4: Should update color value and notify subscribers
          */
         'should update color value and notify subscribers': function(done) {
             var manager = Object.create(PaletteManager);
@@ -130,7 +96,7 @@ define([
         },
         
         /**
-         * Test 7: Should track dirty state when color changes
+         * Test 5: Should track dirty state when color changes
          */
         'should track dirty state when color changes': function() {
             var manager = Object.create(PaletteManager);
@@ -184,7 +150,7 @@ define([
         },
         
         /**
-         * Test 8: Should notify all subscribers on color change
+         * Test 6: Should notify all subscribers on color change
          */
         'should notify all subscribers on color change': function(done) {
             var manager = Object.create(PaletteManager);
@@ -217,25 +183,24 @@ define([
         },
         
         /**
-         * Test 9: Should handle invalid color formats gracefully
+         * Test 7: Should handle invalid color formats gracefully (wrapper integration test)
          */
         'should handle invalid color formats gracefully': function() {
             var manager = Object.create(PaletteManager);
             
-            // Test invalid HEX formats - will return NaN when parsed
+            // Test wrapper methods still work (delegates to ColorUtils)
             var result1 = manager.hexToRgb('invalid');
-            this.assertContains(result1, 'NaN', 
-                'Invalid HEX should return NaN values');
+            this.assertEquals(result1, '0, 0, 0', 
+                'Invalid HEX should return black RGB via wrapper');
             
             // Test invalid RGB formats
             var result3 = manager.rgbToHex('invalid');
             this.assertEquals(result3, '#000000', 
-                'Invalid RGB should return black HEX');
+                'Invalid RGB should return black HEX via wrapper');
             
             var result4 = manager.rgbToHex('999, 999, 999');
-            // Values > 255 will overflow in hex conversion
-            this.assertNotNull(result4, 
-                'RGB values > 255 should still convert');
+            this.assertEquals(result4, '#ffffff', 
+                'RGB values > 255 should clamp to white via wrapper');
         }
     });
 });
