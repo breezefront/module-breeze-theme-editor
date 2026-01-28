@@ -37,7 +37,7 @@ define([
             this.assertNotNull(color, 'Color should be found by cssVar');
             this.assertEquals(color.id, 'primary', 'Color ID should match');
             this.assertEquals(color.label, 'Primary', 'Color label should match');
-            this.assertEquals(color.value, '25, 121, 195', 'Color value should match');
+            this.assertEquals(color.value, '#1979c3', 'Color value should match');
         },
         
         /**
@@ -88,7 +88,7 @@ define([
                 
                 // Verify color was updated in index
                 var color = manager.getColor('--color-brand-primary');
-                self.assertEquals(color.value, '255, 0, 0', 
+                self.assertEquals(color.value, '#ff0000', 
                     'Color value should be updated in index');
                 
                 done();
