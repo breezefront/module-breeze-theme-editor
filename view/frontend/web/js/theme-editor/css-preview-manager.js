@@ -68,7 +68,7 @@ define([
             
             // Lazy require to avoid circular dependency
             require(['Swissup_BreezeThemeEditor/js/theme-editor/palette-manager'], function(PaletteManager) {
-                PaletteManager.subscribe(function(cssVar, hexValue, rgbValue) {
+                PaletteManager.subscribe(function(cssVar, hexValue) {
                     console.log('🎨 Palette cascade:', cssVar, '→', hexValue);
                     
                     // Update CSS variable in live preview (use hexValue - will be converted to RGB by _formatColorValue)
@@ -267,7 +267,7 @@ define([
 
         /**
          * Format color value: palette reference or HEX
-         * Matches backend CssGenerator::formatColor() logic
+         * Matches backend CssGenerator::formatColor() logic (Breeze 3.0 format)
          */
         _formatColorValue: function(value) {
             if (!value) {
@@ -286,8 +286,8 @@ define([
                 return value;
             }
             
-            // HEX color: #ffffff → 255, 255, 255
-            return ColorUtils.hexToRgb(value);
+            // HEX color: return as-is (Breeze 3.0 format)
+            return value;
         },
 
         /**

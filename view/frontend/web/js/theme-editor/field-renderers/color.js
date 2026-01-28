@@ -69,23 +69,22 @@ define([
                 return fallbackDefault || '#000000';
             }
             
-            // Return HEX value (created in PaletteManager from rgbToHex conversion)
+            // Return HEX value (already in HEX format in Breeze 3.0)
             if (color.hex) {
                 console.log('✅ Resolved palette ref:', paletteRef, '→', color.hex);
                 return color.hex;
             }
             
-            // Fallback to default if hex not available
+            // Fallback to value (also HEX in Breeze 3.0)
+            if (color.value) {
+                console.log('✅ Using palette value:', paletteRef, '→', color.value);
+                return color.value;
+            }
+            
+            // Fallback to default if available
             if (color.default && color.default.startsWith('#')) {
                 console.log('✅ Using palette default:', paletteRef, '→', color.default);
                 return color.default;
-            }
-            
-            // Last resort: convert RGB value to HEX
-            if (color.value) {
-                var hex = PaletteManager.rgbToHex(color.value);
-                console.log('✅ Converted RGB to HEX:', paletteRef, '→', hex);
-                return hex;
             }
             
             console.warn('⚠️ No valid color value found for:', paletteRef);

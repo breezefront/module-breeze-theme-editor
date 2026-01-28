@@ -150,7 +150,7 @@ define([
          * @returns {jQuery}
          */
         _createSwatch: function (color) {
-            var hexValue = PaletteManager.rgbToHex(color.value);
+            var hexValue = color.value;  // Already HEX format (Breeze 3.0)
 
             // Create swatch container
             var $swatch = $('<div class="bte-palette-swatch"></div>');
@@ -390,7 +390,7 @@ define([
             
             // Update tooltip
             var color = PaletteManager.getColor(cssVar);
-            var hexValue = PaletteManager.rgbToHex(color.value);
+            var hexValue = color.value;  // Already HEX format (Breeze 3.0)
             var tooltip = color.label + '\n' + hexValue + '\n' + 
                          'Used in ' + (color.usageCount || 0) + ' fields';
             if (isModified) {
