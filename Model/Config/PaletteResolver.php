@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Model\Config;
 
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 
 /**
  * Resolves palette color references to actual color values
@@ -24,16 +25,12 @@ class PaletteResolver
      * @param string $value The value to resolve (e.g., "var(--color-brand-primary)" or "#ff0000")
      * @param int $storeId Store ID for palette values
      * @param int $themeId Theme ID
-     * @return string Resolved RGB value (e.g., "25, 121, 195") or original value
+     * @return string Resolved HEX value (e.g., "#1979c3") or original value
      */
     public function resolve(string $value, int $storeId, int $themeId): string
     {
         // If it's not a CSS variable reference, return as-is
         if (!str_starts_with($value, 'var(--color-')) {
-            // If it's a hex color, convert to RGB
-            if (str_starts_with($value, '#')) {
-                return $this->hexToRgb($value);
-            }
             return $value;
         }
 
@@ -57,10 +54,12 @@ class PaletteResolver
     /**
      * Get custom palette value from database
      * 
+     * Returns HEX format, converts legacy RGB if needed.
+     * 
      * @param string $cssVar CSS variable name (e.g., "--color-brand-primary")
      * @param int $storeId
      * @param int $themeId
-     * @return string|null RGB value or null if not found
+     * @return string|null HEX value or null if not found
      */
     private function getCustomPaletteValue(string $cssVar, int $storeId, int $themeId): ?string
     {
@@ -75,7 +74,19 @@ class PaletteResolver
             null  // userId (null = published/global values)
         );
 
-        return $result['value'] ?? null;
+        $value = $result['value'] ?? null;
+        
+        if ($value === null) {
+            return null;
+        }
+        
+        // Check if legacy RGB format, convert to HEX
+        if (preg_match('/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/', $value)) {
+            return ColorConverter::rgbToHex($value);
+        }
+        
+        // Already HEX format
+        return $value;
     }
 
     /**
@@ -83,7 +94,7 @@ class PaletteResolver
      * 
      * @param string $cssVar CSS variable name
      * @param int $themeId
-     * @return string RGB value or "0, 0, 0" if not found
+     * @return string HEX value or "#000000" if not found
      */
     private function getDefaultPaletteValue(string $cssVar, int $themeId): string
     {
@@ -97,41 +108,15 @@ class PaletteResolver
                 $colors = $group['colors'] ?? [];
                 foreach ($colors as $color) {
                     if (($color['css_var'] ?? '') === $cssVar) {
-                        $hex = $color['default'] ?? '#000000';
-                        return $this->hexToRgb($hex);
+                        // Return HEX directly (no conversion)
+                        return $color['default'] ?? '#000000';
                     }
                 }
             }
         }
 
         // Fallback to black if not found
-        return '0, 0, 0';
-    }
-
-    /**
-     * Convert HEX to RGB format
-     * 
-     * @param string $hex Hex color (e.g., "#1979c3")
-     * @return string RGB format: "25, 121, 195"
-     */
-    private function hexToRgb(string $hex): string
-    {
-        if (!str_starts_with($hex, '#')) {
-            return $hex;
-        }
-
-        $hex = ltrim($hex, '#');
-
-        // Handle 3-character hex colors
-        if (strlen($hex) === 3) {
-            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
-        }
-
-        $r = hexdec(substr($hex, 0, 2));
-        $g = hexdec(substr($hex, 2, 2));
-        $b = hexdec(substr($hex, 4, 2));
-
-        return "$r, $g, $b";
+        return '#000000';
     }
 
     /**
