@@ -404,6 +404,9 @@ define([
          * Compares current saved value with theme default value.
          * Used for showing "Modified" badge and orange border on swatches.
          * 
+         * Note: color.value is RGB format ("25, 121, 195")
+         *       color.default can be HEX format ("#1979c3") or RGB
+         * 
          * @param {String} cssVar - CSS variable name (e.g., "--color-brand-primary")
          * @returns {Boolean} true if saved value differs from default
          */
@@ -413,9 +416,16 @@ define([
                 return false;
             }
             
-            // Normalize values for comparison (remove whitespace)
+            // Normalize current value (RGB format)
             var currentValue = ColorUtils.normalizeRgb(color.value);
-            var defaultValue = ColorUtils.normalizeRgb(color.default);
+            
+            // Convert default to RGB if it's in HEX format
+            var defaultValue = color.default;
+            if (defaultValue.startsWith('#')) {
+                // Convert HEX to RGB for comparison
+                defaultValue = ColorUtils.hexToRgb(defaultValue);
+            }
+            defaultValue = ColorUtils.normalizeRgb(defaultValue);
             
             return currentValue !== defaultValue;
         },
