@@ -1,11 +1,10 @@
 define([
-    'Swissup_BreezeThemeEditor/js/test/test-suite',
+    'Swissup_BreezeThemeEditor/js/test/test-framework',
     'Swissup_BreezeThemeEditor/js/theme-editor/color-utils'
-], function (TestSuite, ColorUtils) {
+], function (TestFramework, ColorUtils) {
     'use strict';
 
-    return TestSuite.create({
-        name: 'ColorUtils',
+    return TestFramework.suite('ColorUtils', {
         
         /**
          * Test 1: Should convert HEX to RGB correctly
