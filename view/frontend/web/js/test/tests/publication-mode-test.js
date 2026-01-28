@@ -121,9 +121,9 @@ define([
                                 'Live preview should have media="not all" in PUBLICATION mode');
 
                             // Assert: Should NOT contain old draft changes
-                            var hasOldDraft = cssContentAfter.indexOf('rgb(180, 24, 24)') !== -1;
+                            var hasOldDraft = cssContentAfter.indexOf('180, 24, 24') !== -1;
                             self.assertEquals(hasOldDraft, false,
-                                'Live preview should NOT contain old draft changes (rgb(180, 24, 24))'
+                                'Live preview should NOT contain old draft changes (180, 24, 24)'
                             );
 
                             console.log('✅ Test passed: Live preview cleared successfully');
@@ -239,7 +239,8 @@ define([
                         var $livePreviewBefore = self.$iframe().find('#bte-live-preview');
                         var draftCssContent = $livePreviewBefore.text();
 
-                        if (draftCssContent.indexOf('rgb(180, 24, 24)') === -1) {
+                        // Check for RGB format (180, 24, 24) - not rgb() function format
+                        if (draftCssContent.indexOf('180, 24, 24') === -1) {
                             self.fail('Setup failed: Draft changes were not applied. Content: ' + draftCssContent.substring(0, 100));
                             self.clearMocks();
                             done();
@@ -263,9 +264,9 @@ define([
 
                                 console.log('📝 Live preview in publication:', publicationCssContent.substring(0, 80));
 
-                                var hasDraftChanges = publicationCssContent.indexOf('rgb(180, 24, 24)') !== -1;
+                                var hasDraftChanges = publicationCssContent.indexOf('180, 24, 24') !== -1;
                                 self.assertEquals(hasDraftChanges, false,
-                                    'Publication mode should NOT show current draft changes (rgb(180, 24, 24))'
+                                    'Publication mode should NOT show current draft changes (180, 24, 24)'
                                 );
 
                                 var hasTestVar = publicationCssContent.indexOf('--test-publication-isolation') !== -1;

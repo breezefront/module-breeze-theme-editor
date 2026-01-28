@@ -29,24 +29,36 @@ define([], function () {
                 return hex;
             }
             
+            var hexStr = hex.toString();
+            
+            // Handle rgb() format: rgb(255, 0, 0) → "255, 0, 0"
+            if (hexStr.startsWith('rgb')) {
+                var match = hexStr.match(/\d+/g);
+                if (match && match.length >= 3) {
+                    return match[0] + ', ' + match[1] + ', ' + match[2];
+                }
+                console.warn('⚠️ ColorUtils.hexToRgb: Invalid RGB format:', hex);
+                return '0, 0, 0';
+            }
+            
             // Remove # if present
-            hex = hex.toString().replace(/^#/, '');
+            hexStr = hexStr.replace(/^#/, '');
             
             // Support shorthand: #fff → #ffffff
-            if (hex.length === 3) {
-                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+            if (hexStr.length === 3) {
+                hexStr = hexStr[0] + hexStr[0] + hexStr[1] + hexStr[1] + hexStr[2] + hexStr[2];
             }
             
             // Validate format
-            if (!hex.match(/^[0-9A-Fa-f]{6}$/)) {
+            if (!hexStr.match(/^[0-9A-Fa-f]{6}$/)) {
                 console.warn('⚠️ ColorUtils.hexToRgb: Invalid HEX format:', hex);
                 return '0, 0, 0';
             }
 
             // Parse hex components
-            var r = parseInt(hex.substring(0, 2), 16);
-            var g = parseInt(hex.substring(2, 4), 16);
-            var b = parseInt(hex.substring(4, 6), 16);
+            var r = parseInt(hexStr.substring(0, 2), 16);
+            var g = parseInt(hexStr.substring(2, 4), 16);
+            var b = parseInt(hexStr.substring(4, 6), 16);
 
             // Return RGB format with spaces (Magento convention)
             return r + ', ' + g + ', ' + b;
@@ -68,8 +80,8 @@ define([], function () {
                 return '#000000';
             }
             
-            // Extract numbers using regex (handles any whitespace/format)
-            var parts = rgb.toString().match(/\d+/g);
+            // Extract numbers using regex (handles any whitespace/format and negatives)
+            var parts = rgb.toString().match(/-?\d+/g);
             if (!parts || parts.length < 3) {
                 console.warn('⚠️ ColorUtils.rgbToHex: Invalid RGB format:', rgb);
                 return '#000000';
