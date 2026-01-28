@@ -1,7 +1,8 @@
 define([
     'mage/template',
-    'Swissup_BreezeThemeEditor/js/theme-editor/panel-state'
-], function(mageTemplate, PanelState) {
+    'Swissup_BreezeThemeEditor/js/theme-editor/panel-state',
+    'Swissup_BreezeThemeEditor/js/theme-editor/badge-renderer'
+], function(mageTemplate, PanelState, BadgeRenderer) {
     'use strict';
 
     /**
@@ -107,6 +108,8 @@ define([
         /**
          * Render status badges HTML
          *
+         * Delegates to BadgeRenderer module for modular badge rendering.
+         * 
          * @param {Boolean} isDirty - Has unsaved changes
          * @param {Boolean} isModified - Different from default (saved)
          * @param {String} sectionCode
@@ -114,36 +117,7 @@ define([
          * @returns {String} HTML
          */
         renderBadges: function(isDirty, isModified, sectionCode, fieldCode) {
-            // Lazy load and cache badge template
-            if (!this._badgeTemplate) {
-                var templateString = 
-                    '<% if (data.isDirty) { %>' +
-                        '<span class="bte-badge bte-badge-dirty" title="You have unsaved changes for this field">' +
-                            '<span class="bte-badge-icon">●</span> Changed' +
-                        '</span>' +
-                        '<button type="button" ' +
-                                'class="bte-field-reset-btn" ' +
-                                'data-field-code="<%= data.fieldCode %>" ' +
-                                'data-section-code="<%= data.sectionCode %>" ' +
-                                'title="Discard unsaved changes" ' +
-                                'aria-label="Reset field to draft value">↺</button>' +
-                    '<% } %>' +
-                    '<% if (data.isModified) { %>' +
-                        '<span class="bte-badge bte-badge-modified" title="This field has been customized from its default value">Modified</span>' +
-                    '<% } %>';
-                
-                this._badgeTemplate = mageTemplate(templateString);
-            }
-
-            // Render badges using template
-            return this._badgeTemplate({
-                data: {
-                    isDirty: isDirty,
-                    isModified: isModified,
-                    sectionCode: sectionCode,
-                    fieldCode: fieldCode
-                }
-            });
+            return BadgeRenderer.renderFieldBadges(isDirty, isModified, sectionCode, fieldCode);
         },
 
         /**
