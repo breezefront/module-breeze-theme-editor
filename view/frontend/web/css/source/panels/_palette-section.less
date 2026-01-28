@@ -45,41 +45,37 @@
             gap: 12px;
             flex-shrink: 0;
         }
-
-        // Reset button in header
+        
+        // Badges container in header
+        .bte-palette-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        
+        // Reset button for palette (styled like field reset button)
         .bte-palette-reset-btn {
-            background: rgba(251, 191, 36, 0.15); // Yellow tint
-            border: 1px solid rgba(251, 191, 36, 0.4);
-            color: #fbbf24;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            line-height: 1;
+            padding: 2px 6px;
+            margin: 0;
             cursor: pointer;
-            transition: all 0.2s;
-            display: none; // Hidden by default
-            white-space: nowrap;
-
+            border-radius: 3px;
+            transition: all 0.2s ease;
+            vertical-align: middle;
+            
             &:hover {
-                background: rgba(251, 191, 36, 0.25);
-                border-color: rgba(251, 191, 36, 0.6);
-                transform: scale(1.05);
+                color: rgba(255, 255, 255, 0.9);
+                background: rgba(255, 255, 255, 0.1);
             }
-
+            
             &:active {
-                transform: scale(0.98);
-            }
-
-            .bte-icon-reset {
-                font-style: normal;
-                font-size: 14px;
-                margin-right: 4px;
-            }
-
-            .bte-reset-count {
-                font-size: 10px;
-                opacity: 0.8;
-                margin-left: 2px;
+                background: rgba(255, 255, 255, 0.15);
+                transform: scale(0.95);
             }
         }
         
@@ -181,6 +177,20 @@
                 border-color: #f59e0b !important; // Darker yellow on hover
                 box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4);
             }
+        }
+        
+        // Modified state (saved but different from default) - ORANGE BORDER
+        &.bte-swatch-modified {
+            border: 2px solid #f97316 !important; // Orange (Tailwind orange-500)
+            
+            &:hover {
+                border-color: #ea580c !important; // Darker orange on hover
+            }
+        }
+        
+        // Dirty + Modified (dirty wins for border color)
+        &.bte-swatch-dirty.bte-swatch-modified {
+            border-color: #fbbf24 !important; // Yellow (dirty priority)
         }
 
         // Visual color square

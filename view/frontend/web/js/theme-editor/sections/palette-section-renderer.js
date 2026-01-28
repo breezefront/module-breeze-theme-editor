@@ -2,12 +2,14 @@ define([
     'jquery',
     'jquery-ui-modules/widget',
     'text!Swissup_BreezeThemeEditor/template/theme-editor/sections/palette-section.html',
-    'Swissup_BreezeThemeEditor/js/theme-editor/palette-manager'
+    'Swissup_BreezeThemeEditor/js/theme-editor/palette-manager',
+    'Swissup_BreezeThemeEditor/js/theme-editor/badge-renderer'
 ], function (
     $,
     widget,
     paletteTemplate,
-    PaletteManager
+    PaletteManager,
+    BadgeRenderer
 ) {
     'use strict';
 
@@ -54,6 +56,7 @@ define([
             this.$header = this.element.find('.bte-palette-header');
             this.$content = this.element.find('.bte-palette-content');
             this.$grid = this.element.find('.bte-palette-grid');
+            this.$badgesContainer = this.element.find('.bte-palette-badges');
             
             // Open by default
             this.$header.addClass('active');
@@ -80,6 +83,9 @@ define([
             this.options.palettes.forEach(function(palette) {
                 self._renderPalette(palette);
             });
+            
+            // Update header badges after initial render
+            this._updateHeaderBadges();
         },
 
         /**
@@ -152,10 +158,21 @@ define([
             $swatch.attr('data-label', color.label);
             $swatch.attr('data-usage', color.usageCount || 0);
 
+            // Check if color is modified (saved value != default)
+            var isModified = PaletteManager.isColorModified(color.cssVar);
+
+            // Add modified class for orange border
+            if (isModified) {
+                $swatch.addClass('bte-swatch-modified');
+            }
+
             // Add title tooltip
             var tooltip = color.label + '\n' + 
                          hexValue + '\n' + 
                          'Used in ' + (color.usageCount || 0) + ' fields';
+            if (isModified) {
+                tooltip += '\n⚠️ Modified from default';
+            }
             $swatch.attr('title', tooltip);
 
             // Create visual square
@@ -225,6 +242,9 @@ define([
                 // Update via PaletteManager (NO auto-save now)
                 PaletteManager.updateColor(cssVar, hexValue);
                 
+                // Update header badges
+                self._updateHeaderBadges();
+                
                 // Trigger event to update panel changes count & reset button
                 $(document).trigger('paletteColorChanged');
             });
@@ -283,13 +303,28 @@ define([
                 // Hide reset button
                 self._updateResetButton();
                 
+                // Update header badges
+                self._updateHeaderBadges();
+                
                 // Update panel changes count
                 $(document).trigger('paletteColorChanged');
             });
 
             // Listen for save to clear dirty state
             $(document).on('themeEditorDraftSaved', function() {
+                // Clear dirty classes
                 self.$grid.find('.bte-palette-swatch').removeClass('bte-swatch-dirty');
+                
+                // Update modified state for all swatches (colors may now be modified)
+                self.$grid.find('.bte-palette-swatch').each(function() {
+                    var $swatch = $(this);
+                    var cssVar = $swatch.attr('data-css-var');
+                    self._updateSwatchModifiedState(cssVar);
+                });
+                
+                // Update header badges (Changed -> Modified transition)
+                self._updateHeaderBadges();
+                
                 self._updateResetButton();
                 console.log('✅ Palette dirty indicators cleared after save');
             });
@@ -314,6 +349,54 @@ define([
                 // Hide button
                 $resetBtn.hide();
             }
+        },
+
+        /**
+         * Update header badges (Changed + Reset + Modified)
+         * 
+         * Renders and updates badge HTML in palette header based on dirty
+         * and modified counts. Uses BadgeRenderer for consistent styling.
+         */
+        _updateHeaderBadges: function() {
+            var dirtyCount = PaletteManager.getDirtyCount();
+            var modifiedCount = PaletteManager.getModifiedCount();
+            
+            // Render badges using BadgeRenderer
+            var badgesHtml = BadgeRenderer.renderPaletteBadges(dirtyCount, modifiedCount);
+            this.$badgesContainer.html(badgesHtml);
+            
+            console.log('📊 Palette badges updated:', {
+                dirty: dirtyCount,
+                modified: modifiedCount
+            });
+        },
+
+        /**
+         * Update swatch visual state (modified border) after save/reset
+         * 
+         * Updates the "modified" class on a swatch based on whether its
+         * current saved value differs from the theme default.
+         * 
+         * @param {String} cssVar - CSS variable name
+         */
+        _updateSwatchModifiedState: function(cssVar) {
+            var $swatch = this.$grid.find('.bte-palette-swatch[data-css-var="' + cssVar + '"]');
+            if ($swatch.length === 0) {
+                return;
+            }
+            
+            var isModified = PaletteManager.isColorModified(cssVar);
+            $swatch.toggleClass('bte-swatch-modified', isModified);
+            
+            // Update tooltip
+            var color = PaletteManager.getColor(cssVar);
+            var hexValue = PaletteManager.rgbToHex(color.value);
+            var tooltip = color.label + '\n' + hexValue + '\n' + 
+                         'Used in ' + (color.usageCount || 0) + ' fields';
+            if (isModified) {
+                tooltip += '\n⚠️ Modified from default';
+            }
+            $swatch.attr('title', tooltip);
         },
 
         /**

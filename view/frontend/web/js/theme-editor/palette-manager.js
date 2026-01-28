@@ -396,6 +396,59 @@ define([
 
             console.warn('⚠️ Unknown color format:', color);
             return '#000000';
+        },
+
+        /**
+         * Check if color is modified (saved value differs from default)
+         * 
+         * Compares current saved value with theme default value.
+         * Used for showing "Modified" badge and orange border on swatches.
+         * 
+         * @param {String} cssVar - CSS variable name (e.g., "--color-brand-primary")
+         * @returns {Boolean} true if saved value differs from default
+         */
+        isColorModified: function(cssVar) {
+            var color = this.getColor(cssVar);
+            if (!color || !color.default) {
+                return false;
+            }
+            
+            // Normalize values for comparison (remove whitespace)
+            var currentValue = ColorUtils.normalizeRgb(color.value);
+            var defaultValue = ColorUtils.normalizeRgb(color.default);
+            
+            return currentValue !== defaultValue;
+        },
+
+        /**
+         * Get count of modified colors (saved but different from defaults)
+         * 
+         * Iterates through all palette colors and counts how many have
+         * saved values that differ from theme defaults.
+         * Used for "Modified (N)" badge count in palette header.
+         * 
+         * @returns {Number} Count of colors where saved value != default
+         */
+        getModifiedCount: function() {
+            var count = 0;
+            for (var cssVar in this.palettes) {
+                if (this.isColorModified(cssVar)) {
+                    count++;
+                }
+            }
+            return count;
+        },
+
+        /**
+         * Get count of dirty colors (unsaved changes)
+         * 
+         * Returns number of palette colors with unsaved changes.
+         * Used for "Changed (N)" badge count in palette header.
+         * 
+         * @returns {Number} Count of colors with unsaved changes
+         */
+        getDirtyCount: function() {
+            return Object.keys(this.dirtyColors).length;
         }
     };
 });

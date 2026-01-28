@@ -16,8 +16,12 @@ define([
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/theme-editor/badges/dirty.html',
     'text!Swissup_BreezeThemeEditor/template/theme-editor/badges/modified.html',
-    'text!Swissup_BreezeThemeEditor/template/theme-editor/badges/reset-button.html'
-], function($, mageTemplate, dirtyTemplate, modifiedTemplate, resetButtonTemplate) {
+    'text!Swissup_BreezeThemeEditor/template/theme-editor/badges/reset-button.html',
+    'text!Swissup_BreezeThemeEditor/template/theme-editor/badges/palette-changed.html',
+    'text!Swissup_BreezeThemeEditor/template/theme-editor/badges/palette-reset-button.html',
+    'text!Swissup_BreezeThemeEditor/template/theme-editor/badges/palette-modified.html'
+], function($, mageTemplate, dirtyTemplate, modifiedTemplate, resetButtonTemplate,
+            paletteChangedTemplate, paletteResetTemplate, paletteModifiedTemplate) {
     'use strict';
 
     return {
@@ -136,6 +140,80 @@ define([
             // For now, reuse modified badge template
             // TODO: Create separate palette badge template if needed
             return this.renderModifiedBadge();
+        },
+
+        /**
+         * Render "Changed" badge for palette header (with count)
+         * 
+         * Indicates palette section has unsaved color changes.
+         * Shows count of dirty colors.
+         * 
+         * @param {Number} count - Number of unsaved palette colors
+         * @returns {String} HTML for palette changed badge
+         */
+        renderPaletteChangedBadge: function(count) {
+            var template = this._getTemplate('paletteChanged', paletteChangedTemplate);
+            return template({ data: { count: count } });
+        },
+
+        /**
+         * Render Reset button for palette header
+         * 
+         * Button to discard all unsaved palette changes.
+         * Appears next to "Changed" badge when palette has dirty colors.
+         * 
+         * @returns {String} HTML for palette reset button
+         */
+        renderPaletteResetButton: function() {
+            var template = this._getTemplate('paletteReset', paletteResetTemplate);
+            return template({});
+        },
+
+        /**
+         * Render "Modified" badge for palette header (with count)
+         * 
+         * Indicates palette has saved colors that differ from theme defaults.
+         * Shows count of modified colors.
+         * 
+         * @param {Number} count - Number of saved colors different from defaults
+         * @returns {String} HTML for palette modified badge
+         */
+        renderPaletteModifiedBadge: function(count) {
+            var template = this._getTemplate('paletteModified', paletteModifiedTemplate);
+            return template({ data: { count: count } });
+        },
+
+        /**
+         * Render all palette header badges (Changed + Reset + Modified)
+         * 
+         * Main entry point for rendering palette section badges.
+         * Combines changed badge, reset button, and modified badge based on state.
+         * 
+         * Rendering rules:
+         * - dirtyCount > 0: Shows "Changed (N)" badge + Reset button
+         * - modifiedCount > 0: Shows "Modified (N)" badge
+         * - Both can be shown simultaneously
+         * - Returns empty string if both counts are 0
+         * 
+         * @param {Number} dirtyCount - Count of unsaved palette colors
+         * @param {Number} modifiedCount - Count of saved colors != defaults
+         * @returns {String} Combined HTML for all palette badges
+         */
+        renderPaletteBadges: function(dirtyCount, modifiedCount) {
+            var html = '';
+            
+            // Changed badge + Reset button (if has dirty colors)
+            if (dirtyCount > 0) {
+                html += this.renderPaletteChangedBadge(dirtyCount);
+                html += this.renderPaletteResetButton();
+            }
+            
+            // Modified badge (if has modified colors)
+            if (modifiedCount > 0) {
+                html += this.renderPaletteModifiedBadge(modifiedCount);
+            }
+            
+            return html;
         }
     };
 });
