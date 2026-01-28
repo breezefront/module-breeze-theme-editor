@@ -6,6 +6,7 @@ namespace Swissup\BreezeThemeEditor\Model\Service;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 
 /**
  * Generate CSS from saved theme values
@@ -80,20 +81,26 @@ class CssGenerator
 
             $cssVar = $settingCode; // CSS var = setting code (e.g., --color-brand-primary)
             
+            // Convert legacy RGB to HEX if needed
+            if (preg_match('/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/', $rawValue)) {
+                $rawValue = ColorConverter::rgbToHex($rawValue);
+            }
+            
             // Check if value differs from default
             $default = $paletteDefaults[$cssVar] ?? null;
             if ($default !== null) {
-                // Convert default HEX to RGB for comparison
-                $defaultRgb = $this->hexToRgb($default);
+                // Normalize both values to lowercase HEX for comparison
+                $normalizedValue = strtolower(trim($rawValue));
+                $normalizedDefault = strtolower(trim($default));
                 
                 // Skip if value equals default (use Breeze base style)
-                if ($this->valuesAreEqual($rawValue, $defaultRgb)) {
+                if ($normalizedValue === $normalizedDefault) {
                     continue;
                 }
             }
             
-            // Only output if different from default
-            $formattedValue = $rawValue; // RGB already in correct format (e.g., "200, 118, 4")
+            // Output HEX value (Breeze 3.0 format)
+            $formattedValue = $rawValue;
             
             // Extract label from CSS variable name
             $label = str_replace('--color-brand-', '', $cssVar);
@@ -236,20 +243,26 @@ class CssGenerator
 
             $cssVar = $settingCode; // e.g., --color-brand-primary
             
+            // Convert legacy RGB to HEX if needed
+            if (preg_match('/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/', $rawValue)) {
+                $rawValue = ColorConverter::rgbToHex($rawValue);
+            }
+            
             // Check if value differs from default
             $default = $paletteDefaults[$cssVar] ?? null;
             if ($default !== null) {
-                // Convert default HEX to RGB for comparison
-                $defaultRgb = $this->hexToRgb($default);
+                // Normalize both values to lowercase HEX for comparison
+                $normalizedValue = strtolower(trim($rawValue));
+                $normalizedDefault = strtolower(trim($default));
                 
                 // Skip if value equals default (use Breeze base style)
-                if ($this->valuesAreEqual($rawValue, $defaultRgb)) {
+                if ($normalizedValue === $normalizedDefault) {
                     continue;
                 }
             }
             
-            // Only output if different from default
-            $formattedValue = $rawValue; // Already in RGB format: "200, 118, 4"
+            // Output HEX value (Breeze 3.0 format)
+            $formattedValue = $rawValue;
             
             // Generate friendly label for comment
             $label = str_replace('--color-brand-', '', $cssVar);
@@ -387,30 +400,6 @@ class CssGenerator
     }
 
     /**
-     * Convert HEX to RGB (Breeze format: "255, 0, 0")
-     * @param string $hex
-     * @return string
-     */
-    private function hexToRgb(string $hex): string
-    {
-        if (! str_starts_with($hex, '#')) {
-            return $hex;
-        }
-
-        $hex = ltrim($hex, '#');
-
-        if (strlen($hex) === 3) {
-            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] .  $hex[2] . $hex[2];
-        }
-
-        $r = hexdec(substr($hex, 0, 2));
-        $g = hexdec(substr($hex, 2, 2));
-        $b = hexdec(substr($hex, 4, 2));
-
-        return "$r, $g, $b";
-    }
-
-    /**
      * Format color value - handle palette references and HEX
      * Supports:
      * - Palette references: --color-brand-primary → var(--color-brand-primary)
@@ -432,8 +421,8 @@ class CssGenerator
             return $value;
         }
         
-        // If it's HEX - convert to RGB
-        return $this->hexToRgb($value);  // #ffffff → 255, 255, 255
+        // If it's HEX - convert to RGB using ColorConverter
+        return ColorConverter::hexToRgb($value);  // #ffffff → 255, 255, 255
     }
 
     /**
