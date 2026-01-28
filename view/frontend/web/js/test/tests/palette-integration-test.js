@@ -70,7 +70,7 @@ define([
             
             this.assertNotNull(color, 
                 'Color should be loaded from config');
-            this.assertEquals(color.value, '25, 121, 195', 
+            this.assertEquals(color.value, '#1979c3', 
                 'Color value should match config');
         },
         
