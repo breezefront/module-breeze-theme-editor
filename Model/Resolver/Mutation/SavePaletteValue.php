@@ -10,6 +10,7 @@ use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 
 /**
  * Save palette color value mutation
@@ -39,7 +40,7 @@ class SavePaletteValue implements \Magento\Framework\GraphQl\Query\ResolverInter
             : $this->themeResolver->getThemeIdByStoreId($storeId);
 
         $cssVar = $input['cssVar'];
-        $rgbValue = $input['value'];
+        $colorValue = $input['value'];
 
         // Validate CSS variable name
         if (!str_starts_with($cssVar, '--color-')) {
@@ -50,11 +51,15 @@ class SavePaletteValue implements \Magento\Framework\GraphQl\Query\ResolverInter
             ];
         }
 
-        // Validate RGB value format (e.g., "25, 121, 195")
-        if (!preg_match('/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/', $rgbValue)) {
+        // Validate and normalize color value
+        // Primary format: HEX (e.g., "#1979c3" or "1979c3")
+        // Legacy format: RGB (e.g., "25, 121, 195") - auto-converted to HEX
+        $hexValue = $this->normalizeColorValue($colorValue);
+        
+        if (!$hexValue) {
             return [
                 'success' => false,
-                'message' => __('Invalid RGB value format. Expected format: "25, 121, 195"'),
+                'message' => __('Invalid color format. Expected HEX (e.g., "#1979c3") or RGB (e.g., "25, 121, 195")'),
                 'affectedFields' => 0
             ];
         }
@@ -72,7 +77,7 @@ class SavePaletteValue implements \Magento\Framework\GraphQl\Query\ResolverInter
         $valueModel->setStatusId(1); // 1 = PUBLISHED (palette changes are always published)
         $valueModel->setSectionCode('_palette');
         $valueModel->setSettingCode($cssVar);
-        $valueModel->setValue($rgbValue);
+        $valueModel->setValue($hexValue);
         $valueModel->setUserId($userId); // Use current user ID
 
         try {
@@ -95,5 +100,34 @@ class SavePaletteValue implements \Magento\Framework\GraphQl\Query\ResolverInter
             'message' => __('Palette color saved successfully'),
             'affectedFields' => $affectedCount
         ];
+    }
+
+    /**
+     * Normalize color value to HEX format
+     * 
+     * Accepts:
+     * - HEX format: "#1979c3" or "1979c3" → "#1979c3"
+     * - RGB format: "25, 121, 195" → "#1979c3" (auto-converted for backward compatibility)
+     * 
+     * @param string $value Color value from input
+     * @return string|null Normalized HEX color or null if invalid
+     */
+    private function normalizeColorValue(string $value): ?string
+    {
+        $value = trim($value);
+        
+        // Check if HEX format (primary format)
+        if (preg_match('/^#?[0-9a-fA-F]{3}$|^#?[0-9a-fA-F]{6}$/', $value)) {
+            // Use ColorConverter to normalize HEX
+            return ColorConverter::normalizeHex($value);
+        }
+        
+        // Check if legacy RGB format (for backward compatibility)
+        if (preg_match('/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/', $value)) {
+            // Convert RGB to HEX using ColorConverter
+            return ColorConverter::rgbToHex($value);
+        }
+        
+        return null;
     }
 }
