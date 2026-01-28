@@ -98,7 +98,7 @@ define([
                 'Should be able to look up color by CSS variable');
             
             if (color) {
-                this.assertEquals(color.value, '25, 121, 195', 
+                this.assertEquals(color.value, '#1979c3', 
                     'Color value should match fixture');
             }
         },
