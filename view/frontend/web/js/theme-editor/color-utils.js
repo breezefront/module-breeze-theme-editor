@@ -220,6 +220,8 @@ define([], function () {
          * - "25, 121, 195"
          * - "25,121,195"
          * - " 25 , 121 , 195 "
+         * - "rgb(25, 121, 195)"
+         * - "rgba(25, 121, 195, 0.5)"
          * 
          * @param {String} value - Color string to check
          * @returns {Boolean} true if RGB format
@@ -228,7 +230,12 @@ define([], function () {
             if (!value || typeof value !== 'string') {
                 return false;
             }
-            return /^\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*$/.test(value);
+            
+            // Strip rgb() or rgba() wrapper if present
+            var normalized = value.trim().replace(/^rgba?\((.+)\)$/i, '$1');
+            
+            // Check if it's valid RGB format (optionally with alpha)
+            return /^\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*[\d.]+)?\s*$/.test(normalized);
         }
     };
 });

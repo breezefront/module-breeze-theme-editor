@@ -18,14 +18,25 @@ class ColorConverter
      * - "#1979c3" → "25, 121, 195"
      * - "#fff" → "255, 255, 255"
      * - "1979c3" → "25, 121, 195"
+     * - "rgb(25, 121, 195)" → "25, 121, 195"
+     * - "rgba(25, 121, 195, 0.5)" → "25, 121, 195" (alpha stripped)
      * 
      * @param string $hex HEX color code with or without # prefix
      * @return string RGB format "r, g, b"
      */
     public static function hexToRgb(string $hex): string
     {
-        // If already RGB format, return as-is
+        // If already RGB format, normalize and return
         if (str_contains($hex, ',')) {
+            // Strip rgb() or rgba() wrapper if present
+            if (preg_match('/^rgba?\((.+)\)$/i', $hex, $matches)) {
+                // Extract RGB values (ignore alpha if rgba)
+                $rgb = $matches[1];
+                $parts = preg_split('/\s*,\s*/', trim($rgb));
+                // Return first 3 components: "17, 24, 39, 0.5" → "17, 24, 39"
+                return implode(', ', array_slice($parts, 0, 3));
+            }
+            // Already clean format "17, 24, 39"
             return $hex;
         }
 
@@ -63,6 +74,8 @@ class ColorConverter
      * Examples:
      * - "25, 121, 195" → "#1979c3"
      * - "25,121,195" → "#1979c3"
+     * - "rgb(25, 121, 195)" → "#1979c3"
+     * - "rgba(25, 121, 195, 0.5)" → "#1979c3" (alpha ignored)
      * - "255, 255, 255" → "#ffffff"
      * 
      * @param string $rgb RGB format "r, g, b" with or without spaces
@@ -75,7 +88,12 @@ class ColorConverter
             return self::normalizeHex($rgb);
         }
 
-        // Extract numbers from RGB string
+        // Strip rgb() or rgba() wrapper if present
+        if (preg_match('/^rgba?\((.+)\)$/i', $rgb, $matches)) {
+            $rgb = $matches[1];
+        }
+
+        // Extract numbers from RGB string (ignore alpha channel if present)
         $parts = array_map('intval', preg_split('/\s*,\s*/', trim($rgb)));
         
         if (count($parts) < 3) {
@@ -158,6 +176,8 @@ class ColorConverter
      * Examples:
      * - "25, 121, 195" → true
      * - "25,121,195" → true
+     * - "rgb(25, 121, 195)" → true
+     * - "rgba(25, 121, 195, 0.5)" → true
      * - "#1979c3" → false
      * 
      * @param string $value Value to check
@@ -165,6 +185,10 @@ class ColorConverter
      */
     public static function isRgb(string $value): bool
     {
-        return (bool) preg_match('/^\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}$/', $value);
+        // Strip rgb() or rgba() wrapper if present
+        $normalized = preg_replace('/^rgba?\((.+)\)$/i', '$1', trim($value));
+        
+        // Check if it's valid RGB format (with optional alpha)
+        return (bool) preg_match('/^\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(\s*,\s*[\d.]+)?$/', $normalized);
     }
 }
