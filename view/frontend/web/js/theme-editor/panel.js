@@ -181,19 +181,20 @@ define([
             $(document).on('publicationStatusChanged', function (e, data) {
                 console.log('🔄 Publication status changed to:', data.status);
                 
+                // ✅ ALWAYS update field editability (regardless of config reload)
+                // This fixes the bug where fields remain disabled on first panel open
+                setTimeout(function() {
+                    self._updateFieldsEditability();
+                }, 100);
+                
                 // Prevent duplicate loading if status hasn't actually changed
                 if (self.options.status === data.status) {
-                    console.log('⏭️ Status unchanged, skipping reload');
-                    return;
+                    console.log('⏭️ Status unchanged, skipping config reload');
+                    return;  // Skip reload, but editability already updated above
                 }
                 
                 self.options.status = data.status;
                 self._loadConfig();
-                
-                // Update field editability after status change
-                setTimeout(function() {
-                    self._updateFieldsEditability();
-                }, 100);
             });
 
             $(document).on('loadThemeEditorFromPublication', function (e, data) {
@@ -413,26 +414,42 @@ define([
          * Enable all input fields
          */
         _enableAllFields: function() {
-            // Enable all standard inputs
+            // Enable all standard inputs in sections
             this.$sectionsContainer.find('input, select, textarea, button').not('.bte-accordion-header').prop('disabled', false);
             
-            // Remove disabled visual state
+            // Remove disabled visual state from fields
             this.$sectionsContainer.find('.bte-field-wrapper').removeClass('bte-field-disabled');
             
-            console.log('✅ All fields enabled');
+            // ✅ Enable palette container
+            this.$paletteContainer.removeClass('bte-field-disabled');
+            this.$paletteContainer.find('input, button').prop('disabled', false);
+            
+            // ✅ Enable preset container
+            this.$presetContainer.removeClass('bte-field-disabled');
+            this.$presetContainer.find('input, select, button').prop('disabled', false);
+            
+            console.log('✅ All fields enabled (including palette and preset)');
         },
         
         /**
          * Disable all input fields
          */
         _disableAllFields: function() {
-            // Disable all standard inputs
+            // Disable all standard inputs in sections
             this.$sectionsContainer.find('input, select, textarea, button').not('.bte-accordion-header').prop('disabled', true);
             
-            // Add disabled visual state
+            // Add disabled visual state to fields
             this.$sectionsContainer.find('.bte-field-wrapper').addClass('bte-field-disabled');
             
-            console.log('🔒 All fields disabled');
+            // ✅ Disable palette container
+            this.$paletteContainer.addClass('bte-field-disabled');
+            this.$paletteContainer.find('input, button').prop('disabled', true);
+            
+            // ✅ Disable preset container
+            this.$presetContainer.addClass('bte-field-disabled');
+            this.$presetContainer.find('input, select, button').prop('disabled', true);
+            
+            console.log('🔒 All fields disabled (including palette and preset)');
         },
 
         /**

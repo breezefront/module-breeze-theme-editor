@@ -400,14 +400,19 @@ class CssGenerator
     }
 
     /**
-     * Format color value - handle palette references and HEX
+     * Format color value - handle palette references and HEX (Breeze 3.0 format)
+     * 
+     * Breeze 3.0 themes use: color: var(--base-color)  instead of  color: rgb(var(--base-color))
+     * Therefore CSS variables must contain HEX format directly.
+     * 
      * Supports:
      * - Palette references: --color-brand-primary → var(--color-brand-primary)
      * - Already wrapped: var(--color-test) → var(--color-test)
-     * - HEX colors: #ffffff → 255, 255, 255
+     * - HEX colors: #ffffff → #ffffff (no conversion)
+     * - Legacy RGB: 255, 255, 255 → #ffffff (automatic migration)
      * 
-     * @param string $value
-     * @return string
+     * @param string $value Color value (HEX, RGB, or palette reference)
+     * @return string Formatted color value
      */
     private function formatColor(string $value): string
     {
@@ -421,8 +426,19 @@ class CssGenerator
             return $value;
         }
         
-        // If it's HEX - convert to RGB using ColorConverter
-        return ColorConverter::hexToRgb($value);  // #ffffff → 255, 255, 255
+        // Breeze 3.0: Return HEX directly (no RGB conversion)
+        // Normalize HEX format (ensure lowercase, add # if needed)
+        if (ColorConverter::isHex($value)) {
+            return ColorConverter::normalizeHex($value);  // #FFFFFF → #ffffff
+        }
+        
+        // Convert legacy RGB to HEX (for backward compatibility with old database values)
+        if (ColorConverter::isRgb($value)) {
+            return ColorConverter::rgbToHex($value);  // 255, 255, 255 → #ffffff
+        }
+        
+        // Fallback: return as-is (shouldn't happen with valid data)
+        return $value;
     }
 
     /**

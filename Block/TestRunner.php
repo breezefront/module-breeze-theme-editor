@@ -59,6 +59,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/live-preview-test',
             'Swissup_BreezeThemeEditor/js/test/tests/edit-restrictions-test',
             'Swissup_BreezeThemeEditor/js/test/tests/error-handling-test',
+            // Palette & Preset Disabled State Tests (7 tests)
+            'Swissup_BreezeThemeEditor/js/test/tests/palette-preset-disabled-test',
             // Color Utils Tests (8 tests)
             'Swissup_BreezeThemeEditor/js/test/tests/color-utils-test',
             // Badge Renderer Tests (8 tests) - NEW

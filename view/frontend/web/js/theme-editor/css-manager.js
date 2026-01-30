@@ -197,6 +197,10 @@ define([
             currentStatus = 'PUBLISHED';
             console.log('📘 CSS Manager: Showing PUBLISHED (read-only mode)');
             // console.trace('📘 showPublished() call stack');
+            
+            // ✅ Trigger event to notify panel about status change
+            $(document).trigger('publicationStatusChanged', {status: 'PUBLISHED'});
+            
             return true;
         },
 
@@ -236,6 +240,10 @@ define([
             currentStatus = 'DRAFT';
             console.log('📗 CSS Manager: Showing DRAFT (editable mode)');
             // console.trace('📗 showDraft() call stack');
+            
+            // ✅ Trigger event to notify panel about status change
+            $(document).trigger('publicationStatusChanged', {status: 'DRAFT'});
+            
             return true;
         },
 
@@ -299,6 +307,13 @@ define([
 
                     currentStatus = 'PUBLICATION';
                     console.log('📙 CSS Manager: Showing PUBLICATION', publicationId, '(read-only mode)');
+                    
+                    // ✅ Trigger event to notify panel about status change
+                    $(document).trigger('publicationStatusChanged', {
+                        status: 'PUBLICATION',
+                        publicationId: publicationId
+                    });
+                    
                     return true;
                 })
                 .catch(function(error) {
