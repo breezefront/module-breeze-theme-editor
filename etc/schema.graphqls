@@ -210,6 +210,7 @@ type BreezeThemeEditorField {
     placeholder: String
     helpText: String
     palette: String @doc(description: "Palette ID for Quick Select (color fields only)")
+    format: String @doc(description: "Color format: 'hex' (Breeze 3.0), 'rgb' (Breeze 2.0), or 'auto'. Default: 'auto' if default value exists, otherwise 'hex'")
     params: BreezeThemeEditorFieldParams @doc(description: "Type-specific parameters")
     dependsOn: BreezeThemeEditorFieldDependency @doc(description: "Show only if condition met")
 }

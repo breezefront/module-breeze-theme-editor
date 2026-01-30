@@ -167,9 +167,8 @@ class CssGenerator
                 continue;
             }
 
-            $fieldType = $field['type'] ?? null;
-            $formattedValue = $this->formatValue($rawValue, $fieldType);
-            $comment = $this->getComment($rawValue, $fieldType);
+            $formattedValue = $this->formatValue($rawValue, $field);
+            $comment = $this->getComment($rawValue, $field['type'] ?? null);
             $important = $field['important'] ?? false;
 
             $css .= "    $cssVar: $formattedValue" . ($important ? ' !important' : '') . ";";
@@ -299,21 +298,25 @@ class CssGenerator
     }
 
     /**
-     * Format value based on field type
+     * Format value based on field type and configuration
      * @param mixed $value
-     * @param string|null $fieldType
+     * @param array|null $field Field configuration (including type, format, default, etc.)
      * @return string
      */
-    private function formatValue($value, ?string $fieldType): string
+    private function formatValue($value, ?array $field): string
     {
-        if (! $fieldType) {
+        if (!$field || !isset($field['type'])) {
             return $this->escapeValue((string)$value);
         }
 
-        $fieldType = strtolower($fieldType);
+        $fieldType = strtolower($field['type']);
 
         return match ($fieldType) {
-            'color' => $this->formatColor($value),
+            'color' => $this->formatColor(
+                $value,
+                $field['format'] ?? null,
+                $field['default'] ?? null
+            ),
             'font_picker' => $this->formatFont($value),
             'toggle', 'checkbox' => ($value === true || $value === '1' || $value === 1) ? '1' : '0',
             'number', 'range' => (string)$value, // Numbers don't need escaping
@@ -400,21 +403,25 @@ class CssGenerator
     }
 
     /**
-     * Format color value - handle palette references and HEX (Breeze 3.0 format)
+     * Format color value with configurable output format
      * 
-     * Breeze 3.0 themes use: color: var(--base-color)  instead of  color: rgb(var(--base-color))
-     * Therefore CSS variables must contain HEX format directly.
+     * Format options:
+     * - 'hex': Output HEX format (Breeze 3.0) → #ffffff
+     * - 'rgb': Output RGB format (Breeze 2.0) → 255, 255, 255
+     * - 'auto': Auto-detect from value format
      * 
      * Supports:
      * - Palette references: --color-brand-primary → var(--color-brand-primary)
      * - Already wrapped: var(--color-test) → var(--color-test)
-     * - HEX colors: #ffffff → #ffffff (no conversion)
-     * - Legacy RGB: 255, 255, 255 → #ffffff (automatic migration)
+     * - HEX colors: #ffffff → format based on $format parameter
+     * - RGB colors: 255, 255, 255 → format based on $format parameter
      * 
      * @param string $value Color value (HEX, RGB, or palette reference)
+     * @param string|null $format Output format: 'hex' (default), 'rgb', or 'auto'
+     * @param string|null $defaultValue Default value for auto-detection (optional)
      * @return string Formatted color value
      */
-    private function formatColor(string $value): string
+    private function formatColor(string $value, ?string $format = null, ?string $defaultValue = null): string
     {
         // If it's a palette reference (starts with --)
         if (str_starts_with($value, '--')) {
@@ -426,15 +433,39 @@ class CssGenerator
             return $value;
         }
         
-        // Breeze 3.0: Return HEX directly (no RGB conversion)
-        // Normalize HEX format (ensure lowercase, add # if needed)
-        if (ColorConverter::isHex($value)) {
-            return ColorConverter::normalizeHex($value);  // #FFFFFF → #ffffff
+        // Determine format: auto if default exists but no format specified, otherwise hex
+        if ($format === null) {
+            $format = ($defaultValue !== null) ? 'auto' : 'hex';
         }
         
-        // Convert legacy RGB to HEX (for backward compatibility with old database values)
-        if (ColorConverter::isRgb($value)) {
-            return ColorConverter::rgbToHex($value);  // 255, 255, 255 → #ffffff
+        $format = strtolower($format);
+        
+        // Auto-detect format from default value
+        if ($format === 'auto') {
+            if ($defaultValue !== null && ColorConverter::isRgb($defaultValue)) {
+                $format = 'rgb';
+            } else {
+                $format = 'hex';
+            }
+        }
+        
+        // Apply requested format
+        if ($format === 'rgb') {
+            // Breeze 2.0: Output RGB format (255, 255, 255)
+            if (ColorConverter::isHex($value)) {
+                return ColorConverter::hexToRgb($value);  // #ffffff → 255, 255, 255
+            }
+            if (ColorConverter::isRgb($value)) {
+                return $value;  // Already RGB, return as-is
+            }
+        } else {
+            // Breeze 3.0: Output HEX format (#ffffff)
+            if (ColorConverter::isHex($value)) {
+                return ColorConverter::normalizeHex($value);  // #FFFFFF → #ffffff
+            }
+            if (ColorConverter::isRgb($value)) {
+                return ColorConverter::rgbToHex($value);  // 255, 255, 255 → #ffffff
+            }
         }
         
         // Fallback: return as-is (shouldn't happen with valid data)
