@@ -45,7 +45,7 @@
 // Dropdown mixin з комбінованим підходом (interpolate-size + fallback)
 .bte-toolbar-dropdown() {
     position: absolute;
-    top: calc(100% + 8px);
+    top: ~"calc(100% + 8px)";
     left: 50%;
     transform: translateX(-50%);
     min-width: 220px;
@@ -107,7 +107,7 @@
     }
 
     .dropdown-content {
-        max-height: calc(75vh - 100px);
+        max-height: ~"calc(75vh - 100px)";
         overflow-y: auto;
         overflow-x: hidden;
 
@@ -175,7 +175,7 @@
         }
 
         .dropdown-content {
-            max-height: calc(60vh - 80px);
+            max-height: ~"calc(60vh - 80px)";
         }
     }
 }
