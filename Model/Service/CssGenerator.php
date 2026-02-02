@@ -81,36 +81,12 @@ class CssGenerator
 
             $cssVar = $settingCode; // CSS var = setting code (e.g., --color-brand-primary)
             
-            // Convert legacy RGB to HEX if needed
-            if (preg_match('/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/', $rawValue)) {
-                $rawValue = ColorConverter::rgbToHex($rawValue);
+            // Process palette color and generate CSS
+            $paletteCss = $this->processPaletteColor($cssVar, $rawValue, $paletteDefaults);
+            if ($paletteCss !== '') {
+                $css .= $paletteCss;
+                $hasPaletteChanges = true;
             }
-            
-            // Check if value differs from default
-            $default = $paletteDefaults[$cssVar] ?? null;
-            if ($default !== null) {
-                // Normalize both values to lowercase HEX for comparison
-                $normalizedValue = strtolower(trim($rawValue));
-                $normalizedDefault = strtolower(trim($default));
-                
-                // Skip if value equals default (use Breeze base style)
-                if ($normalizedValue === $normalizedDefault) {
-                    continue;
-                }
-            }
-            
-            // Generate BOTH HEX and RGB formats for palette colors
-            $hexValue = $rawValue;  // Already in HEX format
-            $rgbValue = ColorConverter::hexToRgb($hexValue);  // Convert to RGB
-            
-            // Extract label from CSS variable name
-            $label = str_replace('--color-brand-', '', $cssVar);
-            $label = ucwords(str_replace('-', ' ', $label)); // Format: "Amber Primary"
-            
-            // Output both formats
-            $css .= "    $cssVar: $hexValue;  /* Palette: $label */\n";
-            $css .= "    $cssVar-rgb: $rgbValue;  /* Palette: $label (RGB) */\n";
-            $hasPaletteChanges = true;
         }
 
         // Add blank line separator after palette colors (if any were added)
@@ -245,36 +221,12 @@ class CssGenerator
 
             $cssVar = $settingCode; // e.g., --color-brand-primary
             
-            // Convert legacy RGB to HEX if needed
-            if (preg_match('/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/', $rawValue)) {
-                $rawValue = ColorConverter::rgbToHex($rawValue);
+            // Process palette color and generate CSS
+            $paletteCss = $this->processPaletteColor($cssVar, $rawValue, $paletteDefaults);
+            if ($paletteCss !== '') {
+                $css .= $paletteCss;
+                $hasPaletteChanges = true;
             }
-            
-            // Check if value differs from default
-            $default = $paletteDefaults[$cssVar] ?? null;
-            if ($default !== null) {
-                // Normalize both values to lowercase HEX for comparison
-                $normalizedValue = strtolower(trim($rawValue));
-                $normalizedDefault = strtolower(trim($default));
-                
-                // Skip if value equals default (use Breeze base style)
-                if ($normalizedValue === $normalizedDefault) {
-                    continue;
-                }
-            }
-            
-            // Generate BOTH HEX and RGB formats for palette colors
-            $hexValue = $rawValue;  // Already in HEX format
-            $rgbValue = ColorConverter::hexToRgb($hexValue);  // Convert to RGB
-            
-            // Generate friendly label for comment
-            $label = str_replace('--color-brand-', '', $cssVar);
-            $label = ucwords(str_replace('-', ' ', $label));
-            
-            // Output both formats
-            $css .= "    $cssVar: $hexValue;  /* Palette: $label */\n";
-            $css .= "    $cssVar-rgb: $rgbValue;  /* Palette: $label (RGB) */\n";
-            $hasPaletteChanges = true;
         }
 
         // Add blank line separator after palette colors (if any were added)
@@ -633,5 +585,49 @@ class CssGenerator
         }
         
         return $defaults;
+    }
+
+    /**
+     * Process palette color value and generate CSS
+     * Handles conversion, default comparison, and CSS output for a single palette color
+     * 
+     * @param string $cssVar CSS variable name (e.g., --color-brand-primary)
+     * @param string $rawValue Raw color value from database
+     * @param array $paletteDefaults Map of css_var => default_hex values
+     * @return string Generated CSS for this palette color (both HEX and RGB formats), or empty string if skipped
+     */
+    private function processPaletteColor(string $cssVar, string $rawValue, array $paletteDefaults): string
+    {
+        // Convert legacy RGB to HEX if needed
+        if (preg_match('/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/', $rawValue)) {
+            $rawValue = ColorConverter::rgbToHex($rawValue);
+        }
+        
+        // Check if value differs from default
+        $default = $paletteDefaults[$cssVar] ?? null;
+        if ($default !== null) {
+            // Normalize both values to lowercase HEX for comparison
+            $normalizedValue = strtolower(trim($rawValue));
+            $normalizedDefault = strtolower(trim($default));
+            
+            // Skip if value equals default (use Breeze base style)
+            if ($normalizedValue === $normalizedDefault) {
+                return '';
+            }
+        }
+        
+        // Generate BOTH HEX and RGB formats for palette colors
+        $hexValue = $rawValue;  // Already in HEX format
+        $rgbValue = ColorConverter::hexToRgb($hexValue);  // Convert to RGB
+        
+        // Extract label from CSS variable name
+        $label = str_replace('--color-brand-', '', $cssVar);
+        $label = ucwords(str_replace('-', ' ', $label)); // Format: "Amber Primary"
+        
+        // Output both formats
+        $css = "    $cssVar: $hexValue;  /* Palette: $label */\n";
+        $css .= "    $cssVar-rgb: $rgbValue;  /* Palette: $label (RGB) */\n";
+        
+        return $css;
     }
 }

@@ -44,7 +44,11 @@ class CssGeneratorTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([
-            '_palette.--color-brand-amber-dark' => '#c87604'
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-amber-dark',
+                'value' => '#c87604'
+            ]
         ]);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -55,7 +59,7 @@ class CssGeneratorTest extends TestCase
                         [
                             'id' => '--color-brand-amber-dark',
                             'css_var' => '--color-brand-amber-dark',
-                            'default' => '#c87604'
+                            'default' => '#000000'  // Different from value
                         ]
                     ]
                 ]
@@ -86,7 +90,11 @@ class CssGeneratorTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([
-            '_palette.--color-brand-primary' => '#1979c3'
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-primary',
+                'value' => '#1979c3'
+            ]
         ]);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -97,7 +105,7 @@ class CssGeneratorTest extends TestCase
                         [
                             'id' => '--color-brand-primary',
                             'css_var' => '--color-brand-primary',
-                            'default' => '#1979c3'
+                            'default' => '#000000'  // Different from value
                         ]
                     ]
                 ]
@@ -122,9 +130,21 @@ class CssGeneratorTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([
-            '_palette.--color-brand-primary' => '#1979c3',
-            '_palette.--color-brand-secondary' => '#ff5733',
-            '_palette.--color-brand-tertiary' => '#33ff57'
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-primary',
+                'value' => '#1979c3'
+            ],
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-secondary',
+                'value' => '#ff5733'
+            ],
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-tertiary',
+                'value' => '#33ff57'
+            ]
         ]);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -132,9 +152,9 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#1979c3'],
-                        ['id' => '--color-brand-secondary', 'css_var' => '--color-brand-secondary', 'default' => '#ff5733'],
-                        ['id' => '--color-brand-tertiary', 'css_var' => '--color-brand-tertiary', 'default' => '#33ff57']
+                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000'],
+                        ['id' => '--color-brand-secondary', 'css_var' => '--color-brand-secondary', 'default' => '#000000'],
+                        ['id' => '--color-brand-tertiary', 'css_var' => '--color-brand-tertiary', 'default' => '#000000']
                     ]
                 ]
             ]
@@ -159,8 +179,16 @@ class CssGeneratorTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([
-            '_palette.--color-brand-primary' => '#1979c3',
-            'buttons.button_primary_bg' => '--color-brand-primary'
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-primary',
+                'value' => '#1979c3'
+            ],
+            [
+                'section_code' => 'buttons',
+                'setting_code' => 'button_primary_bg',
+                'value' => '--color-brand-primary'
+            ]
         ]);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -168,7 +196,7 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#1979c3']
+                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000']
                     ]
                 ],
                 [
@@ -179,7 +207,7 @@ class CssGeneratorTest extends TestCase
                             'css_var' => '--button-primary-bg',
                             'type' => 'color',
                             'format' => 'hex',  // HEX format
-                            'default' => '--color-brand-primary'
+                            'default' => '#cccccc'  // Different from value
                         ]
                     ]
                 ]
@@ -204,8 +232,16 @@ class CssGeneratorTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([
-            '_palette.--color-brand-primary' => '#1979c3',
-            'typography.base_color' => '--color-brand-primary'
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-primary',
+                'value' => '#1979c3'
+            ],
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_color',
+                'value' => '--color-brand-primary'
+            ]
         ]);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -213,7 +249,7 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#1979c3']
+                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000']
                     ]
                 ],
                 [
@@ -224,7 +260,7 @@ class CssGeneratorTest extends TestCase
                             'css_var' => '--base-color',
                             'type' => 'color',
                             'format' => 'rgb',  // RGB format
-                            'default' => '--color-brand-primary'
+                            'default' => '#ffffff'  // Different from value
                         ]
                     ]
                 ]
@@ -249,8 +285,16 @@ class CssGeneratorTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([
-            '_palette.--color-brand-primary' => '#1979c3',
-            'buttons.button_bg' => '--color-brand-primary'
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-primary',
+                'value' => '#1979c3'
+            ],
+            [
+                'section_code' => 'buttons',
+                'setting_code' => 'button_bg',
+                'value' => '--color-brand-primary'
+            ]
         ]);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -258,7 +302,7 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#1979c3']
+                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000']
                     ]
                 ],
                 [
@@ -269,7 +313,7 @@ class CssGeneratorTest extends TestCase
                             'css_var' => '--button-bg',
                             'type' => 'color',
                             // No format property
-                            'default' => '--color-brand-primary'
+                            'default' => '#ffffff'  // Different from value
                         ]
                     ]
                 ]
@@ -294,7 +338,11 @@ class CssGeneratorTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([
-            'buttons.button_custom_bg' => '#ff0000'
+            [
+                'section_code' => 'buttons',
+                'setting_code' => 'button_custom_bg',
+                'value' => '#ff0000'
+            ]
         ]);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -332,9 +380,21 @@ class CssGeneratorTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([
-            '_palette.--color-brand-primary' => '#1979c3',
-            'buttons.button_bg' => '--color-brand-primary',
-            'typography.text_color' => '--color-brand-primary'
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-primary',
+                'value' => '#1979c3'
+            ],
+            [
+                'section_code' => 'buttons',
+                'setting_code' => 'button_bg',
+                'value' => '--color-brand-primary'
+            ],
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'text_color',
+                'value' => '--color-brand-primary'
+            ]
         ]);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -342,19 +402,19 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#1979c3']
+                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000']
                     ]
                 ],
                 [
                     'id' => 'buttons',
                     'settings' => [
-                        ['id' => 'button_bg', 'css_var' => '--button-bg', 'type' => 'color', 'format' => 'hex', 'default' => '--color-brand-primary']
+                        ['id' => 'button_bg', 'css_var' => '--button-bg', 'type' => 'color', 'format' => 'hex', 'default' => '#ffffff']
                     ]
                 ],
                 [
                     'id' => 'typography',
                     'settings' => [
-                        ['id' => 'text_color', 'css_var' => '--text-color', 'type' => 'color', 'format' => 'rgb', 'default' => '--color-brand-primary']
+                        ['id' => 'text_color', 'css_var' => '--text-color', 'type' => 'color', 'format' => 'rgb', 'default' => '#ffffff']
                     ]
                 ]
             ]
@@ -377,8 +437,16 @@ class CssGeneratorTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([
-            '_palette.--color-brand-primary' => '#1979c3',
-            'buttons.button_bg' => '--color-brand-primary'
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-primary',
+                'value' => '#1979c3'
+            ],
+            [
+                'section_code' => 'buttons',
+                'setting_code' => 'button_bg',
+                'value' => '--color-brand-primary'
+            ]
         ]);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -386,13 +454,13 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#1979c3']
+                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000']
                     ]
                 ],
                 [
                     'id' => 'buttons',
                     'settings' => [
-                        ['id' => 'button_bg', 'css_var' => '--button-bg', 'type' => 'color', 'format' => 'hex', 'default' => '--color-brand-primary']
+                        ['id' => 'button_bg', 'css_var' => '--button-bg', 'type' => 'color', 'format' => 'hex', 'default' => '#ffffff']
                     ]
                 ]
             ]
