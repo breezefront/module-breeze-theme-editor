@@ -6,6 +6,7 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\Api\SearchCriteriaBuilderFactory;
 use Swissup\BreezeThemeEditor\Model\Service\CssGenerator;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
@@ -55,7 +56,12 @@ class GetCss implements ResolverInterface
         $publicationId = isset($args['publicationId']) ? (int) $args['publicationId'] : null;
 
         // 5. Generate CSS based on status
-        if ($status === 'PUBLICATION' && $publicationId) {
+        if ($status === 'PUBLICATION') {
+            if (!$publicationId) {
+                throw new GraphQlInputException(
+                    __('publicationId is required when status is PUBLICATION')
+                );
+            }
             $css = $this->generateCssFromPublication($themeId, $storeId, $publicationId);
         } else {
             $css = $this->cssGenerator->generate($themeId, $storeId, $status);
