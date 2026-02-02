@@ -99,14 +99,17 @@ class CssGenerator
                 }
             }
             
-            // Output HEX value (Breeze 3.0 format)
-            $formattedValue = $rawValue;
+            // Generate BOTH HEX and RGB formats for palette colors
+            $hexValue = $rawValue;  // Already in HEX format
+            $rgbValue = ColorConverter::hexToRgb($hexValue);  // Convert to RGB
             
             // Extract label from CSS variable name
             $label = str_replace('--color-brand-', '', $cssVar);
             $label = ucwords(str_replace('-', ' ', $label)); // Format: "Amber Primary"
             
-            $css .= "    $cssVar: $formattedValue;  /* Palette: $label */\n";
+            // Output both formats
+            $css .= "    $cssVar: $hexValue;  /* Palette: $label */\n";
+            $css .= "    $cssVar-rgb: $rgbValue;  /* Palette: $label (RGB) */\n";
             $hasPaletteChanges = true;
         }
 
@@ -260,14 +263,17 @@ class CssGenerator
                 }
             }
             
-            // Output HEX value (Breeze 3.0 format)
-            $formattedValue = $rawValue;
+            // Generate BOTH HEX and RGB formats for palette colors
+            $hexValue = $rawValue;  // Already in HEX format
+            $rgbValue = ColorConverter::hexToRgb($hexValue);  // Convert to RGB
             
             // Generate friendly label for comment
             $label = str_replace('--color-brand-', '', $cssVar);
             $label = ucwords(str_replace('-', ' ', $label));
             
-            $css .= "    $cssVar: $formattedValue;  /* Palette: $label */\n";
+            // Output both formats
+            $css .= "    $cssVar: $hexValue;  /* Palette: $label */\n";
+            $css .= "    $cssVar-rgb: $rgbValue;  /* Palette: $label (RGB) */\n";
             $hasPaletteChanges = true;
         }
 
@@ -411,7 +417,9 @@ class CssGenerator
      * - 'auto': Auto-detect from value format
      * 
      * Supports:
-     * - Palette references: --color-brand-primary → var(--color-brand-primary)
+     * - Palette references with format:
+     *   • format='hex': --color-brand-primary → var(--color-brand-primary)
+     *   • format='rgb': --color-brand-primary → var(--color-brand-primary-rgb)
      * - Already wrapped: var(--color-test) → var(--color-test)
      * - HEX colors: #ffffff → format based on $format parameter
      * - RGB colors: 255, 255, 255 → format based on $format parameter
@@ -425,7 +433,11 @@ class CssGenerator
     {
         // If it's a palette reference (starts with --)
         if (str_starts_with($value, '--')) {
-            return 'var(' . $value . ')';  // --color-brand-primary → var(--color-brand-primary)
+            // Smart mapping: append -rgb suffix if field requires RGB format
+            if ($format === 'rgb') {
+                return 'var(' . $value . '-rgb)';  // --color-brand-primary-rgb
+            }
+            return 'var(' . $value . ')';  // --color-brand-primary (HEX by default)
         }
         
         // If already wrapped in var() - return as-is (backward compatibility)
