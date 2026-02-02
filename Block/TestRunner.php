@@ -63,6 +63,10 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/palette-preset-disabled-test',
             // Color Utils Tests (8 tests)
             'Swissup_BreezeThemeEditor/js/test/tests/color-utils-test',
+            // Color Utils RGB Wrapper Tests (6 tests) - NEW
+            'Swissup_BreezeThemeEditor/js/test/tests/color-utils-rgb-wrapper-test',
+            // Palette Format Mapping Tests (8 tests) - NEW
+            'Swissup_BreezeThemeEditor/js/test/tests/palette-format-mapping-test',
             // Badge Renderer Tests (8 tests) - NEW
             'Swissup_BreezeThemeEditor/js/test/tests/badge-renderer-test',
             // Palette System Tests (32 tests)
