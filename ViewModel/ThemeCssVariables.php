@@ -110,6 +110,18 @@ class ThemeCssVariables implements ArgumentInterface
     }
 
     /**
+     * Check if currently running in test mode
+     * Test mode is activated by ?jstest=true or ?jstest=1 URL parameter
+     * 
+     * @return bool
+     */
+    public function isTestMode(): bool
+    {
+        $jstest = $this->request->getParam('jstest');
+        return $jstest === 'true' || $jstest === '1';
+    }
+
+    /**
      * Check if CSS has real content (contains CSS variables)
      *
      * @param string $css

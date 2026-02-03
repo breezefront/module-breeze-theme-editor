@@ -6,16 +6,19 @@ $inlineCssContent = $viewModel->getInlineCssContent();
 $inlineCssContentDraft = $viewModel->getInlineCssContentDraft();
 
 // Render strategy:
-// 1. Admin (has access token) → ALWAYS render both styles (even if empty)
+// 1. Test mode (?jstest=true) → ALWAYS render both styles (even if empty)
+//    - JS tests need these elements to run properly
+// 2. Admin (has access token) → ALWAYS render both styles (even if empty)
 //    - CSS Manager needs these elements to function properly
 //    - Allows editing themes without saved values (new/blank themes)
-// 2. Regular user (no token) → only render published if has content
+// 3. Regular user (no token) → only render published if has content
 //    - Avoid empty CSS for performance
+$isTestMode = $viewModel->isTestMode();
 $hasToken = $viewModel->hasAccessToken();
 $hasPublishedContent = $viewModel->hasRealCssContent($inlineCssContent);
 
-if (!$hasToken && !$hasPublishedContent) {
-    // Regular user + no published content → skip all rendering
+// Skip rendering only if: regular user + no published content + not in test mode
+if (!$isTestMode && !$hasToken && !$hasPublishedContent) {
     return;
 }
 ?>
@@ -24,8 +27,8 @@ if (!$hasToken && !$hasPublishedContent) {
 <?= /* @noEscape */ $inlineCssContent ?>
 </style>
 
-<?php if ($hasToken): ?>
-<!-- Draft CSS (only for toolbar users, always rendered even if empty) -->
+<?php if ($isTestMode || $hasToken): ?>
+<!-- Draft CSS (for toolbar users and test mode, always rendered even if empty) -->
 <style id="bte-theme-css-variables-draft" data-status="draft" media="not all" disabled>
 <?= /* @noEscape */ $inlineCssContentDraft ?>
 </style>
