@@ -100,6 +100,16 @@ class ThemeCssVariables implements ArgumentInterface
     }
 
     /**
+     * Check if user has valid access token (is admin with toolbar)
+     * 
+     * @return bool
+     */
+    public function hasAccessToken(): bool
+    {
+        return $this->accessToken->validateRequest($this->request);
+    }
+
+    /**
      * Check if CSS has real content (contains CSS variables)
      *
      * @param string $css

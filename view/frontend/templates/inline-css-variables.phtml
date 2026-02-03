@@ -1,21 +1,32 @@
 <?php
-
 /** @var \Swissup\BreezeThemeEditor\Block\ThemeCssVariables $block */
 $viewModel = $block->getViewModel();
 
-if (!$viewModel->shouldRender()) {
-    return;
-}
-
 $inlineCssContent = $viewModel->getInlineCssContent();
 $inlineCssContentDraft = $viewModel->getInlineCssContentDraft();
+
+// Render strategy:
+// 1. Admin (has access token) → ALWAYS render both styles (even if empty)
+//    - CSS Manager needs these elements to function properly
+//    - Allows editing themes without saved values (new/blank themes)
+// 2. Regular user (no token) → only render published if has content
+//    - Avoid empty CSS for performance
+$hasToken = $viewModel->hasAccessToken();
+$hasPublishedContent = $viewModel->hasRealCssContent($inlineCssContent);
+
+if (!$hasToken && !$hasPublishedContent) {
+    // Regular user + no published content → skip all rendering
+    return;
+}
 ?>
-<!-- Published CSS (always present for all users) -->
+<!-- Published CSS (always present when needed) -->
 <style id="bte-theme-css-variables" data-status="published" media="all">
 <?= /* @noEscape */ $inlineCssContent ?>
 </style>
 
-<!-- Draft CSS (always rendered for CSS Manager, disabled by default) -->
+<?php if ($hasToken): ?>
+<!-- Draft CSS (only for toolbar users, always rendered even if empty) -->
 <style id="bte-theme-css-variables-draft" data-status="draft" media="not all" disabled>
 <?= /* @noEscape */ $inlineCssContentDraft ?>
 </style>
+<?php endif; ?>

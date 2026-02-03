@@ -86,6 +86,19 @@ define([
                     return;
                 }
 
+                // === SETUP: Enable mocks ===
+                self.enableMocks();
+
+                // Mock publicationId=1 with empty publication CSS
+                self.mockGetCss({
+                    storeId: 21,
+                    themeId: 21,
+                    status: 'PUBLICATION',
+                    publicationId: 1
+                }, fixtures.publicationEmpty);
+
+                console.log('🎭 Mock registered for publicationId=1');
+
                 // Setup: Set live preview variables (simulating draft changes)
                 CssPreviewManager.setVariable('--test-color', 'rgb(255, 0, 0)', 'color');
                 CssPreviewManager.setVariable('--base-color', 'rgb(180, 24, 24)', 'color');
@@ -97,6 +110,7 @@ define([
 
                     if (cssContentBefore.indexOf('--test-color') === -1) {
                         self.fail('Setup failed: Live preview variables were not set properly. Content: ' + cssContentBefore.substring(0, 100));
+                        self.clearMocks();
                         done();
                         return;
                     }
@@ -127,12 +141,16 @@ define([
                             );
 
                             console.log('✅ Test passed: Live preview cleared successfully');
+                            
+                            // === CLEANUP ===
+                            self.clearMocks();
                             done();
                         }, 500);
 
                     }).catch(function(err) {
                         console.error('❌ Failed to switch to PUBLICATION:', err);
                         self.fail('Failed to switch to PUBLICATION: ' + err);
+                        self.clearMocks();
                         done();
                     });
                 }, 300);

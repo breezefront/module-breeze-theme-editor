@@ -188,13 +188,28 @@ define([
                 }, 100);
                 
                 // Prevent duplicate loading if status hasn't actually changed
-                if (self.options.status === data.status) {
+                if (self.options.status === data.status && data.status !== 'PUBLICATION') {
                     console.log('⏭️ Status unchanged, skipping config reload');
                     return;  // Skip reload, but editability already updated above
                 }
                 
                 self.options.status = data.status;
-                self._loadConfig();
+                
+                // Load config based on status type
+                if (data.status === 'PUBLICATION') {
+                    // PUBLICATION mode: load from specific historical publication
+                    if (data.publicationId && !isNaN(data.publicationId)) {
+                        console.log('📥 Loading config from publication #' + data.publicationId);
+                        self._loadConfigFromPublication(data.publicationId);
+                    } else {
+                        console.warn('⚠️ PUBLICATION status but no valid publication ID, falling back to DRAFT');
+                        self.options.status = 'DRAFT';
+                        self._loadConfig();
+                    }
+                } else {
+                    // DRAFT or PUBLISHED mode: load via standard config query
+                    self._loadConfig();
+                }
             });
 
             $(document).on('loadThemeEditorFromPublication', function (e, data) {
