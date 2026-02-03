@@ -4,7 +4,7 @@ define([
     'use strict';
 
     var query = `
-        query GetThemeEditorCss($storeId: Int!, $themeId: Int, $status: BreezeThemeEditorStatusCode, $publicationId: Int) {
+        query GetThemeEditorCss($storeId: Int!, $themeId: Int, $status: BreezeThemeEditorCssStatusCode, $publicationId: Int) {
             getThemeEditorCss(storeId: $storeId, themeId: $themeId, status: $status, publicationId: $publicationId) {
                 css
                 status
