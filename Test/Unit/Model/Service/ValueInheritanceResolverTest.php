@@ -1,0 +1,583 @@
+<?php
+declare(strict_types=1);
+
+namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Service;
+
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
+use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
+use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+
+class ValueInheritanceResolverTest extends TestCase
+{
+    private ValueInheritanceResolver $resolver;
+    private ValueService|MockObject $valueServiceMock;
+    private ThemeResolver|MockObject $themeResolverMock;
+    private ConfigProvider|MockObject $configProviderMock;
+
+    protected function setUp(): void
+    {
+        $this->valueServiceMock = $this->createMock(ValueService::class);
+        $this->themeResolverMock = $this->createMock(ThemeResolver::class);
+        $this->configProviderMock = $this->createMock(ConfigProvider::class);
+
+        $this->resolver = new ValueInheritanceResolver(
+            $this->valueServiceMock,
+            $this->themeResolverMock,
+            $this->configProviderMock
+        );
+    }
+
+    /**
+     * Test 1: Single theme with no parents returns only its own values
+     */
+    public function testResolveAllValuesWithSingleTheme(): void
+    {
+        $themeId = 10;
+        $storeId = 1;
+        $statusId = 2;
+        $userId = null;
+
+        $hierarchy = [
+            ['theme_id' => 10, 'theme_code' => 'child', 'level' => 0]
+        ];
+
+        $values = [
+            ['section_code' => 'header', 'setting_code' => 'logo', 'value' => 'logo.png'],
+            ['section_code' => 'footer', 'setting_code' => 'copyright', 'value' => '2024']
+        ];
+
+        $this->themeResolverMock->expects($this->once())
+            ->method('getThemeHierarchy')
+            ->with($themeId)
+            ->willReturn($hierarchy);
+
+        $this->valueServiceMock->expects($this->once())
+            ->method('getValuesByTheme')
+            ->with(10, $storeId, $statusId, $userId)
+            ->willReturn($values);
+
+        $result = $this->resolver->resolveAllValues($themeId, $storeId, $statusId, $userId);
+
+        $this->assertCount(2, $result);
+        $this->assertEquals($values, $result);
+    }
+
+    /**
+     * Test 2: Multi-level hierarchy merges values from child to parent
+     */
+    public function testResolveAllValuesWithMultiLevelHierarchy(): void
+    {
+        $themeId = 30;
+        $storeId = 1;
+        $statusId = 2;
+
+        // Hierarchy: child (30) -> parent (20) -> grandparent (10)
+        $hierarchy = [
+            ['theme_id' => 30, 'theme_code' => 'child', 'level' => 0],
+            ['theme_id' => 20, 'theme_code' => 'parent', 'level' => 1],
+            ['theme_id' => 10, 'theme_code' => 'grandparent', 'level' => 2]
+        ];
+
+        // Grandparent values (loaded first due to array_reverse)
+        $grandparentValues = [
+            ['section_code' => 'header', 'setting_code' => 'logo', 'value' => 'default_logo.png'],
+            ['section_code' => 'colors', 'setting_code' => 'primary', 'value' => '#000000']
+        ];
+
+        // Parent values (override logo)
+        $parentValues = [
+            ['section_code' => 'header', 'setting_code' => 'logo', 'value' => 'parent_logo.png'],
+            ['section_code' => 'footer', 'setting_code' => 'text', 'value' => 'Parent Footer']
+        ];
+
+        // Child values (override logo again)
+        $childValues = [
+            ['section_code' => 'header', 'setting_code' => 'logo', 'value' => 'child_logo.png']
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        $this->valueServiceMock->expects($this->exactly(3))
+            ->method('getValuesByTheme')
+            ->willReturnCallback(function ($themeId) use ($grandparentValues, $parentValues, $childValues) {
+                return match($themeId) {
+                    10 => $grandparentValues,
+                    20 => $parentValues,
+                    30 => $childValues,
+                };
+            });
+
+        $result = $this->resolver->resolveAllValues($themeId, $storeId, $statusId);
+
+        // Should have 3 unique keys: header.logo (from child), colors.primary (from grandparent), footer.text (from parent)
+        $this->assertCount(3, $result);
+
+        // Find values by key
+        $logoValue = null;
+        $primaryValue = null;
+        $footerValue = null;
+        foreach ($result as $value) {
+            $key = $value['section_code'] . '.' . $value['setting_code'];
+            if ($key === 'header.logo') $logoValue = $value;
+            if ($key === 'colors.primary') $primaryValue = $value;
+            if ($key === 'footer.text') $footerValue = $value;
+        }
+
+        // Child overrides parent and grandparent
+        $this->assertEquals('child_logo.png', $logoValue['value']);
+        // Grandparent value not overridden
+        $this->assertEquals('#000000', $primaryValue['value']);
+        // Parent value not overridden
+        $this->assertEquals('Parent Footer', $footerValue['value']);
+    }
+
+    /**
+     * Test 3: Empty hierarchy returns empty array
+     */
+    public function testResolveAllValuesWithEmptyHierarchy(): void
+    {
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn([]);
+
+        $result = $this->resolver->resolveAllValues(999, 1, 2);
+
+        $this->assertEmpty($result);
+    }
+
+    /**
+     * Test 4: Single value found in child theme (level 0)
+     */
+    public function testResolveSingleValueFoundInChildTheme(): void
+    {
+        $themeId = 10;
+        $storeId = 1;
+        $statusId = 2;
+        $sectionCode = 'header';
+        $fieldCode = 'logo';
+
+        $hierarchy = [
+            ['theme_id' => 10, 'theme_code' => 'child', 'level' => 0]
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        $this->valueServiceMock->expects($this->once())
+            ->method('getSingleValue')
+            ->with(10, $storeId, $statusId, $sectionCode, $fieldCode, null)
+            ->willReturn('child_logo.png');
+
+        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, $sectionCode, $fieldCode);
+
+        $this->assertEquals('child_logo.png', $result['value']);
+        $this->assertFalse($result['isInherited']);
+        $this->assertNull($result['inheritedFrom']);
+        $this->assertEquals(0, $result['inheritanceLevel']);
+    }
+
+    /**
+     * Test 5: Single value found in parent theme (level 1)
+     */
+    public function testResolveSingleValueFoundInParentTheme(): void
+    {
+        $themeId = 20;
+        $storeId = 1;
+        $statusId = 2;
+        $sectionCode = 'header';
+        $fieldCode = 'logo';
+
+        $hierarchy = [
+            ['theme_id' => 20, 'theme_code' => 'child', 'level' => 0],
+            ['theme_id' => 10, 'theme_code' => 'parent', 'level' => 1, 'theme_title' => 'Parent Theme']
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        $this->valueServiceMock->expects($this->exactly(2))
+            ->method('getSingleValue')
+            ->willReturnCallback(function ($themeId) {
+                // Child returns null, parent returns value
+                return $themeId === 20 ? null : 'parent_logo.png';
+            });
+
+        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, $sectionCode, $fieldCode);
+
+        $this->assertEquals('parent_logo.png', $result['value']);
+        $this->assertTrue($result['isInherited']);
+        $this->assertEquals('parent', $result['inheritedFrom']['theme_code']);
+        $this->assertEquals(1, $result['inheritanceLevel']);
+    }
+
+    /**
+     * Test 6: Single value found in grandparent theme (level 2)
+     */
+    public function testResolveSingleValueFoundInGrandparentTheme(): void
+    {
+        $themeId = 30;
+        $storeId = 1;
+        $statusId = 2;
+        $sectionCode = 'colors';
+        $fieldCode = 'primary';
+
+        $hierarchy = [
+            ['theme_id' => 30, 'theme_code' => 'child', 'level' => 0],
+            ['theme_id' => 20, 'theme_code' => 'parent', 'level' => 1],
+            ['theme_id' => 10, 'theme_code' => 'grandparent', 'level' => 2, 'theme_title' => 'Grandparent Theme']
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        $this->valueServiceMock->expects($this->exactly(3))
+            ->method('getSingleValue')
+            ->willReturnCallback(function ($themeId) {
+                // Only grandparent has value
+                return $themeId === 10 ? '#FF0000' : null;
+            });
+
+        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, $sectionCode, $fieldCode);
+
+        $this->assertEquals('#FF0000', $result['value']);
+        $this->assertTrue($result['isInherited']);
+        $this->assertEquals('grandparent', $result['inheritedFrom']['theme_code']);
+        $this->assertEquals(2, $result['inheritanceLevel']);
+    }
+
+    /**
+     * Test 7: Single value not found anywhere, fallback to config default
+     */
+    public function testResolveSingleValueFallbackToConfigDefault(): void
+    {
+        $themeId = 10;
+        $storeId = 1;
+        $statusId = 2;
+        $sectionCode = 'header';
+        $fieldCode = 'logo';
+
+        $hierarchy = [
+            ['theme_id' => 10, 'theme_code' => 'child', 'level' => 0]
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        $this->valueServiceMock->method('getSingleValue')->willReturn(null);
+
+        $this->configProviderMock->expects($this->once())
+            ->method('getFieldDefault')
+            ->with($themeId, $sectionCode, $fieldCode)
+            ->willReturn('default_logo.png');
+
+        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, $sectionCode, $fieldCode);
+
+        $this->assertEquals('default_logo.png', $result['value']);
+        $this->assertFalse($result['isInherited']);
+        $this->assertNull($result['inheritedFrom']);
+        $this->assertEquals(-1, $result['inheritanceLevel']);
+    }
+
+    /**
+     * Test 8: Single value fallback returns null when config has no default
+     */
+    public function testResolveSingleValueFallbackReturnsNull(): void
+    {
+        $hierarchy = [['theme_id' => 10, 'theme_code' => 'child', 'level' => 0]];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+        $this->valueServiceMock->method('getSingleValue')->willReturn(null);
+        $this->configProviderMock->method('getFieldDefault')->willReturn(null);
+
+        $result = $this->resolver->resolveSingleValue(10, 1, 2, 'header', 'logo');
+
+        $this->assertNull($result['value']);
+        $this->assertFalse($result['isInherited']);
+        $this->assertEquals(-1, $result['inheritanceLevel']);
+    }
+
+    /**
+     * Test 9: isValueInherited returns true when value from parent
+     */
+    public function testIsValueInheritedReturnsTrueForParentValue(): void
+    {
+        $hierarchy = [
+            ['theme_id' => 20, 'theme_code' => 'child', 'level' => 0],
+            ['theme_id' => 10, 'theme_code' => 'parent', 'level' => 1]
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        $this->valueServiceMock->expects($this->exactly(2))
+            ->method('getSingleValue')
+            ->willReturnCallback(fn($themeId) => $themeId === 10 ? 'parent_value' : null);
+
+        $result = $this->resolver->isValueInherited(20, 1, 2, 'section', 'field');
+
+        $this->assertTrue($result);
+    }
+
+    /**
+     * Test 10: isValueInherited returns false when value from child
+     */
+    public function testIsValueInheritedReturnsFalseForChildValue(): void
+    {
+        $hierarchy = [
+            ['theme_id' => 20, 'theme_code' => 'child', 'level' => 0],
+            ['theme_id' => 10, 'theme_code' => 'parent', 'level' => 1]
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+        $this->valueServiceMock->method('getSingleValue')->willReturn('child_value');
+
+        $result = $this->resolver->isValueInherited(20, 1, 2, 'section', 'field');
+
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Test 11: isValueInherited returns false when value from config default
+     */
+    public function testIsValueInheritedReturnsFalseForConfigDefault(): void
+    {
+        $hierarchy = [['theme_id' => 10, 'theme_code' => 'child', 'level' => 0]];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+        $this->valueServiceMock->method('getSingleValue')->willReturn(null);
+        $this->configProviderMock->method('getFieldDefault')->willReturn('default_value');
+
+        $result = $this->resolver->isValueInherited(10, 1, 2, 'section', 'field');
+
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Test 12: getInheritedFromTheme returns parent theme info
+     */
+    public function testGetInheritedFromThemeReturnsParentInfo(): void
+    {
+        $parentThemeInfo = ['theme_id' => 10, 'theme_code' => 'parent', 'level' => 1, 'theme_title' => 'Parent'];
+
+        $hierarchy = [
+            ['theme_id' => 20, 'theme_code' => 'child', 'level' => 0],
+            $parentThemeInfo
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+        $this->valueServiceMock->expects($this->exactly(2))
+            ->method('getSingleValue')
+            ->willReturnCallback(fn($themeId) => $themeId === 10 ? 'parent_value' : null);
+
+        $result = $this->resolver->getInheritedFromTheme(20, 1, 2, 'section', 'field');
+
+        $this->assertEquals($parentThemeInfo, $result);
+        $this->assertEquals('parent', $result['theme_code']);
+    }
+
+    /**
+     * Test 13: getInheritedFromTheme returns null when value from child
+     */
+    public function testGetInheritedFromThemeReturnsNullForChildValue(): void
+    {
+        $hierarchy = [
+            ['theme_id' => 20, 'theme_code' => 'child', 'level' => 0],
+            ['theme_id' => 10, 'theme_code' => 'parent', 'level' => 1]
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+        $this->valueServiceMock->method('getSingleValue')->willReturn('child_value');
+
+        $result = $this->resolver->getInheritedFromTheme(20, 1, 2, 'section', 'field');
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test 14: getInheritedFromTheme returns null when value from config
+     */
+    public function testGetInheritedFromThemeReturnsNullForConfigDefault(): void
+    {
+        $hierarchy = [['theme_id' => 10, 'theme_code' => 'child', 'level' => 0]];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+        $this->valueServiceMock->method('getSingleValue')->willReturn(null);
+        $this->configProviderMock->method('getFieldDefault')->willReturn('default_value');
+
+        $result = $this->resolver->getInheritedFromTheme(10, 1, 2, 'section', 'field');
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test 15: resolveAllValues with userId parameter
+     */
+    public function testResolveAllValuesWithUserId(): void
+    {
+        $themeId = 10;
+        $storeId = 1;
+        $statusId = 1; // DRAFT
+        $userId = 5;
+
+        $hierarchy = [['theme_id' => 10, 'theme_code' => 'child', 'level' => 0]];
+        $values = [['section_code' => 'header', 'setting_code' => 'logo', 'value' => 'user_logo.png']];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        $this->valueServiceMock->expects($this->once())
+            ->method('getValuesByTheme')
+            ->with(10, $storeId, $statusId, $userId)
+            ->willReturn($values);
+
+        $result = $this->resolver->resolveAllValues($themeId, $storeId, $statusId, $userId);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('user_logo.png', $result[0]['value']);
+    }
+
+    /**
+     * Test 16: resolveSingleValue with userId parameter
+     */
+    public function testResolveSingleValueWithUserId(): void
+    {
+        $themeId = 10;
+        $storeId = 1;
+        $statusId = 1; // DRAFT
+        $userId = 5;
+
+        $hierarchy = [['theme_id' => 10, 'theme_code' => 'child', 'level' => 0]];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        $this->valueServiceMock->expects($this->once())
+            ->method('getSingleValue')
+            ->with(10, $storeId, $statusId, 'header', 'logo', $userId)
+            ->willReturn('user_logo.png');
+
+        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, 'header', 'logo', $userId);
+
+        $this->assertEquals('user_logo.png', $result['value']);
+    }
+
+    /**
+     * Test 17: Child value overrides parent when both exist (first match wins)
+     */
+    public function testChildValueOverridesParentInResolveSingleValue(): void
+    {
+        $hierarchy = [
+            ['theme_id' => 20, 'theme_code' => 'child', 'level' => 0],
+            ['theme_id' => 10, 'theme_code' => 'parent', 'level' => 1]
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        // Both child and parent have value, but child should win
+        $this->valueServiceMock->expects($this->once()) // Only called once - stops at child
+            ->method('getSingleValue')
+            ->with(20, 1, 2, 'header', 'logo', null)
+            ->willReturn('child_logo.png');
+
+        $result = $this->resolver->resolveSingleValue(20, 1, 2, 'header', 'logo');
+
+        $this->assertEquals('child_logo.png', $result['value']);
+        $this->assertFalse($result['isInherited']);
+        $this->assertEquals(0, $result['inheritanceLevel']);
+    }
+
+    /**
+     * Test 18: Deep hierarchy (4 levels) correctly merges values
+     */
+    public function testResolveAllValuesWithDeepHierarchy(): void
+    {
+        $hierarchy = [
+            ['theme_id' => 40, 'theme_code' => 'great-grandchild', 'level' => 0],
+            ['theme_id' => 30, 'theme_code' => 'grandchild', 'level' => 1],
+            ['theme_id' => 20, 'theme_code' => 'child', 'level' => 2],
+            ['theme_id' => 10, 'theme_code' => 'parent', 'level' => 3]
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        $this->valueServiceMock->method('getValuesByTheme')
+            ->willReturnCallback(function ($themeId) {
+                return match($themeId) {
+                    10 => [['section_code' => 's1', 'setting_code' => 'f1', 'value' => 'v1_parent']],
+                    20 => [['section_code' => 's1', 'setting_code' => 'f1', 'value' => 'v1_child']],
+                    30 => [['section_code' => 's2', 'setting_code' => 'f2', 'value' => 'v2_grandchild']],
+                    40 => [['section_code' => 's1', 'setting_code' => 'f1', 'value' => 'v1_great']],
+                };
+            });
+
+        $result = $this->resolver->resolveAllValues(40, 1, 2);
+
+        $this->assertCount(2, $result);
+        
+        // s1.f1 should be from great-grandchild (last override)
+        $s1f1 = array_values(array_filter($result, fn($v) => $v['section_code'] === 's1'));
+        $this->assertEquals('v1_great', $s1f1[0]['value']);
+        
+        // s2.f2 should be from grandchild (only one with this value)
+        $s2f2 = array_values(array_filter($result, fn($v) => $v['section_code'] === 's2'));
+        $this->assertEquals('v2_grandchild', $s2f2[0]['value']);
+    }
+
+    /**
+     * Test 19: Empty values from themes don't break merging
+     */
+    public function testResolveAllValuesHandlesEmptyThemeValues(): void
+    {
+        $hierarchy = [
+            ['theme_id' => 30, 'theme_code' => 'child', 'level' => 0],
+            ['theme_id' => 20, 'theme_code' => 'parent', 'level' => 1],
+            ['theme_id' => 10, 'theme_code' => 'grandparent', 'level' => 2]
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        $this->valueServiceMock->method('getValuesByTheme')
+            ->willReturnCallback(function ($themeId) {
+                return match($themeId) {
+                    10 => [['section_code' => 'header', 'setting_code' => 'logo', 'value' => 'logo.png']],
+                    20 => [], // Parent has no values
+                    30 => [['section_code' => 'footer', 'setting_code' => 'text', 'value' => 'Footer']],
+                };
+            });
+
+        $result = $this->resolver->resolveAllValues(30, 1, 2);
+
+        $this->assertCount(2, $result);
+    }
+
+    /**
+     * Test 20: Correct merge order (parent values applied before child)
+     */
+    public function testResolveAllValuesMergeOrderIsCorrect(): void
+    {
+        $hierarchy = [
+            ['theme_id' => 20, 'theme_code' => 'child', 'level' => 0],
+            ['theme_id' => 10, 'theme_code' => 'parent', 'level' => 1]
+        ];
+
+        $parentValues = [
+            ['section_code' => 's1', 'setting_code' => 'f1', 'value' => 'parent_value']
+        ];
+
+        $childValues = [
+            ['section_code' => 's1', 'setting_code' => 'f1', 'value' => 'child_value']
+        ];
+
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        // Mock to track call order
+        $callOrder = [];
+        $this->valueServiceMock->method('getValuesByTheme')
+            ->willReturnCallback(function ($themeId) use (&$callOrder, $parentValues, $childValues) {
+                $callOrder[] = $themeId;
+                return $themeId === 10 ? $parentValues : $childValues;
+            });
+
+        $result = $this->resolver->resolveAllValues(20, 1, 2);
+
+        // Verify parent was called first (due to array_reverse in implementation)
+        $this->assertEquals([10, 20], $callOrder);
+        
+        // Verify child value won
+        $this->assertEquals('child_value', $result[0]['value']);
+    }
+}
