@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
+use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\Serialize\SerializerInterface;
@@ -50,6 +51,14 @@ class Config extends AbstractConfigResolver implements ResolverInterface
 
         // 4. Визначити статус
         $statusCode = $args['status'] ?? 'PUBLISHED';
+        
+        // Validate: PUBLICATION not supported for this query
+        if ($statusCode === 'PUBLICATION') {
+            throw new GraphQlInputException(
+                __('PUBLICATION status is not supported. Use breezeThemeEditorConfigFromPublication query instead.')
+            );
+        }
+        
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
         // 5. Отримати конфігурацію з inheritance

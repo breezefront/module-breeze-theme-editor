@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
+use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Swissup\BreezeThemeEditor\Model\Service\ImportExportService;
@@ -36,28 +37,29 @@ class ExportSettings implements ResolverInterface
             : $this->themeResolver->getThemeIdByStoreId($storeId);
 
         $statusCode = $args['status'] ?? 'PUBLISHED';
+        
+        // Validate: PUBLICATION not supported for export
+        if ($statusCode === 'PUBLICATION') {
+            throw new GraphQlInputException(
+                __('PUBLICATION status is not supported for export. Export from DRAFT or PUBLISHED status only.')
+            );
+        }
+        
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
-        // Export
-        $jsonData = $this->importExportService->export(
+        // Export - fix bug: pass $statusCode not $statusId
+        $result = $this->importExportService->export(
             $themeId,
             $storeId,
-            $statusId,
+            $statusCode, // ← Fixed: was $statusId
             $statusCode === 'DRAFT' ? $userId : null
-        );
-
-        $filename = sprintf(
-            'breeze-theme-editor-%s-store%d-%s.json',
-            $themeId,
-            $storeId,
-            date('Y-m-d-His')
         );
 
         return [
             'success' => true,
             'message' => __('Settings exported successfully'),
-            'jsonData' => $jsonData,
-            'filename' => $filename
+            'jsonData' => $result['jsonData'],
+            'filename' => $result['filename']
         ];
     }
 }

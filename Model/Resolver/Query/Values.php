@@ -7,6 +7,7 @@ use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
+use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
@@ -39,6 +40,13 @@ class Values implements ResolverInterface
 
         $statusCode = $args['status'] ?? 'PUBLISHED';
         $sectionCodes = $args['sectionCodes'] ?? null;
+
+        // Validate: PUBLICATION not supported for this query
+        if ($statusCode === 'PUBLICATION') {
+            throw new GraphQlInputException(
+                __('PUBLICATION status is not supported. Use breezeThemeEditorConfigFromPublication query to load historical values.')
+            );
+        }
 
         // Отримати userId з токена
         $userId = $this->userResolver->getCurrentUserId();
