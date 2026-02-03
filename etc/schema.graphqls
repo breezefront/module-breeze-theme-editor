@@ -1,7 +1,12 @@
 enum BreezeThemeEditorStatusCode {
     DRAFT
     PUBLISHED
-    PUBLICATION
+}
+
+enum BreezeThemeEditorCssStatusCode {
+    DRAFT
+    PUBLISHED
+    PUBLICATION @doc(description: "Read-only: Load CSS from historical publication")
 }
 
 enum BreezeThemeEditorFieldType {
@@ -84,7 +89,7 @@ type Query {
     getThemeEditorCss(
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
-        status: BreezeThemeEditorStatusCode
+        status: BreezeThemeEditorCssStatusCode
         publicationId: Int @doc(description: "For PUBLICATION status: load CSS from this publication")
     ): BreezeThemeEditorCssOutput @doc(description: "Get generated CSS for specific status") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\GetCss")
 }
@@ -327,7 +332,7 @@ type BreezeThemeEditorStatus {
 
 type BreezeThemeEditorCssOutput {
     css: String! @doc(description: "Generated CSS code")
-    status: BreezeThemeEditorStatusCode!
+    status: BreezeThemeEditorCssStatusCode!
     hasContent: Boolean! @doc(description: "True if CSS contains real variables (not empty)")
 }
 
