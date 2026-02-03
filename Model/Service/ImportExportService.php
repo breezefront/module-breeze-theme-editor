@@ -129,8 +129,8 @@ class ImportExportService
         $skipped = count($errors);
 
         if (!empty($models) && empty($errors)) {
-            // Видалити існуючі якщо потрібно
-            if (!$overwriteExisting) {
+            // Delete existing values if overwrite mode enabled
+            if ($overwriteExisting) {
                 $this->valueService->deleteValues(
                     $themeId,
                     $storeId,
