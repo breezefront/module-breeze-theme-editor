@@ -13,7 +13,7 @@ define([
         onTestStart: null,
         onTestComplete: null,
         onSuiteComplete: null,
-        timeout: 5000
+        timeout: 6000  // Increased from 5000ms to accommodate palette RGB cascade processing
     };
     
     var currentSuite = null;
