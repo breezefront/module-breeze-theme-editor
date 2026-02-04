@@ -7,6 +7,7 @@ use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 
 /**
  * Generate CSS from saved theme values
@@ -16,7 +17,8 @@ class CssGenerator
     public function __construct(
         private ValueService $valueService,
         private StatusProvider $statusProvider,
-        private ConfigProvider $configProvider
+        private ConfigProvider $configProvider,
+        private ColorFormatResolver $colorFormatResolver
     ) {}
 
     /**
@@ -272,7 +274,10 @@ class CssGenerator
         return match ($fieldType) {
             'color' => $this->formatColor(
                 $value,
-                $field['format'] ?? null,
+                $this->colorFormatResolver->resolve(
+                    $field['format'] ?? null,
+                    $field['default'] ?? null
+                ),
                 $field['default'] ?? null
             ),
             'font_picker' => $this->formatFont($value),
@@ -363,10 +368,12 @@ class CssGenerator
     /**
      * Format color value with configurable output format
      * 
+     * NOTE: $format parameter should be resolved via ColorFormatResolver::resolve()
+     * before calling this method to ensure proper format detection from field config.
+     * 
      * Format options:
      * - 'hex': Output HEX format (Breeze 3.0) → #ffffff
      * - 'rgb': Output RGB format (Breeze 2.0) → 255, 255, 255
-     * - 'auto': Auto-detect from value format
      * 
      * Supports:
      * - Palette references with format:
@@ -377,11 +384,11 @@ class CssGenerator
      * - RGB colors: 255, 255, 255 → format based on $format parameter
      * 
      * @param string $value Color value (HEX, RGB, or palette reference)
-     * @param string|null $format Output format: 'hex' (default), 'rgb', or 'auto'
-     * @param string|null $defaultValue Default value for auto-detection (optional)
+     * @param string $format Output format: 'hex' or 'rgb' (resolved, never 'auto' or null)
+     * @param string|null $defaultValue Default value (optional, for backward compatibility)
      * @return string Formatted color value
      */
-    private function formatColor(string $value, ?string $format = null, ?string $defaultValue = null): string
+    private function formatColor(string $value, string $format, ?string $defaultValue = null): string
     {
         // If it's a palette reference (starts with --)
         if (str_starts_with($value, '--')) {
@@ -397,23 +404,7 @@ class CssGenerator
             return $value;
         }
         
-        // Determine format: auto if default exists but no format specified, otherwise hex
-        if ($format === null) {
-            $format = ($defaultValue !== null) ? 'auto' : 'hex';
-        }
-        
-        $format = strtolower($format);
-        
-        // Auto-detect format from default value
-        if ($format === 'auto') {
-            if ($defaultValue !== null && ColorConverter::isRgb($defaultValue)) {
-                $format = 'rgb';
-            } else {
-                $format = 'hex';
-            }
-        }
-        
-        // Apply requested format
+        // Apply requested format (already resolved via ColorFormatResolver in formatValue)
         if ($format === 'rgb') {
             // Breeze 2.0: Output RGB format (255, 255, 255)
             if (ColorConverter::isHex($value)) {

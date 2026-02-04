@@ -7,6 +7,7 @@ use Swissup\BreezeThemeEditor\Model\Service\CssGenerator;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 
 /**
  * Unit tests for CssGenerator service
@@ -21,17 +22,20 @@ class CssGeneratorTest extends TestCase
     private ValueService $valueServiceMock;
     private StatusProvider $statusProviderMock;
     private ConfigProvider $configProviderMock;
+    private ColorFormatResolver $colorFormatResolverMock;
     
     protected function setUp(): void
     {
         $this->valueServiceMock = $this->createMock(ValueService::class);
         $this->statusProviderMock = $this->createMock(StatusProvider::class);
         $this->configProviderMock = $this->createMock(ConfigProvider::class);
+        $this->colorFormatResolverMock = $this->createMock(ColorFormatResolver::class);
         
         $this->cssGenerator = new CssGenerator(
             $this->valueServiceMock,
             $this->statusProviderMock,
-            $this->configProviderMock
+            $this->configProviderMock,
+            $this->colorFormatResolverMock
         );
     }
     
@@ -267,6 +271,13 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
         
+        // Mock ColorFormatResolver to return 'rgb' (explicit format)
+        $this->colorFormatResolverMock
+            ->expects($this->once())
+            ->method('resolve')
+            ->with('rgb', '#ffffff')
+            ->willReturn('rgb');
+        
         $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
         
         // Assert: Field maps to -rgb palette variant
@@ -420,6 +431,15 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
         
+        // Mock ColorFormatResolver for both fields
+        $this->colorFormatResolverMock
+            ->expects($this->exactly(2))
+            ->method('resolve')
+            ->willReturnCallback(function ($format, $default) {
+                // Return the explicit format (hex or rgb)
+                return $format;
+            });
+        
         $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
         
         // Assert: Same palette color referenced in different formats
@@ -490,4 +510,201 @@ class CssGeneratorTest extends TestCase
         
         $this->assertEquals(":root {\n}\n", $css, 'Should return empty :root block when no values');
     }
+    
+    /**
+     * Test 11: RGB format auto-detection for palette references
+     * 
+     * When a color field has:
+     * - default value in RGB format (e.g., "rgb(17, 24, 39)")
+     * - NO explicit "format" field in JSON config
+     * - value is a palette reference (e.g., "--color-brand-amber-dark")
+     * 
+     * Then ColorFormatResolver should auto-detect "rgb" format from the default value,
+     * and CssGenerator should append "-rgb" suffix to the palette reference.
+     * 
+     * Expected output: var(--color-brand-amber-dark-rgb)
+     * NOT: var(--color-brand-amber-dark)
+     */
+    public function testRgbFormatAutoDetectionForPaletteReference(): void
+    {
+        // Arrange: Mock status provider
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        
+        // Mock saved value: palette reference
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'test_section',
+                'setting_code' => 'text_color',
+                'value' => '--color-brand-amber-dark'  // Palette reference (HEX version)
+            ]
+        ]);
+        
+        // Mock config: field with RGB default but NO explicit format field
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'test_section',
+                    'name' => 'Test Section',
+                    'settings' => [
+                        [
+                            'id' => 'text_color',
+                            'type' => 'color',
+                            'default' => 'rgb(17, 24, 39)',  // RGB default → should trigger RGB format
+                            'css_var' => '--base-color',
+                            'palette' => 'default'
+                            // NO 'format' field → should auto-detect from default
+                        ]
+                    ]
+                ]
+            ],
+            'palettes' => []
+        ]);
+        
+        // Mock ColorFormatResolver to return 'rgb' (auto-detected from default)
+        $this->colorFormatResolverMock
+            ->expects($this->once())
+            ->method('resolve')
+            ->with(null, 'rgb(17, 24, 39)')
+            ->willReturn('rgb');
+        
+        // Act: Generate CSS
+        $css = $this->cssGenerator->generate(1, 1, 'DRAFT');
+        
+        // Assert: Should append -rgb suffix for RGB format
+        $this->assertStringContainsString(
+            '--base-color: var(--color-brand-amber-dark-rgb);',
+            $css,
+            'RGB format should add -rgb suffix to palette reference'
+        );
+        
+        $this->assertStringNotContainsString(
+            '--base-color: var(--color-brand-amber-dark);',
+            $css,
+            'Should NOT use HEX version without -rgb suffix when format is rgb'
+        );
+    }
+    
+    /**
+     * Test 12: HEX format for palette references (no -rgb suffix)
+     * 
+     * When a color field has:
+     * - default value in HEX format (e.g., "#1979c3")
+     * - value is a palette reference
+     * 
+     * Then should use HEX version WITHOUT -rgb suffix.
+     */
+    public function testHexFormatForPaletteReference(): void
+    {
+        // Arrange
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'test_section',
+                'setting_code' => 'button_color',
+                'value' => '--color-brand-primary'  // Palette reference
+            ]
+        ]);
+        
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'test_section',
+                    'settings' => [
+                        [
+                            'id' => 'button_color',
+                            'type' => 'color',
+                            'default' => '#1979c3',  // HEX default → should trigger HEX format
+                            'css_var' => '--button-bg'
+                        ]
+                    ]
+                ]
+            ],
+            'palettes' => []
+        ]);
+        
+        // Mock ColorFormatResolver to return 'hex'
+        $this->colorFormatResolverMock
+            ->expects($this->once())
+            ->method('resolve')
+            ->with(null, '#1979c3')
+            ->willReturn('hex');
+        
+        // Act
+        $css = $this->cssGenerator->generate(1, 1, 'DRAFT');
+        
+        // Assert: Should use HEX version (without -rgb suffix)
+        $this->assertStringContainsString(
+            '--button-bg: var(--color-brand-primary);',
+            $css,
+            'HEX format should use palette reference without -rgb suffix'
+        );
+        
+        $this->assertStringNotContainsString(
+            '--button-bg: var(--color-brand-primary-rgb);',
+            $css,
+            'Should NOT add -rgb suffix for HEX format'
+        );
+    }
+    
+    /**
+     * Test 13: RGB format converts HEX colors to RGB values
+     * 
+     * When a field has RGB format and value is a HEX color (not palette reference),
+     * should convert HEX to RGB format.
+     */
+    public function testRgbFormatConvertsHexToRgb(): void
+    {
+        // Arrange
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'test_section',
+                'setting_code' => 'text_color',
+                'value' => '#c87604'  // HEX color value
+            ]
+        ]);
+        
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'test_section',
+                    'settings' => [
+                        [
+                            'id' => 'text_color',
+                            'type' => 'color',
+                            'default' => 'rgb(17, 24, 39)',  // RGB default
+                            'css_var' => '--base-color'
+                        ]
+                    ]
+                ]
+            ],
+            'palettes' => []
+        ]);
+        
+        // Mock ColorFormatResolver to return 'rgb'
+        $this->colorFormatResolverMock
+            ->expects($this->once())
+            ->method('resolve')
+            ->with(null, 'rgb(17, 24, 39)')
+            ->willReturn('rgb');
+        
+        // Act
+        $css = $this->cssGenerator->generate(1, 1, 'DRAFT');
+        
+        // Assert: Should convert HEX to RGB
+        $this->assertStringContainsString(
+            '--base-color: 200, 118, 4;',
+            $css,
+            'RGB format should convert HEX color to RGB values'
+        );
+        
+        $this->assertStringNotContainsString(
+            '--base-color: #c87604;',
+            $css,
+            'Should NOT output HEX when format is RGB'
+        );
+    }
 }
+
