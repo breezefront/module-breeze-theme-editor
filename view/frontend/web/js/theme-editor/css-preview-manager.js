@@ -71,8 +71,13 @@ define([
                 PaletteManager.subscribe(function(cssVar, hexValue) {
                     console.log('🎨 Palette cascade:', cssVar, '→', hexValue);
                     
-                    // Update CSS variable in live preview (use hexValue - will be converted to RGB by _formatColorValue)
-                    self.setVariable(cssVar, hexValue, 'color');
+            // Update BOTH HEX and RGB versions in live preview
+            // This ensures fields with format:rgb can reference var(--palette-color-rgb)
+            self.setVariable(cssVar, hexValue, 'color');  // HEX version: --color-brand-primary
+            
+            // Convert HEX to RGB and set RGB version with explicit format
+            var rgbValue = ColorUtils.hexToRgb(hexValue);
+            self.setVariable(cssVar + '-rgb', rgbValue, 'color', { format: 'rgb' });  // RGB version: --color-brand-primary-rgb
                     
                     // Update color fields that reference this palette color
                     self._updateFieldsReferencingPalette(cssVar, hexValue);
@@ -197,8 +202,13 @@ define([
         /**
          * Set CSS variable (with automatic format conversion)
          * Only works in DRAFT mode (editable)
+         * 
+         * @param {String} varName - CSS variable name
+         * @param {String} value - Variable value
+         * @param {String} fieldType - Field type
+         * @param {Object} fieldData - Additional field data (format, defaultValue, etc.)
          */
-        setVariable: function(varName, value, fieldType) {
+        setVariable: function(varName, value, fieldType, fieldData) {
             // Check if editing is allowed
             if (!CssManager.isEditable()) {
                 console.warn('⚠️ Cannot edit in', CssManager.getCurrentStatus(), 'mode. Switch to DRAFT to edit.');
@@ -210,7 +220,7 @@ define([
                     return false;
                 }
             }
-            var formattedValue = this._formatValue(value, fieldType);
+            var formattedValue = this._formatValue(value, fieldType, fieldData);
             changes[varName] = formattedValue;
             this._updateStyles();
             console.log('🎨 CSS variable updated:', varName, '=', formattedValue, '(type:', fieldType, ')');
@@ -218,16 +228,43 @@ define([
         },
 
         /**
-         * Format value based on field type
+         * Remove CSS variable from changes
+         * Used when field is reset to palette reference - allows cascade via var()
+         * 
+         * @param {String} varName - CSS variable name (e.g., '--base-color')
+         * @returns {Boolean} true if variable was removed, false if not found
          */
-        _formatValue: function(value, fieldType) {
+        removeVariable: function(varName) {
+            if (!CssManager.isEditable()) {
+                console.warn('⚠️ Cannot edit in', CssManager.getCurrentStatus(), 'mode. Switch to DRAFT to edit.');
+                return false;
+            }
+
+            if (changes[varName]) {
+                delete changes[varName];
+                this._updateStyles();
+                console.log('🗑️ CSS variable removed:', varName);
+                return true;
+            }
+            return false;
+        },
+
+        /**
+         * Format value based on field type
+         * 
+         * @param {String} value - Field value
+         * @param {String} fieldType - Field type
+         * @param {Object} fieldData - Additional field data (format, defaultValue, etc.)
+         * @returns {String} Formatted value
+         */
+        _formatValue: function(value, fieldType, fieldData) {
             if (!fieldType || value === null || value === undefined) {
                 return String(value);
             }
             fieldType = fieldType.toLowerCase();
             switch (fieldType) {
                 case 'color':
-                    return this._formatColorValue(value);
+                    return this._formatColorValue(value, fieldData);
                 case 'font_picker':
                     return this._formatFont(value);
                 case 'toggle':
@@ -245,40 +282,28 @@ define([
         },
 
         /**
-         * Format color value: palette reference or HEX
+         * Format color value with auto-detection support
          * Matches backend CssGenerator::formatColor() logic
+         * 
+         * @param {String} value - Color value (HEX, RGB, or palette reference)
+         * @param {Object} fieldData - Field data including format and defaultValue
+         * @returns {String} Formatted color value
          */
-        _hexToRgb: function(hex) {
-            if (!hex) {
-                return hex;
-            }
-            if (!hex.toString().match(/^#?[0-9A-Fa-f]{3,6}$/)) {
-                return String(hex);
-            }
-            hex = hex.toString().replace('#', '');
-            if (hex.length === 3) {
-                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-            }
-            var r = parseInt(hex.substring(0, 2), 16);
-            var g = parseInt(hex.substring(2, 4), 16);
-            var b = parseInt(hex.substring(4, 6), 16);
-            return r + ', ' + g + ', ' + b;
-        },
-
-        /**
-         * Format color value: palette reference or HEX
-         * Matches backend CssGenerator::formatColor() logic (Breeze 3.0 format)
-         */
-        _formatColorValue: function(value) {
+        _formatColorValue: function(value, fieldData) {
             if (!value) {
                 return value;
             }
             
             value = String(value);
+            fieldData = fieldData || {};
             
             // Palette reference: --color-brand-primary → var(--color-brand-primary)
             if (value.startsWith('--')) {
-                return 'var(' + value + ')';
+                // Smart mapping: append -rgb suffix if field requires RGB format
+                if (fieldData.format === 'rgb') {
+                    return 'var(' + value + '-rgb)';  // --color-brand-primary-rgb
+                }
+                return 'var(' + value + ')';  // --color-brand-primary (HEX by default)
             }
             
             // Already wrapped: var(--color-test) → var(--color-test)
@@ -286,7 +311,45 @@ define([
                 return value;
             }
             
-            // HEX color: return as-is (Breeze 3.0 format)
+            // Determine format: auto if default exists but no format specified, otherwise hex
+            var format = fieldData.format;
+            if (!format) {
+                format = fieldData.defaultValue ? 'auto' : 'hex';
+            }
+            
+            format = format.toLowerCase();
+            
+            // Auto-detect format from default value
+            if (format === 'auto') {
+                var defaultValue = fieldData.defaultValue;
+                if (defaultValue && ColorUtils.isRgbColor(defaultValue)) {
+                    format = 'rgb';
+                } else {
+                    format = 'hex';
+                }
+            }
+            
+            // Apply requested format
+            if (format === 'rgb') {
+                // Breeze 2.0: Output RGB format (255, 255, 255)
+                if (ColorUtils.isHexColor(value)) {
+                    return ColorUtils.hexToRgb(value);  // #ffffff → 255, 255, 255
+                }
+                if (ColorUtils.isRgbColor(value)) {
+                    // Normalize: "rgb(255, 0, 0)" → "255, 0, 0"
+                    return ColorUtils.hexToRgb(value);  // hexToRgb handles rgb() wrapper
+                }
+            } else {
+                // Breeze 3.0: Output HEX format (#ffffff)
+                if (ColorUtils.isHexColor(value)) {
+                    return ColorUtils.normalizeHex(value);  // #FFFFFF → #ffffff
+                }
+                if (ColorUtils.isRgbColor(value)) {
+                    return ColorUtils.rgbToHex(value);  // 255, 255, 255 → #ffffff
+                }
+            }
+            
+            // Fallback: return as-is
             return value;
         },
 
@@ -309,27 +372,6 @@ define([
          */
         _escapeValue: function(value) {
             return value.replace(/\/\*/g, '/ *').replace(/\*\//g, '* /');
-        },
-
-        /**
-         * Handle hover effect to highlight changed fields
-         */
-        rgbToHex: function(rgb) {
-            if (!rgb) {
-                return '#000000';
-            }
-            var parts = rgb.toString().match(/\d+/g);
-            if (!parts || parts.length < 3) {
-                return '#000000';
-            }
-            var r = parseInt(parts[0]);
-            var g = parseInt(parts[1]);
-            var b = parseInt(parts[2]);
-            var toHex = function(n) {
-                var hex = Math.max(0, Math.min(255, n)).toString(16);
-                return hex.length === 1 ? '0' + hex : hex;
-            };
-            return '#' + toHex(r) + toHex(g) + toHex(b);
         },
 
         /**
