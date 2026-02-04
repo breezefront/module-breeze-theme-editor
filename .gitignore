@@ -16,7 +16,7 @@ composer.lock
 CHANGELOG.md
 ROADMAP.md
 THEME_DEVELOPER_GUIDE.md
-/docs/
+# /docs/  # Commented out to allow migration planning docs
 
 # PHPUnit
 .phpunit.result.cache
