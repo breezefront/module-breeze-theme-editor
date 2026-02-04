@@ -165,8 +165,32 @@ define([
                     // Update Save button counter
                     self._updateChangesCount();
                     
-                    // Update CSS preview
+                    // Update CSS preview with reset value
                     if (CssPreviewManager.isActive()) {
+                        // Get field info to determine how to update CSS variable
+                        var $field = self.element.find('[data-section="' + data.sectionCode + '"][data-field="' + data.fieldCode + '"]');
+                        var fieldCssVar = $field.attr('data-css-var');
+                        var fieldType = ($field.attr('data-type') || '').toLowerCase();
+                        
+                        if (fieldCssVar && data.value !== undefined) {
+                            // Check if reset value is palette reference (--color-*)
+                            if (typeof data.value === 'string' && data.value.startsWith('--color-')) {
+                                // Palette reference - remove from changes to allow cascade via var()
+                                // This allows var(--color-brand-amber-dark-rgb) to resolve correctly
+                                CssPreviewManager.removeVariable(fieldCssVar);
+                                console.log('🗑️ Removed', fieldCssVar, 'from live preview (reset to palette ref:', data.value + ')');
+                            } else {
+                                // Direct value (HEX/RGB) - update changes with formatted value
+                                var fieldData = {
+                                    format: $field.attr('data-format'),
+                                    defaultValue: $field.attr('data-default-value')
+                                };
+                                CssPreviewManager.setVariable(fieldCssVar, data.value, fieldType, fieldData);
+                                console.log('🔄 Updated', fieldCssVar, 'in live preview (reset to:', data.value + ')');
+                            }
+                        }
+                        
+                        // Refresh CSS output in iframe
                         CssPreviewManager.updatePreview();
                     }
                 }
