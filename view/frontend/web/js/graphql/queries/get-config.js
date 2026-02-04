@@ -37,6 +37,7 @@ define([
                         placeholder
                         helpText
                         palette
+                        format
                         validation {
                             minLength
                             maxLength

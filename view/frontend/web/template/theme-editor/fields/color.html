@@ -24,6 +24,7 @@
                  data-palette="<%= data.palette %>"
                  data-type="color"
                  data-default="<%= data.default %>"
+                 <% if (data.format) { %>data-format="<%= data.format %>"<% } %>
                  <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>
                  <%= data.required ? 'data-required="true"' : '' %>>
                 <div class="bte-color-preview" 
@@ -39,6 +40,7 @@
                 data-field="<%= data.code %>"
                 data-css-var="<%= data.cssVar %>"
                 data-type="color"
+                <% if (data.format) { %>data-format="<%= data.format %>"<% } %>
                 <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>
             />
         </div>

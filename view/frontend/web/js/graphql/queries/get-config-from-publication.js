@@ -37,6 +37,8 @@ define([
                         }
                         placeholder
                         helpText
+                        palette
+                        format
                         params {
                             min
                             max

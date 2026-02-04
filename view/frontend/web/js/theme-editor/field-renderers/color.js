@@ -35,6 +35,9 @@ define([
         data.palette = field.palette || null;
         data.paletteId = field.palette || null;
 
+        // Pass format for RGB/HEX handling
+        data.format = field.format || null;
+
         return data;
     };
 
