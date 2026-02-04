@@ -108,22 +108,34 @@ Swissup_BreezeThemeEditor::editor
 │ Admin Area: /admin/breeze_editor/editor/index           │
 │                                                          │
 │  ┌────────────────────────────────────────────────────┐ │
-│  │ Toolbar (Admin Layout)                             │ │
-│  │ - Scope Selector | Page Selector | Device Switch  │ │
-│  │ - Publication Controls | Exit Button              │ │
+│  │ Toolbar (All Components in Admin Context)         │ │
+│  │ - Navigation | Device Switcher | Status           │ │
+│  │ - Publication Selector | Save/Publish Actions     │ │
+│  │                                                     │ │
+│  │ 📦 Component Structure:                            │ │
+│  │   view/base/web/js/toolbar/                       │ │
+│  │     ├── navigation.js (shared)                    │ │
+│  │     ├── toolbar-toggle.js (shared)                │ │
+│  │     └── highlight-toggle.js (shared)              │ │
+│  │   view/adminhtml/web/js/editor/toolbar/           │ │
+│  │     ├── device-switcher.js (admin-adapted)        │ │
+│  │     ├── publication-selector.js (admin auth)      │ │
+│  │     └── status-indicator.js (new)                 │ │
+│  │   view/base/web/js/jstest/ (testing framework)    │ │
 │  └────────────────────────────────────────────────────┘ │
 │                                                          │
 │  ┌────────────────────────────────────────────────────┐ │
 │  │ <iframe src="/admin/breeze_editor/editor/iframe">  │ │
 │  │                                                     │ │
-│  │   [Frontend Preview - Store 1 - /category.html]   │ │
+│  │   [Frontend Preview - Pure Content Only]          │ │
 │  │                                                     │ │
-│  │   - No toolbar rendered                            │ │
-│  │   - Pure frontend content                          │ │
-│  │   - CSS variables applied                          │ │
+│  │   - NO toolbar                                     │ │
+│  │   - NO editor UI                                   │ │
+│  │   - CSS variables applied from draft              │ │
+│  │   - Jstest accessible for testing                 │ │
 │  │                                                     │ │
 │  └────────────────────────────────────────────────────┘ │
-│         ↕ PostMessage API (toolbar ↔ iframe)            │
+│         ↕ Device Switcher changes iframe width          │
 └──────────────────────────────────────────────────────────┘
          │
          │ GraphQL requests with admin session
@@ -138,7 +150,9 @@ Swissup_BreezeThemeEditor::editor
 - ✅ Admin session security
 - ✅ ACL integration
 - ✅ No token vulnerabilities
-- ✅ Clear separation of concerns
+- ✅ All toolbar logic in admin context (no cross-frame communication)
+- ✅ Shared components in `view/base` (DRY principle)
+- ✅ Jstest framework available for component testing
 - ✅ Standard Magento pattern
 
 ---
@@ -206,13 +220,14 @@ We use a **phased migration** strategy to minimize risk and allow testing at eac
 
 ### [Phase 3: UI & Toolbar Migration](./admin-migration-phase-3.md) 🟡
 
-**Goal:** Move toolbar to admin area with full functionality
+**Goal:** Migrate all toolbar components to admin area
 
 **Key Deliverables:**
-- Toolbar in admin layout
-- PostMessage bridge for iframe communication
-- All toolbar components working
-- Adapted JavaScript for admin context
+- Move shared components to `view/base/web/js/toolbar/`
+- Adapt admin-specific components in `view/adminhtml/web/js/editor/toolbar/`
+- Device switcher controls iframe width (no PostMessage bridge needed)
+- Publication selector with admin auth
+- Jstest framework accessible in admin context
 
 **Time:** 8-10 hours  
 **Status:** Not Started

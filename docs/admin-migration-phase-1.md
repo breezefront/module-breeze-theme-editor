@@ -21,9 +21,16 @@
 
 Phase 1 establishes the foundation for admin-based theme editing by creating:
 - Admin controllers that handle the editor interface
-- Iframe that renders frontend pages for preview
+- Minimal toolbar structure (navigation, status, save/publish)
+- Iframe that renders frontend pages for preview (content only)
 - Admin menu integration
 - Layout files for admin area
+
+**Architecture Decision:**
+- ✅ All toolbar components in admin context (no PostMessage bridge)
+- ✅ Shared components in `view/base/web/js/toolbar/`
+- ✅ Admin-specific components in `view/adminhtml/web/js/editor/toolbar/`
+- ✅ Jstest framework in `view/base/web/js/jstest/`
 
 **Key Principle:** Token system remains functional throughout Phase 1 as a safety net.
 
@@ -401,14 +408,14 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
 ### 4. Template Files (1 file)
 
 #### `view/adminhtml/templates/editor/index.phtml`
-**Purpose:** Main editor page template with iframe  
-**Lines:** ~100
+**Purpose:** Main editor page template - component-based initialization  
+**Lines:** ~50 (minimal PHP, delegates to RequireJS)
 
 ```php
 <?php
 /**
  * @var $block \Magento\Backend\Block\Template
- * @var $viewModel \Swissup\BreezeThemeEditor\ViewModel\Toolbar
+ * @var $viewModel \Swissup\BreezeThemeEditor\ViewModel\AdminToolbar
  */
 $viewModel = $block->getData('view_model');
 $storeId = $block->getData('store_id') ?: 1;
@@ -424,194 +431,66 @@ $iframeUrl = $block->getUrl('breeze_editor/editor/iframe', [
 ]);
 ?>
 
-<div id="breeze-theme-editor" class="breeze-editor-container">
+<!-- Minimal HTML structure - components will render their own UI -->
+<div id="bte-admin-editor" class="bte-admin-editor">
+    <!-- Toolbar container - populated by toolbar.js -->
+    <div id="bte-toolbar" class="bte-toolbar"></div>
     
-    <!-- Header / Toolbar Area -->
-    <div class="breeze-editor-toolbar">
-        <div class="toolbar-header">
-            <h1 class="toolbar-title">
-                <span class="toolbar-icon">🎨</span>
-                <?= $block->escapeHtml(__('Theme Editor')) ?>
-            </h1>
-            
-            <div class="toolbar-actions">
-                <!-- Store Selector -->
-                <div class="toolbar-control">
-                    <label><?= $block->escapeHtml(__('Store View:')) ?></label>
-                    <select id="store-selector" class="admin__control-select">
-                        <option value="1" <?= $storeId == 1 ? 'selected' : '' ?>>
-                            Default Store View
-                        </option>
-                        <!-- More stores will be populated by ViewModel in Phase 3 -->
-                    </select>
-                </div>
-
-                <!-- Page Selector -->
-                <div class="toolbar-control">
-                    <label><?= $block->escapeHtml(__('Page:')) ?></label>
-                    <select id="page-selector" class="admin__control-select">
-                        <option value="/"><?= $block->escapeHtml(__('Home Page')) ?></option>
-                        <!-- More pages in Phase 3 -->
-                    </select>
-                </div>
-
-                <!-- Device Switcher -->
-                <div class="toolbar-control toolbar-device-switcher">
-                    <button class="device-btn active" data-device="desktop" title="Desktop">
-                        🖥️
-                    </button>
-                    <button class="device-btn" data-device="tablet" title="Tablet">
-                        📱
-                    </button>
-                    <button class="device-btn" data-device="mobile" title="Mobile">
-                        📱
-                    </button>
-                </div>
-
-                <!-- Exit Button -->
-                <button id="exit-editor" class="action-secondary">
-                    <?= $block->escapeHtml(__('Exit Editor')) ?>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Iframe Container -->
-    <div class="breeze-editor-preview">
+    <!-- Panels container - for side panels (theme editor, etc) -->
+    <div id="bte-panels" class="bte-panels"></div>
+    
+    <!-- Iframe container -->
+    <div id="bte-preview" class="bte-preview">
         <iframe 
-            id="breeze-editor-iframe"
+            id="bte-iframe"
             src="<?= $block->escapeUrl($iframeUrl) ?>"
             frameborder="0"
-            width="100%"
-            height="100%"
             sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
         ></iframe>
     </div>
-
 </div>
 
-<style>
-    .breeze-editor-container {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        overflow: hidden;
-    }
-    
-    .breeze-editor-toolbar {
-        background: #fff;
-        border-bottom: 1px solid #ddd;
-        padding: 15px;
-        flex-shrink: 0;
-    }
-    
-    .toolbar-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    
-    .toolbar-title {
-        margin: 0;
-        font-size: 20px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .toolbar-actions {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-    }
-    
-    .toolbar-control {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .toolbar-device-switcher {
-        gap: 4px;
-    }
-    
-    .device-btn {
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        background: #fff;
-        cursor: pointer;
-        font-size: 18px;
-    }
-    
-    .device-btn.active {
-        background: #007bff;
-        color: #fff;
-        border-color: #007bff;
-    }
-    
-    .breeze-editor-preview {
-        flex: 1;
-        overflow: hidden;
-        position: relative;
-    }
-    
-    #breeze-editor-iframe {
-        display: block;
-    }
-</style>
-
-<script>
-require([
-    'jquery'
-], function($) {
-    'use strict';
-    
-    // Phase 1: Basic functionality
-    // Full implementation in Phase 3
-    
-    // Store selector change
-    $('#store-selector').on('change', function() {
-        var storeId = $(this).val();
-        window.location.href = '<?= $block->getUrl('breeze_editor/editor/index') ?>?store=' + storeId;
-    });
-    
-    // Page selector change
-    $('#page-selector').on('change', function() {
-        var url = $(this).val();
-        var iframe = $('#breeze-editor-iframe');
-        var currentSrc = iframe.attr('src');
-        var newSrc = currentSrc.replace(/url=[^&]*/, 'url=' + encodeURIComponent(url));
-        iframe.attr('src', newSrc);
-    });
-    
-    // Device switcher
-    $('.device-btn').on('click', function() {
-        $('.device-btn').removeClass('active');
-        $(this).addClass('active');
-        
-        var device = $(this).data('device');
-        var iframe = $('#breeze-editor-iframe');
-        
-        // Update iframe width based on device
-        switch(device) {
-            case 'mobile':
-                iframe.css('width', '375px');
-                break;
-            case 'tablet':
-                iframe.css('width', '768px');
-                break;
-            default:
-                iframe.css('width', '100%');
+<!-- Component-based initialization via x-magento-init -->
+<script type="text/x-magento-init">
+{
+    "#bte-admin-editor": {
+        "Swissup_BreezeThemeEditor/js/editor/toolbar": {
+            "storeId": <?= (int)$storeId ?>,
+            "themeId": <?= (int)$themeId ?>,
+            "jstest": <?= $jstest ? 'true' : 'false' ?>,
+            "iframeSelector": "#bte-iframe",
+            "graphqlEndpoint": "<?= $block->escapeUrl($block->getUrl('graphql')) ?>",
+            "components": {
+                "navigation": {
+                    "selector": "#bte-navigation",
+                    "items": [
+                        {"id": "theme-editor", "label": "<?= $block->escapeJs(__('Theme')) ?>", "icon": "icon-palette"}
+                    ]
+                },
+                "deviceSwitcher": {
+                    "selector": "#bte-device-switcher",
+                    "devices": ["desktop", "tablet", "mobile"],
+                    "default": "desktop"
+                },
+                "statusIndicator": {
+                    "selector": "#bte-status",
+                    "currentStatus": "<?= $block->escapeJs($viewModel->getCurrentPublicationStatus()) ?>",
+                    "draftChangesCount": <?= (int)$viewModel->getDraftChangesCount() ?>
+                }
+            }
         }
-    });
-    
-    // Exit button
-    $('#exit-editor').on('click', function() {
-        window.location.href = '<?= $block->getUrl('admin/dashboard') ?>';
-    });
-});
+    }
+}
 </script>
 ```
+
+**Key Architecture Points:**
+- ✅ Minimal PHP template (only config)
+- ✅ Uses `<script type="text/x-magento-init">` pattern (Magento standard)
+- ✅ No inline HTML/CSS for UI components
+- ✅ No inline JavaScript logic
+- ✅ All UI rendering delegated to RequireJS modules
+- ✅ Clean separation: template = config, JS = logic + UI
 
 **Location:** `view/adminhtml/templates/editor/index.phtml`
 
@@ -683,6 +562,215 @@ require([
 ```
 
 **Location:** `view/adminhtml/web/css/editor.css`
+
+---
+
+### 6. JavaScript Components (Phase 1 - Minimal Set)
+
+**Architecture:** Component-based with RequireJS + jQuery widgets
+
+#### `view/adminhtml/web/js/editor/toolbar.js`
+**Purpose:** Main coordinator - initializes toolbar components  
+**Lines:** ~100
+
+```javascript
+define([
+    'jquery',
+    'mage/template',
+    'text!Swissup_BreezeThemeEditor/template/editor/toolbar.html',
+    'Swissup_BreezeThemeEditor/js/toolbar/navigation',
+    'Swissup_BreezeThemeEditor/js/editor/toolbar/device-switcher',
+    'Swissup_BreezeThemeEditor/js/editor/toolbar/status-indicator'
+], function ($, mageTemplate, toolbarTemplate, navigation, deviceSwitcher, statusIndicator) {
+    'use strict';
+    
+    return function(config, element) {
+        console.log('🎨 Initializing admin toolbar', config);
+        
+        // Store config in body data for components access
+        $('body').data('bte-admin-config', {
+            storeId: config.storeId,
+            themeId: config.themeId,
+            graphqlEndpoint: config.graphqlEndpoint
+        });
+        
+        // Render toolbar HTML from template
+        var template = mageTemplate(toolbarTemplate);
+        var html = template({ data: config });
+        $(config.components.navigation.selector).parent().html(html);
+        
+        // Initialize navigation (from view/base - shared component)
+        $(config.components.navigation.selector).breezeNavigation({
+            items: config.components.navigation.items,
+            panelSelector: '#bte-panels'
+        });
+        
+        // Initialize device switcher (admin-specific)
+        $(config.components.deviceSwitcher.selector).breezeDeviceSwitcher({
+            devices: config.components.deviceSwitcher.devices,
+            default: config.components.deviceSwitcher.default,
+            iframeSelector: config.iframeSelector
+        });
+        
+        // Initialize status indicator (admin-specific)
+        $(config.components.statusIndicator.selector).breezeStatusIndicator({
+            currentStatus: config.components.statusIndicator.currentStatus,
+            draftChangesCount: config.components.statusIndicator.draftChangesCount
+        });
+        
+        console.log('✅ Admin toolbar initialized');
+    };
+});
+```
+
+#### `view/adminhtml/web/template/editor/toolbar.html`
+**Purpose:** Toolbar HTML template (Underscore.js format)  
+**Lines:** ~50
+
+```html
+<div class="bte-toolbar-container">
+    <div class="bte-toolbar-left">
+        <h1 class="bte-title">
+            <span class="bte-icon icon-palette"></span>
+            <%= data.title || 'Theme Editor' %>
+        </h1>
+        <div id="bte-navigation"></div>
+    </div>
+    
+    <div class="bte-toolbar-center">
+        <div id="bte-device-switcher"></div>
+    </div>
+    
+    <div class="bte-toolbar-right">
+        <div id="bte-status"></div>
+        <button id="bte-exit" class="action-secondary">
+            Exit Editor
+        </button>
+    </div>
+</div>
+```
+
+#### `view/adminhtml/web/js/editor/toolbar/device-switcher.js`
+**Purpose:** Device width switcher (desktop/tablet/mobile)  
+**Lines:** ~80
+
+```javascript
+define([
+    'jquery',
+    'jquery-ui-modules/widget'
+], function ($, widget) {
+    'use strict';
+    
+    $.widget('swissup.breezeDeviceSwitcher', {
+        options: {
+            devices: ['desktop', 'tablet', 'mobile'],
+            default: 'desktop',
+            iframeSelector: '#bte-iframe',
+            widths: {
+                desktop: '100%',
+                tablet: '768px',
+                mobile: '375px'
+            }
+        },
+        
+        _create: function() {
+            this._render();
+            this._bind();
+            this._setDevice(this.options.default);
+        },
+        
+        _render: function() {
+            var html = '<div class="device-switcher">';
+            this.options.devices.forEach(function(device) {
+                html += '<button class="device-btn" data-device="' + device + '">' +
+                        this._getDeviceIcon(device) +
+                        '</button>';
+            }.bind(this));
+            html += '</div>';
+            this.element.html(html);
+        },
+        
+        _bind: function() {
+            this.element.on('click', '.device-btn', $.proxy(this._onDeviceClick, this));
+        },
+        
+        _onDeviceClick: function(e) {
+            var device = $(e.currentTarget).data('device');
+            this._setDevice(device);
+        },
+        
+        _setDevice: function(device) {
+            this.element.find('.device-btn').removeClass('active');
+            this.element.find('[data-device="' + device + '"]').addClass('active');
+            
+            var $iframe = $(this.options.iframeSelector);
+            var width = this.options.widths[device];
+            $iframe.css('width', width);
+            
+            this.element.trigger('deviceChanged', [device]);
+        },
+        
+        _getDeviceIcon: function(device) {
+            var icons = {desktop: '🖥️', tablet: '📱', mobile: '📱'};
+            return icons[device] || '';
+        }
+    });
+    
+    return $.swissup.breezeDeviceSwitcher;
+});
+```
+
+#### `view/adminhtml/web/js/editor/toolbar/status-indicator.js`
+**Purpose:** Shows draft/published status  
+**Lines:** ~60
+
+```javascript
+define([
+    'jquery',
+    'jquery-ui-modules/widget'
+], function ($, widget) {
+    'use strict';
+    
+    $.widget('swissup.breezeStatusIndicator', {
+        options: {
+            currentStatus: 'DRAFT',
+            draftChangesCount: 0
+        },
+        
+        _create: function() {
+            this._render();
+        },
+        
+        _render: function() {
+            var icon = this.options.currentStatus === 'PUBLISHED' ? '✅' : '📝';
+            var badge = this.options.draftChangesCount > 0 
+                ? '<span class="badge">' + this.options.draftChangesCount + '</span>'
+                : '';
+            
+            this.element.html(
+                '<div class="status-indicator">' +
+                '  <span class="status-icon">' + icon + '</span>' +
+                '  <span class="status-label">' + this.options.currentStatus + '</span>' +
+                badge +
+                '</div>'
+            );
+        },
+        
+        setStatus: function(status, draftCount) {
+            this.options.currentStatus = status;
+            this.options.draftChangesCount = draftCount || 0;
+            this._render();
+            this.element.trigger('statusChanged', {status: status});
+        }
+    });
+    
+    return $.swissup.breezeStatusIndicator;
+});
+```
+
+**Note:** `navigation.js` is reused from `view/base/web/js/toolbar/navigation.js` (already exists in frontend, will be moved to base in Phase 3).
+
+**Location:** `view/adminhtml/web/js/editor/`
 
 ---
 

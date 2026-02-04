@@ -3,6 +3,43 @@
 **Purpose:** Code examples, Magento documentation links, troubleshooting guide  
 **Audience:** Developers implementing the migration
 
+**⚠️ Updated for Final Architecture:** All toolbar components in admin, no PostMessage bridge
+
+---
+
+## 🏗️ Architecture Quick Reference
+
+### Component Location Strategy
+
+```
+view/base/web/js/
+├── jstest/          → Testing framework (shared)
+└── toolbar/         → Context-agnostic UI components
+    ├── navigation.js
+    ├── toolbar-toggle.js
+    └── highlight-toggle.js
+
+view/adminhtml/web/js/editor/
+├── toolbar.js       → Main coordinator (admin-only)
+└── toolbar/         → Admin-specific components
+    ├── device-switcher.js
+    ├── publication-selector.js
+    ├── page-selector.js
+    ├── scope-selector.js
+    └── status-indicator.js
+
+view/frontend/
+└── (preview only - no toolbar)
+```
+
+### Key Principles
+
+1. **No PostMessage Bridge** - All toolbar logic in admin context
+2. **Shared Components in Base** - DRY principle for reusable widgets
+3. **Admin Session Auth** - No token URLs
+4. **Iframe Width Control** - Device switcher changes CSS, not DOM manipulation
+5. **Component-based Templates** - x-magento-init pattern, not inline HTML/JS
+
 ---
 
 ## 📚 Magento Official Documentation
