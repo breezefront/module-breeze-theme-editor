@@ -1,6 +1,10 @@
 # Swissup Breeze Theme Editor
 
-Visual theme customization tool for Magento 2 Breeze themes with live preview, draft/publish workflow, and 15+ field types.
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/breezefront/module-breeze-theme-editor/releases)
+[![License](https://img.shields.io/badge/license-OSL--3.0-green.svg)](LICENSE)
+[![PHP](https://img.shields.io/badge/php-7.4%20%7C%208.0%20%7C%208.1%20%7C%208.2-blue.svg)]()
+
+Visual theme customization tool for Magento 2 Breeze themes with live preview, draft/publish workflow, and 16+ field types.
 
 ## 📚 Documentation
 
@@ -16,7 +20,8 @@ Visual theme customization tool for Magento 2 Breeze themes with live preview, d
 
 - **Live Preview** - See changes instantly without page reload
 - **Draft/Publish Workflow** - Test before going live
-- **15+ Field Types** - Colors, fonts, toggles, images, spacing, repeaters, and more
+- **16+ Field Types** - Colors, fonts, toggles, images, spacing, repeaters, and more
+- **Dual Color Format Support** - RGB (Breeze 2.0) and HEX (Breeze 3.0) with auto-detection
 - **Theme Inheritance** - Extend parent theme configurations
 - **Multi-Store Support** - Different settings per store view
 - **Version Control** - Publication history with rollback
@@ -154,16 +159,120 @@ body {
 
 | Type | Description | CSS Output Example |
 |------|-------------|-------------------|
-| **color** | Color picker | `--color: 255, 0, 0` (RGB) |
+| **color** | Color picker with RGB/HEX support | `--color: 255, 0, 0` (RGB) or `--color: #ff0000` (HEX) |
 | **text** | Single line input | `--width: 1280px` |
+| **textarea** | Multi-line text input | `--content: "text..."` |
 | **number** | Numeric input | `--columns: 4` |
+| **range** | Slider control | `--opacity: 0.8` |
+| **select** | Dropdown selector | `--variant: primary` |
+| **checkbox** | Multiple selection | JSON data |
 | **toggle** | On/Off switch | `--enabled: 1` or `0` |
 | **font_picker** | Font selector | `--font: "Georgia", serif` |
+| **color_scheme** | Predefined color schemes | Multiple CSS vars |
+| **icon_set_picker** | Icon set selector | `--icon-set: fontawesome` |
 | **spacing** | 4-sided control | `--padding: 20px` or `10px 20px` |
 | **image_upload** | Image upload | `--logo: url(...)` |
+| **code** | Code editor | CSS/JS code |
+| **social_links** | Social media links | JSON data |
 | **repeater** | Dynamic lists | JSON data for JS |
 
+**Color Format Support:**
+- **Breeze 2.0 themes** use RGB format: `--color: 255, 0, 0`
+- **Breeze 3.0 themes** use HEX format: `--color: #ff0000`
+- Format is auto-detected from default value or set explicitly via `format` field
+
 **See full documentation:** https://docs.swissuplabs.com/m2/extensions/breeze-theme-editor/theme-developer-guide/
+
+## 🔌 GraphQL API Example
+
+The module provides a comprehensive GraphQL API for programmatic access:
+
+```graphql
+query {
+  breezeThemeEditorConfig(storeId: 1, status: DRAFT) {
+    version
+    sections {
+      code
+      label
+      fields {
+        code
+        label
+        type
+        value
+        default
+        format
+        cssVar
+      }
+    }
+    palettes {
+      id
+      label
+      groups {
+        colors {
+          id
+          label
+          value
+          cssVar
+          format
+        }
+      }
+    }
+  }
+}
+```
+
+**API Features:**
+- 10 Query operations (config, values, publications, presets, etc.)
+- 9 Mutation operations (save, publish, rollback, import/export, etc.)
+- Full support for draft/publish workflow
+- Publication history with changelog tracking
+
+**See full API documentation:** https://docs.swissuplabs.com/m2/extensions/breeze-theme-editor/graphql-api/
+
+## 🎨 Color Format Support (Breeze 2.0 vs 3.0)
+
+The Theme Editor supports both RGB and HEX color formats to ensure compatibility with different Breeze versions:
+
+### RGB Format (Breeze 2.0)
+
+```json
+{
+  "id": "primary_color",
+  "type": "color",
+  "default": "25, 121, 195",
+  "format": "rgb",
+  "css_var": "--primary-color"
+}
+```
+
+**CSS output:** `--primary-color: 25, 121, 195`
+
+**Usage:** `background: rgb(var(--primary-color))`
+
+### HEX Format (Breeze 3.0)
+
+```json
+{
+  "id": "primary_color",
+  "type": "color",
+  "default": "#1979c3",
+  "format": "hex",
+  "css_var": "--primary-color"
+}
+```
+
+**CSS output:** `--primary-color: #1979c3`
+
+**Usage:** `background: var(--primary-color)`
+
+### Auto-Detection
+
+If `format` is not specified, the Theme Editor automatically detects the format from the default value:
+- Contains comma → RGB format
+- Starts with `#` → HEX format
+- Contains `rgb()` wrapper → RGB format (wrapper is removed)
+
+**Note:** The GraphQL API includes the `format` field for all color values.
 
 ### 4. Enable and Access
 
@@ -210,22 +319,52 @@ php bin/magento cache:flush
 
 ## 🧪 Running Tests
 
+This module includes comprehensive test coverage:
+- **Backend Tests:** 25+ PHPUnit tests for PHP code
+- **Frontend Tests:** 24 JavaScript tests for UI components
+
+### Backend PHP Tests
+
+**Using Docker (Recommended):**
+
 ```bash
-# Run all unit tests
-vendor/bin/phpunit
-
-# Run specific test file
-vendor/bin/phpunit Test/Unit/Model/Service/CssGeneratorTest.php
-
-# Run with test names
-vendor/bin/phpunit --testdox
+cd /path/to/magento/root/src
+bin/clinotty bash -c "cd vendor/swissup/module-breeze-theme-editor && ../../bin/phpunit"
 ```
+
+**Using PHPUnit directly:**
+
+```bash
+cd vendor/swissup/module-breeze-theme-editor
+../../bin/phpunit
+```
+
+**Run specific test file:**
+
+```bash
+../../bin/phpunit Test/Unit/Model/Service/CssGeneratorTest.php
+```
+
+### Frontend JavaScript Tests
+
+Access the browser-based test runner:
+
+```
+http://your-store.com/?jstest=1&autorun=1
+```
+
+**URL Parameters:**
+- `jstest=1` - Enable test mode
+- `autorun=1` - Automatically run all tests on page load
+- `suite=<name>` - Run specific test suite only
+
+**For complete testing documentation, see [README-TESTS.md](README-TESTS.md)**
 
 ## 📋 Requirements
 
-- Magento 2.4.x
-- PHP 8.1+
-- Breeze theme
+- Magento 2.4.x or higher
+- PHP 7.4, 8.0, 8.1, or 8.2
+- Breeze Frontend (v2.0+ for RGB format, v3.0+ for HEX format)
 
 ## 🤝 Contributing
 
