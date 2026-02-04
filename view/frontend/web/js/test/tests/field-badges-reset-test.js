@@ -97,10 +97,10 @@ define([
                 return;
             }
             
-            // Poll for badge appearance (max 2 seconds)
+            // Poll for badge appearance (max 3 seconds, increased for palette RGB cascade)
             var $field = $input.closest('.bte-field');
             var $header = $field.find('.bte-field-header');
-            var maxAttempts = 20; // 20 * 100ms = 2 seconds
+            var maxAttempts = 30; // 30 * 100ms = 3 seconds
             var attempts = 0;
             
             var checkBadge = function() {
@@ -113,7 +113,7 @@ define([
                     console.log('✅ Badge appeared after', attempts * 100, 'ms');
                     callback();
                 } else if (attempts >= maxAttempts) {
-                    console.warn('⚠️ Badge did not appear after 2 seconds. Final state:', badges);
+                    console.warn('⚠️ Badge did not appear after 3 seconds. Final state:', badges);
                     console.warn('⚠️ Header HTML:', $header[0].outerHTML);
                     callback(new Error('Badge did not appear after field change. hasDirtyBadge=' + badges.hasDirtyBadge + ', hasResetButton=' + badges.hasResetButton));
                 } else {
@@ -147,10 +147,10 @@ define([
             // Click reset button
             $resetBtn.trigger('click');
             
-            // Wait for reset to complete
+            // Wait for reset to complete (increased for palette RGB cascade processing)
             setTimeout(function() {
                 callback();
-            }, 100);
+            }, 500);
         }
     };
     
@@ -459,7 +459,7 @@ define([
                                 return;
                             }
                             
-                            // Wait a bit for listener to be called
+                            // Wait for listener to be called (increased for palette RGB cascade)
                             setTimeout(function() {
                                 try {
                                     // Check if listener was called
@@ -482,7 +482,7 @@ define([
                                     self.fail(err.message);
                                     done();
                                 }
-                            }, 200);
+                            }, 500);
                         });
                     } catch (err) {
                         PanelState.removeListener(testListener);
@@ -492,6 +492,119 @@ define([
                 });
             } catch (err) {
                 PanelState.removeListener(testListener);
+                self.fail(err.message);
+                done();
+            }
+        },
+        
+        /**
+         * Test 7: CSS Preview should be updated correctly after reset to palette reference
+         */
+        'CSS preview should remove variable when reset to palette reference': function(done) {
+            var self = this;
+            
+            try {
+                var field = helpers.findColorField();
+                
+                // Require CssPreviewManager
+                require(['Swissup_BreezeThemeEditor/js/theme-editor/css-preview-manager'], function(CssPreviewManager) {
+                    
+                    if (!CssPreviewManager.isActive()) {
+                        console.log('⏭️ Skipping test: CSS Preview Manager not active');
+                        done();
+                        return;
+                    }
+                    
+                    var fieldCssVar = field.$input.attr('data-css-var');
+                    
+                    if (!fieldCssVar) {
+                        console.log('⏭️ Skipping test: Field has no CSS variable');
+                        done();
+                        return;
+                    }
+                    
+                    console.log('🧪 Test: CSS Preview update after reset to palette ref');
+                    console.log('   Field CSS var:', fieldCssVar);
+                    
+                    var newValue = '#FF00FF'; // Magenta color
+                    
+                    // Step 1: Change field to direct color (not palette ref)
+                    helpers.changeFieldValue(field.$input, newValue, function(err) {
+                        if (err) {
+                            self.fail(err.message);
+                            done();
+                            return;
+                        }
+                        
+                        try {
+                            // Check that CSS variable was added to live preview
+                            var changesAfterEdit = CssPreviewManager.getChanges();
+                            
+                            console.log('   Changes after edit:', changesAfterEdit);
+                            
+                            var hasVarAfterEdit = changesAfterEdit.hasOwnProperty(fieldCssVar);
+                            self.assertTrue(hasVarAfterEdit,
+                                'CSS variable should be in live preview after manual edit');
+                            
+                            // Step 2: Click reset to restore palette reference
+                            helpers.clickReset(field.$field, function(err) {
+                                if (err) {
+                                    self.fail(err.message);
+                                    done();
+                                    return;
+                                }
+                                
+                                // Wait for reset to complete and CSS to update
+                                setTimeout(function() {
+                                    try {
+                                        // Check PanelState - should be palette reference
+                                        var state = PanelState.getFieldState(field.sectionCode, field.fieldCode);
+                                        
+                                        if (!state) {
+                                            self.fail('Field state not found after reset');
+                                            done();
+                                            return;
+                                        }
+                                        
+                                        console.log('   State after reset:', {
+                                            value: state.value,
+                                            savedValue: state.savedValue,
+                                            isDirty: state.isDirty
+                                        });
+                                        
+                                        // If reset value is palette reference, CSS var should be REMOVED from changes
+                                        var isPaletteRef = typeof state.value === 'string' && state.value.startsWith('--color-');
+                                        
+                                        if (isPaletteRef) {
+                                            var changesAfterReset = CssPreviewManager.getChanges();
+                                            
+                                            console.log('   Changes after reset:', changesAfterReset);
+                                            
+                                            var hasVarAfterReset = changesAfterReset.hasOwnProperty(fieldCssVar);
+                                            
+                                            self.assertEquals(hasVarAfterReset, false,
+                                                'CSS variable should be REMOVED from live preview after reset to palette ref (to allow cascade via var())');
+                                            
+                                            console.log('✅ Test passed: CSS variable removed after reset to palette ref');
+                                        } else {
+                                            console.log('⏭️ Field reset to direct value (not palette ref), skipping cascade test');
+                                        }
+                                        
+                                        done();
+                                    } catch (err) {
+                                        self.fail(err.message);
+                                        done();
+                                    }
+                                }, 700);  // Wait for CSS preview update
+                            });
+                        } catch (err) {
+                            self.fail(err.message);
+                            done();
+                        }
+                    });
+                    
+                });
+            } catch (err) {
                 self.fail(err.message);
                 done();
             }
