@@ -99,9 +99,9 @@ define([
 
                 console.log('🎭 Mock registered for publicationId=1');
 
-                // Setup: Set live preview variables (simulating draft changes)
-                CssPreviewManager.setVariable('--test-color', 'rgb(255, 0, 0)', 'color');
-                CssPreviewManager.setVariable('--base-color', 'rgb(180, 24, 24)', 'color');
+                // Setup: Set live preview variables (simulating draft changes) with explicit RGB format
+                CssPreviewManager.setVariable('--test-color', 'rgb(255, 0, 0)', 'color', { format: 'rgb' });
+                CssPreviewManager.setVariable('--base-color', 'rgb(180, 24, 24)', 'color', { format: 'rgb' });
 
                 setTimeout(function() {
                     // Verify changes are present before switching
@@ -177,8 +177,8 @@ define([
                 CssManager.switchTo('DRAFT');
 
                 setTimeout(function() {
-                    // Setup: Set a live preview variable
-                    CssPreviewManager.setVariable('--link-color', 'rgb(140, 24, 24)', 'color');
+                    // Setup: Set a live preview variable with explicit RGB format
+                    CssPreviewManager.setVariable('--link-color', 'rgb(140, 24, 24)', 'color', { format: 'rgb' });
 
                     setTimeout(function() {
                         var $livePreviewBefore = self.$iframe().find('#bte-live-preview');
@@ -225,7 +225,7 @@ define([
             // First ensure CSS Manager is initialized
             this.waitFor(function() {
                 return CssManager.getCurrentStatus() !== null;
-            }, 2000, function(err) {
+            }, 1500, function(err) {  // Reduced from 2000ms to fit within 5000ms test timeout
                 if (err) {
                     self.fail('CSS Manager not initialized: ' + err.message);
                     done();
@@ -249,9 +249,9 @@ define([
                 CssManager.switchTo('DRAFT');
 
                 setTimeout(function() {
-                    // Create draft changes
-                    CssPreviewManager.setVariable('--base-color', 'rgb(180, 24, 24)', 'color');
-                    CssPreviewManager.setVariable('--test-publication-isolation', 'rgb(99, 99, 99)', 'color');
+                    // Create draft changes with explicit RGB format
+                    CssPreviewManager.setVariable('--base-color', 'rgb(180, 24, 24)', 'color', { format: 'rgb' });
+                    CssPreviewManager.setVariable('--test-publication-isolation', 'rgb(99, 99, 99)', 'color', { format: 'rgb' });
 
                     setTimeout(function() {
                         var $livePreviewBefore = self.$iframe().find('#bte-live-preview');
@@ -314,7 +314,7 @@ define([
                                 self.clearMocks();
                                 done();
 
-                            }, 1000);
+                            }, 2000);  // Increased timeout for palette cascade with RGB versions
 
                         }).catch(function(err) {
                             console.error('❌ Failed to switch to PUBLICATION:', err);
@@ -322,8 +322,8 @@ define([
                             self.clearMocks();
                             done();
                         });
-                    }, 300);
-                }, 200);
+                    }, 100);  // Reduced to fit within 5000ms test timeout
+                }, 100);  // Reduced to fit within 5000ms test timeout
             });
         },
 
