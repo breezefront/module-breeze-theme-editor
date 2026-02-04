@@ -1,0 +1,112 @@
+<?php
+
+namespace Swissup\BreezeThemeEditor\Controller\Adminhtml\Editor;
+
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
+use Magento\Framework\View\Result\PageFactory;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+
+abstract class AbstractEditor extends Action
+{
+    /**
+     * Authorization level of a basic admin session
+     *
+     * @see _isAllowed()
+     */
+    const ADMIN_RESOURCE = 'Swissup_BreezeThemeEditor::editor';
+
+    /**
+     * @var PageFactory
+     */
+    protected $resultPageFactory;
+
+    /**
+     * @var StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
+     * @var ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
+    /**
+     * @param Context $context
+     * @param PageFactory $resultPageFactory
+     * @param StoreManagerInterface $storeManager
+     * @param ScopeConfigInterface $scopeConfig
+     */
+    public function __construct(
+        Context $context,
+        PageFactory $resultPageFactory,
+        StoreManagerInterface $storeManager,
+        ScopeConfigInterface $scopeConfig
+    ) {
+        parent::__construct($context);
+        $this->resultPageFactory = $resultPageFactory;
+        $this->storeManager = $storeManager;
+        $this->scopeConfig = $scopeConfig;
+    }
+
+    /**
+     * Check if user has permission to access editor
+     *
+     * @return bool
+     */
+    protected function _isAllowed()
+    {
+        return $this->_authorization->isAllowed(self::ADMIN_RESOURCE);
+    }
+
+    /**
+     * Get current store ID from request
+     *
+     * @return int
+     */
+    protected function getStoreId()
+    {
+        $storeId = (int) $this->getRequest()->getParam('store', 0);
+        
+        // Validate store exists
+        try {
+            $this->storeManager->getStore($storeId);
+            return $storeId;
+        } catch (\Exception $e) {
+            return $this->storeManager->getDefaultStoreView()->getId();
+        }
+    }
+
+    /**
+     * Get current theme ID from request or store config
+     *
+     * @return int
+     */
+    protected function getThemeId()
+    {
+        $themeId = (int) $this->getRequest()->getParam('theme', 0);
+        
+        if ($themeId) {
+            return $themeId;
+        }
+        
+        // Get theme from store config
+        $storeId = $this->getStoreId();
+        return (int) $this->scopeConfig->getValue(
+            'design/theme/theme_id',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Check if jstest mode is enabled
+     *
+     * @return bool
+     */
+    protected function isJstestMode()
+    {
+        return (bool) $this->getRequest()->getParam('jstest', false);
+    }
+}

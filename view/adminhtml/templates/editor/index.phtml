@@ -1,0 +1,70 @@
+<?php
+/**
+ * @var $block \Magento\Backend\Block\Template
+ * @var $viewModel \Swissup\BreezeThemeEditor\ViewModel\Toolbar
+ */
+$viewModel = $block->getData('view_model');
+$storeId = $block->getData('store_id') ?: 1;
+$themeId = $block->getData('theme_id') ?: 0;
+$jstest = $block->getData('jstest') ?: false;
+
+// Build iframe URL
+$iframeUrl = $block->getUrl('breeze_editor/editor/iframe', [
+    'store' => $storeId,
+    'theme' => $themeId,
+    'url' => '/',
+    'jstest' => $jstest
+]);
+?>
+
+<!-- Minimal HTML structure - components will render their own UI -->
+<div id="bte-admin-editor" class="bte-admin-editor">
+    <!-- Toolbar container - populated by toolbar.js -->
+    <div id="bte-toolbar" class="bte-toolbar"></div>
+    
+    <!-- Panels container - for side panels (theme editor, etc) -->
+    <div id="bte-panels" class="bte-panels"></div>
+    
+    <!-- Iframe container -->
+    <div id="bte-preview" class="bte-preview">
+        <iframe 
+            id="bte-iframe"
+            src="<?= $block->escapeUrl($iframeUrl) ?>"
+            frameborder="0"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+        ></iframe>
+    </div>
+</div>
+
+<!-- Component-based initialization via x-magento-init -->
+<script type="text/x-magento-init">
+{
+    "#bte-admin-editor": {
+        "Swissup_BreezeThemeEditor/js/editor/toolbar": {
+            "storeId": <?= (int)$storeId ?>,
+            "themeId": <?= (int)$themeId ?>,
+            "jstest": <?= $jstest ? 'true' : 'false' ?>,
+            "iframeSelector": "#bte-iframe",
+            "graphqlEndpoint": "<?= $block->escapeUrl($block->getUrl('graphql')) ?>",
+            "components": {
+                "navigation": {
+                    "selector": "#bte-navigation",
+                    "items": [
+                        {"id": "theme-editor", "label": "<?= $block->escapeJs(__('Theme')) ?>", "icon": "icon-palette"}
+                    ]
+                },
+                "deviceSwitcher": {
+                    "selector": "#bte-device-switcher",
+                    "devices": ["desktop", "tablet", "mobile"],
+                    "default": "desktop"
+                },
+                "statusIndicator": {
+                    "selector": "#bte-status",
+                    "currentStatus": "DRAFT",
+                    "draftChangesCount": 0
+                }
+            }
+        }
+    }
+}
+</script>

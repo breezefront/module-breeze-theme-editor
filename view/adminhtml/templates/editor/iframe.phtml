@@ -1,0 +1,37 @@
+<?php
+/**
+ * Iframe template - redirects to frontend preview
+ *
+ * @var $block \Magento\Backend\Block\Template
+ */
+$storeId = $block->getData('store_id') ?: 1;
+$previewUrl = $block->getData('preview_url') ?: '/';
+$jstest = $block->getData('jstest') ?: false;
+
+// Build frontend URL
+$frontendUrl = $block->getUrl('', [
+    '_scope' => $storeId,
+    '_nosid' => true
+]);
+
+// Append preview URL path
+if ($previewUrl !== '/') {
+    $frontendUrl = rtrim($frontendUrl, '/') . '/' . ltrim($previewUrl, '/');
+}
+
+// Add jstest parameter if needed
+if ($jstest) {
+    $frontendUrl .= (strpos($frontendUrl, '?') !== false ? '&' : '?') . 'jstest=1';
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="refresh" content="0;url=<?= $block->escapeUrl($frontendUrl) ?>">
+    <title>Loading Preview...</title>
+</head>
+<body>
+    <p>Loading preview... <a href="<?= $block->escapeUrl($frontendUrl) ?>">Click here if not redirected</a></p>
+</body>
+</html>

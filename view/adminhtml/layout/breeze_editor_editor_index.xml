@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="Swissup_BreezeThemeEditor::css/editor.css"/>
+    </head>
+    <body>
+        <referenceContainer name="content">
+            <block class="Magento\Backend\Block\Template"
+                   name="breeze.editor.index"
+                   template="Swissup_BreezeThemeEditor::editor/index.phtml">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Swissup\BreezeThemeEditor\ViewModel\Toolbar</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>
