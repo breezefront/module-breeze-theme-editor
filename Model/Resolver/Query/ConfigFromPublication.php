@@ -11,6 +11,7 @@ use Magento\Framework\Api\SearchCriteriaBuilderFactory;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
@@ -23,12 +24,13 @@ class ConfigFromPublication extends AbstractConfigResolver implements ResolverIn
         SerializerInterface $serializer,
         ConfigProvider $configProvider,
         PaletteProvider $paletteProvider,
+        ColorFormatResolver $colorFormatResolver,
         private ThemeResolver $themeResolver,
         private PublicationRepositoryInterface $publicationRepository,
         private ChangelogRepositoryInterface $changelogRepository,
         private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory
     ) {
-        parent::__construct($serializer, $configProvider, $paletteProvider);
+        parent::__construct($serializer, $configProvider, $paletteProvider, $colorFormatResolver);
     }
 
     public function resolve(

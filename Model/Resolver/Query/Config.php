@@ -10,6 +10,7 @@ use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
@@ -22,13 +23,14 @@ class Config extends AbstractConfigResolver implements ResolverInterface
         SerializerInterface $serializer,
         ConfigProvider $configProvider,
         PaletteProvider $paletteProvider,
+        ColorFormatResolver $colorFormatResolver,
         private ValueInheritanceResolver $valueInheritanceResolver,
         private StatusProvider $statusProvider,
         private CompareProvider $compareProvider,
         private ThemeResolver $themeResolver,
         private UserResolver $userResolver
     ) {
-        parent::__construct($serializer, $configProvider, $paletteProvider);
+        parent::__construct($serializer, $configProvider, $paletteProvider, $colorFormatResolver);
     }
 
     public function resolve(

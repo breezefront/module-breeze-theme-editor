@@ -9,6 +9,7 @@ use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
@@ -29,6 +30,7 @@ class ConfigTest extends TestCase
     private SerializerInterface $serializerMock;
     private ConfigProvider $configProviderMock;
     private PaletteProvider $paletteProviderMock;
+    private ColorFormatResolver $colorFormatResolverMock;
     private ValueInheritanceResolver $valueInheritanceResolverMock;
     private StatusProvider $statusProviderMock;
     private CompareProvider $compareProviderMock;
@@ -45,6 +47,7 @@ class ConfigTest extends TestCase
         $this->serializerMock = $this->createMock(SerializerInterface::class);
         $this->configProviderMock = $this->createMock(ConfigProvider::class);
         $this->paletteProviderMock = $this->createMock(PaletteProvider::class);
+        $this->colorFormatResolverMock = $this->createMock(ColorFormatResolver::class);
         $this->valueInheritanceResolverMock = $this->createMock(ValueInheritanceResolver::class);
         $this->statusProviderMock = $this->createMock(StatusProvider::class);
         $this->compareProviderMock = $this->createMock(CompareProvider::class);
@@ -66,6 +69,7 @@ class ConfigTest extends TestCase
             $this->serializerMock,
             $this->configProviderMock,
             $this->paletteProviderMock,
+            $this->colorFormatResolverMock,
             $this->valueInheritanceResolverMock,
             $this->statusProviderMock,
             $this->compareProviderMock,

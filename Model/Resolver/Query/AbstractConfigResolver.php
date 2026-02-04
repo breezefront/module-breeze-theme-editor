@@ -6,6 +6,7 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 
 /**
  * Abstract base class for Config resolvers
@@ -16,7 +17,8 @@ abstract class AbstractConfigResolver
     public function __construct(
         protected SerializerInterface $serializer,
         protected ConfigProvider $configProvider,
-        protected PaletteProvider $paletteProvider
+        protected PaletteProvider $paletteProvider,
+        protected ColorFormatResolver $colorFormatResolver
     ) {}
 
     /**
@@ -37,7 +39,7 @@ abstract class AbstractConfigResolver
                 $currentValue = $valuesMap[$key] ?? null;
                 $defaultValue = $defaults[$key] ?? ($setting['default'] ?? null);
 
-                $fields[] = [
+                $field = [
                     'code' => $setting['id'],
                     'label' => $setting['label'],
                     'type' => strtoupper($setting['type']),
@@ -50,10 +52,24 @@ abstract class AbstractConfigResolver
                     'validation' => $this->formatValidation($setting),
                     'placeholder' => $setting['placeholder'] ?? null,
                     'helpText' => $setting['help_text'] ?? null,
-                    'palette' => $setting['palette'] ?? null,
                     'params' => $this->formatParams($setting),
                     'dependsOn' => $this->formatDependency($setting)
                 ];
+
+                // Add color-specific fields only when relevant (avoid null)
+                if (strtolower($setting['type']) === 'color') {
+                    if (isset($setting['palette'])) {
+                        $field['palette'] = $setting['palette'];
+                    }
+                    
+                    // Resolve format using centralized logic
+                    $field['format'] = $this->colorFormatResolver->resolve(
+                        $setting['format'] ?? null,
+                        $setting['default'] ?? null
+                    );
+                }
+
+                $fields[] = $field;
             }
 
             $result[] = [
