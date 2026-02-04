@@ -64,7 +64,7 @@ define([
                     
                     // Save change
                     console.log('🎨 Calling BaseHandler.handleChange with callback:', typeof callback);
-                    BaseHandler.handleChange($textInput, callback);
+                    self._handleColorChange($textInput, callback);
                     console.log('🎨 BaseHandler.handleChange completed');
                 } else {
                     console.log('⏳ Waiting for valid HEX:', value);
@@ -111,6 +111,22 @@ define([
          */
         isValidHex: function(value) {
             return /^#[0-9A-Fa-f]{6}$/.test(value);
+        },
+
+        /**
+         * Helper: Call BaseHandler.handleChange with color-specific options
+         * Extracts format and defaultValue from input element and passes to BaseHandler
+         * 
+         * @param {jQuery} $textInput - Color input element
+         * @param {Function} callback - Change callback
+         * @private
+         */
+        _handleColorChange: function($textInput, callback) {
+            var colorOptions = {
+                format: $textInput.data('format'),
+                defaultValue: $textInput.data('default')
+            };
+            BaseHandler.handleChange($textInput, callback, colorOptions);
         },
 
         /**
@@ -308,7 +324,7 @@ define([
                 }
                 
                 // Trigger change event
-                BaseHandler.handleChange($textInput, callback);
+                self._handleColorChange($textInput, callback);
             });
             
             // On save button click
@@ -348,7 +364,7 @@ define([
                     console.log('✅ Palette reference preserved (palette selection on save)');
                 }
                 
-                BaseHandler.handleChange($textInput, callback);
+                self._handleColorChange($textInput, callback);
                 
                 // Close popup after save
                 self._closeAllPopups();
@@ -414,7 +430,7 @@ define([
                 });
                 
                 // Trigger change event to save
-                BaseHandler.handleChange($textInput, callback);
+                self._handleColorChange($textInput, callback);
                 
                 // Clear flag after change is processed
                 // Use setTimeout to ensure flag is cleared after all events complete

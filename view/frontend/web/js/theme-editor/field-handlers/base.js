@@ -66,7 +66,9 @@ define([
 
             // Live preview
             if (fieldData.cssVar && ! options.skipPreview) {
-                CssPreviewManager.setVariable(fieldData.cssVar, fieldData.value, fieldData.type);
+                // Merge fieldData with options (color-specific data like format, defaultValue)
+                var previewData = Object.assign({}, fieldData, options);
+                CssPreviewManager.setVariable(fieldData.cssVar, fieldData.value, fieldData.type, previewData);
             }
 
             // Callback
