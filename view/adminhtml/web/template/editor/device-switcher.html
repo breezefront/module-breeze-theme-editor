@@ -1,0 +1,12 @@
+<div class="bte-device-switcher">
+    <% _.each(data.devices, function(device) { %>
+        <button type="button"
+            class="device-btn <%= device.active ? 'active' : '' %>"
+            data-device="<%= device.name %>"
+            title="<%= device.title %>">
+            <span class="device-icon">
+                <img src="<%= device.icon %>" alt="<%= device.title %>" width="16" height="16" />
+            </span>
+        </button>
+    <% }); %>
+</div>

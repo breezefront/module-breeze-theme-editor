@@ -1,0 +1,274 @@
+//
+// Breeze Theme Editor - Toolbar Components (Shared)
+// Buttons, Dividers, Icons, Device Switcher, Status, etc.
+// _____________________________________________
+
+.breeze-theme-editor-toolbar,
+.bte-toolbar {
+    // Generic Buttons
+    button {
+        font-weight: 400;
+        .select-status {
+            text-transform: uppercase;
+        }
+    }
+
+    .toolbar-button {
+        background: none;
+        .bte-toolbar-button();
+        text-decoration: none;
+
+        &.toolbar-button-exit {
+            .bte-toolbar-button(@bte-toolbar-exit-bg, @bte-toolbar-exit-bg-hover);
+            border-color: #982CE5;
+            border-width: 1px;
+            font-weight: 400;
+        }
+
+        &.toolbar-button-toggle {
+            .button-icon {
+                transition: @bte-toolbar-transform-transition;
+            }
+        }
+
+        &.active {
+            .bte-toolbar-button(@bte-toolbar-active-bg, @bte-toolbar-active-bg-hover);
+            border-color: @bte-toolbar-active-bg;
+        }
+    }
+
+    .button-icon {
+        font-size: 16px;
+    }
+
+    // Dividers
+    .toolbar-divider {
+        width: 1px;
+        height: 30px;
+        background: @bte-toolbar-divider;
+    }
+
+    // Admin Link
+    .toolbar-admin-link,
+    .bte-admin-link {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: @bte-toolbar-text;
+        text-transform: uppercase;
+        text-decoration: none;
+        padding: 8px 12px;
+        border-radius: @bte-toolbar-border-radius;
+        transition: @bte-toolbar-transition;
+
+        .bte-toolbar-hover-overlay(0.1);
+
+        img {
+            color: @bte-toolbar-icon;
+        }
+    }
+
+    .admin-icon {
+        .bte-flex-center();
+        .bte-icon-size(20px, 24px);
+
+        &.admin-icon-svg {
+            svg {
+                .bte-icon-size(20px, 24px);
+
+                g {
+                    fill: currentColor;
+                }
+            }
+        }
+
+        img {
+            .bte-icon-size(20px, 24px);
+            filter: brightness(0) invert(1);
+        }
+    }
+
+    .admin-username {
+        font-weight: 600;
+        font-size: @bte-toolbar-font-size;
+    }
+
+    // Navigation
+    .toolbar-nav {
+        display: flex;
+        gap: 5px;
+        
+        button {
+            .nav-text {
+                font-weight: 400;
+            }
+        }
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: @bte-toolbar-button-padding;
+        background: transparent;
+        border: none;
+        border-radius: @bte-toolbar-border-radius;
+        color: @bte-toolbar-text-muted;
+        cursor: pointer;
+        transition: @bte-toolbar-transition;
+        font-size: @bte-toolbar-font-size;
+        position: relative;
+
+        &.active {
+            background: @bte-toolbar-active-bg;
+            color: @bte-toolbar-text;
+        }
+
+        &.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: none;
+        }
+
+        &:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+    }
+
+    .nav-icon {
+        font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+            display: block;
+            width: 16px;
+            height: 16px;
+
+            path,
+            circle {
+                stroke: currentColor;
+                fill: currentColor;
+            }
+        }
+    }
+
+    .badge-pro {
+        font-size: 9px;
+        background: @bte-toolbar-badge-pro;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-weight: 700;
+        margin-left: 4px;
+        color: #000;
+        text-transform: uppercase;
+    }
+
+    // Device Switcher
+    .toolbar-devices,
+    .bte-device-switcher {
+        display: flex;
+        gap: 4px;
+    }
+
+    .device-button,
+    .device-btn {
+        min-width: 40px;
+        height: 40px;
+        padding: 8px;
+        border: none;
+        background: none;
+        border-radius: @bte-toolbar-border-radius;
+        cursor: pointer;
+        transition: @bte-toolbar-transition;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &.active {
+            border: none;
+            background: @bte-toolbar-active-bg;
+        }
+
+        &:not(.active) {
+            opacity: 0.6;
+        }
+
+        &:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 1;
+        }
+
+        .device-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        img,
+        svg {
+            width: 20px;
+            height: 20px;
+            filter: brightness(0) invert(1);
+        }
+    }
+
+    // Status Indicator
+    .bte-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: @bte-toolbar-border-radius;
+        font-size: @bte-toolbar-font-size-small;
+        font-weight: 500;
+        
+        &.status-draft {
+            .status-label {
+                color: @status-draft-color;
+            }
+        }
+        
+        &.status-published {
+            .status-label {
+                color: @status-published-color;
+            }
+        }
+    }
+
+    .status-icon {
+        font-size: 14px;
+    }
+
+    .status-label {
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    // Title
+    .bte-title {
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        color: @bte-toolbar-text;
+
+        svg {
+            width: 20px;
+            height: 20px;
+            
+            path,
+            circle {
+                fill: @bte-toolbar-text;
+            }
+        }
+
+        .bte-icon {
+            font-size: 20px;
+        }
+    }
+}

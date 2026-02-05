@@ -1,0 +1,171 @@
+/*
+ * Breeze Theme Editor - Variables
+ * Namespace: bte (Breeze Theme Editor)
+ * _____________________________________________
+*/
+
+/* Toolbar Colors */
+@bte-toolbar-bg: #131724;
+@bte-toolbar-bg-hover: #4a4542;
+@bte-toolbar-text: #fff;
+@bte-toolbar-text-muted: rgba(255, 255, 255, 0.8);
+@bte-toolbar-icon: #EC6737;
+
+/* Toolbar Buttons */
+/* @bte-toolbar-button-bg: rgba(255, 255, 255, 0.15); */
+@bte-toolbar-button-bg: none;
+@bte-toolbar-button-bg-hover: rgba(255, 255, 255, 0.2);
+@bte-toolbar-button-border: rgba(255, 255, 255, 0.2);
+@bte-toolbar-button-padding: 8px 14px;
+
+/* Toolbar Elements */
+@bte-toolbar-divider: rgba(255, 255, 255, 0.2);
+@bte-toolbar-select-padding: 8px 12px;
+
+/* Toolbar Special Buttons */
+@bte-toolbar-exit-bg: none;
+@bte-toolbar-exit-bg-hover: rgba(255, 255, 255, 0.2);
+@bte-toolbar-active-bg: linear-gradient(143.03deg, #982CE5 -10.01%, #1D6799 135.82%);
+@bte-toolbar-active-bg-hover: linear-gradient(143.03deg, #1D6799 -10.01%, #982CE5 135.82%);
+
+/* Toolbar Badges & Status */
+@bte-toolbar-badge-pro: #ff9800;
+@bte-toolbar-status-unpublished: #ff9800;
+
+/* Toolbar Highlight Mode */
+@bte-toolbar-highlight: rgba(33, 150, 243, 0.5);
+@bte-toolbar-highlight-hover: rgba(33, 150, 243, 1);
+@bte-toolbar-highlight-bg: rgba(33, 150, 243, 0.1);
+
+/* Toolbar Dropdown */
+@bte-toolbar-dropdown-bg: #2a2623;
+@bte-toolbar-dropdown-border: rgba(255, 255, 255, 0.15);
+
+/* Toolbar Dimensions */
+@bte-toolbar-height: 56px;
+@bte-toolbar-z-index: 10000;
+@bte-toolbar-compact-z-index: 9999;
+
+@bte-toolbar-padding-h: 20px;
+@bte-toolbar-padding-h-mobile: 10px;
+@bte-toolbar-gap: 20px;
+@bte-toolbar-gap-small: 10px;
+
+@bte-toolbar-border-radius: 6px;
+@bte-toolbar-border-radius-large: 12px;
+
+/* Toolbar Typography */
+@bte-toolbar-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+@bte-toolbar-font-size: 14px;
+@bte-toolbar-font-size-small: 13px;
+@bte-toolbar-font-size-tiny: 12px;
+
+/* Toolbar Transitions */
+@bte-toolbar-transition: all 0.2s ease;
+@bte-toolbar-transition-slow: all 0.3s ease;
+@bte-toolbar-transform-transition: transform 0.3s ease;
+
+/* Device breakpoints (already defined in Magento, but for reference) */
+/* @screen__m: 768px */
+/* @screen__l: 1024px */
+
+/*
+ * Field Status Badges
+ * _____________________________________________
+ */
+
+/* Modified (saved customization) - Blue */
+@bte-badge-modified-primary: #3b82f6;
+@bte-badge-modified-light: #60a5fa;
+@bte-badge-modified-bg-start: #dbeafe;
+@bte-badge-modified-bg-end: #bfdbfe;
+@bte-badge-modified-text: #1e40af;
+@bte-badge-modified-border: #60a5fa;
+
+/* Dirty (unsaved changes) - Yellow/Amber */
+@bte-badge-dirty-primary: #f59e0b;
+@bte-badge-dirty-light: #fbbf24;
+@bte-badge-dirty-bg-start: #fef3c7;
+@bte-badge-dirty-bg-end: #fde68a;
+@bte-badge-dirty-text: #92400e;
+@bte-badge-dirty-border: #fbbf24;
+
+/* Dark Mode - Modified */
+@bte-badge-modified-dark-bg-start: #1e3a8a;
+@bte-badge-modified-dark-bg-end: #1e40af;
+@bte-badge-modified-dark-text: #dbeafe;
+@bte-badge-modified-dark-border: #3b82f6;
+@bte-badge-modified-dark-dot: #60a5fa;
+
+/* Dark Mode - Dirty */
+@bte-badge-dirty-dark-bg-start: #451a03;
+@bte-badge-dirty-dark-bg-end: #78350f;
+@bte-badge-dirty-dark-text: #fef3c7;
+@bte-badge-dirty-dark-border: #92400e;
+@bte-badge-dirty-dark-icon: #fbbf24;
+
+/* Publication Selector Status Colors */
+@status-draft-color: #f59e0b; /* Amber/Orange*/
+@status-published-color: #10b981; /* Green */
+@status-historical-color: #6b7280; /* Gray */
+
+/* Dropdown Colors */
+@dropdown-section-title-color: #6b7280;
+@dropdown-action-bg: #f9fafb;
+@dropdown-action-hover-bg: #f3f4f6;
+@dropdown-item-meta-color: #9ca3af;
+
+/* Status Error */
+@status-error-color: #ef4444; /* Red */
+
+/* ============================================================================
+ * PUBLICATION SELECTOR - ADDITIONAL DROPDOWN VARIABLES
+ * ============================================================================ */
+
+/* Dropdown Structure */
+@dropdown-bg: @bte-toolbar-dropdown-bg; /* #2a2623 - темний фон */
+@dropdown-border: @bte-toolbar-dropdown-border; /* rgba(255, 255, 255, 0.15) */
+@dropdown-border-radius: 8px;
+@dropdown-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+@dropdown-z-index: 10050;
+
+/* Dropdown Header */
+@dropdown-header-bg: rgba(255, 255, 255, 0.05); /* Трохи світліший за dropdown */
+@dropdown-header-color: @bte-toolbar-text; /* #fff */
+
+/* Dropdown Divider */
+@dropdown-divider-color: rgba(255, 255, 255, 0.1);
+
+/* Dropdown Items */
+@dropdown-item-color: @bte-toolbar-text; /* #fff */
+@dropdown-item-hover-bg: rgba(255, 255, 255, 0.1);
+@dropdown-item-active-bg: rgba(236, 103, 55, 0.2); /* Помаранчевий з toolbar */
+@dropdown-item-active-color: @bte-toolbar-icon; /* #EC6737 */
+
+/* Dropdown Item Meta (dates, secondary text) */
+@dropdown-item-meta-color: @bte-toolbar-text-muted; /* rgba(255, 255, 255, 0.8) */
+
+/* Dropdown Section Title */
+@dropdown-section-title-color: @bte-toolbar-text-muted; /* rgba(255, 255, 255, 0.8) */
+
+/* Dropdown Action Item */
+@dropdown-action-bg: rgba(255, 255, 255, 0.03);
+@dropdown-action-hover-bg: rgba(255, 255, 255, 0.08);
+
+/* Toolbar Button Colors (for publication selector button) */
+@toolbar-button-bg: rgba(255, 255, 255, 0.05);
+@toolbar-button-border: rgba(255, 255, 255, 0.2);
+@toolbar-button-hover-bg: rgba(255, 255, 255, 0.1);
+@toolbar-button-hover-border: rgba(255, 255, 255, 0.3);
+@toolbar-button-active-bg: rgba(255, 255, 255, 0.15);
+@toolbar-button-active-border: rgba(255, 255, 255, 0.4);
+
+/* Toolbar General (if not already defined) */
+@toolbar-border-radius: @bte-toolbar-border-radius;
+@toolbar-text-color: @bte-toolbar-text;
+@toolbar-text-muted: @bte-toolbar-text-muted;
+@toolbar-primary-color: @bte-toolbar-icon; /* #EC6737 - помаранчевий замість синього */
+
+/* Responsive Breakpoints (reference existing Magento variables) */
+@screen-s: @screen__s;
+@screen-m: @screen__m;

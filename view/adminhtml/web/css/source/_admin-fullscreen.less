@@ -1,0 +1,42 @@
+//
+// Breeze Theme Editor - Admin Fullscreen Mode
+// _____________________________________________
+
+/* Fullscreen Mode - Hide Magento Admin UI */
+
+// Hide admin page wrapper, menu, header
+body.breeze-editor-fullscreen {
+    .page-wrapper,
+    .menu-wrapper,
+    .page-header,
+    .page-main-actions {
+        display: none !important;
+    }
+    
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+// Editor container takes full screen
+body.breeze-editor-fullscreen .bte-admin-editor {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    z-index: 10000;
+    margin: 0;
+    padding: 0;
+}
+
+// Remove any paddings from content area
+body.breeze-editor-fullscreen {
+    .page-content,
+    .admin__scope-old {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+}

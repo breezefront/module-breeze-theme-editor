@@ -1,0 +1,29 @@
+<div class="bte-page-selector">
+    <button type="button" class="toolbar-select">
+        <span class="select-text"><%- currentPageLabel %></span>
+        <span class="select-arrow">
+            <svg width="7" height="5" viewBox="0 0 7 5" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M3.35355 2.64645L6.00003 0L6.70713 0.70711L3.35355 4.06062L0 0.70711L0.70711 0L3.35355 2.64645Z" fill="currentColor"/>
+            </svg>
+        </span>
+    </button>
+
+    <div class="toolbar-dropdown" style="display: none;">
+        <div class="dropdown-header">
+            <span>Switch Page Type</span>
+        </div>
+
+        <div class="dropdown-content">
+            <% pages.forEach(function(page) { %>
+                <a href="#" 
+                   class="dropdown-item <%= page.id === currentPageId ? 'active' : '' %>" 
+                   data-page-id="<%- page.id %>">
+                    <span class="item-text"><%- page.label %></span>
+                    <% if (page.id === currentPageId) { %>
+                        <span class="item-check">✓</span>
+                    <% } %>
+                </a>
+            <% }); %>
+        </div>
+    </div>
+</div>

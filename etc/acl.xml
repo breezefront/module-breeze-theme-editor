@@ -3,11 +3,22 @@
     <acl>
         <resources>
             <resource id="Magento_Backend::admin">
+                <!-- Configuration under Stores -->
                 <resource id="Magento_Backend::stores">
                     <resource id="Magento_Backend::stores_settings">
                         <resource id="Magento_Config::config">
                             <resource id="Swissup_BreezeThemeEditor::config" title="Breeze Theme Editor Configuration" />
                         </resource>
+                    </resource>
+                </resource>
+                
+                <!-- Editor access under Content -->
+                <resource id="Magento_Backend::content">
+                    <resource id="Swissup_BreezeThemeEditor::editor" title="Breeze Theme Editor" sortOrder="100">
+                        <resource id="Swissup_BreezeThemeEditor::editor_view" title="View Theme Editor" sortOrder="10" />
+                        <resource id="Swissup_BreezeThemeEditor::editor_edit" title="Edit Themes" sortOrder="20" />
+                        <resource id="Swissup_BreezeThemeEditor::editor_publish" title="Publish Changes" sortOrder="30" />
+                        <resource id="Swissup_BreezeThemeEditor::editor_rollback" title="Rollback Changes" sortOrder="40" />
                     </resource>
                 </resource>
             </resource>

@@ -2,37 +2,81 @@
 
 namespace Swissup\BreezeThemeEditor\Controller\Adminhtml\Editor;
 
-use Magento\Framework\Controller\ResultInterface;
-use Magento\Framework\View\Result\Page;
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\Controller\Result\Raw;
+use Magento\Framework\Controller\Result\RawFactory;
 
-class Iframe extends AbstractEditor
+class Iframe extends AbstractEditor implements HttpGetActionInterface
 {
     /**
-     * Render frontend page in iframe (preview only - no toolbar)
+     * @var RawFactory
+     */
+    private $rawResultFactory;
+
+    /**
+     * @param \Magento\Backend\App\Action\Context $context
+     * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param RawFactory $rawResultFactory
+     */
+    public function __construct(
+        \Magento\Backend\App\Action\Context $context,
+        \Magento\Framework\View\Result\PageFactory $resultPageFactory,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        RawFactory $rawResultFactory
+    ) {
+        parent::__construct($context, $resultPageFactory, $storeManager, $scopeConfig);
+        $this->rawResultFactory = $rawResultFactory;
+    }
+
+    /**
+     * Render frontend page in iframe (pure redirect to frontend)
      *
-     * @return ResultInterface|Page
+     * @return Raw
      */
     public function execute()
     {
         $storeId = $this->getStoreId();
-        $themeId = $this->getThemeId();
-        $url = $this->getRequest()->getParam('url', '/');
+        $previewUrl = $this->getRequest()->getParam('url', '/');
         $jstest = $this->isJstestMode();
         
-        // Create page result for iframe content
-        $resultPage = $this->resultPageFactory->create();
-        
-        // Use minimal admin layout (no admin header/sidebar)
-        $resultPage->addHandle('breeze_editor_editor_iframe');
-        
-        // Pass data to layout
-        if ($block = $resultPage->getLayout()->getBlock('breeze.editor.iframe')) {
-            $block->setData('store_id', $storeId)
-                  ->setData('theme_id', $themeId)
-                  ->setData('preview_url', $url)
-                  ->setData('jstest', $jstest);
+        // Get frontend store URL
+        try {
+            $store = $this->storeManager->getStore($storeId);
+            $frontendUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
+            
+            // Append preview URL path
+            if ($previewUrl !== '/') {
+                $frontendUrl = rtrim($frontendUrl, '/') . '/' . ltrim($previewUrl, '/');
+            }
+            
+            // Add jstest parameter
+            if ($jstest) {
+                $frontendUrl .= (strpos($frontendUrl, '?') !== false ? '&' : '?') . 'jstest=1';
+            }
+        } catch (\Exception $e) {
+            $frontendUrl = '/';
         }
         
-        return $resultPage;
+        // Simple redirect HTML
+        $html = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script>window.location.href = ' . json_encode($frontendUrl) . ';</script>
+    <title>Loading Preview...</title>
+</head>
+<body style="margin:0;padding:20px;font-family:sans-serif;">
+    <p>Loading preview... <a href="' . htmlspecialchars($frontendUrl, ENT_QUOTES, 'UTF-8') . '">Click here if not redirected</a></p>
+</body>
+</html>';
+        
+        $result = $this->rawResultFactory->create();
+        $result->setHeader('Content-Type', 'text/html; charset=utf-8');
+        $result->setContents($html);
+        
+        return $result;
     }
 }

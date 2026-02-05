@@ -1,26 +1,48 @@
-<div class="bte-toolbar-container">
-    <div class="bte-toolbar-left">
-        <h1 class="bte-title">
-            <span class="bte-icon">🎨</span>
-            Theme Editor
-        </h1>
-    </div>
-    
-    <div class="bte-toolbar-center">
-        <div id="bte-device-switcher" class="bte-device-switcher">
-            <button class="device-btn active" data-device="desktop" title="Desktop">🖥️</button>
-            <button class="device-btn" data-device="tablet" title="Tablet">📱</button>
-            <button class="device-btn" data-device="mobile" title="Mobile">📱</button>
+<div class="bte-toolbar">
+    <div class="bte-toolbar-container">
+        <!-- Left Section -->
+        <div class="bte-toolbar-left">
+            <div id="bte-admin-link"></div>
+            <div class="toolbar-divider"></div>
+            
+            <h1 class="bte-title">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="3" cy="3" r="2" fill="white"/>
+                    <circle cx="10" cy="3" r="2" fill="white"/>
+                    <circle cx="17" cy="3" r="2" fill="white"/>
+                    <circle cx="3" cy="10" r="2" fill="white"/>
+                    <circle cx="10" cy="10" r="2" fill="white"/>
+                    <circle cx="17" cy="10" r="2" fill="white"/>
+                    <circle cx="3" cy="17" r="2" fill="white"/>
+                    <circle cx="10" cy="17" r="2" fill="white"/>
+                    <circle cx="17" cy="17" r="2" fill="white"/>
+                </svg>
+                <span>Theme Editor</span>
+            </h1>
+            
+            <div class="toolbar-divider"></div>
+            <div id="bte-navigation"></div>
         </div>
-    </div>
-    
-    <div class="bte-toolbar-right">
-        <div id="bte-status" class="bte-status">
-            <span class="status-icon">📝</span>
-            <span class="status-label">DRAFT</span>
+        
+        <!-- Center Section -->
+        <div class="bte-toolbar-center">
+            <!-- Publication Selector (Draft/Published switcher) -->
+            <div id="bte-publication-selector"></div>
+            
+            <!-- Scope Selector (Store switcher) -->
+            <div id="bte-scope-selector"></div>
+            
+            <!-- Page Selector (Page type navigator) -->
+            <div id="bte-page-selector"></div>
+            
+            <!-- Device Switcher (Desktop/Tablet/Mobile) -->
+            <div id="bte-device-switcher"></div>
         </div>
-        <button id="bte-exit" class="action-secondary">
-            Exit Editor
-        </button>
+        
+        <!-- Right Section -->
+        <div class="bte-toolbar-right">
+            <div id="bte-status"></div>
+            <button id="bte-exit" class="toolbar-button">Exit Editor</button>
+        </div>
     </div>
 </div>

@@ -14,7 +14,6 @@ class Index extends AbstractEditor
     public function execute()
     {
         $resultPage = $this->resultPageFactory->create();
-        $resultPage->setActiveMenu('Swissup_BreezeThemeEditor::editor');
         $resultPage->getConfig()->getTitle()->prepend(__('Theme Editor'));
         
         // Pass data to layout

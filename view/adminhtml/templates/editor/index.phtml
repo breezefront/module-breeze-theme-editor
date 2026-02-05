@@ -45,6 +45,8 @@ $iframeUrl = $block->getUrl('breeze_editor/editor/iframe', [
             "themeId": <?= (int)$themeId ?>,
             "jstest": <?= $jstest ? 'true' : 'false' ?>,
             "iframeSelector": "#bte-iframe",
+            "adminUrl": "<?= $block->escapeUrl($block->getUrl('adminhtml')) ?>",
+            "username": "<?= $block->escapeJs($viewModel ? $viewModel->getCurrentUser() : 'Admin') ?>",
             "graphqlEndpoint": "<?= $block->escapeUrl($block->getUrl('graphql')) ?>",
             "components": {
                 "navigation": {

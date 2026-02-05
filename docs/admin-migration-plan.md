@@ -101,7 +101,7 @@ Swissup_BreezeThemeEditor::editor
 - ❌ No ACL integration
 - ❌ Session conflicts possible
 
-### Target Architecture (Admin-Based)
+### Target Architecture (Admin-Based) - AS IMPLEMENTED
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -110,18 +110,18 @@ Swissup_BreezeThemeEditor::editor
 │  ┌────────────────────────────────────────────────────┐ │
 │  │ Toolbar (All Components in Admin Context)         │ │
 │  │ - Navigation | Device Switcher | Status           │ │
-│  │ - Publication Selector | Save/Publish Actions     │ │
+│  │ - Admin Link | Exit Button                        │ │
 │  │                                                     │ │
-│  │ 📦 Component Structure:                            │ │
-│  │   view/base/web/js/toolbar/                       │ │
-│  │     ├── navigation.js (shared)                    │ │
-│  │     ├── toolbar-toggle.js (shared)                │ │
-│  │     └── highlight-toggle.js (shared)              │ │
+│  │ 📦 Component Structure (IMPLEMENTED):              │ │
 │  │   view/adminhtml/web/js/editor/toolbar/           │ │
-│  │     ├── device-switcher.js (admin-adapted)        │ │
-│  │     ├── publication-selector.js (admin auth)      │ │
-│  │     └── status-indicator.js (new)                 │ │
-│  │   view/base/web/js/jstest/ (testing framework)    │ │
+│  │     ├── admin-link.js (admin username, dashboard) │ │
+│  │     ├── device-switcher.js (changes iframe width) │ │
+│  │     ├── status-indicator.js (draft/published)     │ │
+│  │     └── navigation.js (show/hide panels)          │ │
+│  │                                                     │ │
+│  │   ❌ NO view/base/ directory                      │ │
+│  │   ✅ All admin components self-contained          │ │
+│  │   ✅ Frontend components stay in view/frontend/   │ │
 │  └────────────────────────────────────────────────────┘ │
 │                                                          │
 │  ┌────────────────────────────────────────────────────┐ │
@@ -135,7 +135,7 @@ Swissup_BreezeThemeEditor::editor
 │  │   - Jstest accessible for testing                 │ │
 │  │                                                     │ │
 │  └────────────────────────────────────────────────────┘ │
-│         ↕ Device Switcher changes iframe width          │
+│         ↕ Device Switcher changes iframe width (CSS)    │
 └──────────────────────────────────────────────────────────┘
          │
          │ GraphQL requests with admin session
@@ -151,9 +151,18 @@ Swissup_BreezeThemeEditor::editor
 - ✅ ACL integration
 - ✅ No token vulnerabilities
 - ✅ All toolbar logic in admin context (no cross-frame communication)
-- ✅ Shared components in `view/base` (DRY principle)
-- ✅ Jstest framework available for component testing
+- ✅ Separate admin/frontend implementations (cleaner than forced sharing)
+- ✅ No DeviceFrame dependency (simplified device switcher)
 - ✅ Standard Magento pattern
+
+**Architecture Decision (Phase 1):**
+- **DECIDED AGAINST** `view/base/` shared components
+- **REASON:** Frontend and admin components have fundamentally different implementations:
+  - Frontend device-switcher uses DeviceFrame widget (650+ lines, creates iframe)
+  - Admin device-switcher only changes existing iframe width (simple CSS)
+  - Frontend navigation initializes theme-editor/panel widget
+  - Admin navigation is standalone show/hide logic
+- **RESULT:** Cleaner separation, allows independent evolution
 
 ---
 
@@ -188,18 +197,21 @@ We use a **phased migration** strategy to minimize risk and allow testing at eac
 
 ## 📁 Migration Phases Overview
 
-### [Phase 1: Foundation](./admin-migration-phase-1.md) 🟢
+### [Phase 1: Foundation](./admin-migration-phase-1.md) ✅
 
-**Goal:** Create admin controllers and basic iframe rendering
+**Goal:** Create admin controllers and complete toolbar components
 
 **Key Deliverables:**
-- Admin controllers (`Index.php`, `Iframe.php`)
-- Admin routes and menu configuration
-- Basic layout files
-- Iframe renders frontend correctly
+- ✅ Admin controllers (`Index.php`, `Iframe.php`, `AbstractEditor.php`)
+- ✅ Admin routes and menu configuration
+- ✅ Layout files with fullscreen mode
+- ✅ Iframe renders frontend correctly
+- ✅ All toolbar components created (admin-link, device-switcher, status-indicator, navigation)
+- ✅ Fullscreen CSS (hides admin menu/wrapper)
+- ✅ Fixed toolbar.js coordinator (no duplicate code)
 
-**Time:** 12-14 hours  
-**Status:** Not Started
+**Time:** 11 hours (actual)  
+**Status:** ✅ **COMPLETED** (February 5, 2026) - Pending browser testing
 
 ---
 

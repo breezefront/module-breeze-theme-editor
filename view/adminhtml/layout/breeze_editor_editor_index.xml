@@ -1,15 +1,26 @@
 <?xml version="1.0"?>
-<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="admin-empty" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <head>
-        <css src="Swissup_BreezeThemeEditor::css/editor.css"/>
+        <css src="Swissup_BreezeThemeEditor::css/source/_module.less"/>
     </head>
     <body>
+        <!-- Add RequireJS infrastructure (missing in admin-empty layout) -->
+        <referenceContainer name="root">
+            <block class="Magento\RequireJs\Block\Html\Head\Config" 
+                   name="requirejs-config" 
+                   before="-"/>
+            <block class="Magento\Framework\View\Element\Js\Components" 
+                   name="head.components" 
+                   template="Magento_Backend::page/js/components.phtml"/>
+        </referenceContainer>
+        
+        <attribute name="class" value="breeze-editor-fullscreen"/>
         <referenceContainer name="content">
             <block class="Magento\Backend\Block\Template"
                    name="breeze.editor.index"
                    template="Swissup_BreezeThemeEditor::editor/index.phtml">
                 <arguments>
-                    <argument name="view_model" xsi:type="object">Swissup\BreezeThemeEditor\ViewModel\Toolbar</argument>
+                    <argument name="view_model" xsi:type="object">Swissup\BreezeThemeEditor\ViewModel\AdminToolbar</argument>
                 </arguments>
             </block>
         </referenceContainer>

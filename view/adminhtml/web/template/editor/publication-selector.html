@@ -1,0 +1,82 @@
+<div class="bte-publication-selector">
+    <button type="button" class="toolbar-select status-<%- status.toLowerCase() %>">
+        <span class="select-label"><%- status %></span>
+        
+        <% if (changesCount > 0 && status === 'DRAFT') { %>
+            <span class="select-badge">(<%- changesCount %> changes)</span>
+        <% } %>
+        
+        <span class="select-arrow">
+            <svg width="7" height="5" viewBox="0 0 7 5" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M3.35355 2.64645L6.00003 0L6.70713 0.70711L3.35355 4.06062L0 0.70711L0.70711 0L3.35355 2.64645Z" fill="currentColor"/>
+            </svg>
+        </span>
+    </button>
+
+    <div class="toolbar-dropdown" style="display: none;">
+        <div class="dropdown-header">
+            <span>Switch Publication</span>
+        </div>
+
+        <div class="dropdown-content">
+            <!-- Draft status -->
+            <div class="dropdown-item-group <%= status === 'DRAFT' ? 'active' : '' %>">
+                <a href="#" class="dropdown-item" data-status="DRAFT">
+                    <span class="item-icon">🟡</span>
+                    <span class="item-text">Draft</span>
+                    <% if (changesCount > 0) { %>
+                        <span class="item-meta"><%- changesCount %> changes</span>
+                    <% } %>
+                    <% if (status === 'DRAFT') { %>
+                        <span class="item-check">✓</span>
+                    <% } %>
+                </a>
+
+                <!-- Publish button (only when Draft + changes) -->
+                <% if (canPublish) { %>
+                    <div class="dropdown-publish-button-wrapper">
+                        <button type="button" class="dropdown-publish-button" data-action="publish">
+                            <span class="publish-icon">💾</span>
+                            <span class="publish-label">Publish <%- changesCount %> changes</span>
+                        </button>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Published status -->
+            <a href="#" class="dropdown-item <%= status === 'PUBLISHED' ? 'active' : '' %>" data-status="PUBLISHED">
+                <span class="item-icon">🟢</span>
+                <span class="item-text">Published</span>
+                <% if (status === 'PUBLISHED') { %>
+                    <span class="item-check">✓</span>
+                <% } %>
+            </a>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- Recent Publications Section -->
+            <% if (publications && publications.length > 0) { %>
+                <div class="dropdown-section-title">Recent Publications</div>
+                <div class="publications-list">
+                    <% publications.forEach(function(pub) { %>
+                        <a href="#" class="dropdown-item" data-publication-id="<%- pub.id %>">
+                            <span class="item-icon">📦</span>
+                            <span class="item-content">
+                                <span class="item-title"><%- pub.title %></span>
+                                <span class="item-meta"><%- pub.date %></span>
+                            </span>
+                        </a>
+                    <% }); %>
+                </div>
+
+                <div class="dropdown-divider"></div>
+
+                <!-- Load More Action -->
+                <a href="#" class="dropdown-item dropdown-action" data-action="load-more">
+                    <span class="item-icon">⬇️</span>
+                    <span class="item-text">Load More Publications</span>
+                </a>
+            <% } %>
+        </div>
+    </div>
+</div>

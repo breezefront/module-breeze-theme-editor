@@ -24,6 +24,84 @@ Admin Panel → Content → Theme Editor
 
 ---
 
+---
+
+## 🏗️ Architecture Changes (Internal - For Developers)
+
+### Component Organization (Phase 1 Implementation)
+
+**Original Plan vs Reality:**
+
+| Aspect | Original Plan | Actual Implementation |
+|--------|--------------|----------------------|
+| Shared components | `view/base/web/js/toolbar/` | ❌ Not created |
+| Admin components | `view/adminhtml/web/js/editor/toolbar/` | ✅ All components here |
+| Frontend components | Keep in `view/frontend/` | ✅ Unchanged |
+| Reasoning | DRY principle | Different implementations |
+
+### Why NOT `view/base/` Directory?
+
+**Decision:** Keep separate admin and frontend implementations
+
+**Reasoning:**
+
+Frontend and admin components have fundamentally different implementations:
+
+**Device Switcher:**
+- **Frontend:** Uses `DeviceFrame` widget (650+ lines)
+  - Creates iframe dynamically
+  - Moves DOM elements into iframe
+  - Complex iframe communication
+- **Admin:** Simple CSS width change (~180 lines)
+  - Iframe already exists in layout
+  - Just changes `width` property
+  - No iframe creation logic
+
+**Navigation:**
+- **Frontend:** Initializes `theme-editor/panel` widget
+  - Complex panel state management
+  - Widget dependencies
+- **Admin:** Simple show/hide logic
+  - Standalone panel toggle
+  - No widget dependencies
+
+**Status Indicator:**
+- **Frontend:** Doesn't exist
+- **Admin:** New component for draft/published status
+
+**Conclusion:** Forcing shared components would create artificial abstractions and increase complexity. Separate implementations are cleaner and allow independent evolution.
+
+### Files Created in Phase 1
+
+**Admin Components (NEW):**
+```
+view/adminhtml/web/js/editor/toolbar/
+├── device-switcher.js (180 lines)
+├── status-indicator.js (120 lines)
+└── navigation.js (300 lines)
+
+view/adminhtml/web/template/editor/
+├── device-switcher.html
+├── status-indicator.html
+└── navigation.html
+```
+
+**Modified Files:**
+```
+view/adminhtml/web/js/editor/toolbar.js (fixed duplicate code)
+view/adminhtml/web/css/editor.css (added fullscreen mode)
+Controller/Adminhtml/Editor/Index.php (removed setActiveMenu call)
+```
+
+**Impact on Custom Modules:**
+
+- ✅ No impact - internal change only
+- ✅ No breaking changes to public APIs
+- ✅ Frontend components unchanged
+- ✅ GraphQL schema unchanged (until Phase 2)
+
+---
+
 ## 📋 Breaking Changes List
 
 ### 1. ❌ Token Authentication Removed

@@ -1,0 +1,151 @@
+//
+// Breeze Theme Editor - Toolbar Base Styles (Shared)
+// _____________________________________________
+
+// Main toolbar container
+.breeze-theme-editor-toolbar,
+.bte-toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: @bte-toolbar-bg;
+    color: @bte-toolbar-text;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: @bte-toolbar-z-index;
+    font-family: @bte-toolbar-font-family;
+
+    .toolbar-container,
+    .bte-toolbar-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 @bte-toolbar-padding-h;
+        height: @bte-toolbar-height;
+        max-width: 100%;
+        margin: 0 auto;
+        gap: @bte-toolbar-gap;
+    }
+
+    // Collapsed state
+    &.toolbar-collapsed {
+        transform: translateY(-100%);
+        transition: @bte-toolbar-transform-transition;
+
+        .toolbar-button-toggle .button-icon {
+            transform: rotate(180deg);
+        }
+    }
+
+    // Responsive for Desktop
+    .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__l) {
+        .nav-text,
+        .button-text,
+        .devices-label {
+            display: none;
+        }
+    }
+
+    // Responsive for Tablet/Mobile
+    .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__m) {
+        .toolbar-container,
+        .bte-toolbar-container {
+            padding: 0 @bte-toolbar-padding-h-mobile;
+            gap: @bte-toolbar-gap-small;
+        }
+
+        .toolbar-center,
+        .bte-toolbar-center {
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .admin-username {
+            display: none;
+        }
+    }
+}
+
+// ========================================
+// TOOLBAR ADAPTATION BY REAL VIEWPORT
+// Toolbar always adapts to real screen width,
+// regardless of device preview mode
+// ========================================
+
+// If real viewport is tablet - compact toolbar
+body.breeze-viewport-tablet {
+    .breeze-theme-editor-toolbar,
+    .bte-toolbar {
+        .toolbar-container,
+        .bte-toolbar-container {
+            padding: 0 10px !important;
+            gap: 10px !important;
+            height: 48px !important;
+        }
+
+        .nav-text,
+        .button-text,
+        .admin-username,
+        .devices-label,
+        .select-label-small {
+            display: none !important;
+        }
+
+        .toolbar-select {
+            padding: 6px 8px !important;
+            font-size: 12px !important;
+        }
+
+        .device-button,
+        .device-btn,
+        .toolbar-button,
+        .nav-item {
+            padding: 6px 8px !important;
+        }
+    }
+
+    --breeze-toolbar-height: 48px !important;
+}
+
+// If real viewport is mobile - mini toolbar
+body.breeze-viewport-mobile {
+    .breeze-theme-editor-toolbar,
+    .bte-toolbar {
+        .toolbar-container,
+        .bte-toolbar-container {
+            padding: 0 5px !important;
+            gap: 5px !important;
+            height: 44px !important;
+            flex-wrap: nowrap !important;
+        }
+
+        .toolbar-left,
+        .bte-toolbar-left,
+        .toolbar-center,
+        .bte-toolbar-center {
+            display: none !important;
+        }
+
+        .toolbar-right,
+        .bte-toolbar-right {
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .nav-text,
+        .button-text,
+        .admin-username,
+        .devices-label {
+            display: none !important;
+        }
+
+        .device-button,
+        .device-btn,
+        .toolbar-button {
+            padding: 4px 6px !important;
+            min-width: 32px !important;
+        }
+    }
+
+    --breeze-toolbar-height: 44px !important;
+}
