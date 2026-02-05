@@ -67,14 +67,15 @@ define([
             console.log('✅ Device switcher initialized');
         }
         
-        // Initialize status indicator widget
-        if ($('#bte-status').length && config.components && config.components.statusIndicator) {
-            $('#bte-status').breezeStatusIndicator({
-                currentStatus: config.components.statusIndicator.currentStatus || 'DRAFT',
-                draftChangesCount: config.components.statusIndicator.draftChangesCount || 0
-            });
-            console.log('✅ Status indicator initialized');
-        }
+        // TODO: Status indicator removed (duplicate of publication selector)
+        // This space reserved for future Highlight Toggle button
+        // if ($('#bte-status').length && config.components && config.components.statusIndicator) {
+        //     $('#bte-status').breezeStatusIndicator({
+        //         currentStatus: config.components.statusIndicator.currentStatus || 'DRAFT',
+        //         draftChangesCount: config.components.statusIndicator.draftChangesCount || 0
+        //     });
+        //     console.log('✅ Status indicator initialized');
+        // }
         
         // Initialize publication selector widget
         if ($('#bte-publication-selector').length) {
