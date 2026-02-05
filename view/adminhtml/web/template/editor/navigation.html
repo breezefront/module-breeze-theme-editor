@@ -5,17 +5,7 @@
             <%= item.disabled ? 'disabled' : '' %>
             data-id="<%= item.id %>">
             <span class="nav-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="3" cy="3" r="2" fill="currentColor"/>
-                    <circle cx="10" cy="3" r="2" fill="currentColor"/>
-                    <circle cx="17" cy="3" r="2" fill="currentColor"/>
-                    <circle cx="3" cy="10" r="2" fill="currentColor"/>
-                    <circle cx="10" cy="10" r="2" fill="currentColor"/>
-                    <circle cx="17" cy="10" r="2" fill="currentColor"/>
-                    <circle cx="3" cy="17" r="2" fill="currentColor"/>
-                    <circle cx="10" cy="17" r="2" fill="currentColor"/>
-                    <circle cx="17" cy="17" r="2" fill="currentColor"/>
-                </svg>
+                <%- item.icon %>
             </span>
             <span class="nav-text"><%= item.label %></span>
             <% if (item.badge) { %>
