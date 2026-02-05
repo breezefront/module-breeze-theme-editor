@@ -94,13 +94,16 @@ define([
          */
         _toggleDropdown: function() {
             var $dropdown = this.element.find('.toolbar-dropdown');
+            var $button = this.element.find('.toolbar-select');
             var isVisible = $dropdown.is(':visible');
             
             // Close all other dropdowns first
             $('.toolbar-dropdown').not($dropdown).hide();
+            $('.toolbar-select').not($button).removeClass('active');
             
             // Toggle this dropdown
             $dropdown.toggle();
+            $button.toggleClass('active', !isVisible);
             
             console.log(isVisible ? '🔽 Closing page dropdown' : '🔼 Opening page dropdown');
         },
@@ -111,6 +114,7 @@ define([
          */
         _closeDropdown: function() {
             this.element.find('.toolbar-dropdown').hide();
+            this.element.find('.toolbar-select').removeClass('active');
         },
 
         /**
