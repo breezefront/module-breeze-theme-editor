@@ -311,6 +311,10 @@ class AdminToolbar extends Toolbar
      * - getGraphqlEndpoint() - GraphQL URL
      * - getScopeSelectorData() - store hierarchy (via StoreDataProvider)
      * - getPageSelectorData() - page types (via PageUrlProvider)
+     * 
+     * Note: pageTypes contain absolute URLs from PageUrlProvider.
+     * iframeBaseUrl is provided for backward compatibility but is no longer
+     * used for URL building since PageUrlProvider returns complete URLs.
      *
      * @return array
      */
@@ -324,6 +328,9 @@ class AdminToolbar extends Toolbar
             'adminUrl' => $this->getAdminUrl(),
             'graphqlEndpoint' => $this->getGraphqlEndpoint(),
             'iframeSelector' => '#bte-iframe',
+            
+            // Exit URL - returns user to admin dashboard
+            'exitUrl' => $this->getAdminUrl(),
             
             // ===== Component configurations =====
             'components' => [
@@ -367,6 +374,7 @@ class AdminToolbar extends Toolbar
             
             // ===== Page types (inherited via PageUrlProvider) =====
             // Transform: 'title' → 'label' for widget compatibility
+            // Note: URLs are absolute from PageUrlProvider
             'pageTypes' => array_map(function($page) {
                 return [
                     'id' => $page['id'],
@@ -377,6 +385,9 @@ class AdminToolbar extends Toolbar
             }, $this->getPageSelectorData()),
             
             'currentPageId' => $this->getCurrentPageId(),
+            
+            // Base URL for iframe (kept for backward compatibility)
+            // Note: Not used in page-selector since pageTypes already contain absolute URLs
             'iframeBaseUrl' => $this->storeManager->getStore($this->getStoreId())->getBaseUrl(),
             
             // ===== Publications (real data from DB via PublicationRepository) =====

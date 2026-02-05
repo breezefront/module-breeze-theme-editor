@@ -235,14 +235,18 @@ define([
 
         /**
          * Update URL store parameter
-         * @param {string} url
-         * @param {string} storeCode
+         * 
+         * Note: url is the current iframe URL (absolute).
+         * We parse it and update only the ___store query parameter.
+         * 
+         * @param {string} url - Current iframe absolute URL
+         * @param {string} storeCode - New store code to set
          * @returns {string}
          * @private
          */
         _updateUrlStoreParam: function(url, storeCode) {
             try {
-                // Parse URL
+                // Parse URL (handles absolute URLs correctly)
                 var urlObj = new URL(url, window.location.origin);
                 
                 // Update ___store parameter
@@ -251,6 +255,8 @@ define([
                 return urlObj.toString();
             } catch (e) {
                 console.error('❌ Error updating URL store param:', e);
+                console.error('   url:', url);
+                console.error('   storeCode:', storeCode);
                 return url;
             }
         },

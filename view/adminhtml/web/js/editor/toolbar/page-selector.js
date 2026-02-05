@@ -171,35 +171,44 @@ define([
 
         /**
          * Build new page URL preserving store and jstest params
-         * @param {string} pageUrl
-         * @param {string} currentUrl
+         * 
+         * Note: pageUrl is already an absolute URL from PageUrlProvider.
+         * We just parse it and add query parameters from the current URL.
+         * 
+         * @param {string} pageUrl - Absolute URL from PageUrlProvider
+         * @param {string} currentUrl - Current iframe URL
          * @returns {string}
          * @private
          */
         _buildPageUrl: function(pageUrl, currentUrl) {
             try {
+                // pageUrl is already absolute (from PageUrlProvider)
+                var newUrlObj = new URL(pageUrl);
+                
                 // Parse current URL to preserve params
-                var currentUrlObj = new URL(currentUrl, window.location.origin);
+                var currentUrlObj = new URL(currentUrl);
                 var storeParam = currentUrlObj.searchParams.get('___store');
                 var jstestParam = currentUrlObj.searchParams.get('jstest');
+                var tokenParam = currentUrlObj.searchParams.get('breeze_theme_editor_access_token');
 
-                // Build new URL with page path
-                var newUrl = this.options.iframeBaseUrl + pageUrl;
-                var newUrlObj = new URL(newUrl, window.location.origin);
-
-                // Preserve store and jstest params
+                // Preserve important params
                 if (storeParam) {
                     newUrlObj.searchParams.set('___store', storeParam);
                 }
                 if (jstestParam) {
                     newUrlObj.searchParams.set('jstest', jstestParam);
                 }
+                if (tokenParam) {
+                    newUrlObj.searchParams.set('breeze_theme_editor_access_token', tokenParam);
+                }
 
                 return newUrlObj.toString();
             } catch (e) {
                 console.error('❌ Error building page URL:', e);
-                // Fallback to simple concatenation
-                return this.options.iframeBaseUrl + pageUrl;
+                console.error('   pageUrl:', pageUrl);
+                console.error('   currentUrl:', currentUrl);
+                // Fallback to raw page URL
+                return pageUrl;
             }
         },
 
