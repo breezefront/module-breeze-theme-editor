@@ -2,23 +2,48 @@
 
 namespace Swissup\BreezeThemeEditor\ViewModel;
 
-use Magento\Framework\View\Element\Block\ArgumentInterface;
-use Magento\Backend\Model\Auth\Session as AuthSession;
+use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\View\DesignInterface;
-use Magento\Framework\App\RequestInterface;
+use Magento\Backend\Model\Auth\Session as AuthSession;
+use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
+use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Api\SortOrder;
 
 /**
  * Admin-specific ViewModel for Theme Editor toolbar
  * 
- * Provides admin context data without token-based authentication
+ * Extends frontend Toolbar to reuse:
+ * - StoreDataProvider for store hierarchy
+ * - PageUrlProvider for page types
+ * - Store/Theme/User data methods
+ * 
+ * Adds admin-specific functionality:
+ * - Real publications from database via PublicationRepository
+ * - Admin authentication (no AccessToken needed)
+ * - ACL checks for edit/publish permissions
  */
-class AdminToolbar implements ArgumentInterface
+class AdminToolbar extends Toolbar
 {
+    /**
+     * @var PublicationRepositoryInterface
+     */
+    private $publicationRepository;
+
+    /**
+     * @var SearchCriteriaBuilder
+     */
+    private $searchCriteriaBuilder;
+
     /**
      * @var AuthSession
      */
     private $authSession;
+
+    /**
+     * @var \Magento\Framework\App\RequestInterface
+     */
+    private $request;
 
     /**
      * @var StoreManagerInterface
@@ -26,99 +51,130 @@ class AdminToolbar implements ArgumentInterface
     private $storeManager;
 
     /**
-     * @var DesignInterface
-     */
-    private $design;
-
-    /**
-     * @var RequestInterface
-     */
-    private $request;
-
-    /**
+     * @param \Swissup\BreezeThemeEditor\Helper\Data $helper
+     * @param \Swissup\BreezeThemeEditor\Model\Data\AccessToken $accessToken
+     * @param \Magento\Framework\App\RequestInterface $request
+     * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param AuthSession $authSession
      * @param StoreManagerInterface $storeManager
+     * @param \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider $pageUrlProvider
+     * @param \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider
      * @param DesignInterface $design
-     * @param RequestInterface $request
+     * @param Json $jsonSerializer
+     * @param PublicationRepositoryInterface $publicationRepository
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
      */
     public function __construct(
+        \Swissup\BreezeThemeEditor\Helper\Data $helper,
+        \Swissup\BreezeThemeEditor\Model\Data\AccessToken $accessToken,
+        \Magento\Framework\App\RequestInterface $request,
+        \Magento\Framework\UrlInterface $urlBuilder,
         AuthSession $authSession,
         StoreManagerInterface $storeManager,
+        \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider $pageUrlProvider,
+        \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider,
         DesignInterface $design,
-        RequestInterface $request
+        Json $jsonSerializer,
+        PublicationRepositoryInterface $publicationRepository,
+        SearchCriteriaBuilder $searchCriteriaBuilder
     ) {
+        parent::__construct(
+            $helper,
+            $accessToken,
+            $request,
+            $urlBuilder,
+            $authSession,
+            $storeManager,
+            $pageUrlProvider,
+            $storeDataProvider,
+            $design,
+            $jsonSerializer
+        );
+        
+        // Store references that we need in this class
+        $this->publicationRepository = $publicationRepository;
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->authSession = $authSession;
-        $this->storeManager = $storeManager;
-        $this->design = $design;
         $this->request = $request;
+        $this->storeManager = $storeManager;
     }
 
     /**
-     * Get current admin user name
+     * Admin area doesn't require AccessToken validation
+     * Just check if admin user is logged in
      *
-     * @return string
+     * @return bool
      */
-    public function getCurrentUser()
+    public function canShow()
     {
-        $user = $this->authSession->getUser();
-        return $user ? $user->getUsername() : 'Admin';
+        return $this->authSession->isLoggedIn();
     }
 
     /**
-     * Get current store ID from request
-     *
-     * @return int
-     */
-    public function getStoreId()
-    {
-        $storeId = $this->request->getParam('store');
-        if ($storeId !== null) {
-            return (int)$storeId;
-        }
-
-        try {
-            return (int)$this->storeManager->getStore()->getId();
-        } catch (\Exception $e) {
-            return 1; // Default store
-        }
-    }
-
-    /**
-     * Get current theme ID from request or store config
-     *
-     * @return int
-     */
-    public function getThemeId()
-    {
-        $themeId = $this->request->getParam('theme');
-        if ($themeId !== null) {
-            return (int)$themeId;
-        }
-
-        try {
-            return (int)$this->design->getDesignTheme()->getId();
-        } catch (\Exception $e) {
-            return 0;
-        }
-    }
-
-    /**
-     * Get count of draft changes
+     * Get list of publications from database (real data via Repository)
      * 
-     * @return int
-     * @todo Implement after GraphQL integration
+     * Fetches last 10 publications for current theme+store combination
+     *
+     * @return array
      */
-    public function getDraftChangesCount()
+    public function getPublications()
     {
-        // Will be implemented in Phase 2 when we integrate with GraphQL
-        return 0;
+        try {
+            $searchCriteria = $this->searchCriteriaBuilder
+                ->addFilter('theme_id', $this->getThemeId())
+                ->addFilter('store_id', $this->getStoreId())
+                ->addSortOrder(
+                    $this->searchCriteriaBuilder->create()->getSortOrders()[0] ?? 
+                    $this->createSortOrder('published_at', SortOrder::SORT_DESC)
+                )
+                ->setPageSize(10)
+                ->create();
+            
+            // Add sort order manually if not working through builder
+            $searchCriteria->setSortOrders([
+                $this->createSortOrder('published_at', SortOrder::SORT_DESC)
+            ]);
+            
+            $result = $this->publicationRepository->getList($searchCriteria);
+            
+            $publications = [];
+            foreach ($result->getItems() as $publication) {
+                $publications[] = [
+                    'id' => (int)$publication->getPublicationId(),
+                    'title' => $publication->getTitle(),
+                    'date' => $publication->getPublishedAt(),
+                    'status' => 'PUBLISHED'
+                ];
+            }
+            
+            return $publications;
+            
+        } catch (\Exception $e) {
+            // Return empty array on error (e.g., table doesn't exist yet)
+            return [];
+        }
+    }
+
+    /**
+     * Create sort order object
+     *
+     * @param string $field
+     * @param string $direction
+     * @return SortOrder
+     */
+    private function createSortOrder($field, $direction)
+    {
+        $sortOrder = new SortOrder();
+        $sortOrder->setField($field);
+        $sortOrder->setDirection($direction);
+        return $sortOrder;
     }
 
     /**
      * Get current publication status
      *
      * @return string One of: DRAFT, PUBLISHED, SCHEDULED
-     * @todo Implement after GraphQL integration
+     * @todo Phase 2: Implement draft status detection from GraphQL
      */
     public function getCurrentPublicationStatus()
     {
@@ -127,9 +183,84 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
-     * Check if user has permission to edit
+     * Get count of draft changes
+     * 
+     * @return int
+     * @todo Phase 2: Implement draft changes counter from GraphQL
+     */
+    public function getDraftChangesCount()
+    {
+        // Will be implemented in Phase 2 when we integrate with GraphQL
+        return 0;
+    }
+
+    /**
+     * Get current publication ID (latest published for theme+store)
+     *
+     * @return int|null
+     */
+    public function getCurrentPublicationId()
+    {
+        $publications = $this->getPublications();
+        return !empty($publications) ? $publications[0]['id'] : null;
+    }
+
+    /**
+     * Get current page ID from iframe URL parameter
+     * 
+     * Note: This is approximate detection based on URL patterns.
+     * Cannot accurately distinguish between product/category pages.
+     * 
+     * For precise detection in future, use postMessage from iframe.
+     *
+     * @return string Action name (e.g., 'cms_index_index')
+     */
+    public function getCurrentPageId()
+    {
+        $url = $this->request->getParam('url', '/');
+        
+        // Simple URL → action name mapping (fallback)
+        if (empty($url) || $url === '/') {
+            return 'cms_index_index';
+        }
+        
+        // Checkout pages
+        if (strpos($url, '/checkout/cart') !== false) {
+            return 'checkout_cart_index';
+        }
+        
+        if (strpos($url, '/checkout') !== false) {
+            return 'checkout_index_index';
+        }
+        
+        // Customer pages
+        if (strpos($url, '/customer/account/login') !== false) {
+            return 'customer_account_login';
+        }
+        
+        if (strpos($url, '/customer/account') !== false) {
+            return 'customer_account_index';
+        }
+        
+        // Search
+        if (strpos($url, '/catalogsearch/result') !== false) {
+            return 'catalogsearch_result_index';
+        }
+        
+        // Product/Category pages (.html) - cannot distinguish accurately
+        if (strpos($url, '.html') !== false) {
+            return 'catalog_category_view'; // Default to category
+        }
+        
+        // CMS pages (anything else)
+        return 'cms_page_view';
+    }
+
+    /**
+     * Check if user has permission to edit theme
      *
      * @return bool
+     * @todo Phase 2: Use ACL resource 'Swissup_BreezeThemeEditor::edit'
      */
     public function canEdit()
     {
@@ -138,9 +269,10 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
-     * Check if user has permission to publish
+     * Check if user has permission to publish theme
      *
      * @return bool
+     * @todo Phase 2: Use ACL resource 'Swissup_BreezeThemeEditor::publish'
      */
     public function canPublish()
     {
@@ -171,187 +303,29 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
-     * Get list of publications for publication selector
-     *
-     * @return array
-     * @todo Phase 2: Implement real GraphQL query to fetch publications
-     */
-    public function getPublications()
-    {
-        // Mock data for Phase 1B
-        // In Phase 2, this will query GraphQL for real publication history
-        return [
-            [
-                'id' => 8,
-                'title' => '🟣 Purple Theme (Current)',
-                'date' => '2026-01-15 15:29:00',
-                'status' => 'PUBLISHED'
-            ],
-            [
-                'id' => 7,
-                'title' => '🔴 Red Theme',
-                'date' => '2026-01-14 15:29:00',
-                'status' => 'PUBLISHED'
-            ],
-            [
-                'id' => 6,
-                'title' => '🔵 Blue Theme',
-                'date' => '2026-01-13 10:15:00',
-                'status' => 'PUBLISHED'
-            ],
-            [
-                'id' => 5,
-                'title' => '🟢 Green Theme',
-                'date' => '2026-01-12 14:20:00',
-                'status' => 'PUBLISHED'
-            ]
-        ];
-    }
-
-    /**
-     * Get store hierarchy for scope selector (Website → Store Group → Store View)
-     *
-     * @return array
-     */
-    public function getStoreHierarchy()
-    {
-        $hierarchy = [];
-
-        try {
-            foreach ($this->storeManager->getWebsites() as $website) {
-                $websiteData = [
-                    'id' => 'website_' . $website->getId(),
-                    'name' => $website->getName(),
-                    'code' => $website->getCode(),
-                    'type' => 'website',
-                    'groups' => []
-                ];
-
-                foreach ($website->getGroups() as $group) {
-                    $groupData = [
-                        'id' => 'group_' . $group->getId(),
-                        'name' => $group->getName(),
-                        'type' => 'group',
-                        'stores' => []
-                    ];
-
-                    foreach ($group->getStores() as $store) {
-                        $groupData['stores'][] = [
-                            'id' => (int)$store->getId(),
-                            'name' => $store->getName(),
-                            'code' => $store->getCode(),
-                            'type' => 'store',
-                            'baseUrl' => $store->getBaseUrl()
-                        ];
-                    }
-
-                    $websiteData['groups'][] = $groupData;
-                }
-
-                $hierarchy[] = $websiteData;
-            }
-        } catch (\Exception $e) {
-            // Return empty array on error
-            return [];
-        }
-
-        return $hierarchy;
-    }
-
-    /**
-     * Get available page types for page selector
-     *
-     * @return array
-     */
-    public function getPageTypes()
-    {
-        // Common Magento page types
-        // In Phase 2, this could be dynamically populated based on available routes
-        return [
-            [
-                'id' => 'cms_index_index',
-                'label' => 'Home Page',
-                'url' => '/'
-            ],
-            [
-                'id' => 'catalog_category_view',
-                'label' => 'Category Page',
-                'url' => '/gear.html'
-            ],
-            [
-                'id' => 'catalog_product_view',
-                'label' => 'Product Page',
-                'url' => '/push-it-messenger-bag.html'
-            ],
-            [
-                'id' => 'cms_page_view',
-                'label' => 'CMS Page',
-                'url' => '/about-us'
-            ],
-            [
-                'id' => 'checkout_cart_index',
-                'label' => 'Shopping Cart',
-                'url' => '/checkout/cart'
-            ],
-            [
-                'id' => 'customer_account_login',
-                'label' => 'Customer Login',
-                'url' => '/customer/account/login'
-            ],
-            [
-                'id' => 'customer_account_index',
-                'label' => 'Customer Account',
-                'url' => '/customer/account'
-            ],
-            [
-                'id' => 'catalogsearch_result_index',
-                'label' => 'Search Results',
-                'url' => '/catalogsearch/result?q=bag'
-            ]
-        ];
-    }
-
-    /**
-     * Get current page ID (detected from iframe URL)
-     *
-     * @return string
-     * @todo Phase 2: Implement URL parsing to detect actual page type
-     */
-    public function getCurrentPageId()
-    {
-        // For now, default to home page
-        // In Phase 2, this will parse the iframe URL to determine the actual page type
-        return 'cms_index_index';
-    }
-
-    /**
-     * Get current publication ID
-     *
-     * @return int|null
-     * @todo Phase 2: Implement real query
-     */
-    public function getCurrentPublicationId()
-    {
-        // Mock data - return the latest publication
-        return 8;
-    }
-
-    /**
-     * Get toolbar configuration as JSON
+     * Get toolbar configuration for JavaScript initialization
+     * 
+     * Uses inherited methods from parent Toolbar:
+     * - getStoreId(), getThemeId() - store/theme info
+     * - getAdminUsername(), getAdminUrl() - admin user info
+     * - getGraphqlEndpoint() - GraphQL URL
+     * - getScopeSelectorData() - store hierarchy (via StoreDataProvider)
+     * - getPageSelectorData() - page types (via PageUrlProvider)
      *
      * @return array
      */
     public function getToolbarConfig()
     {
         return [
+            // ===== Inherited from parent Toolbar =====
             'storeId' => $this->getStoreId(),
             'themeId' => $this->getThemeId(),
-            'username' => $this->getCurrentUser(),
-            'adminUrl' => '/admin',
-            'graphqlEndpoint' => '/graphql',
+            'username' => $this->getAdminUsername(),
+            'adminUrl' => $this->getAdminUrl(),
+            'graphqlEndpoint' => $this->getGraphqlEndpoint(),
             'iframeSelector' => '#bte-iframe',
             
-            // Component configurations
+            // ===== Component configurations =====
             'components' => [
                 'statusIndicator' => [
                     'currentStatus' => $this->getCurrentPublicationStatus(),
@@ -370,30 +344,29 @@ class AdminToolbar implements ArgumentInterface
                 ]
             ],
             
-            // Data for new widgets
-            'publications' => $this->getPublications(),
-            'storeHierarchy' => $this->getStoreHierarchy(),
+            // ===== Store hierarchy (inherited via StoreDataProvider) =====
+            'storeHierarchy' => $this->getScopeSelectorData(),
             'currentStoreId' => $this->getStoreId(),
-            'pageTypes' => $this->getPageTypes(),
+            
+            // ===== Page types (inherited via PageUrlProvider) =====
+            // Transform: 'title' → 'label' for widget compatibility
+            'pageTypes' => array_map(function($page) {
+                return [
+                    'id' => $page['id'],
+                    'label' => $page['title'], // Frontend uses 'title', widget expects 'label'
+                    'url' => $page['url'],
+                    'active' => $page['active'] ?? false
+                ];
+            }, $this->getPageSelectorData()),
+            
             'currentPageId' => $this->getCurrentPageId(),
+            'iframeBaseUrl' => $this->storeManager->getStore($this->getStoreId())->getBaseUrl(),
+            
+            // ===== Publications (real data from DB via PublicationRepository) =====
+            'publications' => $this->getPublications(),
             'currentPublicationId' => $this->getCurrentPublicationId(),
-            'iframeBaseUrl' => $this->getIframeBaseUrl(),
             'currentStatus' => $this->getCurrentPublicationStatus(),
             'changesCount' => $this->getDraftChangesCount()
         ];
-    }
-
-    /**
-     * Get iframe base URL for current store
-     *
-     * @return string
-     */
-    private function getIframeBaseUrl()
-    {
-        try {
-            return $this->storeManager->getStore($this->getStoreId())->getBaseUrl();
-        } catch (\Exception $e) {
-            return '/';
-        }
     }
 }
