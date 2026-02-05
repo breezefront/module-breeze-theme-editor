@@ -6,6 +6,55 @@
 .bte-toolbar {
     .bte-scope-selector {
         position: relative;
+        display: inline-block;
+
+        .toolbar-select {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: @toolbar-button-bg;
+            border: 1px solid @toolbar-button-border;
+            border-radius: @toolbar-border-radius;
+            color: @toolbar-text-color;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+
+            &:hover {
+                background: @toolbar-button-hover-bg;
+                border-color: @toolbar-button-hover-border;
+            }
+
+            &.active {
+                background: @toolbar-button-active-bg;
+                border-color: @toolbar-button-active-border;
+                box-shadow: 0 0 0 3px fade(@toolbar-primary-color, 10%);
+            }
+
+            .select-text {
+                font-weight: 600;
+            }
+
+            .select-arrow {
+                display: flex;
+                align-items: center;
+                margin-left: 4px;
+                transition: transform 0.2s ease;
+
+                svg {
+                    width: 7px;
+                    height: 5px;
+                    fill: currentColor;
+                }
+            }
+
+            &.active .select-arrow {
+                transform: rotate(180deg);
+            }
+        }
     }
 
     // Якщо тільки один store - показати як текст
