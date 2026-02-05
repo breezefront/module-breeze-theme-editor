@@ -1,12 +1,15 @@
 <?php
 /**
  * @var $block \Magento\Backend\Block\Template
- * @var $viewModel \Swissup\BreezeThemeEditor\ViewModel\Toolbar
+ * @var $viewModel \Swissup\BreezeThemeEditor\ViewModel\AdminToolbar
  */
 $viewModel = $block->getData('view_model');
 $storeId = $block->getData('store_id') ?: 1;
 $themeId = $block->getData('theme_id') ?: 0;
 $jstest = $block->getData('jstest') ?: false;
+
+// Get full toolbar configuration from ViewModel
+$toolbarConfig = $viewModel ? $viewModel->getToolbarConfig() : [];
 
 // Build iframe URL
 $iframeUrl = $block->getUrl('breeze_editor/editor/iframe', [
@@ -40,33 +43,7 @@ $iframeUrl = $block->getUrl('breeze_editor/editor/iframe', [
 <script type="text/x-magento-init">
 {
     "#bte-admin-editor": {
-        "Swissup_BreezeThemeEditor/js/editor/toolbar": {
-            "storeId": <?= (int)$storeId ?>,
-            "themeId": <?= (int)$themeId ?>,
-            "jstest": <?= $jstest ? 'true' : 'false' ?>,
-            "iframeSelector": "#bte-iframe",
-            "adminUrl": "<?= $block->escapeUrl($block->getUrl('adminhtml')) ?>",
-            "username": "<?= $block->escapeJs($viewModel ? $viewModel->getCurrentUser() : 'Admin') ?>",
-            "graphqlEndpoint": "<?= $block->escapeUrl($block->getUrl('graphql')) ?>",
-            "components": {
-                "navigation": {
-                    "selector": "#bte-navigation",
-                    "items": [
-                        {"id": "theme-editor", "label": "<?= $block->escapeJs(__('Theme')) ?>", "icon": "icon-palette"}
-                    ]
-                },
-                "deviceSwitcher": {
-                    "selector": "#bte-device-switcher",
-                    "devices": ["desktop", "tablet", "mobile"],
-                    "default": "desktop"
-                },
-                "statusIndicator": {
-                    "selector": "#bte-status",
-                    "currentStatus": "DRAFT",
-                    "draftChangesCount": 0
-                }
-            }
-        }
+        "Swissup_BreezeThemeEditor/js/editor/toolbar": <?= /* @noEscape */ json_encode($toolbarConfig) ?>
     }
 }
 </script>
