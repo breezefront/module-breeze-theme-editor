@@ -2,8 +2,8 @@
  * Admin Toolbar Coordinator
  * 
  * Ініціалізує всі toolbar компоненти для admin area.
- * Координує роботу navigation, device switcher, status indicator, admin link,
- * publication selector, scope selector та page selector.
+ * Координує роботу navigation, device switcher, admin link,
+ * publication selector, scope selector, page selector, highlight toggle, and exit button.
  */
 define([
     'jquery',
@@ -11,11 +11,13 @@ define([
     'text!Swissup_BreezeThemeEditor/template/editor/toolbar.html',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/admin-link',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/device-switcher',
-    'Swissup_BreezeThemeEditor/js/editor/toolbar/status-indicator',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/navigation',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/scope-selector',
-    'Swissup_BreezeThemeEditor/js/editor/toolbar/page-selector'
+    'Swissup_BreezeThemeEditor/js/editor/toolbar/page-selector',
+    'Swissup_BreezeThemeEditor/js/editor/toolbar/highlight-toggle',
+    'Swissup_BreezeThemeEditor/js/editor/toolbar/toolbar-toggle',
+    'Swissup_BreezeThemeEditor/js/editor/toolbar/exit-button'
 ], function ($, mageTemplate, toolbarTemplate) {
     'use strict';
     
@@ -109,12 +111,33 @@ define([
             console.log('✅ Page selector initialized');
         }
         
-        // Exit button handler
-        $('#bte-exit').on('click', function() {
-            var adminUrl = config.adminUrl || '/admin';
-            console.log('👋 Exiting editor, redirecting to:', adminUrl);
-            window.location.href = adminUrl;
-        });
+        // Initialize highlight toggle widget
+        if ($('#bte-highlight-toggle').length) {
+            $('#bte-highlight-toggle').breezeHighlightToggle({
+                enabled: false,
+                iframeSelector: config.iframeSelector || '#bte-iframe'
+            });
+            console.log('✅ Highlight toggle initialized');
+        }
+        
+        // Initialize toolbar toggle widget
+        if ($('#bte-toolbar-toggle').length) {
+            $('#bte-toolbar-toggle').breezeToolbarToggle({
+                collapsed: false,
+                toolbarSelector: '.bte-toolbar'
+            });
+            console.log('✅ Toolbar toggle initialized');
+        }
+        
+        // Initialize exit button widget
+        if ($('#bte-exit').length) {
+            var exitUrl = config.exitUrl || window.location.href.split('?')[0];
+            $('#bte-exit').breezeExitButton({
+                exitUrl: exitUrl,
+                label: 'Exit'
+            });
+            console.log('✅ Exit button initialized');
+        }
         
         console.log('✅ Admin toolbar initialized successfully');
     };

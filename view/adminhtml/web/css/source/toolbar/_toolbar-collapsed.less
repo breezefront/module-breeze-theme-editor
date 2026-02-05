@@ -1,0 +1,72 @@
+//
+// Breeze Theme Editor Admin - Toolbar Collapsed State & Compact Toggle
+// _____________________________________________
+
+// Collapsed toolbar state - slides up out of view
+.bte-toolbar.toolbar-collapsed {
+    transform: translateY(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    // Rotate toggle button icon when collapsed
+    .toolbar-button-toggle .button-icon {
+        transform: rotate(180deg);
+    }
+}
+
+// Body class when toolbar is hidden
+body.bte-toolbar-hidden {
+    // Toolbar is hidden, iframe takes full height
+    --breeze-toolbar-height: 0px;
+}
+
+// Compact toggle button - appears when toolbar is collapsed
+.bte-compact-toggle {
+    position: fixed;
+    top: 0;
+    right: 20px;
+    left: auto;
+    transform: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: @bte-toolbar-bg;
+    border: none;
+    border-radius: 0 0 12px 12px;
+    color: @bte-toolbar-text;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: @bte-toolbar-z-index + 100;
+    transition: all 0.3s ease;
+    font-family: @bte-toolbar-font-family;
+    font-size: @bte-toolbar-font-size;
+    font-weight: 500;
+
+    &:hover {
+        padding-bottom: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        background: rgba(30, 35, 40, 0.98);
+    }
+
+    .compact-icon {
+        font-size: @bte-toolbar-font-size;
+        transition: transform 0.2s ease;
+    }
+
+    &:hover .compact-icon {
+        transform: translateY(2px);
+    }
+
+    .compact-text {
+        font-weight: 600;
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .bte-compact-toggle {
+        right: 10px;
+        padding: 6px 16px;
+        font-size: 12px;
+    }
+}
