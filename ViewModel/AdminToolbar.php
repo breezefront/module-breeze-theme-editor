@@ -51,6 +51,11 @@ class AdminToolbar extends Toolbar
     private $storeManager;
 
     /**
+     * @var \Magento\Framework\UrlInterface
+     */
+    private $urlBuilder;
+
+    /**
      * @param \Swissup\BreezeThemeEditor\Helper\Data $helper
      * @param \Swissup\BreezeThemeEditor\Model\Data\AccessToken $accessToken
      * @param \Magento\Framework\App\RequestInterface $request
@@ -100,6 +105,7 @@ class AdminToolbar extends Toolbar
         $this->authSession = $authSession;
         $this->request = $request;
         $this->storeManager = $storeManager;
+        $this->urlBuilder = $urlBuilder;
     }
 
     /**
@@ -306,14 +312,63 @@ class AdminToolbar extends Toolbar
     }
 
     /**
+     * Get admin dashboard URL
+     * 
+     * Override parent to generate correct admin dashboard URL
+     * without double "admin/" prefix and without security key
+     *
+     * @return string
+     */
+    public function getAdminUrl()
+    {
+        try {
+            $baseUrl = $this->storeManager->getStore()->getBaseUrl(
+                \Magento\Framework\UrlInterface::URL_TYPE_WEB
+            );
+            
+            // Return admin dashboard URL (without security key)
+            return rtrim($baseUrl, '/') . '/admin/dashboard/';
+        } catch (\Exception $e) {
+            // Fallback to relative URL
+            return '/admin/dashboard/';
+        }
+    }
+
+    /**
+     * Get GraphQL endpoint URL
+     * 
+     * Override parent to generate frontend GraphQL endpoint URL
+     * (without admin prefix) for use from admin panel
+     *
+     * @return string
+     */
+    public function getGraphqlEndpoint()
+    {
+        try {
+            $baseUrl = $this->storeManager->getStore()->getBaseUrl(
+                \Magento\Framework\UrlInterface::URL_TYPE_WEB
+            );
+            
+            // Return frontend GraphQL endpoint (without admin prefix)
+            return rtrim($baseUrl, '/') . '/graphql';
+        } catch (\Exception $e) {
+            // Fallback to relative URL
+            return '/graphql';
+        }
+    }
+
+    /**
      * Get toolbar configuration for JavaScript initialization
      * 
      * Uses inherited methods from parent Toolbar:
      * - getStoreId(), getThemeId() - store/theme info
-     * - getAdminUsername(), getAdminUrl() - admin user info
-     * - getGraphqlEndpoint() - GraphQL URL
+     * - getAdminUsername() - admin user info
      * - getScopeSelectorData() - store hierarchy (via StoreDataProvider)
      * - getPageSelectorData() - page types (via PageUrlProvider)
+     * 
+     * Overrides parent methods:
+     * - getAdminUrl() - generates correct admin dashboard URL
+     * - getGraphqlEndpoint() - generates frontend GraphQL URL
      * 
      * Note: pageTypes contain absolute URLs from PageUrlProvider.
      * iframeBaseUrl is provided for backward compatibility but is no longer

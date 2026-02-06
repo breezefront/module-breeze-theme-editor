@@ -17,8 +17,12 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/toolbar/page-selector',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/highlight-toggle',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/toolbar-toggle',
-    'Swissup_BreezeThemeEditor/js/editor/toolbar/exit-button'
-], function ($, mageTemplate, toolbarTemplate) {
+    'Swissup_BreezeThemeEditor/js/editor/toolbar/exit-button',
+    'Swissup_BreezeThemeEditor/js/editor/util/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/util/url-builder'
+], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation, 
+             publicationSelector, scopeSelector, pageSelector, highlightToggle, 
+             toolbarToggle, exitButton, configManager, urlBuilder) {
     'use strict';
     
     /**
@@ -28,9 +32,15 @@ define([
      */
     return function(config, element) {
         console.log('🎨 Initializing admin toolbar', config);
+        console.log('📦 Config details:', {
+            storeId: config.storeId,
+            storeCode: config.storeCode,
+            themeId: config.themeId,
+            iframeBaseUrl: config.iframeBaseUrl
+        });
         
-        // Store config globally for child widgets to access
-        $('body').data('bte-admin-config', {
+        // Store config globally for child widgets to access via configManager
+        configManager.set({
             storeId: config.storeId,
             storeCode: config.storeCode,
             themeId: config.themeId,
@@ -183,10 +193,30 @@ define([
                         }
                         
                         try {
-                            // Build URL with parameters
-                            var newUrl = _buildUrlWithParams(href, config, iframeWindow);
+                            // Get current config (may be updated by scope selector)
+                            var currentConfig = configManager.get();
+                            console.log('📦 Using config - storeCode:', currentConfig.storeCode, 'themeId:', currentConfig.themeId);
                             
-                            if (newUrl !== href) {
+                            // Build URL with parameters using urlBuilder utility
+                            var newUrl = urlBuilder.addNavigationParams(href, {
+                                storeCode: currentConfig.storeCode,
+                                themeId: currentConfig.themeId
+                            }, iframeWindow.location.origin);
+                            
+                            // Skip if external link (different origin)
+                            if (!_isSameOrigin(href, iframeWindow.location.origin)) {
+                                console.log('🌍 External link detected, skipping:', href);
+                                return;
+                            }
+                            
+                            // Check if URL was modified
+                            var hasParams = urlBuilder.hasNavigationParams(href, iframeWindow.location.origin);
+                            var isModified = newUrl !== href || !hasParams.hasStore || !hasParams.hasTheme;
+                            // Check if URL was modified
+                            var hasParams = urlBuilder.hasNavigationParams(href, iframeWindow.location.origin);
+                            var isModified = newUrl !== href || !hasParams.hasStore || !hasParams.hasTheme;
+                            
+                            if (isModified) {
                                 // Prevent default navigation
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -221,68 +251,18 @@ define([
          * @return {boolean} true if should skip
          */
         function _shouldSkipLink(href) {
-            if (!href) {
-                return true;
-            }
-            
-            // Skip these protocols/patterns
-            var skipPatterns = [
-                '#',            // Anchor links (same page navigation)
-                'javascript:',  // JavaScript pseudo-protocol
-                'mailto:',      // Email links
-                'tel:',         // Phone links
-                'data:',        // Data URIs
-                'blob:'         // Blob URLs
-            ];
-            
-            return skipPatterns.some(function(pattern) {
-                return href.startsWith(pattern);
-            });
+            return urlBuilder.shouldSkipUrl(href);
         }
         
         /**
-         * Build URL with store and theme parameters
-         * Pattern reused from scope-selector.js URL building logic
+         * Check if URL is same-origin
          * 
-         * @param {string} href - original link href
-         * @param {Object} config - toolbar config with storeCode and themeId
-         * @param {Window} iframeWindow - iframe window object for origin checking
-         * @return {string} URL with parameters added
+         * @param {string} url - URL to check
+         * @param {string} origin - Origin to compare
+         * @return {boolean} true if same origin
          */
-        function _buildUrlWithParams(href, config, iframeWindow) {
-            try {
-                // Parse URL (handle both relative and absolute URLs)
-                var baseUrl = iframeWindow.location.origin;
-                var url = new URL(href, baseUrl);
-                
-                // Only handle same-origin URLs (don't modify external links)
-                if (url.origin !== iframeWindow.location.origin) {
-                    console.log('🌍 External link detected, skipping:', url.origin);
-                    return href;
-                }
-                
-                // Check if parameters already exist
-                var hasStore = url.searchParams.has('___store');
-                var hasTheme = url.searchParams.has('preview_theme');
-                
-                console.log('📊 URL params check - hasStore:', hasStore, 'hasTheme:', hasTheme);
-                
-                // Add missing parameters
-                if (!hasStore && config.storeCode) {
-                    url.searchParams.set('___store', config.storeCode);
-                    console.log('   ➕ Added ___store:', config.storeCode);
-                }
-                if (!hasTheme && config.themeId) {
-                    url.searchParams.set('preview_theme', config.themeId);
-                    console.log('   ➕ Added preview_theme:', config.themeId);
-                }
-                
-                return url.toString();
-                
-            } catch (err) {
-                console.warn('⚠️  Failed to build URL:', href, err);
-                return href; // Return original on error
-            }
+        function _isSameOrigin(url, origin) {
+            return urlBuilder.isSameOrigin(url, origin);
         }
     };
 });

@@ -7,8 +7,11 @@
 define([
     'jquery',
     'mage/template',
-    'text!Swissup_BreezeThemeEditor/template/editor/page-selector.html'
-], function ($, mageTemplate, template) {
+    'text!Swissup_BreezeThemeEditor/template/editor/page-selector.html',
+    'Swissup_BreezeThemeEditor/js/editor/util/cookie-manager',
+    'Swissup_BreezeThemeEditor/js/editor/util/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/util/url-builder'
+], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder) {
     'use strict';
 
     $.widget('swissup.breezePageSelector', {
@@ -148,25 +151,6 @@ define([
         },
 
         /**
-         * Set theme preview cookie for Magento
-         * 
-         * Magento uses 'preview_theme' cookie to override store's default theme.
-         * This ensures iframe displays correct theme when navigating.
-         * 
-         * @private
-         */
-        _setThemePreviewCookie: function() {
-            if (!this.options.themeId) {
-                console.warn('⚠️ No themeId provided, cannot set preview_theme cookie');
-                return;
-            }
-            
-            // Set cookie for Magento theme preview (SameSite=Lax, path=/)
-            document.cookie = 'preview_theme=' + this.options.themeId + '; path=/; SameSite=Lax';
-            console.log('🎨 Set preview_theme cookie:', this.options.themeId);
-        },
-
-        /**
          * Select page and reload iframe
          * @param {string} pageId
          * @private
@@ -207,8 +191,10 @@ define([
             console.log('🔄 Reloading iframe with page:', pageData.label);
             console.log('   New URL:', newUrl);
             
-            // Set theme preview cookie BEFORE navigation
-            this._setThemePreviewCookie();
+            // Set navigation cookies BEFORE navigation
+            var storeCode = configManager.getStoreCode(this.currentParams.store);
+            var themeId = configManager.getThemeId(this.options.themeId);
+            cookieManager.setNavigationCookies(storeCode, themeId);
             
             // Navigate iframe directly via contentWindow for better UX
             try {
@@ -230,7 +216,7 @@ define([
         },
 
         /**
-         * Build page URL with current parameters (store, jstest)
+         * Build page URL with current parameters (store, jstest, preview_theme)
          * 
          * @param {string} pageUrl - Absolute URL from PageUrlProvider
          * @returns {string}
@@ -238,17 +224,18 @@ define([
          */
         _buildPageUrlWithParams: function(pageUrl) {
             try {
-                var newUrlObj = new URL(pageUrl);
+                // Get current config (may be updated by scope selector)
+                var storeCode = configManager.getStoreCode(this.currentParams.store);
+                var themeId = configManager.getThemeId(this.options.themeId);
                 
-                // Add current parameters
-                if (this.currentParams.store) {
-                    newUrlObj.searchParams.set('___store', this.currentParams.store);
-                }
-                if (this.currentParams.jstest) {
-                    newUrlObj.searchParams.set('jstest', this.currentParams.jstest);
-                }
-
-                return newUrlObj.toString();
+                console.log('📦 Building URL with - storeCode:', storeCode, 'themeId:', themeId);
+                
+                // Add navigation parameters
+                return urlBuilder.addNavigationParams(pageUrl, {
+                    storeCode: storeCode,
+                    themeId: themeId,
+                    jstest: this.currentParams.jstest
+                });
             } catch (e) {
                 console.error('❌ Error building page URL:', e);
                 console.error('   pageUrl:', pageUrl);
