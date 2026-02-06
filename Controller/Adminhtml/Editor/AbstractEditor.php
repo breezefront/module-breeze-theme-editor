@@ -7,6 +7,7 @@ use Magento\Backend\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Psr\Log\LoggerInterface;
 
 abstract class AbstractEditor extends Action
 {
@@ -33,21 +34,37 @@ abstract class AbstractEditor extends Action
     protected $scopeConfig;
 
     /**
+     * @var \Swissup\BreezeThemeEditor\Model\Session\BackendSession
+     */
+    private $backendSession;
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
      * @param Context $context
      * @param PageFactory $resultPageFactory
      * @param StoreManagerInterface $storeManager
      * @param ScopeConfigInterface $scopeConfig
+     * @param \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession
+     * @param LoggerInterface $logger
      */
     public function __construct(
         Context $context,
         PageFactory $resultPageFactory,
         StoreManagerInterface $storeManager,
-        ScopeConfigInterface $scopeConfig
+        ScopeConfigInterface $scopeConfig,
+        \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession,
+        LoggerInterface $logger
     ) {
         parent::__construct($context);
         $this->resultPageFactory = $resultPageFactory;
         $this->storeManager = $storeManager;
         $this->scopeConfig = $scopeConfig;
+        $this->backendSession = $backendSession;
+        $this->logger = $logger;
     }
 
     /**
@@ -61,21 +78,51 @@ abstract class AbstractEditor extends Action
     }
 
     /**
-     * Get current store ID from request
+     * Get current store ID from request, cookie, or default
+     *
+     * Priority:
+     * 1. URL parameter ?store=X (highest)
+     * 2. Cookie 'bte_last_store_id' (last used store)
+     * 3. Default store view (fallback)
      *
      * @return int
      */
     protected function getStoreId()
     {
+        // Priority 1: Check URL parameter ?store=X
         $storeId = (int) $this->getRequest()->getParam('store', 0);
         
-        // Validate store exists
-        try {
-            $this->storeManager->getStore($storeId);
-            return $storeId;
-        } catch (\Exception $e) {
-            return $this->storeManager->getDefaultStoreView()->getId();
+        if ($storeId > 0) {
+            try {
+                $store = $this->storeManager->getStore($storeId);
+                // Valid store found - save to cookie for next time
+                $this->backendSession->setStoreId($storeId);
+                $this->logger->info(sprintf('[BTE Controller] Using store from URL: %d (%s)', $storeId, $store->getCode()));
+                return $storeId;
+            } catch (\Exception $e) {
+                $this->logger->warning(sprintf('[BTE Controller] Store %d from URL not found: %s', $storeId, $e->getMessage()));
+                // Continue to next priority
+            }
         }
+        
+        // Priority 2: Check cookie (last used store)
+        $lastStoreId = $this->backendSession->getStoreId();
+        if ($lastStoreId) {
+            try {
+                $store = $this->storeManager->getStore($lastStoreId);
+                $this->logger->info(sprintf('[BTE Controller] Using store from cookie: %d (%s)', $lastStoreId, $store->getCode()));
+                return $lastStoreId;
+            } catch (\Exception $e) {
+                $this->logger->warning(sprintf('[BTE Controller] Store %d from cookie not found: %s', $lastStoreId, $e->getMessage()));
+                // Continue to fallback
+            }
+        }
+        
+        // Priority 3: Use default store view
+        $defaultStore = $this->storeManager->getDefaultStoreView();
+        $defaultStoreId = $defaultStore->getId();
+        $this->logger->info(sprintf('[BTE Controller] Using default store: %d (%s)', $defaultStoreId, $defaultStore->getCode()));
+        return $defaultStoreId;
     }
 
     /**
