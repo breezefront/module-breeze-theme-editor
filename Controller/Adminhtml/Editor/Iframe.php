@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Controller\Adminhtml\Editor;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\Controller\Result\Raw;
 use Magento\Framework\Controller\Result\RawFactory;
+use Psr\Log\LoggerInterface;
 
 class Iframe extends AbstractEditor implements HttpGetActionInterface
 {
@@ -14,10 +15,17 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
     private $rawResultFactory;
 
     /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession
+     * @param LoggerInterface $logger
      * @param RawFactory $rawResultFactory
      */
     public function __construct(
@@ -25,9 +33,12 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession,
+        LoggerInterface $logger,
         RawFactory $rawResultFactory
     ) {
-        parent::__construct($context, $resultPageFactory, $storeManager, $scopeConfig);
+        parent::__construct($context, $resultPageFactory, $storeManager, $scopeConfig, $backendSession, $logger);
+        $this->logger = $logger;
         $this->rawResultFactory = $rawResultFactory;
     }
 
@@ -57,17 +68,23 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
             $separator = (strpos($frontendUrl, '?') !== false) ? '&' : '?';
             $frontendUrl .= $separator . '___store=' . $storeCode;
             
-            // Add theme preview parameter
-            $themeId = $this->getThemeId();
-            if ($themeId) {
-                $frontendUrl .= '&preview_theme=' . $themeId;
-            }
+            // Theme preview will be set by Observer (SetThemePreviewCookie)
+            // based on store config - no need to pass it here
+            
+            // Log URL building for debugging
+            $this->logger->info(sprintf(
+                '[BTE Iframe] Building URL: store=%d (%s), url=%s',
+                $storeId,
+                $storeCode,
+                $frontendUrl
+            ));
             
             // Add jstest parameter
             if ($jstest) {
                 $frontendUrl .= '&jstest=1';
             }
         } catch (\Exception $e) {
+            $this->logger->error('[BTE Iframe] Failed to build URL: ' . $e->getMessage());
             $frontendUrl = '/';
         }
         

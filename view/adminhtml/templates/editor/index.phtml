@@ -5,16 +5,14 @@
  */
 $viewModel = $block->getData('view_model');
 $storeId = $block->getData('store_id') ?: 1;
-$themeId = $block->getData('theme_id') ?: 0;
 $jstest = $block->getData('jstest') ?: false;
 
 // Get full toolbar configuration from ViewModel
 $toolbarConfig = $viewModel ? $viewModel->getToolbarConfig() : [];
 
-// Build iframe URL
+// Build iframe URL (theme is determined automatically from store config)
 $iframeUrl = $block->getUrl('breeze_editor/editor/iframe', [
     'store' => $storeId,
-    'theme' => $themeId,
     'url' => '/',
     'jstest' => $jstest
 ]);
