@@ -752,6 +752,236 @@ Admin Context:
 
 ---
 
+## 🔗 URL Architecture & Navigation
+
+### The Iframe URL Challenge
+
+**Problem:** Admin controllers wrap frontend pages in an iframe, but this creates URL navigation complexity.
+
+**Initial Load Flow:**
+```
+1. Admin URL: /admin/breeze_editor/editor/iframe/store/1/theme/3/url/%2F/
+   ↓
+2. Iframe.php controller redirects (JavaScript):
+   window.location.href = 'https://magento248.local/'
+   ↓
+3. Actual frontend URL loaded in iframe:
+   https://magento248.local/
+```
+
+**Navigation Bug (Original Implementation):**
+```javascript
+// BUG: Reading wrapper URL instead of real frontend URL
+var currentUrl = $iframe.attr('src');  
+// Returns: /admin/breeze_editor/editor/iframe/...
+```
+
+### Solution: Area-Specific PageUrlProvider + ContentWindow
+
+**Part 1: Area-Specific URL Generation**
+
+**Problem:** `PageUrlProvider` used `\Magento\Framework\UrlInterface` which in admin context generates admin URLs:
+```php
+// BEFORE (Broken):
+$this->urlBuilder->getUrl('cms/page/view', ['page_id' => 123])
+// Returns: /admin/cms/page/view/... ❌ 404 Not Found
+```
+
+**Solution:** Created area-specific implementations:
+
+```
+Model/Provider/
+├── PageUrlProvider.php (base class, changed private → protected)
+├── AdminPageUrlProvider.php (extends base, overrides URL generation)
+└── FrontendPageUrlProvider.php (extends base, no overrides needed)
+```
+
+**AdminPageUrlProvider.php** - Uses `$store->getUrl()` instead of `$urlBuilder->getUrl()`:
+```php
+protected function getFrontendUrl($route = '', $params = [])
+{
+    $store = $this->storeManager->getStore();
+    return $store->getUrl($route, $params); // Frontend URL from admin context
+}
+
+public function getCmsPageUrl($pageId) {
+    // ... find page ...
+    return $this->getFrontendUrl($page->getIdentifier());
+    // Returns: https://magento248.local/enable-cookies ✅
+}
+```
+
+**DI Configuration:**
+```xml
+<!-- etc/adminhtml/di.xml -->
+<preference for="Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider"
+            type="Swissup\BreezeThemeEditor\Model\Provider\AdminPageUrlProvider"/>
+
+<!-- etc/frontend/di.xml -->
+<preference for="Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider"
+            type="Swissup\BreezeThemeEditor\Model\Provider\FrontendPageUrlProvider"/>
+```
+
+**Part 2: ContentWindow Navigation**
+
+**Problem:** Selectors were reading/writing `iframe.src` which points to the admin wrapper URL, not the actual frontend URL after redirect.
+
+**Solution:** Access iframe's actual URL via `contentWindow.location.href`:
+
+**scope-selector.js** (store switching):
+```javascript
+// Get actual frontend URL, not wrapper URL
+var iframe = $iframe[0];
+var currentUrl;
+
+try {
+    currentUrl = iframe.contentWindow.location.href;  // Real URL after redirect
+} catch (e) {
+    currentUrl = $iframe.attr('src');  // Fallback for cross-origin
+}
+
+// Navigate directly via contentWindow
+try {
+    iframe.contentWindow.location.href = newUrl;  // Direct navigation
+} catch (e) {
+    $iframe.attr('src', newUrl);  // Fallback
+}
+```
+
+**page-selector.js** (page switching):
+- Same contentWindow logic as scope-selector
+- Removed `breeze_theme_editor_access_token` preservation (tokens being deprecated)
+
+### URL Flow After Fix
+
+**Store Switching:**
+```
+Before:
+Old: /admin/breeze_editor/editor/iframe/...?___store=old  ❌ Updates wrapper
+New: /admin/breeze_editor/editor/iframe/...?___store=new  ❌ Still wrapper
+
+After:
+Old: https://magento248.local/?___store=old  ✅ Real frontend URL
+New: https://magento248.local/?___store=new  ✅ Real frontend URL
+```
+
+**Page Navigation:**
+```
+Before:
+Old: /admin/breeze_editor/editor/iframe/...
+New: https://magento248.local/admin/enable-cookies/...  ❌ 404 Not Found
+
+After:
+Old: https://magento248.local/gear.html  ✅
+New: https://magento248.local/enable-cookies  ✅ 200 OK
+```
+
+### Files Modified (Bug Fix)
+
+**Backend:**
+```
+Model/Provider/PageUrlProvider.php        ✅ Changed private → protected
+Model/Provider/AdminPageUrlProvider.php   ✅ CREATED (area-specific URLs)
+Model/Provider/FrontendPageUrlProvider.php ✅ CREATED (alias for base)
+etc/adminhtml/di.xml                      ✅ CREATED (DI preference)
+etc/frontend/di.xml                       ✅ UPDATED (added DI preference)
+```
+
+**Frontend:**
+```
+view/adminhtml/web/js/editor/toolbar/scope-selector.js  ✅ Added contentWindow logic
+view/adminhtml/web/js/editor/toolbar/page-selector.js   ✅ Added contentWindow logic
+                                                        ✅ Removed token preservation
+```
+
+### Key Architectural Notes
+
+1. **Iframe wrapper preserved** - Still needed for future Content Editor proxy functionality
+2. **Frontend toolbar NOT affected** - FrontendPageUrlProvider preserves existing behavior
+3. **Cross-origin safety** - Try-catch fallbacks for contentWindow access
+4. **Token deprecation** - Removed token preservation as tokens will be deprecated
+
+---
+
+## 🔐 Token Authentication Strategy
+
+### Why Tokens Are Not Used in Admin
+
+The toolbar behaves differently in admin vs. frontend areas for authentication:
+
+**Admin Area:**
+- ✅ Admin users are already authenticated via `Magento\Backend\Model\Auth\Session`
+- ✅ No access token needed in URLs - session handles authentication
+- ✅ Cleaner URLs without security concerns
+- ✅ `AdminToolbar::canShow()` checks `$authSession->isLoggedIn()`
+- ✅ URLs: `https://magento248.local/gear.html?___store=default` (no token)
+
+**Frontend Area:**
+- ✅ Guest users need access token to enable toolbar
+- ✅ Token passed via URL parameter: `?breeze_theme_editor_access_token=...`
+- ✅ Token validated via `AccessToken::validateRequest()`
+- ✅ `Toolbar::canShow()` checks `$accessToken->validateRequest($request)`
+- ✅ URLs: `https://magento248.local/gear.html?breeze_theme_editor_access_token=KHeDsAwhkv1KTLdg&___store=default`
+
+### Implementation: Area Detection
+
+**Problem:** Token was being added to all URLs in both admin and frontend, even though admin doesn't need it.
+
+**Solution:** Use `\Magento\Framework\App\State::getAreaCode()` to detect current area and conditionally add token.
+
+**Files Modified:**
+
+1. **ViewModel/Toolbar.php** - Page navigation URLs
+   ```php
+   use Magento\Framework\App\State;
+   
+   private $state;
+   
+   protected function shouldAddToken()
+   {
+       try {
+           return $this->state->getAreaCode() !== \Magento\Framework\App\Area::AREA_ADMINHTML;
+       } catch (\Exception $e) {
+           // If we can't determine area, assume frontend (safer to add token)
+           return true;
+       }
+   }
+   
+   // In getPageSelectorData():
+   if ($token && $this->shouldAddToken()) {
+       $url .= $separator . $this->accessToken->getParamName() . '=' . urlencode($token);
+   }
+   ```
+
+2. **Model/Provider/StoreDataProvider.php** - Store switching URLs
+   ```php
+   use Magento\Framework\App\State;
+   
+   private $state;
+   
+   private function shouldAddToken()
+   {
+       try {
+           return $this->state->getAreaCode() !== \Magento\Framework\App\Area::AREA_ADMINHTML;
+       } catch (\Exception $e) {
+           return true; // Safer to add token if area unknown
+       }
+   }
+   
+   // In getStoreUrl():
+   if ($token && $this->shouldAddToken()) {
+       $url .= $separator . $this->accessToken->getParamName() . '=' . urlencode($token);
+   }
+   ```
+
+**Result:**
+- ✅ Admin URLs: Clean, no token parameter
+- ✅ Frontend URLs: Token preserved for access control
+- ✅ All navigation and store switching works correctly
+- ✅ Admin session authentication unchanged
+
+---
+
 ## ✅ Implementation Summary
 
 ### Phase 1A: Completed ✅

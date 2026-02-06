@@ -61,6 +61,7 @@ class AdminToolbar extends Toolbar
      * @param \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider
      * @param DesignInterface $design
      * @param Json $jsonSerializer
+     * @param \Magento\Framework\App\State $state
      * @param PublicationRepositoryInterface $publicationRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      */
@@ -75,6 +76,7 @@ class AdminToolbar extends Toolbar
         \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider,
         DesignInterface $design,
         Json $jsonSerializer,
+        \Magento\Framework\App\State $state,
         PublicationRepositoryInterface $publicationRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder
     ) {
@@ -88,7 +90,8 @@ class AdminToolbar extends Toolbar
             $pageUrlProvider,
             $storeDataProvider,
             $design,
-            $jsonSerializer
+            $jsonSerializer,
+            $state
         );
         
         // Store references that we need in this class

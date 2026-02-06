@@ -6,6 +6,7 @@ use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\View\DesignInterface;
+use Magento\Framework\App\State;
 
 class Toolbar implements ArgumentInterface
 {
@@ -60,6 +61,11 @@ class Toolbar implements ArgumentInterface
     private $design;
 
     /**
+     * @var State
+     */
+    private $state;
+
+    /**
      * @param \Swissup\BreezeThemeEditor\Helper\Data $helper
      * @param \Swissup\BreezeThemeEditor\Model\Data\AccessToken $accessToken
      * @param \Magento\Framework\App\RequestInterface $request
@@ -70,6 +76,7 @@ class Toolbar implements ArgumentInterface
      * @param \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider
      * @param DesignInterface $design
      * @param Json $jsonSerializer
+     * @param State $state
      */
     public function __construct(
         \Swissup\BreezeThemeEditor\Helper\Data $helper,
@@ -81,7 +88,8 @@ class Toolbar implements ArgumentInterface
         \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider $pageUrlProvider,
         \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider,
         DesignInterface $design,
-        Json $jsonSerializer
+        Json $jsonSerializer,
+        State $state
     ) {
         $this->helper = $helper;
         $this->accessToken = $accessToken;
@@ -93,6 +101,7 @@ class Toolbar implements ArgumentInterface
         $this->storeDataProvider = $storeDataProvider;
         $this->design = $design;
         $this->jsonSerializer = $jsonSerializer;
+        $this->state = $state;
     }
 
     /**
@@ -232,8 +241,8 @@ class Toolbar implements ArgumentInterface
         foreach ($pages as $actionName => $data) {
             $url = $data['url'];
             
-            // Add access token to URL for navigation persistence
-            if ($token) {
+            // Add access token to URL for navigation persistence (frontend only)
+            if ($token && $this->shouldAddToken()) {
                 $separator = strpos($url, '?') !== false ? '&' : '?';
                 $url .= $separator . $this->accessToken->getParamName() . '=' . urlencode($token);
             }
@@ -413,5 +422,23 @@ class Toolbar implements ArgumentInterface
     public function getAccessToken()
     {
         return $this->accessToken->getToken();
+    }
+
+    /**
+     * Check if access token should be added to URLs
+     * 
+     * In admin area, token is not needed because admin is already authenticated.
+     * In frontend area, token is needed to persist toolbar access.
+     *
+     * @return bool
+     */
+    protected function shouldAddToken()
+    {
+        try {
+            return $this->state->getAreaCode() !== \Magento\Framework\App\Area::AREA_ADMINHTML;
+        } catch (\Exception $e) {
+            // If we can't determine area, assume frontend (safer to add token)
+            return true;
+        }
     }
 }
