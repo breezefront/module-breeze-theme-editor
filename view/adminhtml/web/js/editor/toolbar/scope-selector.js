@@ -16,7 +16,8 @@ define([
             websites: [],           // Hierarchical store data from ViewModel
             currentStoreId: null,   // Current store ID
             iframeSelector: '#bte-iframe',
-            pageSelectorElement: '#bte-page-selector' // Page selector element (to update store param)
+            pageSelectorElement: '#bte-page-selector', // Page selector element (to update store param)
+            themeId: null           // Theme ID for preview cookie
         },
 
         /**
@@ -194,6 +195,25 @@ define([
         },
 
         /**
+         * Set theme preview cookie for Magento
+         * 
+         * Magento uses 'preview_theme' cookie to override store's default theme.
+         * This ensures iframe displays correct theme when switching stores.
+         * 
+         * @private
+         */
+        _setThemePreviewCookie: function() {
+            if (!this.options.themeId) {
+                console.warn('⚠️ No themeId provided, cannot set preview_theme cookie');
+                return;
+            }
+            
+            // Set cookie for Magento theme preview (SameSite=Lax, path=/)
+            document.cookie = 'preview_theme=' + this.options.themeId + '; path=/; SameSite=Lax';
+            console.log('🎨 Set preview_theme cookie:', this.options.themeId);
+        },
+
+        /**
          * Select store and reload iframe
          * @param {number} storeId
          * @param {string} storeCode
@@ -232,6 +252,9 @@ define([
             console.log('🔄 Reloading iframe with store:', storeCode);
             console.log('   Old URL:', currentUrl);
             console.log('   New URL:', newUrl);
+            
+            // Set theme preview cookie BEFORE navigation
+            this._setThemePreviewCookie();
             
             // Navigate iframe directly via contentWindow for better UX
             try {

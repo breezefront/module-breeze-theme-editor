@@ -13,10 +13,11 @@ define([
 
     $.widget('swissup.breezePageSelector', {
         options: {
-            pages: [],              // Page types from ViewModel
-            currentPageId: null,    // Current page ID
-            iframeBaseUrl: '',      // Base URL for iframe
-            iframeSelector: '#bte-iframe'
+            pages: [],
+            currentPageId: null,
+            iframeBaseUrl: '',
+            iframeSelector: '#bte-iframe',
+            themeId: null
         },
 
         /**
@@ -147,6 +148,25 @@ define([
         },
 
         /**
+         * Set theme preview cookie for Magento
+         * 
+         * Magento uses 'preview_theme' cookie to override store's default theme.
+         * This ensures iframe displays correct theme when navigating.
+         * 
+         * @private
+         */
+        _setThemePreviewCookie: function() {
+            if (!this.options.themeId) {
+                console.warn('⚠️ No themeId provided, cannot set preview_theme cookie');
+                return;
+            }
+            
+            // Set cookie for Magento theme preview (SameSite=Lax, path=/)
+            document.cookie = 'preview_theme=' + this.options.themeId + '; path=/; SameSite=Lax';
+            console.log('🎨 Set preview_theme cookie:', this.options.themeId);
+        },
+
+        /**
          * Select page and reload iframe
          * @param {string} pageId
          * @private
@@ -186,6 +206,9 @@ define([
 
             console.log('🔄 Reloading iframe with page:', pageData.label);
             console.log('   New URL:', newUrl);
+            
+            // Set theme preview cookie BEFORE navigation
+            this._setThemePreviewCookie();
             
             // Navigate iframe directly via contentWindow for better UX
             try {

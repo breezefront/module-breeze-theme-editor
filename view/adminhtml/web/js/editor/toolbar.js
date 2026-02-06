@@ -95,7 +95,8 @@ define([
             $('#bte-scope-selector').breezeScopeSelector({
                 websites: config.storeHierarchy || [],
                 currentStoreId: config.currentStoreId || null,
-                iframeSelector: config.iframeSelector || '#bte-iframe'
+                iframeSelector: config.iframeSelector || '#bte-iframe',
+                themeId: config.themeId || null
             });
             console.log('✅ Scope selector initialized');
         }
@@ -106,7 +107,8 @@ define([
                 pages: config.pageTypes || [],
                 currentPageId: config.currentPageId || null,
                 iframeBaseUrl: config.iframeBaseUrl || '',
-                iframeSelector: config.iframeSelector || '#bte-iframe'
+                iframeSelector: config.iframeSelector || '#bte-iframe',
+                themeId: config.themeId || null
             });
             console.log('✅ Page selector initialized');
         }
