@@ -52,9 +52,20 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
                 $frontendUrl = rtrim($frontendUrl, '/') . '/' . ltrim($previewUrl, '/');
             }
             
+            // Add store parameter to ensure correct store view
+            $storeCode = $store->getCode();
+            $separator = (strpos($frontendUrl, '?') !== false) ? '&' : '?';
+            $frontendUrl .= $separator . '___store=' . $storeCode;
+            
+            // Add theme preview parameter
+            $themeId = $this->getThemeId();
+            if ($themeId) {
+                $frontendUrl .= '&preview_theme=' . $themeId;
+            }
+            
             // Add jstest parameter
             if ($jstest) {
-                $frontendUrl .= (strpos($frontendUrl, '?') !== false ? '&' : '?') . 'jstest=1';
+                $frontendUrl .= '&jstest=1';
             }
         } catch (\Exception $e) {
             $frontendUrl = '/';

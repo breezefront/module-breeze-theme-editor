@@ -36,6 +36,24 @@ define([
             graphqlEndpoint: config.graphqlEndpoint
         });
         
+        // Set theme preview cookie and refresh on iframe navigation
+        var iframeSelector = config.iframeSelector || '#bte-iframe';
+        var $iframe = $(iframeSelector);
+        
+        if (config.themeId) {
+            // Set cookie immediately
+            document.cookie = 'preview_theme=' + config.themeId + '; path=/; SameSite=Lax';
+            console.log('🎨 Theme preview cookie set initially:', config.themeId);
+            
+            // Refresh cookie on every iframe load (including link clicks inside iframe)
+            if ($iframe.length) {
+                $iframe.on('load', function() {
+                    document.cookie = 'preview_theme=' + config.themeId + '; path=/; SameSite=Lax';
+                    console.log('🎨 Theme preview cookie refreshed on iframe load:', config.themeId);
+                });
+            }
+        }
+        
         // Render toolbar HTML from template
         var template = mageTemplate(toolbarTemplate);
         var html = template({ data: config });
