@@ -20,15 +20,44 @@ define([
         },
 
         /**
+         * Current URL parameters (store, jstest)
+         * @private
+         */
+        currentParams: {},
+
+        /**
          * Widget initialization
          * @private
          */
         _create: function() {
             console.log('🎨 Initializing page selector', this.options);
             this.currentPageLabel = this._findPageLabel(this.options.currentPageId);
+            this._initializeCurrentParams();
             this._render();
             this._bindEvents();
             console.log('✅ Page selector initialized');
+        },
+
+        /**
+         * Initialize current parameters from iframeBaseUrl
+         * @private
+         */
+        _initializeCurrentParams: function() {
+            this.currentParams = {};
+            try {
+                var urlObj = new URL(this.options.iframeBaseUrl, window.location.origin);
+                var storeParam = urlObj.searchParams.get('___store');
+                var jstestParam = urlObj.searchParams.get('jstest');
+                
+                if (storeParam) {
+                    this.currentParams.store = storeParam;
+                }
+                if (jstestParam) {
+                    this.currentParams.jstest = jstestParam;
+                }
+            } catch (e) {
+                console.warn('⚠️ Error parsing iframeBaseUrl:', e);
+            }
         },
 
         /**
@@ -148,16 +177,24 @@ define([
             this.options.currentPageId = pageId;
             this.currentPageLabel = pageData.label;
 
-            // Build new iframe URL
+            // Get iframe element
             var $iframe = $(this.options.iframeSelector);
-            var currentUrl = $iframe.attr('src');
-            var newUrl = this._buildPageUrl(pageData.url, currentUrl);
+            var iframe = $iframe[0];
+            
+            // Build new URL with current params
+            var newUrl = this._buildPageUrlWithParams(pageData.url);
 
             console.log('🔄 Reloading iframe with page:', pageData.label);
-            console.log('   Old URL:', currentUrl);
             console.log('   New URL:', newUrl);
             
-            $iframe.attr('src', newUrl);
+            // Navigate iframe directly via contentWindow for better UX
+            try {
+                iframe.contentWindow.location.href = newUrl;
+            } catch (e) {
+                // Fallback to iframe.src if contentWindow access fails
+                console.warn('⚠️ Cannot set iframe contentWindow.location, using src attribute');
+                $iframe.attr('src', newUrl);
+            }
 
             // Update UI
             this._render();
@@ -170,44 +207,28 @@ define([
         },
 
         /**
-         * Build new page URL preserving store and jstest params
-         * 
-         * Note: pageUrl is already an absolute URL from PageUrlProvider.
-         * We just parse it and add query parameters from the current URL.
+         * Build page URL with current parameters (store, jstest)
          * 
          * @param {string} pageUrl - Absolute URL from PageUrlProvider
-         * @param {string} currentUrl - Current iframe URL
          * @returns {string}
          * @private
          */
-        _buildPageUrl: function(pageUrl, currentUrl) {
+        _buildPageUrlWithParams: function(pageUrl) {
             try {
-                // pageUrl is already absolute (from PageUrlProvider)
                 var newUrlObj = new URL(pageUrl);
                 
-                // Parse current URL to preserve params
-                var currentUrlObj = new URL(currentUrl);
-                var storeParam = currentUrlObj.searchParams.get('___store');
-                var jstestParam = currentUrlObj.searchParams.get('jstest');
-                var tokenParam = currentUrlObj.searchParams.get('breeze_theme_editor_access_token');
-
-                // Preserve important params
-                if (storeParam) {
-                    newUrlObj.searchParams.set('___store', storeParam);
+                // Add current parameters
+                if (this.currentParams.store) {
+                    newUrlObj.searchParams.set('___store', this.currentParams.store);
                 }
-                if (jstestParam) {
-                    newUrlObj.searchParams.set('jstest', jstestParam);
-                }
-                if (tokenParam) {
-                    newUrlObj.searchParams.set('breeze_theme_editor_access_token', tokenParam);
+                if (this.currentParams.jstest) {
+                    newUrlObj.searchParams.set('jstest', this.currentParams.jstest);
                 }
 
                 return newUrlObj.toString();
             } catch (e) {
                 console.error('❌ Error building page URL:', e);
                 console.error('   pageUrl:', pageUrl);
-                console.error('   currentUrl:', currentUrl);
-                // Fallback to raw page URL
                 return pageUrl;
             }
         },
@@ -219,6 +240,16 @@ define([
         setPage: function(pageId) {
             console.log('📝 Setting page externally:', pageId);
             this._selectPage(pageId);
+        },
+
+        /**
+         * Public API: Update store parameter
+         * Called by scope-selector when store changes
+         * @param {string} storeCode
+         */
+        updateStoreParam: function(storeCode) {
+            console.log('🏪 Updating store parameter:', storeCode);
+            this.currentParams.store = storeCode;
         }
     });
 

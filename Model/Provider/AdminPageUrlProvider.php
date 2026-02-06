@@ -1,33 +1,21 @@
 <?php
+declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Provider;
 
-class PageUrlProvider
+use Magento\Framework\Url as FrontendUrlBuilder;
+
+/**
+ * Admin-specific PageUrlProvider
+ *
+ * Generates frontend store URLs even when called from admin context.
+ */
+class AdminPageUrlProvider extends PageUrlProvider
 {
     /**
-     * @var \Magento\Framework\UrlInterface
+     * @var FrontendUrlBuilder
      */
-    protected $urlBuilder;
-
-    /**
-     * @var \Magento\Catalog\Model\CategoryFactory
-     */
-    protected $categoryFactory;
-
-    /**
-     * @var \Magento\Catalog\Model\ProductFactory
-     */
-    protected $productFactory;
-
-    /**
-     * @var \Magento\Cms\Model\PageFactory
-     */
-    protected $pageFactory;
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $storeManager;
+    private $frontendUrlBuilder;
 
     /**
      * @param \Magento\Framework\UrlInterface $urlBuilder
@@ -35,58 +23,25 @@ class PageUrlProvider
      * @param \Magento\Catalog\Model\ProductFactory $productFactory
      * @param \Magento\Cms\Model\PageFactory $pageFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param FrontendUrlBuilder $frontendUrlBuilder
      */
     public function __construct(
         \Magento\Framework\UrlInterface $urlBuilder,
         \Magento\Catalog\Model\CategoryFactory $categoryFactory,
         \Magento\Catalog\Model\ProductFactory $productFactory,
         \Magento\Cms\Model\PageFactory $pageFactory,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        FrontendUrlBuilder $frontendUrlBuilder
     ) {
-        $this->urlBuilder = $urlBuilder;
-        $this->categoryFactory = $categoryFactory;
-        $this->productFactory = $productFactory;
-        $this->pageFactory = $pageFactory;
-        $this->storeManager = $storeManager;
-    }
+        parent::__construct(
+            $urlBuilder,
+            $categoryFactory,
+            $productFactory,
+            $pageFactory,
+            $storeManager
+        );
 
-    /**
-     * Get available page types with URLs
-     *
-     * @return array
-     */
-    public function getAvailablePages()
-    {
-        return [
-            'cms_index_index' => [
-                'title' => __('Home Page'),
-                'url' => $this->getHomeUrl()
-            ],
-            'catalog_category_view' => [
-                'title' => __('Category Page'),
-                'url' => $this->getCategoryUrl()
-            ],
-            'catalog_product_view' => [
-                'title' => __('Product Page'),
-                'url' => $this->getProductUrl()
-            ],
-            'checkout_cart_index' => [
-                'title' => __('Shopping Cart'),
-                'url' => $this->getCartUrl()
-            ],
-            'checkout_index_index' => [
-                'title' => __('Checkout'),
-                'url' => $this->getCheckoutUrl()
-            ],
-            'customer_account_index' => [
-                'title' => __('My Account'),
-                'url' => $this->getAccountUrl()
-            ],
-            'cms_page_view' => [
-                'title' => __('CMS Page'),
-                'url' => $this->getCmsPageUrl()
-            ]
-        ];
+        $this->frontendUrlBuilder = $frontendUrlBuilder;
     }
 
     /**
@@ -96,7 +51,7 @@ class PageUrlProvider
      */
     public function getHomeUrl()
     {
-        return $this->urlBuilder->getUrl('');
+        return $this->getFrontendUrl('');
     }
 
     /**
@@ -121,13 +76,15 @@ class PageUrlProvider
                 ->getFirstItem();
 
             if ($category->getId()) {
-                return $category->getUrl();
+                return $this->getFrontendUrl('catalog/category/view', [
+                    'id' => $category->getId()
+                ]);
             }
         } catch (\Exception $e) {
             // Silent fail
         }
 
-        return $this->urlBuilder->getUrl('catalog/category/view', ['id' => 2]);
+        return $this->getFrontendUrl('catalog/category/view', ['id' => 2]);
     }
 
     /**
@@ -156,13 +113,15 @@ class PageUrlProvider
                 ->getFirstItem();
 
             if ($product->getId()) {
-                return $product->getProductUrl();
+                return $this->getFrontendUrl('catalog/product/view', [
+                    'id' => $product->getId()
+                ]);
             }
         } catch (\Exception $e) {
             // Silent fail
         }
 
-        return $this->urlBuilder->getUrl('catalog/product/view', ['id' => 1]);
+        return $this->getFrontendUrl('catalog/product/view', ['id' => 1]);
     }
 
     /**
@@ -184,13 +143,13 @@ class PageUrlProvider
                 ->getFirstItem();
 
             if ($page->getId()) {
-                return $this->urlBuilder->getUrl($page->getIdentifier());
+                return $this->getFrontendUrl($page->getIdentifier());
             }
         } catch (\Exception $e) {
             // Silent fail
         }
 
-        return $this->urlBuilder->getUrl('about-us');
+        return $this->getFrontendUrl('about-us');
     }
 
     /**
@@ -200,7 +159,7 @@ class PageUrlProvider
      */
     public function getCartUrl()
     {
-        return $this->urlBuilder->getUrl('checkout/cart');
+        return $this->getFrontendUrl('checkout/cart');
     }
 
     /**
@@ -210,7 +169,7 @@ class PageUrlProvider
      */
     public function getCheckoutUrl()
     {
-        return $this->urlBuilder->getUrl('checkout');
+        return $this->getFrontendUrl('checkout');
     }
 
     /**
@@ -220,6 +179,61 @@ class PageUrlProvider
      */
     public function getAccountUrl()
     {
-        return $this->urlBuilder->getUrl('customer/account');
+        return $this->getFrontendUrl('customer/account');
+    }
+
+    /**
+     * Get frontend URL using dedicated frontend URL builder
+     *
+     * This ensures we get frontend URLs even when called from admin context.
+     *
+     * @param string $route
+     * @param array $params
+     * @return string
+     */
+    protected function getFrontendUrl($route = '', $params = [])
+    {
+        try {
+            $store = $this->storeManager->getStore();
+
+            // Force frontend scope parameters
+            $params = array_merge($params, [
+                '_scope' => $store->getId(),
+                '_type' => \Magento\Framework\UrlInterface::URL_TYPE_WEB,
+                '_nosid' => true,
+                '_scope_to_url' => true
+            ]);
+
+            // Set the frontend URL builder to use the correct store
+            $this->frontendUrlBuilder->setScope($store->getId());
+
+            // Build frontend URL
+            return $this->frontendUrlBuilder->getUrl($route, $params);
+
+        } catch (\Exception $e) {
+            // Fallback to base URL construction
+            try {
+                $baseUrl = $this->storeManager->getStore()->getBaseUrl(
+                    \Magento\Framework\UrlInterface::URL_TYPE_WEB
+                );
+                $route = ltrim($route, '/');
+
+                // Build query string if params present
+                $query = '';
+                if (!empty($params)) {
+                    $queryParams = array_filter($params, function($key) {
+                        return strpos($key, '_') !== 0;
+                    }, ARRAY_FILTER_USE_KEY);
+
+                    if (!empty($queryParams)) {
+                        $query = '?' . http_build_query($queryParams);
+                    }
+                }
+
+                return rtrim($baseUrl, '/') . '/' . $route . $query;
+            } catch (\Exception $e) {
+                return '';
+            }
+        }
     }
 }

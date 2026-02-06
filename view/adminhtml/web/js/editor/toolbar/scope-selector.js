@@ -15,7 +15,8 @@ define([
         options: {
             websites: [],           // Hierarchical store data from ViewModel
             currentStoreId: null,   // Current store ID
-            iframeSelector: '#bte-iframe'
+            iframeSelector: '#bte-iframe',
+            pageSelectorElement: '#bte-page-selector' // Page selector element (to update store param)
         },
 
         /**
@@ -212,20 +213,44 @@ define([
             this.options.currentStoreId = storeId;
             this.currentStoreName = storeName;
 
-            // Reload iframe with new store
+            // Get iframe element and read real URL from contentWindow
             var $iframe = $(this.options.iframeSelector);
-            var currentUrl = $iframe.attr('src');
+            var iframe = $iframe[0];
+            var currentUrl;
+            
+            try {
+                // Get the actual frontend URL (after redirect), not the admin wrapper URL
+                currentUrl = iframe.contentWindow.location.href;
+            } catch (e) {
+                // Fallback to iframe src if contentWindow access fails (cross-origin)
+                console.warn('⚠️ Cannot access iframe contentWindow, using src attribute');
+                currentUrl = $iframe.attr('src');
+            }
+            
             var newUrl = this._updateUrlStoreParam(currentUrl, storeCode);
             
             console.log('🔄 Reloading iframe with store:', storeCode);
             console.log('   Old URL:', currentUrl);
             console.log('   New URL:', newUrl);
             
-            $iframe.attr('src', newUrl);
+            // Navigate iframe directly via contentWindow for better UX
+            try {
+                iframe.contentWindow.location.href = newUrl;
+            } catch (e) {
+                // Fallback to iframe.src if contentWindow access fails
+                console.warn('⚠️ Cannot set iframe contentWindow.location, using src attribute');
+                $iframe.attr('src', newUrl);
+            }
 
             // Update UI
             this._render();
             this._closeDropdown();
+
+            // Update page selector's store parameter
+            var $pageSelector = $(this.options.pageSelectorElement);
+            if ($pageSelector.length && $pageSelector.data('swissup-breezePageSelector')) {
+                $pageSelector.breezePageSelector('updateStoreParam', storeCode);
+            }
 
             // Trigger event
             $(this.element).trigger('storeChanged', [storeId, storeCode]);

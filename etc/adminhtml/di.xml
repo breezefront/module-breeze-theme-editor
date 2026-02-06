@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    
+    <!-- Use Admin-specific PageUrlProvider in admin area -->
+    <!-- Generates frontend store URLs even when called from admin context -->
+    <preference for="Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider"
+                type="Swissup\BreezeThemeEditor\Model\Provider\AdminPageUrlProvider"/>
+</config>

@@ -2,6 +2,10 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn: magento:framework:ObjectManager/etc/config.xsd">
 
+    <!-- Use frontend-specific PageUrlProvider -->
+    <preference for="Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider"
+                type="Swissup\BreezeThemeEditor\Model\Provider\FrontendPageUrlProvider"/>
+
     <!-- Invalidate CSS variables cache after mutations -->
 
     <!-- Plugin:  Invalidate cache after saving draft values -->
