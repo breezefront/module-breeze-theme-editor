@@ -326,6 +326,7 @@ class AdminToolbar extends Toolbar
         return [
             // ===== Inherited from parent Toolbar =====
             'storeId' => $this->getStoreId(),
+            'storeCode' => $this->storeManager->getStore($this->getStoreId())->getCode(),
             'themeId' => $this->getThemeId(),
             'username' => $this->getAdminUsername(),
             'adminUrl' => $this->getAdminUrl(),

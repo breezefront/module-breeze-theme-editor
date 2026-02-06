@@ -279,6 +279,13 @@ define([
             $(this.element).trigger('storeChanged', [storeId, storeCode]);
             
             console.log('✅ Store switched to:', storeName);
+            
+            // Update toolbar config with new store code for link interceptor
+            var toolbarConfig = $('body').data('bte-admin-config');
+            if (toolbarConfig) {
+                toolbarConfig.storeCode = storeCode;
+                console.log('🔄 Toolbar config updated - new storeCode:', storeCode);
+            }
         },
 
         /**

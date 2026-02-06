@@ -32,26 +32,17 @@ define([
         // Store config globally for child widgets to access
         $('body').data('bte-admin-config', {
             storeId: config.storeId,
+            storeCode: config.storeCode,
             themeId: config.themeId,
             graphqlEndpoint: config.graphqlEndpoint
         });
         
-        // Set theme preview cookie and refresh on iframe navigation
+        // Setup link interception for iframe navigation
         var iframeSelector = config.iframeSelector || '#bte-iframe';
         var $iframe = $(iframeSelector);
-        
-        if (config.themeId) {
-            // Set cookie immediately
-            document.cookie = 'preview_theme=' + config.themeId + '; path=/; SameSite=Lax';
-            console.log('🎨 Theme preview cookie set initially:', config.themeId);
-            
-            // Refresh cookie on every iframe load (including link clicks inside iframe)
-            if ($iframe.length) {
-                $iframe.on('load', function() {
-                    document.cookie = 'preview_theme=' + config.themeId + '; path=/; SameSite=Lax';
-                    console.log('🎨 Theme preview cookie refreshed on iframe load:', config.themeId);
-                });
-            }
+        if ($iframe.length && config.storeCode && config.themeId) {
+            _setupLinkInterceptor($iframe, config);
+            console.log('✅ Link interceptor initialized with store:', config.storeCode, 'theme:', config.themeId);
         }
         
         // Render toolbar HTML from template
@@ -160,5 +151,138 @@ define([
         }
         
         console.log('✅ Admin toolbar initialized successfully');
+        
+        /**
+         * Setup link interception inside iframe
+         * Intercepts all <a> clicks and adds store/theme parameters
+         * 
+         * @param {jQuery} $iframe - iframe element
+         * @param {Object} config - toolbar configuration with storeCode and themeId
+         */
+        function _setupLinkInterceptor($iframe, config) {
+            // Re-attach listener on every iframe load
+            $iframe.on('load.bte-link-intercept', function() {
+                try {
+                    var iframeWindow = $iframe[0].contentWindow;
+                    var iframeDoc = iframeWindow.document;
+                    
+                    // Remove previous listener to avoid duplicates
+                    $(iframeDoc).off('click.bte-link-intercept');
+                    
+                    // Attach click handler to all <a> tags
+                    $(iframeDoc).on('click.bte-link-intercept', 'a[href]', function(e) {
+                        var $link = $(this);
+                        var href = $link.attr('href');
+                        
+                        console.log('🔗 Link clicked:', href);
+                        
+                        // Skip special links
+                        if (_shouldSkipLink(href)) {
+                            console.log('⏭️  Skipping special link:', href);
+                            return; // Let browser handle normally
+                        }
+                        
+                        try {
+                            // Build URL with parameters
+                            var newUrl = _buildUrlWithParams(href, config, iframeWindow);
+                            
+                            if (newUrl !== href) {
+                                // Prevent default navigation
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                // Navigate with parameters
+                                console.log('🎯 Navigating with params:', newUrl);
+                                iframeWindow.location.href = newUrl;
+                            } else {
+                                console.log('✓ Link already has parameters, using default navigation');
+                            }
+                            // If URL unchanged (already has params), let browser navigate normally
+                            
+                        } catch (err) {
+                            console.warn('⚠️  Failed to parse URL:', href, err);
+                            // Let browser handle on error
+                        }
+                    });
+                    
+                    console.log('✅ Link interceptor attached to iframe document');
+                    
+                } catch (err) {
+                    console.error('❌ Failed to setup link interceptor:', err);
+                    console.error('   This may happen if iframe content is from different origin');
+                }
+            });
+        }
+        
+        /**
+         * Check if link should be skipped (not intercepted)
+         * 
+         * @param {string} href - link href attribute
+         * @return {boolean} true if should skip
+         */
+        function _shouldSkipLink(href) {
+            if (!href) {
+                return true;
+            }
+            
+            // Skip these protocols/patterns
+            var skipPatterns = [
+                '#',            // Anchor links (same page navigation)
+                'javascript:',  // JavaScript pseudo-protocol
+                'mailto:',      // Email links
+                'tel:',         // Phone links
+                'data:',        // Data URIs
+                'blob:'         // Blob URLs
+            ];
+            
+            return skipPatterns.some(function(pattern) {
+                return href.startsWith(pattern);
+            });
+        }
+        
+        /**
+         * Build URL with store and theme parameters
+         * Pattern reused from scope-selector.js URL building logic
+         * 
+         * @param {string} href - original link href
+         * @param {Object} config - toolbar config with storeCode and themeId
+         * @param {Window} iframeWindow - iframe window object for origin checking
+         * @return {string} URL with parameters added
+         */
+        function _buildUrlWithParams(href, config, iframeWindow) {
+            try {
+                // Parse URL (handle both relative and absolute URLs)
+                var baseUrl = iframeWindow.location.origin;
+                var url = new URL(href, baseUrl);
+                
+                // Only handle same-origin URLs (don't modify external links)
+                if (url.origin !== iframeWindow.location.origin) {
+                    console.log('🌍 External link detected, skipping:', url.origin);
+                    return href;
+                }
+                
+                // Check if parameters already exist
+                var hasStore = url.searchParams.has('___store');
+                var hasTheme = url.searchParams.has('preview_theme');
+                
+                console.log('📊 URL params check - hasStore:', hasStore, 'hasTheme:', hasTheme);
+                
+                // Add missing parameters
+                if (!hasStore && config.storeCode) {
+                    url.searchParams.set('___store', config.storeCode);
+                    console.log('   ➕ Added ___store:', config.storeCode);
+                }
+                if (!hasTheme && config.themeId) {
+                    url.searchParams.set('preview_theme', config.themeId);
+                    console.log('   ➕ Added preview_theme:', config.themeId);
+                }
+                
+                return url.toString();
+                
+            } catch (err) {
+                console.warn('⚠️  Failed to build URL:', href, err);
+                return href; // Return original on error
+            }
+        }
     };
 });
