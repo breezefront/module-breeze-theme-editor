@@ -7,8 +7,11 @@
 define([
     'jquery',
     'mage/template',
-    'text!Swissup_BreezeThemeEditor/template/editor/scope-selector.html'
-], function ($, mageTemplate, template) {
+    'text!Swissup_BreezeThemeEditor/template/editor/scope-selector.html',
+    'Swissup_BreezeThemeEditor/js/editor/util/cookie-manager',
+    'Swissup_BreezeThemeEditor/js/editor/util/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/util/url-builder'
+], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder) {
     'use strict';
 
     $.widget('swissup.breezeScopeSelector', {
@@ -195,25 +198,6 @@ define([
         },
 
         /**
-         * Set theme preview cookie for Magento
-         * 
-         * Magento uses 'preview_theme' cookie to override store's default theme.
-         * This ensures iframe displays correct theme when switching stores.
-         * 
-         * @private
-         */
-        _setThemePreviewCookie: function() {
-            if (!this.options.themeId) {
-                console.warn('⚠️ No themeId provided, cannot set preview_theme cookie');
-                return;
-            }
-            
-            // Set cookie for Magento theme preview (SameSite=Lax, path=/)
-            document.cookie = 'preview_theme=' + this.options.themeId + '; path=/; SameSite=Lax';
-            console.log('🎨 Set preview_theme cookie:', this.options.themeId);
-        },
-
-        /**
          * Select store and reload iframe
          * @param {number} storeId
          * @param {string} storeCode
@@ -233,87 +217,52 @@ define([
             this.options.currentStoreId = storeId;
             this.currentStoreName = storeName;
 
-            // Get iframe element and read real URL from contentWindow
             var $iframe = $(this.options.iframeSelector);
-            var iframe = $iframe[0];
-            var currentUrl;
+            var currentSrc = $iframe.attr('src');
             
-            try {
-                // Get the actual frontend URL (after redirect), not the admin wrapper URL
-                currentUrl = iframe.contentWindow.location.href;
-            } catch (e) {
-                // Fallback to iframe src if contentWindow access fails (cross-origin)
-                console.warn('⚠️ Cannot access iframe contentWindow, using src attribute');
-                currentUrl = $iframe.attr('src');
-            }
+            // Replace /store/OLD_ID/ with /store/NEW_ID/
+            // Also replace /url/.../ with /url/%2F/ (always reset to homepage)
+            var newSrc = currentSrc
+                .replace(/\/store\/\d+\//, '/store/' + storeId + '/')
+                .replace(/\/url\/[^\/]*\//, '/url/%2F/');
             
-            var newUrl = this._updateUrlStoreParam(currentUrl, storeCode);
+            console.log('🔄 Updating iframe src');
+            console.log('   Old:', currentSrc);
+            console.log('   New:', newSrc);
             
-            console.log('🔄 Reloading iframe with store:', storeCode);
-            console.log('   Old URL:', currentUrl);
-            console.log('   New URL:', newUrl);
+            // Set store cookie only (theme determined automatically from store config)
+            cookieManager.setStoreCookie(storeCode);
             
-            // Set theme preview cookie BEFORE navigation
-            this._setThemePreviewCookie();
+            // Save last store ID for next session (24h)
+            cookieManager.setCookie('bte_last_store_id', storeId, {
+                path: '/',
+                maxAge: 86400,  // 24 hours
+                sameSite: 'Lax'
+            });
+            console.log('💾 Saved last store ID:', storeId);
             
-            // Navigate iframe directly via contentWindow for better UX
-            try {
-                iframe.contentWindow.location.href = newUrl;
-            } catch (e) {
-                // Fallback to iframe.src if contentWindow access fails
-                console.warn('⚠️ Cannot set iframe contentWindow.location, using src attribute');
-                $iframe.attr('src', newUrl);
-            }
-
+            // Update iframe src (triggers reload with new store + homepage)
+            $iframe.attr('src', newSrc);
+            
             // Update UI
             this._render();
             this._closeDropdown();
-
-            // Update page selector's store parameter
+            
+            // Update page selector
             var $pageSelector = $(this.options.pageSelectorElement);
             if ($pageSelector.length && $pageSelector.data('swissup-breezePageSelector')) {
                 $pageSelector.breezePageSelector('updateStoreParam', storeCode);
             }
-
+            
             // Trigger event
             $(this.element).trigger('storeChanged', [storeId, storeCode]);
-            
             console.log('✅ Store switched to:', storeName);
             
-            // Update toolbar config with new store code for link interceptor
-            var toolbarConfig = $('body').data('bte-admin-config');
-            if (toolbarConfig) {
-                toolbarConfig.storeCode = storeCode;
-                console.log('🔄 Toolbar config updated - new storeCode:', storeCode);
-            }
-        },
-
-        /**
-         * Update URL store parameter
-         * 
-         * Note: url is the current iframe URL (absolute).
-         * We parse it and update only the ___store query parameter.
-         * 
-         * @param {string} url - Current iframe absolute URL
-         * @param {string} storeCode - New store code to set
-         * @returns {string}
-         * @private
-         */
-        _updateUrlStoreParam: function(url, storeCode) {
-            try {
-                // Parse URL (handles absolute URLs correctly)
-                var urlObj = new URL(url, window.location.origin);
-                
-                // Update ___store parameter
-                urlObj.searchParams.set('___store', storeCode);
-                
-                return urlObj.toString();
-            } catch (e) {
-                console.error('❌ Error updating URL store param:', e);
-                console.error('   url:', url);
-                console.error('   storeCode:', storeCode);
-                return url;
-            }
+            // Update config
+            configManager.update({
+                storeCode: storeCode,
+                storeId: storeId
+            });
         },
 
         /**
