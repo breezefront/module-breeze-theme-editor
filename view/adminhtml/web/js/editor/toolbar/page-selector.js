@@ -55,28 +55,6 @@ define([
         },
 
         /**
-         * Initialize current parameters from iframeBaseUrl
-         * @private
-         */
-        _initializeCurrentParams: function() {
-            this.currentParams = {};
-            try {
-                var urlObj = new URL(this.options.iframeBaseUrl, window.location.origin);
-                var storeParam = urlObj.searchParams.get('___store');
-                var jstestParam = urlObj.searchParams.get('jstest');
-                
-                if (storeParam) {
-                    this.currentParams.store = storeParam;
-                }
-                if (jstestParam) {
-                    this.currentParams.jstest = jstestParam;
-                }
-            } catch (e) {
-                console.warn('⚠️ Error parsing iframeBaseUrl:', e);
-            }
-        },
-
-        /**
          * Find page label by ID
          * @param {string} pageId
          * @returns {string}
@@ -272,6 +250,18 @@ define([
         updateStoreParam: function(storeCode) {
             console.log('🏪 Updating store parameter:', storeCode);
             this.currentParams.store = storeCode;
+        },
+
+        /**
+         * Public API: Reset to home page
+         * Called by scope-selector when store changes to reset page selection
+         */
+        resetToHomePage: function() {
+            console.log('🏠 Resetting page selector to home');
+            this.options.currentPageId = 'cms_index_index';
+            this.currentPageLabel = this._findPageLabel('cms_index_index');
+            this._render();
+            console.log('✅ Page selector reset to home');
         }
     });
 

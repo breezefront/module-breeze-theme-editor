@@ -248,10 +248,11 @@ define([
             this._render();
             this._closeDropdown();
             
-            // Update page selector
+            // Update page selector - reset to homepage when store changes
             var $pageSelector = $(this.options.pageSelectorElement);
             if ($pageSelector.length && $pageSelector.data('swissup-breezePageSelector')) {
                 $pageSelector.breezePageSelector('updateStoreParam', storeCode);
+                $pageSelector.breezePageSelector('resetToHomePage');
             }
             
             // Trigger event
