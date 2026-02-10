@@ -18,7 +18,8 @@ define([
         options: {
             pages: [],
             currentPageId: null,
-            iframeBaseUrl: '',
+            storeCode: '',
+            jstest: false,
             iframeSelector: '#bte-iframe',
             themeId: null
         },
@@ -34,12 +35,23 @@ define([
          * @private
          */
         _create: function() {
-            console.log('🎨 Initializing page selector', this.options);
             this.currentPageLabel = this._findPageLabel(this.options.currentPageId);
             this._initializeCurrentParams();
             this._render();
             this._bindEvents();
             console.log('✅ Page selector initialized');
+        },
+
+        /**
+         * Initialize current parameters from options (passed from config)
+         * @private
+         */
+        _initializeCurrentParams: function() {
+            this.currentParams = {
+                store: this.options.storeCode || '',
+                jstest: this.options.jstest || false
+            };
+            console.log('📦 Initialized params:', this.currentParams);
         },
 
         /**

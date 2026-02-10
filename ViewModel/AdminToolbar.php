@@ -184,10 +184,12 @@ class AdminToolbar extends Toolbar
      *
      * @return string One of: DRAFT, PUBLISHED, SCHEDULED
      * @todo Phase 2: Implement draft status detection from GraphQL
+     *              Currently returns hardcoded 'DRAFT' - needs real-time status check
      */
     public function getCurrentPublicationStatus()
     {
-        // Will be implemented in Phase 2 when we integrate with GraphQL
+        // STUB: Will be implemented in Phase 2 when we integrate with GraphQL
+        // Real implementation should check if current theme values differ from latest publication
         return 'DRAFT';
     }
 
@@ -196,10 +198,12 @@ class AdminToolbar extends Toolbar
      * 
      * @return int
      * @todo Phase 2: Implement draft changes counter from GraphQL
+     *              Currently returns 0 - needs to count actual modified values
      */
     public function getDraftChangesCount()
     {
-        // Will be implemented in Phase 2 when we integrate with GraphQL
+        // STUB: Will be implemented in Phase 2 when we integrate with GraphQL
+        // Real implementation should compare current values vs latest publication
         return 0;
     }
 
@@ -212,6 +216,16 @@ class AdminToolbar extends Toolbar
     {
         $publications = $this->getPublications();
         return !empty($publications) ? $publications[0]['id'] : null;
+    }
+
+    /**
+     * Check if jstest mode is enabled
+     *
+     * @return bool
+     */
+    public function isJstestMode()
+    {
+        return (bool) $this->request->getParam('jstest', false);
     }
 
     /**
@@ -270,10 +284,12 @@ class AdminToolbar extends Toolbar
      *
      * @return bool
      * @todo Phase 2: Use ACL resource 'Swissup_BreezeThemeEditor::edit'
+     *              Currently checks only if user is logged in - needs proper ACL check
      */
     public function canEdit()
     {
-        // Will use ACL in Phase 2
+        // STUB: Will use ACL in Phase 2
+        // Real implementation: return $this->authorization->isAllowed('Swissup_BreezeThemeEditor::edit');
         return $this->authSession->isLoggedIn();
     }
 
@@ -282,10 +298,12 @@ class AdminToolbar extends Toolbar
      *
      * @return bool
      * @todo Phase 2: Use ACL resource 'Swissup_BreezeThemeEditor::publish'
+     *              Currently checks only if user is logged in - needs proper ACL check
      */
     public function canPublish()
     {
-        // Will use ACL in Phase 2
+        // STUB: Will use ACL in Phase 2
+        // Real implementation: return $this->authorization->isAllowed('Swissup_BreezeThemeEditor::publish');
         return $this->authSession->isLoggedIn();
     }
 
@@ -369,20 +387,17 @@ class AdminToolbar extends Toolbar
      * Overrides parent methods:
      * - getAdminUrl() - generates correct admin dashboard URL
      * - getGraphqlEndpoint() - generates frontend GraphQL URL
-     * 
-     * Note: pageTypes contain absolute URLs from PageUrlProvider.
-     * iframeBaseUrl is provided for backward compatibility but is no longer
-     * used for URL building since PageUrlProvider returns complete URLs.
      *
      * @return array
      */
     public function getToolbarConfig()
     {
         return [
-            // ===== Inherited from parent Toolbar =====
+            // ===== Core parameters =====
             'storeId' => $this->getStoreId(),
             'storeCode' => $this->storeManager->getStore($this->getStoreId())->getCode(),
             'themeId' => $this->getThemeId(),
+            'jstest' => $this->isJstestMode(),
             'username' => $this->getAdminUsername(),
             'adminUrl' => $this->getAdminUrl(),
             'graphqlEndpoint' => $this->getGraphqlEndpoint(),
@@ -429,11 +444,10 @@ class AdminToolbar extends Toolbar
             
             // ===== Store hierarchy (inherited via StoreDataProvider) =====
             'storeHierarchy' => $this->getScopeSelectorData(),
-            'currentStoreId' => $this->getStoreId(),
             
             // ===== Page types (inherited via PageUrlProvider) =====
             // Transform: 'title' → 'label' for widget compatibility
-            // Note: URLs are absolute from PageUrlProvider
+            // URLs are absolute from PageUrlProvider
             'pageTypes' => array_map(function($page) {
                 return [
                     'id' => $page['id'],
@@ -444,10 +458,6 @@ class AdminToolbar extends Toolbar
             }, $this->getPageSelectorData()),
             
             'currentPageId' => $this->getCurrentPageId(),
-            
-            // Base URL for iframe (kept for backward compatibility)
-            // Note: Not used in page-selector since pageTypes already contain absolute URLs
-            'iframeBaseUrl' => $this->storeManager->getStore($this->getStoreId())->getBaseUrl(),
             
             // ===== Publications (real data from DB via PublicationRepository) =====
             'publications' => $this->getPublications(),

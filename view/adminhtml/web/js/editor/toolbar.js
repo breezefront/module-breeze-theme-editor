@@ -113,7 +113,7 @@ define([
         if ($('#bte-scope-selector').length) {
             $('#bte-scope-selector').breezeScopeSelector({
                 websites: config.storeHierarchy || [],
-                currentStoreId: config.currentStoreId || null,
+                currentStoreId: config.storeId || null,
                 iframeSelector: config.iframeSelector || '#bte-iframe',
                 themeId: config.themeId || null
             });
@@ -125,7 +125,8 @@ define([
             $('#bte-page-selector').breezePageSelector({
                 pages: config.pageTypes || [],
                 currentPageId: config.currentPageId || null,
-                iframeBaseUrl: config.iframeBaseUrl || '',
+                storeCode: config.storeCode || '',
+                jstest: config.jstest || false,
                 iframeSelector: config.iframeSelector || '#bte-iframe',
                 themeId: config.themeId || null
             });
