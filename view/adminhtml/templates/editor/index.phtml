@@ -4,7 +4,10 @@
  * @var $viewModel \Swissup\BreezeThemeEditor\ViewModel\AdminToolbar
  */
 $viewModel = $block->getData('view_model');
-$storeId = $block->getData('store_id') ?: 1;
+
+// Get store ID from ViewModel (same source as toolbar config for consistency)
+// Uses priority: URL param ?store=X → Cookie → Default store
+$storeId = $viewModel ? $viewModel->getStoreId() : 1;
 $jstest = $block->getData('jstest') ?: false;
 
 // Get full toolbar configuration from ViewModel
