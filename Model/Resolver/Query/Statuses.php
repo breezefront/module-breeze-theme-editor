@@ -4,12 +4,17 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Swissup\BreezeThemeEditor\Api\StatusRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
-class Statuses implements ResolverInterface
+/**
+ * Get available statuses
+ * 
+ * ACL: Inherits ::editor_view from AbstractQueryResolver
+ */
+class Statuses extends AbstractQueryResolver
 {
     public function __construct(
         private StatusRepositoryInterface $statusRepository,

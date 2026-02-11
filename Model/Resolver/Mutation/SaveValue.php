@@ -19,7 +19,7 @@ class SaveValue extends AbstractSaveMutation
         $input = $args['input'];
 
         // Використай базовий метод для розпакування стандартних параметрів
-        $params = $this->prepareBaseParams($input);
+        $params = $this->prepareBaseParams($input, $context);
 
         $sectionCode = $input['sectionCode'];
         $fieldCode = $input['fieldCode'];

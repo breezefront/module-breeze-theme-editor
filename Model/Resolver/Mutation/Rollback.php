@@ -4,15 +4,30 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\PublishService;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
-class Rollback implements ResolverInterface
+/**
+ * Rollback to previous publication
+ * 
+ * ACL: Override - requires ::editor_rollback permission
+ */
+class Rollback extends AbstractMutationResolver
 {
+    /**
+     * {@inheritdoc}
+     * 
+     * Override: Rollback requires special permission
+     */
+    public function getAclResource(): string
+    {
+        return 'Swissup_BreezeThemeEditor::editor_rollback';
+    }
+    
     public function __construct(
         private PublishService $publishManager,
         private UserResolver $userResolver,
@@ -31,7 +46,7 @@ class Rollback implements ResolverInterface
         $title = $input['title'];
         $description = $input['description'] ?? null;
 
-        $userId = $this->userResolver->getCurrentUserId();
+        $userId = $this->userResolver->getCurrentUserId($context);
 
         // Перевірити що публікація існує
         try {

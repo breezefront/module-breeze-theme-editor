@@ -19,7 +19,7 @@ class ResetToDefaults extends AbstractSaveMutation
         $input = $args['input'];
 
         // Використати базовий метод
-        $params = $this->prepareBaseParams($input);
+        $params = $this->prepareBaseParams($input, $context);
 
         $sectionCodes = $input['sectionCodes'] ?? null;
         $fieldCodes = $input['fieldCodes'] ?? null;

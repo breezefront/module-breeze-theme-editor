@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\Api\SearchCriteriaBuilderFactory;
@@ -15,12 +14,15 @@ use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
 /**
  * GraphQL resolver for getThemeEditorCss query
+ * 
+ * ACL: Inherits ::editor_view from AbstractQueryResolver
  * Returns generated CSS for specific status (PUBLISHED, DRAFT, or PUBLICATION)
  */
-class GetCss implements ResolverInterface
+class GetCss extends AbstractQueryResolver
 {
     use PublicationChangelogTrait;
     public function __construct(

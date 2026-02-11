@@ -7,14 +7,19 @@ use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Api\SortOrder;
 use Magento\Framework\Api\SortOrderBuilder;
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\AdminUserLoader;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
-class Publications implements ResolverInterface
+/**
+ * Get publication history
+ * 
+ * ACL: Inherits ::editor_view from AbstractQueryResolver
+ */
+class Publications extends AbstractQueryResolver
 {
     public function __construct(
         private PublicationRepositoryInterface $publicationRepository,

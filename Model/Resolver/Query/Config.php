@@ -5,7 +5,6 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
@@ -17,7 +16,12 @@ use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 
-class Config extends AbstractConfigResolver implements ResolverInterface
+/**
+ * Get theme configuration with current values
+ * 
+ * ACL: Inherits ::editor_view from AbstractConfigResolver -> AbstractQueryResolver
+ */
+class Config extends AbstractConfigResolver
 {
     public function __construct(
         SerializerInterface $serializer,
@@ -41,7 +45,7 @@ class Config extends AbstractConfigResolver implements ResolverInterface
         array $args = null
     ) {
         // 1. Отримати userId
-        $userId = $this->userResolver->getCurrentUserId();
+        $userId = $this->userResolver->getCurrentUserId($context);
 
         // 2. Отримати store ID
         $storeId = (int)$args['storeId'];

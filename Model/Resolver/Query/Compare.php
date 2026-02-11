@@ -4,13 +4,18 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
-class Compare implements ResolverInterface
+/**
+ * Compare draft vs published changes
+ * 
+ * ACL: Inherits ::editor_view from AbstractQueryResolver
+ */
+class Compare extends AbstractQueryResolver
 {
     public function __construct(
         private CompareProvider $compareProvider,
@@ -26,7 +31,7 @@ class Compare implements ResolverInterface
         array $args = null
     ) {
         // Отримати userId з токена
-        $userId = $this->userResolver->getCurrentUserId();
+        $userId = $this->userResolver->getCurrentUserId($context);
 
         $storeId = (int)$args['storeId'];
 

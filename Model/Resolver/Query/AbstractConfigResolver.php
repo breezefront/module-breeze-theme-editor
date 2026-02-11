@@ -7,12 +7,15 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
 /**
  * Abstract base class for Config resolvers
  * Contains shared formatting logic to avoid code duplication
+ * 
+ * Extends AbstractQueryResolver to inherit ACL permission checking
  */
-abstract class AbstractConfigResolver
+abstract class AbstractConfigResolver extends AbstractQueryResolver
 {
     public function __construct(
         protected SerializerInterface $serializer,

@@ -38,7 +38,7 @@ class ApplyPreset extends AbstractSaveMutation
         array $args = null
     ) {
         $input = $args['input'];
-        $params = $this->prepareBaseParams($input);
+        $params = $this->prepareBaseParams($input, $context);
 
         $presetId = $input['presetId'];
         $overwriteExisting = $input['overwriteExisting'] ?? false;

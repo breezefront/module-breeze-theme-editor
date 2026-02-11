@@ -34,7 +34,7 @@ class CopyFromStore extends AbstractSaveMutation
             'storeId' => $toStoreId,
             'themeId' => $input['themeId'] ?? null,
             'status' => $input['status'] ??  'DRAFT'
-        ]);
+        ], $context);
 
         // Визначити themeId для source store
         $fromThemeId = $this->themeResolver->getThemeIdByStoreId($fromStoreId);

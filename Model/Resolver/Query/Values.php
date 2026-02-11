@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
@@ -13,8 +12,14 @@ use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
-class Values implements ResolverInterface
+/**
+ * Get only values (without config structure)
+ * 
+ * ACL: Inherits ::editor_view from AbstractQueryResolver
+ */
+class Values extends AbstractQueryResolver
 {
     public function __construct(
         private ValueInheritanceResolver $valueInheritanceResolver,
@@ -49,7 +54,7 @@ class Values implements ResolverInterface
         }
 
         // Отримати userId з токена
-        $userId = $this->userResolver->getCurrentUserId();
+        $userId = $this->userResolver->getCurrentUserId($context);
 
         if ($statusCode === 'DRAFT' && !$userId) {
             throw new GraphQlAuthorizationException(__('Authorization required'));

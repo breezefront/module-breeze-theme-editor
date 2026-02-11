@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
@@ -12,8 +11,14 @@ use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Swissup\BreezeThemeEditor\Model\Utility\AdminUserLoader;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
-class Publication implements ResolverInterface
+/**
+ * Get publication details with changelog
+ * 
+ * ACL: Inherits ::editor_view from AbstractQueryResolver
+ */
+class Publication extends AbstractQueryResolver
 {
     public function __construct(
         private PublicationRepositoryInterface $publicationRepository,

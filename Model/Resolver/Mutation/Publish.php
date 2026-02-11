@@ -4,15 +4,30 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\PublishService;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
-class Publish implements ResolverInterface
+/**
+ * Publish draft to production
+ * 
+ * ACL: Override - requires ::editor_publish permission
+ */
+class Publish extends AbstractMutationResolver
 {
+    /**
+     * {@inheritdoc}
+     * 
+     * Override: Publish requires special permission
+     */
+    public function getAclResource(): string
+    {
+        return 'Swissup_BreezeThemeEditor::editor_publish';
+    }
+    
     public function __construct(
         private PublishService $publishManager,
         private UserResolver $userResolver,
@@ -29,8 +44,8 @@ class Publish implements ResolverInterface
         $input = $args['input'];
 
         // Отримати userId з токена
-        $userId = $this->userResolver->getCurrentUserId();
-        $userMetadata = $this->userResolver->getCurrentUserMetadata();
+        $userId = $this->userResolver->getCurrentUserId($context);
+        $userMetadata = $this->userResolver->getCurrentUserMetadata($context);
 
         $storeId = (int)$input['storeId'];
         $themeId = isset($input['themeId']) && $input['themeId']

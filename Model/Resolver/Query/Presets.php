@@ -4,13 +4,18 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Service\PresetService;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
-class Presets implements ResolverInterface
+/**
+ * Get available presets from theme config
+ * 
+ * ACL: Inherits ::editor_view from AbstractQueryResolver
+ */
+class Presets extends AbstractQueryResolver
 {
     public function __construct(
         private ConfigProvider $configProvider,

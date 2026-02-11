@@ -19,7 +19,7 @@ class SaveValues extends AbstractSaveMutation
         $input = $args['input'];
 
         // Парсимо стандартні параметри
-        $params = $this->prepareBaseParams($input);
+        $params = $this->prepareBaseParams($input, $context);
         $values = $input['values'];
 
         // Формуємо масив ValueInterface моделей

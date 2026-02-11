@@ -11,12 +11,15 @@ use Swissup\BreezeThemeEditor\Model\Config\PaletteResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
 /**
  * Save palette color value mutation
  * Saves palette color to section "_palette" and returns number of affected fields
+ * 
+ * ACL: Inherits ::editor_edit from AbstractMutationResolver
  */
-class SavePaletteValue implements \Magento\Framework\GraphQl\Query\ResolverInterface
+class SavePaletteValue extends AbstractMutationResolver
 {
     public function __construct(
         private ValueRepositoryInterface $valueRepository,
@@ -65,7 +68,7 @@ class SavePaletteValue implements \Magento\Framework\GraphQl\Query\ResolverInter
         }
 
         // Get current user ID for storing the palette value
-        $userId = $this->userResolver->getCurrentUserId();
+        $userId = $this->userResolver->getCurrentUserId($context);
 
         // Save palette value to database using saveMultiple (handles INSERT or UPDATE automatically)
         // Section: "_palette", Setting: CSS variable name (e.g., "--color-brand-primary")

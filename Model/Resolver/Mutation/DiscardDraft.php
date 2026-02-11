@@ -4,14 +4,19 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
-class DiscardDraft implements ResolverInterface
+/**
+ * Discard draft changes
+ * 
+ * ACL: Inherits ::editor_edit from AbstractMutationResolver
+ */
+class DiscardDraft extends AbstractMutationResolver
 {
     public function __construct(
         private ValueService $valueService,
@@ -33,7 +38,7 @@ class DiscardDraft implements ResolverInterface
             : $this->themeResolver->getThemeIdByStoreId($storeId);
 
         $sectionCodes = $args['sectionCodes'] ??  null;
-        $userId = $this->userResolver->getCurrentUserId();
+        $userId = $this->userResolver->getCurrentUserId($context);
 
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
 

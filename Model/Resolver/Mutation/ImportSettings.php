@@ -4,15 +4,20 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\ImportExportService;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
-class ImportSettings implements ResolverInterface
+/**
+ * Import settings from JSON
+ * 
+ * ACL: Inherits ::editor_edit from AbstractMutationResolver
+ */
+class ImportSettings extends AbstractMutationResolver
 {
     public function __construct(
         private ImportExportService $importExportService,
@@ -31,7 +36,7 @@ class ImportSettings implements ResolverInterface
         $input = $args['input'];
 
         // Auth
-        $userId = $this->userResolver->getCurrentUserId();
+        $userId = $this->userResolver->getCurrentUserId($context);
 
         $storeId = (int)$input['storeId'];
         $themeId = isset($input['themeId']) && $input['themeId']

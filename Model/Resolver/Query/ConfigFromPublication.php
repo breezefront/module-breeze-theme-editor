@@ -5,7 +5,6 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\Api\SearchCriteriaBuilderFactory;
 use Magento\Framework\Serialize\SerializerInterface;
@@ -16,7 +15,12 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 
-class ConfigFromPublication extends AbstractConfigResolver implements ResolverInterface
+/**
+ * Get theme configuration from specific publication
+ * 
+ * ACL: Inherits ::editor_view from AbstractConfigResolver -> AbstractQueryResolver
+ */
+class ConfigFromPublication extends AbstractConfigResolver
 {
     use PublicationChangelogTrait;
 

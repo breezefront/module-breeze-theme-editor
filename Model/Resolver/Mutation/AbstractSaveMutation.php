@@ -3,15 +3,21 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
-abstract class AbstractSaveMutation implements ResolverInterface
+/**
+ * Abstract base class for Save mutations
+ * Contains shared logic for saving values
+ * 
+ * Extends AbstractMutationResolver to inherit ACL permission checking (::editor_edit)
+ */
+abstract class AbstractSaveMutation extends AbstractMutationResolver
 {
     public function __construct(
         protected ValueRepositoryInterface $valueRepository,
@@ -25,10 +31,10 @@ abstract class AbstractSaveMutation implements ResolverInterface
     /**
      * Підготувати базові параметри з input
      */
-    protected function prepareBaseParams(array $input): array
+    protected function prepareBaseParams(array $input, $context): array
     {
         // Отримати userId з токена
-        $userId = $this->userResolver->getCurrentUserId();
+        $userId = $this->userResolver->getCurrentUserId($context);
 
         $storeId = (int)$input['storeId'];
         $themeId = isset($input['themeId']) && $input['themeId']
