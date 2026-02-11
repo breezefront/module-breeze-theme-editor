@@ -4,94 +4,144 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Utility;
 
 use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
-use Swissup\BreezeThemeEditor\Api\AccessTokenInterface;
-use Magento\Framework\App\RequestInterface;
+use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\Authorization\Model\UserContextInterface;
+use Psr\Log\LoggerInterface;
 
+/**
+ * Extract user information from GraphQL context
+ * 
+ * Context is populated by Magento's TokenUserContext which validates Bearer tokens.
+ * We simply extract the already-authenticated user info from context.
+ * 
+ * Authentication Flow:
+ * 1. Admin generates Bearer token via AdminTokenGenerator (JWT)
+ * 2. Token stored in localStorage on frontend
+ * 3. GraphQL requests include: Authorization: Bearer <token>
+ * 4. Magento's TokenUserContext validates JWT → Sets context (UserType, UserId)
+ * 5. RequireAdminSession plugin validates UserType !== GUEST
+ * 6. This class extracts userId from context for business logic
+ */
 class UserResolver
 {
+    /**
+     * @var LoggerInterface
+     */
+    private LoggerInterface $logger;
+
+    /**
+     * @param LoggerInterface $logger
+     */
     public function __construct(
-        private AccessTokenInterface $accessToken,
-        private RequestInterface $request
-    ) {}
+        LoggerInterface $logger
+    ) {
+        $this->logger = $logger;
+    }
 
     /**
-     * Отримати userId з токена
+     * Get current user ID from GraphQL context
+     * 
+     * Context is already populated by Magento's authentication system.
+     * This method validates that user is an authenticated admin.
+     *
+     * @param ContextInterface $context
+     * @return int Admin user ID
+     * @throws GraphQlAuthorizationException
      */
-    public function getCurrentUserId(): int
+    public function getCurrentUserId(ContextInterface $context): int
     {
-        $token = $this->getTokenFromRequest();
-
-        if (!$token) {
-            throw new GraphQlAuthorizationException(__('Access token required'));
+        $userType = $context->getUserType();
+        $userId = $context->getUserId();
+        
+        // UserType values from UserContextInterface:
+        // USER_TYPE_INTEGRATION = 1
+        // USER_TYPE_ADMIN = 2 (required)
+        // USER_TYPE_CUSTOMER = 3
+        // USER_TYPE_GUEST = 4 (not authenticated)
+        
+        if ($userType === UserContextInterface::USER_TYPE_GUEST || $userType === null) {
+            $this->logger->warning('[BTE UserResolver] Authentication failed - user is GUEST (invalid or missing token)');
+            
+            throw new GraphQlAuthorizationException(
+                __('Authentication required. Please provide valid Bearer token.')
+            );
         }
-
-        // Валідувати токен
-        if (!$this->accessToken->validate($token)) {
-            throw new GraphQlAuthorizationException(__('Invalid access token'));
+        
+        if ($userType !== UserContextInterface::USER_TYPE_ADMIN) {
+            $this->logger->warning(sprintf(
+                '[BTE UserResolver] Authorization failed - UserType %d is not ADMIN (required: 2)',
+                $userType
+            ));
+            
+            throw new GraphQlAuthorizationException(
+                __('Admin access required for Theme Editor operations.')
+            );
         }
-
-        // Отримати userId з metadata
-        $userId = $this->accessToken->getUserId($token);
-
+        
         if (!$userId) {
-            throw new GraphQlAuthorizationException(__('User not found for token'));
+            $this->logger->error('[BTE UserResolver] User ID not found in context despite valid UserType');
+            
+            throw new GraphQlAuthorizationException(
+                __('User ID not found in authentication context.')
+            );
         }
-
-        return $userId;
+        
+        // Log successful authentication
+        $this->logger->info(sprintf(
+            '[BTE UserResolver] User authenticated - UserID: %d, UserType: %d (ADMIN)',
+            $userId,
+            $userType
+        ));
+        
+        return (int) $userId;
     }
-
+    
     /**
-     * Отримати повну metadata користувача
+     * Get user type from context
+     * 
+     * @param ContextInterface $context
+     * @return int User type (0=GUEST, 1=CUSTOMER, 2=ADMIN, 3=INTEGRATION, 4=internal)
      */
-    public function getCurrentUserMetadata(): ? array
+    public function getUserType(ContextInterface $context): int
     {
-        $token = $this->getTokenFromRequest();
-
-        if (!$token) {
-            return null;
-        }
-
-        return $this->accessToken->getMetadata($token);
+        return $context->getUserType();
     }
-
+    
     /**
-     * Отримати токен з request
+     * Check if user is authenticated admin
+     * 
+     * @param ContextInterface $context
+     * @return bool True if user is admin
      */
-    private function getTokenFromRequest(): ?string
+    public function isAdmin(ContextInterface $context): bool
     {
-        // 1. З параметра
-        $token = $this->request->getParam($this->accessToken->getParamName());
-
-        if ($token) {
-            return $token;
-        }
-
-        // 2.  З header
-        $token = $this->request->getHeader('X-Breeze-Theme-Editor-Token');
-
-        if ($token) {
-            return $token;
-        }
-
-        // 3. Authorization Bearer
-        $authHeader = $this->request->getHeader('Authorization');
-        if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
-            return substr($authHeader, 7);
-        }
-
-        return null;
+        return $context->getUserType() === 2;
     }
-
+    
     /**
-     * Перевірити чи є валідний токен
+     * Check if user is authorized (not guest)
+     * 
+     * @param ContextInterface $context
+     * @return bool True if user is authenticated
      */
-    public function isAuthorized(): bool
+    public function isAuthorized(ContextInterface $context): bool
     {
-        try {
-            $this->getCurrentUserId();
-            return true;
-        } catch (\Exception $e) {
-            return false;
-        }
+        return $context->getUserType() !== 0;
+    }
+    
+    /**
+     * Get user metadata from context
+     * 
+     * @param ContextInterface $context
+     * @return array User metadata
+     */
+    public function getCurrentUserMetadata(ContextInterface $context): array
+    {
+        return [
+            'userId' => $context->getUserId(),
+            'userType' => $context->getUserType(),
+            'isAdmin' => $this->isAdmin($context),
+            'isAuthorized' => $this->isAuthorized($context),
+        ];
     }
 }

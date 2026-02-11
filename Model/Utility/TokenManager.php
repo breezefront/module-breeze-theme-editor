@@ -6,6 +6,13 @@ namespace Swissup\BreezeThemeEditor\Model\Utility;
 use Swissup\BreezeThemeEditor\Api\AccessTokenInterface;
 use Magento\Backend\Model\Auth\Session as AdminSession;
 
+/**
+ * @deprecated Since module version 1.x.x - No longer used with GraphQL Bearer token authentication
+ * @see \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator - Now generates JWT tokens for admins
+ * 
+ * This class was part of the old custom token system. GraphQL now uses standard Magento
+ * Bearer token authentication via AdminTokenGenerator.
+ */
 class TokenManager
 {
     public function __construct(

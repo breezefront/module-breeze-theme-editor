@@ -2,6 +2,15 @@
 
 namespace Swissup\BreezeThemeEditor\Api;
 
+/**
+ * @deprecated Since module version 1.x.x - No longer used with GraphQL Bearer token authentication
+ * @see \Swissup\BreezeThemeEditor\Model\Utility\UserResolver - Now uses GraphQL context for user identification
+ * @see \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator - Generates JWT tokens via Magento's UserTokenIssuer
+ * 
+ * This interface was part of the old custom token authentication system.
+ * GraphQL now uses standard Magento Bearer tokens (JWT) which are validated by TokenUserContext.
+ * This interface will be removed in a future major version.
+ */
 interface AccessTokenInterface
 {
     /**

@@ -5,6 +5,13 @@ namespace Swissup\BreezeThemeEditor\Model\Data;
 use Magento\Framework\Encryption\Helper\Security;
 use Magento\Framework\Exception\LocalizedException;
 
+/**
+ * @deprecated Since module version 1.x.x - No longer used with GraphQL Bearer token authentication
+ * @see \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator - Now generates JWT tokens
+ * 
+ * This class was part of the old custom token system. GraphQL now uses Magento's standard
+ * Bearer token authentication (JWT) which doesn't require custom token storage.
+ */
 class AccessToken implements \Swissup\BreezeThemeEditor\Api\AccessTokenInterface
 {
     const CACHE_ID = 'swissup_breeze_theme_editor_3h_access_token';
