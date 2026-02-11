@@ -56,6 +56,16 @@ class AdminToolbar extends Toolbar
     private $urlBuilder;
 
     /**
+     * @var \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator
+     */
+    private $tokenGenerator;
+
+    /**
+     * @var \Magento\Framework\AuthorizationInterface
+     */
+    private $authorization;
+
+    /**
      * @param \Swissup\BreezeThemeEditor\Helper\Data $helper
      * @param \Swissup\BreezeThemeEditor\Model\Data\AccessToken $accessToken
      * @param \Magento\Framework\App\RequestInterface $request
@@ -69,6 +79,8 @@ class AdminToolbar extends Toolbar
      * @param \Magento\Framework\App\State $state
      * @param PublicationRepositoryInterface $publicationRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator $tokenGenerator
+     * @param \Magento\Framework\AuthorizationInterface $authorization
      */
     public function __construct(
         \Swissup\BreezeThemeEditor\Helper\Data $helper,
@@ -83,7 +95,9 @@ class AdminToolbar extends Toolbar
         Json $jsonSerializer,
         \Magento\Framework\App\State $state,
         PublicationRepositoryInterface $publicationRepository,
-        SearchCriteriaBuilder $searchCriteriaBuilder
+        SearchCriteriaBuilder $searchCriteriaBuilder,
+        \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator $tokenGenerator,
+        \Magento\Framework\AuthorizationInterface $authorization
     ) {
         parent::__construct(
             $helper,
@@ -106,6 +120,8 @@ class AdminToolbar extends Toolbar
         $this->request = $request;
         $this->storeManager = $storeManager;
         $this->urlBuilder = $urlBuilder;
+        $this->tokenGenerator = $tokenGenerator;
+        $this->authorization = $authorization;
     }
 
     /**
@@ -117,6 +133,25 @@ class AdminToolbar extends Toolbar
     public function canShow()
     {
         return $this->authSession->isLoggedIn();
+    }
+
+    /**
+     * Get Magento admin integration token for GraphQL authentication
+     * 
+     * Returns cached token if still valid, or generates new one.
+     * Token is valid for 4 hours and cached in Backend Session.
+     *
+     * @return string|null
+     */
+    public function getToken(): ?string
+    {
+        try {
+            return $this->tokenGenerator->generateForCurrentAdmin();
+        } catch (\Exception $e) {
+            // Don't use logger here as it's not injected
+            // Error will be logged by AdminTokenGenerator already
+            return null;
+        }
     }
 
     /**
@@ -376,6 +411,21 @@ class AdminToolbar extends Toolbar
     }
 
     /**
+     * Get user permissions for ACL checks
+     *
+     * @return array
+     */
+    public function getPermissions()
+    {
+        return [
+            'canView' => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_view'),
+            'canEdit' => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_edit'),
+            'canPublish' => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_publish'),
+            'canRollback' => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_rollback'),
+        ];
+    }
+
+    /**
      * Get toolbar configuration for JavaScript initialization
      * 
      * Uses inherited methods from parent Toolbar:
@@ -396,12 +446,16 @@ class AdminToolbar extends Toolbar
             // ===== Core parameters =====
             'storeId' => $this->getStoreId(),
             'storeCode' => $this->storeManager->getStore($this->getStoreId())->getCode(),
+            'token' => $this->getToken(),
             'themeId' => $this->getThemeId(),
             'jstest' => $this->isJstestMode(),
             'username' => $this->getAdminUsername(),
             'adminUrl' => $this->getAdminUrl(),
             'graphqlEndpoint' => $this->getGraphqlEndpoint(),
             'iframeSelector' => '#bte-iframe',
+            
+            // ===== Permissions (ACL) =====
+            'permissions' => $this->getPermissions(),
             
             // Exit URL - returns user to admin dashboard
             'exitUrl' => $this->getAdminUrl(),

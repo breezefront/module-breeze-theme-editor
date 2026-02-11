@@ -19,10 +19,11 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/toolbar/toolbar-toggle',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/exit-button',
     'Swissup_BreezeThemeEditor/js/editor/util/config-manager',
-    'Swissup_BreezeThemeEditor/js/editor/util/url-builder'
+    'Swissup_BreezeThemeEditor/js/editor/util/url-builder',
+    'Swissup_BreezeThemeEditor/js/graphql/client'
 ], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation, 
              publicationSelector, scopeSelector, pageSelector, highlightToggle, 
-             toolbarToggle, exitButton, configManager, urlBuilder) {
+             toolbarToggle, exitButton, configManager, urlBuilder, graphQLClient) {
     'use strict';
     
     /**
@@ -46,6 +47,17 @@ define([
             themeId: config.themeId,
             graphqlEndpoint: config.graphqlEndpoint
         });
+        
+        // Initialize Bearer token for GraphQL authentication
+        // Token is stored in localStorage for persistence between page loads
+        if (config.token) {
+            localStorage.setItem('bte_admin_token', config.token);
+            console.log('✅ Admin Bearer token initialized');
+        } else {
+            console.warn('⚠️  No admin token provided - GraphQL requests will fail');
+            console.warn('    This usually means AdminTokenGenerator failed to create token');
+            console.warn('    Check backend logs for errors');
+        }
         
         // Setup link interception for iframe navigation
         var iframeSelector = config.iframeSelector || '#bte-iframe';
