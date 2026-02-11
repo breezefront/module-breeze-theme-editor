@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * GraphQL Dependency Injection Configuration
+ * 
+ * Registers plugins for GraphQL operations
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    
+    <!-- 
+        Plugin: ACL Authorization for BreezeThemeEditor GraphQL resolvers
+        
+        Intercepts all resolvers implementing Swissup\BreezeThemeEditor\Api\GraphQL\ResolverInterface
+        and validates:
+        1. User is authenticated (UserType === ADMIN)
+        2. User has required ACL permission (via getAclResource())
+        
+        Similar to admin controller _isAllowed() pattern.
+    -->
+    <type name="Swissup\BreezeThemeEditor\Api\GraphQL\ResolverInterface">
+        <plugin name="breeze_theme_editor_acl_authorization" 
+                type="Swissup\BreezeThemeEditor\Plugin\GraphQL\AclAuthorization" 
+                sortOrder="10"
+                disabled="false"/>
+    </type>
+</config>
