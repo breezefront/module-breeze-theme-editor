@@ -12,6 +12,7 @@ use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Publication;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 
 class RollbackTest extends TestCase
@@ -21,6 +22,7 @@ class RollbackTest extends TestCase
     private UserResolver|MockObject $userResolverMock;
     private PublicationRepositoryInterface|MockObject $publicationRepositoryMock;
     private Field|MockObject $fieldMock;
+    private ContextInterface|MockObject $contextMock;
     private ResolveInfo|MockObject $resolveInfoMock;
 
     protected function setUp(): void
@@ -29,6 +31,11 @@ class RollbackTest extends TestCase
         $this->userResolverMock = $this->createMock(UserResolver::class);
         $this->publicationRepositoryMock = $this->createMock(PublicationRepositoryInterface::class);
         $this->fieldMock = $this->createMock(Field::class);
+        $this->contextMock = $this->getMockBuilder(ContextInterface::class)
+            ->addMethods(['getUserId', 'getUserType'])
+            ->getMock();
+        $this->contextMock->method('getUserId')->willReturn(1);
+        $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->resolveInfoMock = $this->createMock(ResolveInfo::class);
 
         $this->rollbackResolver = new Rollback(
@@ -67,7 +74,9 @@ class RollbackTest extends TestCase
         $newPublication->method('getPublishedBy')->willReturn(5);
         $newPublication->method('getChangesCount')->willReturn(3);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
 
         // First getById call: verify target publication exists
         $this->publicationRepositoryMock->expects($this->exactly(2))
@@ -83,7 +92,7 @@ class RollbackTest extends TestCase
 
         $result = $this->rollbackResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -125,7 +134,9 @@ class RollbackTest extends TestCase
         $newPublication->method('getPublishedBy')->willReturn(5);
         $newPublication->method('getChangesCount')->willReturn(2);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
 
         $this->publicationRepositoryMock->method('getById')
             ->willReturnCallback(function ($id) use ($targetPublication, $newPublication) {
@@ -139,7 +150,7 @@ class RollbackTest extends TestCase
 
         $result = $this->rollbackResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -161,7 +172,9 @@ class RollbackTest extends TestCase
             ]
         ];
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
 
         $this->publicationRepositoryMock->expects($this->once())
             ->method('getById')
@@ -173,7 +186,7 @@ class RollbackTest extends TestCase
 
         $this->rollbackResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -208,7 +221,9 @@ class RollbackTest extends TestCase
         $newPublication->method('getPublishedBy')->willReturn(7);
         $newPublication->method('getChangesCount')->willReturn(5);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(7);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(7);
 
         $this->publicationRepositoryMock->method('getById')
             ->willReturnCallback(function ($id) use ($targetPublication, $newPublication) {
@@ -219,7 +234,7 @@ class RollbackTest extends TestCase
 
         $result = $this->rollbackResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -284,7 +299,9 @@ class RollbackTest extends TestCase
         $newPublication->method('getPublishedBy')->willReturn(5);
         $newPublication->method('getChangesCount')->willReturn(0);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
 
         $this->publicationRepositoryMock->method('getById')
             ->willReturnCallback(function ($id) use ($targetPublication, $newPublication) {
@@ -295,7 +312,7 @@ class RollbackTest extends TestCase
 
         $result = $this->rollbackResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -318,7 +335,9 @@ class RollbackTest extends TestCase
 
         $targetPublication = $this->createMock(Publication::class);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
 
         // Expect getById to be called twice: once for verification, once for result
         $this->publicationRepositoryMock->expects($this->exactly(2))
@@ -345,7 +364,7 @@ class RollbackTest extends TestCase
 
         $result = $this->rollbackResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -382,7 +401,9 @@ class RollbackTest extends TestCase
         $newPublication->method('getPublishedBy')->willReturn(5);
         $newPublication->method('getChangesCount')->willReturn(10); // Even with changes count
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
 
         $this->publicationRepositoryMock->method('getById')
             ->willReturnCallback(function ($id) use ($targetPublication, $newPublication) {
@@ -393,7 +414,7 @@ class RollbackTest extends TestCase
 
         $result = $this->rollbackResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -432,7 +453,9 @@ class RollbackTest extends TestCase
         $newPublication->method('getPublishedBy')->willReturn(5);
         $newPublication->method('getChangesCount')->willReturn(0);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
 
         $this->publicationRepositoryMock->method('getById')
             ->willReturnCallback(function ($id) use ($targetPublication, $newPublication) {
@@ -443,7 +466,7 @@ class RollbackTest extends TestCase
 
         $result = $this->rollbackResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args

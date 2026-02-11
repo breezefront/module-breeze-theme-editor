@@ -13,6 +13,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 
 class SavePaletteValueTest extends TestCase
 {
@@ -22,6 +23,7 @@ class SavePaletteValueTest extends TestCase
     private ThemeResolver|MockObject $themeResolverMock;
     private UserResolver|MockObject $userResolverMock;
     private Field|MockObject $fieldMock;
+    private ContextInterface|MockObject $contextMock;
     private ResolveInfo|MockObject $resolveInfoMock;
 
     protected function setUp(): void
@@ -31,6 +33,11 @@ class SavePaletteValueTest extends TestCase
         $this->themeResolverMock = $this->createMock(ThemeResolver::class);
         $this->userResolverMock = $this->createMock(UserResolver::class);
         $this->fieldMock = $this->createMock(Field::class);
+        $this->contextMock = $this->getMockBuilder(ContextInterface::class)
+            ->addMethods(['getUserId', 'getUserType'])
+            ->getMock();
+        $this->contextMock->method('getUserId')->willReturn(1);
+        $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->resolveInfoMock = $this->createMock(ResolveInfo::class);
 
         $this->savePaletteValueResolver = new SavePaletteValue(
@@ -66,7 +73,9 @@ class SavePaletteValueTest extends TestCase
         $valueMock->expects($this->once())->method('setValue')->with('#1979c3');
         $valueMock->expects($this->once())->method('setUserId')->with(5);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
 
         $this->valueRepositoryMock->expects($this->once())
             ->method('saveMultiple')
@@ -78,7 +87,7 @@ class SavePaletteValueTest extends TestCase
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -115,13 +124,15 @@ class SavePaletteValueTest extends TestCase
         $valueMock->method('setSettingCode')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
         $this->valueRepositoryMock->method('saveMultiple');
         $this->paletteResolverMock->method('getFieldsUsingColor')->willReturn([]);
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -156,13 +167,15 @@ class SavePaletteValueTest extends TestCase
         $valueMock->method('setSettingCode')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
         $this->valueRepositoryMock->method('saveMultiple');
         $this->paletteResolverMock->method('getFieldsUsingColor')->willReturn([]);
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -197,13 +210,15 @@ class SavePaletteValueTest extends TestCase
         $valueMock->method('setSettingCode')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
         $this->valueRepositoryMock->method('saveMultiple');
         $this->paletteResolverMock->method('getFieldsUsingColor')->willReturn(['field1']);
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -229,7 +244,7 @@ class SavePaletteValueTest extends TestCase
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -256,7 +271,7 @@ class SavePaletteValueTest extends TestCase
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -283,7 +298,7 @@ class SavePaletteValueTest extends TestCase
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -323,13 +338,15 @@ class SavePaletteValueTest extends TestCase
         $valueMock->method('setValue')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
         $this->valueRepositoryMock->method('saveMultiple');
         $this->paletteResolverMock->method('getFieldsUsingColor')->willReturn([]);
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -367,13 +384,15 @@ class SavePaletteValueTest extends TestCase
         $valueMock->method('setValue')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
         $this->valueRepositoryMock->method('saveMultiple');
         $this->paletteResolverMock->method('getFieldsUsingColor')->willReturn([]);
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -407,7 +426,9 @@ class SavePaletteValueTest extends TestCase
         $valueMock->method('setValue')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
 
         $this->valueRepositoryMock->expects($this->once())
             ->method('saveMultiple')
@@ -415,7 +436,7 @@ class SavePaletteValueTest extends TestCase
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -452,7 +473,9 @@ class SavePaletteValueTest extends TestCase
         $valueMock->method('setValue')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
         $this->valueRepositoryMock->method('saveMultiple');
 
         $this->paletteResolverMock->method('getFieldsUsingColor')
@@ -461,7 +484,7 @@ class SavePaletteValueTest extends TestCase
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -496,7 +519,9 @@ class SavePaletteValueTest extends TestCase
         $valueMock->method('setValue')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
         $this->valueRepositoryMock->method('saveMultiple');
 
         $this->paletteResolverMock->method('getFieldsUsingColor')
@@ -513,7 +538,7 @@ class SavePaletteValueTest extends TestCase
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -548,13 +573,15 @@ class SavePaletteValueTest extends TestCase
         $valueMock->method('setValue')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
         $this->valueRepositoryMock->method('saveMultiple');
         $this->paletteResolverMock->method('getFieldsUsingColor')->willReturn([]);
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -588,13 +615,15 @@ class SavePaletteValueTest extends TestCase
         $valueMock->method('setValue')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
         $this->valueRepositoryMock->method('saveMultiple');
         $this->paletteResolverMock->method('getFieldsUsingColor')->willReturn([]);
 
         $result = $this->savePaletteValueResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args

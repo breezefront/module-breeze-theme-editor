@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Resolver\Query;
 use PHPUnit\Framework\TestCase;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
@@ -31,7 +32,7 @@ class ValuesTest extends TestCase
     private ThemeResolver $themeResolverMock;
     
     private Field $fieldMock;
-    private $contextMock;
+    private ContextInterface $contextMock;
     private ResolveInfo $infoMock;
     
     protected function setUp(): void
@@ -45,7 +46,11 @@ class ValuesTest extends TestCase
         
         // Create GraphQL mocks
         $this->fieldMock = $this->createMock(Field::class);
-        $this->contextMock = new \stdClass();
+        $this->contextMock = $this->getMockBuilder(ContextInterface::class)
+            ->addMethods(['getUserId', 'getUserType'])
+            ->getMock();
+        $this->contextMock->method('getUserId')->willReturn(1);
+        $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->infoMock = $this->createMock(ResolveInfo::class);
         
         // Instantiate Values resolver
@@ -95,7 +100,9 @@ class ValuesTest extends TestCase
     public function testLoadsValuesForDraftStatus(): void
     {
         // Setup mocks
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->expects($this->once())
             ->method('getStatusId')
@@ -146,7 +153,9 @@ class ValuesTest extends TestCase
      */
     public function testLoadsValuesForPublishedStatus(): void
     {
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->expects($this->once())
             ->method('getStatusId')
@@ -205,7 +214,9 @@ class ValuesTest extends TestCase
      */
     public function testFiltersValuesBySectionCodes(): void
     {
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         
@@ -264,7 +275,9 @@ class ValuesTest extends TestCase
      */
     public function testMarksValueAsModified(): void
     {
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         
@@ -304,7 +317,9 @@ class ValuesTest extends TestCase
      */
     public function testDoesNotMarkValueAsModifiedWhenSameAsDefault(): void
     {
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         

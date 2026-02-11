@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Resolver\Query;
 use PHPUnit\Framework\TestCase;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
@@ -38,7 +39,7 @@ class ConfigTest extends TestCase
     private UserResolver $userResolverMock;
     
     private Field $fieldMock;
-    private $contextMock;
+    private ContextInterface $contextMock;
     private ResolveInfo $infoMock;
     
     protected function setUp(): void
@@ -56,7 +57,11 @@ class ConfigTest extends TestCase
         
         // Create GraphQL mocks
         $this->fieldMock = $this->createMock(Field::class);
-        $this->contextMock = new \stdClass();
+        $this->contextMock = $this->getMockBuilder(ContextInterface::class)
+            ->addMethods(['getUserId', 'getUserType'])
+            ->getMock();
+        $this->contextMock->method('getUserId')->willReturn(1);
+        $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->infoMock = $this->createMock(ResolveInfo::class);
         
         // Setup default serializer behavior (passthrough for simplicity)
@@ -116,7 +121,9 @@ class ConfigTest extends TestCase
     public function testLoadsConfigForDraftStatus(): void
     {
         // Setup mocks
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->expects($this->once())
             ->method('getStatusId')
@@ -201,7 +208,9 @@ class ConfigTest extends TestCase
     public function testLoadsConfigForPublishedStatus(): void
     {
         // Setup mocks
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->expects($this->once())
             ->method('getStatusId')
@@ -253,7 +262,9 @@ class ConfigTest extends TestCase
      */
     public function testDefaultsToPublishedWhenStatusNotProvided(): void
     {
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         
         $this->statusProviderMock->expects($this->once())
@@ -286,7 +297,9 @@ class ConfigTest extends TestCase
      */
     public function testAutoDetectsThemeIdWhenNotProvided(): void
     {
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         
         $this->themeResolverMock->expects($this->once())
             ->method('getThemeIdByStoreId')
@@ -319,7 +332,9 @@ class ConfigTest extends TestCase
      */
     public function testLoadsDraftChangesCountForDraftStatus(): void
     {
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
@@ -360,7 +375,9 @@ class ConfigTest extends TestCase
      */
     public function testDoesNotLoadDraftChangesForPublishedStatus(): void
     {
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         

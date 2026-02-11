@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
@@ -25,6 +26,7 @@ class SaveValueTest extends TestCase
     private ThemeResolver $themeResolver;
     private ConfigProvider $configProvider;
     private Field $field;
+    private ContextInterface $contextMock;
     private ResolveInfo $resolveInfo;
 
     protected function setUp(): void
@@ -36,6 +38,11 @@ class SaveValueTest extends TestCase
         $this->themeResolver = $this->createMock(ThemeResolver::class);
         $this->configProvider = $this->createMock(ConfigProvider::class);
         $this->field = $this->createMock(Field::class);
+        $this->contextMock = $this->getMockBuilder(ContextInterface::class)
+            ->addMethods(['getUserId', 'getUserType'])
+            ->getMock();
+        $this->contextMock->method('getUserId')->willReturn(1);
+        $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->resolveInfo = $this->createMock(ResolveInfo::class);
 
         $this->mutation = new SaveValue(
@@ -60,7 +67,9 @@ class SaveValueTest extends TestCase
             'value' => '#ff0000'
         ];
 
-        $this->userResolver->method('getCurrentUserId')->willReturn(42);
+        $this->userResolver->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(42);
         $this->statusProvider->method('getStatusId')->with('DRAFT')->willReturn(1);
 
         $valueMock = $this->createMock(ValueInterface::class);
@@ -80,7 +89,7 @@ class SaveValueTest extends TestCase
         ]);
 
         // Act
-        $result = $this->mutation->resolve($this->field, null, $this->resolveInfo, null, ['input' => $input]);
+        $result = $this->mutation->resolve($this->field, $this->contextMock, $this->resolveInfo, null, ['input' => $input]);
 
         // Assert
         $this->assertTrue($result['success']);
@@ -104,7 +113,9 @@ class SaveValueTest extends TestCase
             'value' => '#ffffff'
         ];
 
-        $this->userResolver->method('getCurrentUserId')->willReturn(100);
+        $this->userResolver->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(100);
         $this->statusProvider->method('getStatusId')->with('PUBLISHED')->willReturn(2);
 
         $valueMock = $this->createMock(ValueInterface::class);
@@ -122,7 +133,7 @@ class SaveValueTest extends TestCase
         $this->configProvider->method('getAllDefaults')->willReturn([]);
 
         // Act
-        $result = $this->mutation->resolve($this->field, null, $this->resolveInfo, null, ['input' => $input]);
+        $result = $this->mutation->resolve($this->field, $this->contextMock, $this->resolveInfo, null, ['input' => $input]);
 
         // Assert
         $this->assertTrue($result['success']);
@@ -139,7 +150,9 @@ class SaveValueTest extends TestCase
             'value' => '#123456'
         ];
 
-        $this->userResolver->method('getCurrentUserId')->willReturn(1);
+        $this->userResolver->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->statusProvider->method('getStatusId')->willReturn(1);
         $this->themeResolver->expects($this->once())
             ->method('getThemeIdByStoreId')
@@ -159,7 +172,7 @@ class SaveValueTest extends TestCase
         $this->configProvider->method('getAllDefaults')->willReturn([]);
 
         // Act
-        $result = $this->mutation->resolve($this->field, null, $this->resolveInfo, null, ['input' => $input]);
+        $result = $this->mutation->resolve($this->field, $this->contextMock, $this->resolveInfo, null, ['input' => $input]);
 
         // Assert
         $this->assertTrue($result['success']);
@@ -176,7 +189,9 @@ class SaveValueTest extends TestCase
             'value' => '1200px'
         ];
 
-        $this->userResolver->method('getCurrentUserId')->willReturn(1);
+        $this->userResolver->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->statusProvider->expects($this->once())
             ->method('getStatusId')
             ->with('DRAFT')
@@ -195,7 +210,7 @@ class SaveValueTest extends TestCase
         $this->configProvider->method('getAllDefaults')->willReturn([]);
 
         // Act
-        $result = $this->mutation->resolve($this->field, null, $this->resolveInfo, null, ['input' => $input]);
+        $result = $this->mutation->resolve($this->field, $this->contextMock, $this->resolveInfo, null, ['input' => $input]);
 
         // Assert
         $this->assertTrue($result['success']);
@@ -213,7 +228,9 @@ class SaveValueTest extends TestCase
             'value' => '18px'
         ];
 
-        $this->userResolver->method('getCurrentUserId')->willReturn(1);
+        $this->userResolver->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->statusProvider->method('getStatusId')->willReturn(1);
 
         $valueMock = $this->createMock(ValueInterface::class);
@@ -231,7 +248,7 @@ class SaveValueTest extends TestCase
         ]);
 
         // Act
-        $result = $this->mutation->resolve($this->field, null, $this->resolveInfo, null, ['input' => $input]);
+        $result = $this->mutation->resolve($this->field, $this->contextMock, $this->resolveInfo, null, ['input' => $input]);
 
         // Assert
         $this->assertTrue($result['value']['isModified']);
@@ -249,7 +266,9 @@ class SaveValueTest extends TestCase
             'value' => '20px'
         ];
 
-        $this->userResolver->method('getCurrentUserId')->willReturn(1);
+        $this->userResolver->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->statusProvider->method('getStatusId')->willReturn(1);
 
         $valueMock = $this->createMock(ValueInterface::class);
@@ -267,7 +286,7 @@ class SaveValueTest extends TestCase
         ]);
 
         // Act
-        $result = $this->mutation->resolve($this->field, null, $this->resolveInfo, null, ['input' => $input]);
+        $result = $this->mutation->resolve($this->field, $this->contextMock, $this->resolveInfo, null, ['input' => $input]);
 
         // Assert
         $this->assertFalse($result['value']['isModified']);
@@ -285,7 +304,9 @@ class SaveValueTest extends TestCase
             'value' => 'custom_value'
         ];
 
-        $this->userResolver->method('getCurrentUserId')->willReturn(1);
+        $this->userResolver->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->statusProvider->method('getStatusId')->willReturn(1);
 
         $valueMock = $this->createMock(ValueInterface::class);
@@ -301,7 +322,7 @@ class SaveValueTest extends TestCase
         $this->configProvider->method('getAllDefaults')->with(5)->willReturn([]);
 
         // Act
-        $result = $this->mutation->resolve($this->field, null, $this->resolveInfo, null, ['input' => $input]);
+        $result = $this->mutation->resolve($this->field, $this->contextMock, $this->resolveInfo, null, ['input' => $input]);
 
         // Assert
         $this->assertTrue($result['value']['isModified']);
@@ -319,7 +340,9 @@ class SaveValueTest extends TestCase
             'value' => '8px'
         ];
 
-        $this->userResolver->method('getCurrentUserId')->willReturn(1);
+        $this->userResolver->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
         $this->statusProvider->method('getStatusId')->willReturn(1);
 
         $valueMock = $this->createMock(ValueInterface::class);
@@ -335,7 +358,7 @@ class SaveValueTest extends TestCase
         $this->configProvider->method('getAllDefaults')->willReturn([]);
 
         // Act
-        $result = $this->mutation->resolve($this->field, null, $this->resolveInfo, null, ['input' => $input]);
+        $result = $this->mutation->resolve($this->field, $this->contextMock, $this->resolveInfo, null, ['input' => $input]);
 
         // Assert
         $this->assertArrayHasKey('success', $result);

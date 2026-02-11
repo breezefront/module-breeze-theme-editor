@@ -11,6 +11,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 
 class PublishTest extends TestCase
@@ -20,6 +21,7 @@ class PublishTest extends TestCase
     private UserResolver|MockObject $userResolverMock;
     private ThemeResolver|MockObject $themeResolverMock;
     private Field|MockObject $fieldMock;
+    private ContextInterface|MockObject $contextMock;
     private ResolveInfo|MockObject $resolveInfoMock;
 
     protected function setUp(): void
@@ -28,6 +30,11 @@ class PublishTest extends TestCase
         $this->userResolverMock = $this->createMock(UserResolver::class);
         $this->themeResolverMock = $this->createMock(ThemeResolver::class);
         $this->fieldMock = $this->createMock(Field::class);
+        $this->contextMock = $this->getMockBuilder(ContextInterface::class)
+            ->addMethods(['getUserId', 'getUserType'])
+            ->getMock();
+        $this->contextMock->method('getUserId')->willReturn(1);
+        $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->resolveInfoMock = $this->createMock(ResolveInfo::class);
 
         $this->publishResolver = new Publish(
@@ -79,8 +86,12 @@ class PublishTest extends TestCase
             'email' => 'john@example.com'
         ];
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
-        $this->userResolverMock->method('getCurrentUserMetadata')->willReturn($userMetadata);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserMetadata')
+            ->with($this->contextMock)
+            ->willReturn($userMetadata);
 
         $this->publishServiceMock->expects($this->once())
             ->method('publish')
@@ -89,7 +100,7 @@ class PublishTest extends TestCase
 
         $result = $this->publishResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -131,8 +142,12 @@ class PublishTest extends TestCase
             'changes' => []
         ];
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
-        $this->userResolverMock->method('getCurrentUserMetadata')->willReturn([]);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserMetadata')
+            ->with($this->contextMock)
+            ->willReturn([]);
 
         $this->publishServiceMock->expects($this->once())
             ->method('publish')
@@ -141,7 +156,7 @@ class PublishTest extends TestCase
 
         $result = $this->publishResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -164,15 +179,19 @@ class PublishTest extends TestCase
             ]
         ];
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
-        $this->userResolverMock->method('getCurrentUserMetadata')->willReturn([]);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserMetadata')
+            ->with($this->contextMock)
+            ->willReturn([]);
 
         $this->expectException(GraphQlInputException::class);
         $this->expectExceptionMessage('Publication title is required');
 
         $this->publishResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -204,8 +223,12 @@ class PublishTest extends TestCase
             'changes' => []
         ];
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
-        $this->userResolverMock->method('getCurrentUserMetadata')->willReturn([]);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserMetadata')
+            ->with($this->contextMock)
+            ->willReturn([]);
 
         $this->themeResolverMock->expects($this->once())
             ->method('getThemeIdByStoreId')
@@ -219,7 +242,7 @@ class PublishTest extends TestCase
 
         $result = $this->publishResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -254,8 +277,12 @@ class PublishTest extends TestCase
             'changes' => []
         ];
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
-        $this->userResolverMock->method('getCurrentUserMetadata')->willReturn([]);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserMetadata')
+            ->with($this->contextMock)
+            ->willReturn([]);
 
         // ThemeResolver should NOT be called
         $this->themeResolverMock->expects($this->never())
@@ -268,7 +295,7 @@ class PublishTest extends TestCase
 
         $result = $this->publishResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -331,13 +358,17 @@ class PublishTest extends TestCase
             ]
         ];
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
-        $this->userResolverMock->method('getCurrentUserMetadata')->willReturn([]);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserMetadata')
+            ->with($this->contextMock)
+            ->willReturn([]);
         $this->publishServiceMock->method('publish')->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -396,13 +427,17 @@ class PublishTest extends TestCase
             'changes' => []
         ];
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(5);
-        $this->userResolverMock->method('getCurrentUserMetadata')->willReturn([]);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(5);
+        $this->userResolverMock->method('getCurrentUserMetadata')
+            ->with($this->contextMock)
+            ->willReturn([]);
         $this->publishServiceMock->method('publish')->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -445,13 +480,17 @@ class PublishTest extends TestCase
             'lastname' => 'Smith'
         ];
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(7);
-        $this->userResolverMock->method('getCurrentUserMetadata')->willReturn($userMetadata);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(7);
+        $this->userResolverMock->method('getCurrentUserMetadata')
+            ->with($this->contextMock)
+            ->willReturn($userMetadata);
         $this->publishServiceMock->method('publish')->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -487,13 +526,17 @@ class PublishTest extends TestCase
             'changes' => []
         ];
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(8);
-        $this->userResolverMock->method('getCurrentUserMetadata')->willReturn([]);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(8);
+        $this->userResolverMock->method('getCurrentUserMetadata')
+            ->with($this->contextMock)
+            ->willReturn([]);
         $this->publishServiceMock->method('publish')->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
@@ -529,13 +572,17 @@ class PublishTest extends TestCase
             'changes' => []
         ];
 
-        $this->userResolverMock->method('getCurrentUserId')->willReturn(9);
-        $this->userResolverMock->method('getCurrentUserMetadata')->willReturn(['username' => 'user9']);
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(9);
+        $this->userResolverMock->method('getCurrentUserMetadata')
+            ->with($this->contextMock)
+            ->willReturn(['username' => 'user9']);
         $this->publishServiceMock->method('publish')->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
             $this->fieldMock,
-            null,
+            $this->contextMock,
             $this->resolveInfoMock,
             null,
             $args
