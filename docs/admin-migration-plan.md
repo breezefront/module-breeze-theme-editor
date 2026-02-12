@@ -230,19 +230,38 @@ We use a **phased migration** strategy to minimize risk and allow testing at eac
 
 ---
 
-### [Phase 3: UI & Toolbar Migration](./admin-migration-phase-3.md) 🟡
+### [Phase 3: Admin Editor Integration](./admin-migration-phase-3.md) 🟡
 
-**Goal:** Migrate all toolbar components to admin area
+**Goal:** Complete admin editor with toolbar GraphQL integration and settings editor migration
 
+**Phase 3 is split into two sub-phases:**
+
+#### Phase 3A: Toolbar GraphQL Integration
 **Key Deliverables:**
-- Move shared components to `view/base/web/js/toolbar/`
-- Adapt admin-specific components in `view/adminhtml/web/js/editor/toolbar/`
-- Device switcher controls iframe width (no PostMessage bridge needed)
-- Publication selector with admin auth
-- Jstest framework accessible in admin context
+- Connect toolbar components to GraphQL API
+- Implement permission-based UI (ACL integration)
+- Add live preview with CSS injection
+- Error handling and loading states
+- All 4 ACL roles tested
 
-**Time:** 8-10 hours  
-**Status:** Not Started
+**Time:** 8.5 hours  
+**Status:** 📋 Ready to execute  
+**Details:** [`PHASE-3-IMPLEMENTATION-PLAN.md`](./PHASE-3-IMPLEMENTATION-PLAN.md)
+
+#### Phase 3B: Settings Editor Migration
+**Key Deliverables:**
+- Rename frontend `panel.js` → `settings-editor.js` (clarity & future-proofing)
+- Migrate Theme Editor Panel to admin (~7,500 lines of code)
+- Copy field handlers (9 files) and renderers (15 files)
+- Create admin `breezeSettingsEditor` widget
+- Integrate into admin toolbar
+- Full testing of all field types
+
+**Time:** 30 hours  
+**Status:** 📋 Planned (after Phase 3A)  
+**Details:** [`PHASE-3B-IMPLEMENTATION-PLAN.md`](./PHASE-3B-IMPLEMENTATION-PLAN.md)
+
+**Phase 3 Total:** 38.5 hours (~5-6 work days)
 
 ---
 
@@ -279,26 +298,60 @@ We use a **phased migration** strategy to minimize risk and allow testing at eac
 
 ## 📊 Timeline & Milestones
 
-```
-Week 1
-├── Day 1: Phase 1 (Foundation) - Part 1
-├── Day 2: Phase 1 (Foundation) - Part 2 + Phase 2 Start
-├── Day 3: Phase 2 (ACL & Auth) Complete + Phase 3 Start
-├── Day 4: Phase 3 (UI & Toolbar) Complete + Phase 4 Start
-└── Day 5: Phase 4 (Integration) Complete + Phase 5 (Testing)
+### Updated Timeline (February 2026)
 
-Week 2 (if needed)
-└── Day 6: Phase 5 (Testing & Docs) Complete
+```
+Week 1: Foundation & Security ✅ COMPLETE
+├── Phase 1: Foundation (31 hours actual) ✅
+│   - Day 1-2: Admin controllers, routes, layouts
+│   - Day 3-4: Toolbar components (10 widgets)
+│   - Day 4: Fullscreen mode, iframe setup
+└── Phase 2: ACL & GraphQL Auth (8 hours) ✅
+    - Day 5: ACL permissions, GraphQL auth plugin
+    - Day 5: JWT tokens, admin session validation
+
+Week 2: Editor Integration 🚧 IN PROGRESS
+├── Phase 3A: Toolbar GraphQL (8.5 hours) 📋 Ready
+│   - Day 6: Utilities, permissions, error handling (3h)
+│   - Day 6-7: GraphQL integration (4h)
+│   - Day 7: Preview manager, testing (1.5h)
+└── Phase 3B: Settings Editor (30 hours) 📋 Planned
+    - Day 8: Rename & copy files (3h)
+    - Day 9-10: Create admin widget (12h)
+    - Day 11-12: Integration & testing (15h)
+
+Week 3-4: Polish & Release
+├── Phase 4: Integration & Polish (6-8 hours)
+│   - Remaining error handling
+│   - Performance optimization
+│   - UI refinements
+└── Phase 5: Testing & Docs (8-10 hours)
+    - Regression testing
+    - User documentation
+    - Release notes
 ```
 
 ### Milestones
 
-- ✅ **M1**: Admin URL opens and shows iframe (End of Phase 1)
-- ✅ **M2**: GraphQL secured with ACL (End of Phase 2)
-- ✅ **M3**: Toolbar fully functional in admin (End of Phase 3)
-- ✅ **M4**: No console errors, smooth UX (End of Phase 4)
-- ✅ **M5**: All tests pass, docs complete (End of Phase 5)
+- ✅ **M1**: Admin URL opens and shows iframe (End of Phase 1) - **COMPLETE**
+- ✅ **M2**: GraphQL secured with ACL (End of Phase 2) - **COMPLETE**
+- 🚧 **M3A**: Toolbar GraphQL integration working (End of Phase 3A) - **IN PROGRESS**
+- 📋 **M3B**: Settings editor migrated to admin (End of Phase 3B) - **PLANNED**
+- 📋 **M4**: No console errors, smooth UX (End of Phase 4)
+- 📋 **M5**: All tests pass, docs complete (End of Phase 5)
 - 🚀 **Release v2.0**
+
+### Time Summary
+
+| Phase | Estimated | Actual | Status |
+|-------|-----------|--------|--------|
+| Phase 1 | 20-24h | 31h | ✅ Complete |
+| Phase 2 | 6-8h | 8h | ✅ Complete |
+| Phase 3A | 8.5h | TBD | 🚧 In Progress |
+| Phase 3B | 30h | TBD | 📋 Planned |
+| Phase 4 | 6-8h | TBD | 📋 Not Started |
+| Phase 5 | 8-10h | TBD | 📋 Not Started |
+| **Total** | **79-111h** | **39h + 52.5h remaining** | **43% Complete** |
 
 ---
 
