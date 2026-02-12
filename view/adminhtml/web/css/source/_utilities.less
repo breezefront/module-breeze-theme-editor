@@ -1,0 +1,113 @@
+//
+//  Loading States
+//  _____________________________________________
+
+.bte-loading {
+    position: relative;
+    opacity: 0.6;
+    pointer-events: none;
+    
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.3);
+        z-index: 999;
+    }
+}
+
+.bte-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 12px 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    
+    span {
+        display: inline-block;
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+        
+        &::after {
+            content: '...';
+            animation: bte-dots 1.5s steps(4, end) infinite;
+        }
+    }
+}
+
+@keyframes bte-dots {
+    0%, 25% { content: '.'; }
+    50% { content: '..'; }
+    75%, 100% { content: '...'; }
+}
+
+//
+//  Permission Denied States
+//  _____________________________________________
+
+.bte-permission-denied {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    
+    &:hover {
+        background-color: #f5f5f5 !important;
+        cursor: not-allowed !important;
+    }
+    
+    &:active {
+        pointer-events: none;
+    }
+}
+
+.permission-notice {
+    padding: 10px 15px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-size: 13px;
+    line-height: 1.5;
+    
+    .help-text {
+        display: block;
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+        font-style: italic;
+    }
+}
+
+//
+//  Button States with Permissions
+//  _____________________________________________
+
+button.bte-permission-denied,
+a.bte-permission-denied {
+    &::before {
+        content: '🔒 ';
+        margin-right: 4px;
+    }
+}
+
+//
+//  Tooltip Enhancement for Disabled Elements
+//  _____________________________________________
+
+[title][disabled],
+.bte-permission-denied[title] {
+    cursor: help !important;
+    position: relative;
+    
+    &:hover::after {
+        // Native browser tooltip will show
+        // No need for custom tooltip overlay
+    }
+}

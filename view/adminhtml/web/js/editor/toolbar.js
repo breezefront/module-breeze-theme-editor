@@ -20,10 +20,11 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/toolbar/exit-button',
     'Swissup_BreezeThemeEditor/js/editor/util/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/util/url-builder',
-    'Swissup_BreezeThemeEditor/js/graphql/client'
+    'Swissup_BreezeThemeEditor/js/graphql/client',
+    'Swissup_BreezeThemeEditor/js/editor/preview-manager'
 ], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation, 
              publicationSelector, scopeSelector, pageSelector, highlightToggle, 
-             toolbarToggle, exitButton, configManager, urlBuilder, graphQLClient) {
+             toolbarToggle, exitButton, configManager, urlBuilder, graphQLClient, previewManager) {
     'use strict';
     
     /**
@@ -173,6 +174,12 @@ define([
             console.log('✅ Exit button initialized');
         }
         
+        // Initialize preview manager
+        _initializePreview(config);
+        
+        // Bind global events
+        _bindGlobalEvents(config);
+        
         console.log('✅ Admin toolbar initialized successfully');
         
         /**
@@ -255,6 +262,73 @@ define([
                     console.error('   This may happen if iframe content is from different origin');
                 }
             });
+        }
+        
+        /**
+         * Initialize preview iframe with draft CSS
+         * 
+         * @param {Object} config - Toolbar configuration
+         */
+        function _initializePreview(config) {
+            var iframeSelector = config.iframeSelector || '#bte-iframe';
+            var $iframe = $(iframeSelector);
+            
+            if (!$iframe.length) {
+                console.warn('⚠️  Preview iframe not found:', iframeSelector);
+                return;
+            }
+            
+            // Wait for iframe to load
+            $iframe.on('load.bte-preview', function() {
+                console.log('🎨 Iframe loaded, injecting draft CSS...');
+                
+                // Get current config (may have been updated)
+                var currentConfig = configManager.get();
+                
+                previewManager.injectDraftCSS(
+                    iframeSelector.replace('#', ''), // Remove # from selector
+                    currentConfig.storeId || config.storeId,
+                    currentConfig.themeId || config.themeId
+                );
+            });
+            
+            console.log('✅ Preview manager initialized');
+        }
+        
+        /**
+         * Bind global events for preview updates
+         * 
+         * @param {Object} config - Toolbar configuration
+         */
+        function _bindGlobalEvents(config) {
+            var iframeSelector = config.iframeSelector || '#bte-iframe';
+            var iframeId = iframeSelector.replace('#', '');
+            
+            // Refresh preview after save
+            $(document).on('bte:saved', function(e, data) {
+                console.log('🔄 Refreshing preview after save...');
+                
+                var currentConfig = configManager.get();
+                previewManager.refresh(
+                    iframeId,
+                    data.storeId || currentConfig.storeId || config.storeId,
+                    data.themeId || currentConfig.themeId || config.themeId
+                );
+            });
+            
+            // Refresh preview after status change
+            $(document).on('bte:statusChanged', function(e, status) {
+                console.log('🔄 Refreshing preview after status change to:', status);
+                
+                var currentConfig = configManager.get();
+                previewManager.refresh(
+                    iframeId,
+                    currentConfig.storeId || config.storeId,
+                    currentConfig.themeId || config.themeId
+                );
+            });
+            
+            console.log('✅ Global events bound');
         }
         
         /**
