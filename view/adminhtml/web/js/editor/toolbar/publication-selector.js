@@ -201,6 +201,12 @@ define([
         _bindGlobalEvents: function() {
             var self = this;
             
+            // Listen: Iframe reloaded → restore CSS state
+            $(document).on('bte:iframeReloaded', function(e, data) {
+                console.log('📥 Iframe reloaded event received, restoring CSS state...');
+                self._restoreCssState();
+            });
+            
             // Listen: Draft saved → update changes count
             $(document).on('bte:saved', function(e, data) {
                 console.log('📥 Draft saved event received');

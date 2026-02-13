@@ -303,16 +303,13 @@ define([
             
             // Wait for iframe to load
             $iframe.on('load.bte-preview', function() {
-                console.log('🎨 Iframe loaded, injecting draft CSS...');
+                console.log('🎨 Iframe loaded, triggering CSS state restoration...');
                 
-                // Get current config (may have been updated)
-                var currentConfig = configManager.get();
-                
-                previewManager.injectDraftCSS(
-                    iframeSelector.replace('#', ''), // Remove # from selector
-                    currentConfig.storeId || config.storeId,
-                    currentConfig.themeId || config.themeId
-                );
+                // Trigger event to restore CSS state (Draft/Published/Publication)
+                // Publication selector will handle restoring the correct CSS from localStorage
+                $(document).trigger('bte:iframeReloaded', {
+                    iframeId: iframeSelector.replace('#', '')
+                });
             });
             
             console.log('✅ Preview manager initialized');
