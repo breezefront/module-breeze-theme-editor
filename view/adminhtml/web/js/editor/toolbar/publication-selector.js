@@ -139,12 +139,166 @@ define([
                 canPublish: permissions.canPublish() && 
                            this.options.changesCount > 0 && 
                            this.options.currentStatus === 'DRAFT',
-                canRollback: permissions.canRollback()
+                canRollback: permissions.canRollback(),
+                // Computed values for simpler template
+                displayLabel: this._getDisplayLabel(),
+                badgeText: this._getBadgeText(),
+                badgeClass: this._getBadgeClass(),
+                draftMeta: this._getMetaText('DRAFT'),
+                publishedMeta: this._getMetaText('PUBLISHED')
             });
             this.element.html(html);
             
             // Apply permission restrictions after render
             this._applyPermissions();
+        },
+
+        /**
+         * Update only the button (smart partial update)
+         * @private
+         */
+        updateButton: function() {
+            var $button = this.element.find('.toolbar-select');
+            if (!$button.length) {
+                return;
+            }
+            
+            // Update status class
+            $button.removeClass('status-draft status-published status-publication')
+                   .addClass('status-' + this.options.currentStatus.toLowerCase());
+            
+            // Update label (using translated text)
+            var label = this._getDisplayLabel();
+            $button.find('.select-label').text(label);
+            
+            // Update badge
+            this.updateBadge();
+            
+            console.log('🔄 Button updated:', this.options.currentStatus);
+        },
+
+        /**
+         * Update only the badge (smart partial update)
+         * @private
+         */
+        updateBadge: function() {
+            var $button = this.element.find('.toolbar-select');
+            if (!$button.length) {
+                return;
+            }
+            
+            // Remove old badge
+            $button.find('.select-badge').remove();
+            
+            // Create new badge based on status (using translated text)
+            var badgeText = this._getBadgeText();
+            var badgeClass = this._getBadgeClass();
+            
+            // Insert badge before arrow
+            if (badgeText) {
+                var badgeHtml = '<span class="select-badge ' + badgeClass + '">' + badgeText + '</span>';
+                $button.find('.select-arrow').before(badgeHtml);
+            }
+            
+            console.log('🔄 Badge updated:', this.options.currentStatus, this.options.changesCount);
+        },
+
+        /**
+         * Update checkmarks in dropdown (smart partial update)
+         * @private
+         */
+        updateCheckmarks: function() {
+            var $dropdown = this.element.find('.toolbar-dropdown');
+            if (!$dropdown.length) {
+                return;
+            }
+            
+            // Remove all active classes and checkmarks
+            $dropdown.find('.dropdown-item, .dropdown-item-group').removeClass('active');
+            $dropdown.find('.item-check').remove();
+            
+            // Add active state and checkmark to current item
+            if (this.options.currentStatus === 'PUBLICATION') {
+                // Find and mark publication item
+                var $pubItem = $dropdown.find('[data-publication-id="' + this.options.currentPublicationId + '"]');
+                $pubItem.addClass('active')
+                        .append('<span class="item-check">✓</span>');
+            } else {
+                // Find and mark draft/published item
+                var $statusItem = $dropdown.find('[data-status="' + this.options.currentStatus + '"]');
+                $statusItem.addClass('active')
+                           .append('<span class="item-check">✓</span>');
+                
+                // Also mark the parent group for Draft (which has additional publish button)
+                if (this.options.currentStatus === 'DRAFT') {
+                    $statusItem.closest('.dropdown-item-group').addClass('active');
+                }
+            }
+            
+            console.log('🔄 Checkmarks updated:', this.options.currentStatus);
+        },
+
+        /**
+         * Get display label for button
+         * @private
+         * @returns {string}
+         */
+        _getDisplayLabel: function() {
+            if (this.options.currentStatus === 'PUBLICATION' && this.options.currentPublicationTitle) {
+                return this.options.currentPublicationTitle;
+            }
+            return $t(this.options.currentStatus);
+        },
+
+        /**
+         * Get badge text for current status
+         * @private
+         * @returns {string}
+         */
+        _getBadgeText: function() {
+            if (this.options.currentStatus === 'DRAFT' && this.options.changesCount > 0) {
+                return '(' + this.options.changesCount + ' ' + $t('changes') + ')';
+            } else if (this.options.currentStatus === 'PUBLISHED') {
+                return '(' + $t('Live') + ')';
+            } else if (this.options.currentStatus === 'PUBLICATION') {
+                return '(' + $t('Archive') + ')';
+            }
+            return '';
+        },
+
+        /**
+         * Get badge CSS class for current status
+         * @private
+         * @returns {string}
+         */
+        _getBadgeClass: function() {
+            if (this.options.currentStatus === 'DRAFT') {
+                return 'badge-changes';
+            } else if (this.options.currentStatus === 'PUBLISHED') {
+                return 'badge-live';
+            } else if (this.options.currentStatus === 'PUBLICATION') {
+                return 'badge-archive';
+            }
+            return '';
+        },
+
+        /**
+         * Get meta text for dropdown item
+         * @private
+         * @param {string} status - DRAFT, PUBLISHED, or PUBLICATION
+         * @returns {string}
+         */
+        _getMetaText: function(status) {
+            if (status === 'DRAFT') {
+                return this.options.changesCount > 0 
+                    ? this.options.changesCount + ' ' + $t('changes')
+                    : $t('No changes');
+            } else if (status === 'PUBLISHED') {
+                return $t('Live');
+            } else if (status === 'PUBLICATION') {
+                return $t('Archive');
+            }
+            return '';
         },
 
         /**
@@ -291,7 +445,9 @@ define([
                 StorageHelper.setCurrentStatus(status);
                 StorageHelper.clearCurrentPublication();
                 
-                self._render();
+                // Smart update instead of full render
+                self.updateButton();
+                self.updateCheckmarks();
                 self._closeDropdown();
                 
                 // Trigger event for other components to reload data
@@ -500,7 +656,9 @@ define([
                 StorageHelper.setCurrentPublicationId(publicationId);
                 StorageHelper.setCurrentPublicationTitle(publication.title);
                 
-                self._render();
+                // Smart update instead of full render
+                self.updateButton();
+                self.updateCheckmarks();
                 self._closeDropdown();
                 
                 // Trigger event for other components
@@ -612,7 +770,8 @@ define([
         updateChangesCount: function(count) {
             console.log('🔢 Updating changes count:', count);
             this.options.changesCount = count;
-            this._render();
+            // Smart update - only badge needs to change
+            this.updateBadge();
         },
 
         /**

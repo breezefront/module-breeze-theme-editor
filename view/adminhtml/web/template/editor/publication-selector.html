@@ -1,19 +1,9 @@
 <div class="bte-publication-selector">
     <button type="button" class="toolbar-select status-<%- status.toLowerCase() %>">
-        <span class="select-label">
-            <% if (status === 'PUBLICATION' && currentPublicationTitle) { %>
-                <%- currentPublicationTitle %>
-            <% } else { %>
-                <%- status %>
-            <% } %>
-        </span>
+        <span class="select-label"><%- displayLabel %></span>
         
-        <% if (status === 'DRAFT' && changesCount > 0) { %>
-            <span class="select-badge badge-changes">(<%- changesCount %> changes)</span>
-        <% } else if (status === 'PUBLISHED') { %>
-            <span class="select-badge badge-live">(Live)</span>
-        <% } else if (status === 'PUBLICATION') { %>
-            <span class="select-badge badge-archive">(Archive)</span>
+        <% if (badgeText) { %>
+            <span class="select-badge <%- badgeClass %>"><%- badgeText %></span>
         <% } %>
         
         <span class="select-arrow">
@@ -34,11 +24,7 @@
                 <a href="#" class="dropdown-item" data-status="DRAFT">
                     <span class="item-icon">🟡</span>
                     <span class="item-text">Draft</span>
-                    <% if (changesCount > 0) { %>
-                        <span class="item-meta"><%- changesCount %> changes</span>
-                    <% } else { %>
-                        <span class="item-meta">No changes</span>
-                    <% } %>
+                    <span class="item-meta"><%- draftMeta %></span>
                     <% if (status === 'DRAFT') { %>
                         <span class="item-check">✓</span>
                     <% } %>
@@ -59,7 +45,7 @@
             <a href="#" class="dropdown-item <%= status === 'PUBLISHED' ? 'active' : '' %>" data-status="PUBLISHED">
                 <span class="item-icon">🟢</span>
                 <span class="item-text">Published</span>
-                <span class="item-meta">Live</span>
+                <span class="item-meta"><%- publishedMeta %></span>
                 <% if (status === 'PUBLISHED') { %>
                     <span class="item-check">✓</span>
                 <% } %>
