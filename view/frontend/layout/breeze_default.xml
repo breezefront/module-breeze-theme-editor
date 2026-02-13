@@ -18,6 +18,8 @@
         </referenceBlock>
 
         <!-- Test Runner (activated with ?jstest=true URL parameter) -->
+        <!-- DISABLED: Use admin test runner instead at /admin/breeze_editor/editor/index?jstest=true -->
+        <!--
         <referenceContainer name="after.body.start">
             <block
                 class="Swissup\BreezeThemeEditor\Block\TestRunner"
@@ -25,5 +27,6 @@
                 template="Swissup_BreezeThemeEditor::test-runner.phtml"
             />
         </referenceContainer>
+        -->
     </body>
 </page>

@@ -43,11 +43,72 @@ class TestRunner extends Template
     }
     
     /**
+     * Check if this is admin context
+     *
+     * @return bool
+     */
+    public function isAdminContext()
+    {
+        // Primary method: Check area code
+        try {
+            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+            $state = $objectManager->get(\Magento\Framework\App\State::class);
+            $areaCode = $state->getAreaCode();
+            
+            if ($areaCode === 'adminhtml') {
+                return true;
+            }
+        } catch (\Exception $e) {
+            // Area not set yet, continue to fallback
+        }
+        
+        // Fallback method 1: Check request route
+        try {
+            $request = $this->getRequest();
+            $moduleName = $request->getModuleName();
+            $controllerName = $request->getControllerName();
+            
+            // Check if it's admin editor route
+            if ($moduleName === 'breeze_editor' && $controllerName === 'editor') {
+                return true;
+            }
+            
+            // Check if request is in admin area
+            if ($moduleName === 'admin' || strpos($moduleName, 'admin') === 0) {
+                return true;
+            }
+        } catch (\Exception $e) {
+            // Request not available, continue to fallback
+        }
+        
+        // Fallback method 2: Check template path
+        $template = $this->getTemplate();
+        if ($template && (strpos($template, 'adminhtml') !== false || strpos($template, 'admin/') !== false)) {
+            return true;
+        }
+        
+        // Default: assume frontend
+        return false;
+    }
+    
+    /**
      * Get list of test modules to load
      *
      * @return array
      */
     public function getTestModules()
+    {
+        return $this->isAdminContext() 
+            ? $this->getAdminTestModules()
+            : $this->getFrontendTestModules();
+    }
+    
+    /**
+     * Get frontend test modules
+     *
+     * @return array
+     */
+    protected function getFrontendTestModules()
     {
         return [
             'Swissup_BreezeThemeEditor/js/test/tests/auth-manager-test',
@@ -83,6 +144,20 @@ class TestRunner extends Template
             // Field Badges Reset Tests (6 tests)
             'Swissup_BreezeThemeEditor/js/test/tests/field-badges-reset-test',
             // Note: Pickr color picker tests removed - Pickr functionality tested manually
+        ];
+    }
+    
+    /**
+     * Get admin test modules
+     *
+     * @return array
+     */
+    protected function getAdminTestModules()
+    {
+        return [
+            // Admin-specific tests
+            'Swissup_BreezeThemeEditor/js/test/tests/admin-auth-manager-test',
+            // Add more admin tests here as they are created
         ];
     }
 }

@@ -23,6 +23,12 @@
                     <argument name="view_model" xsi:type="object">Swissup\BreezeThemeEditor\ViewModel\AdminToolbar</argument>
                 </arguments>
             </block>
+            
+            <!-- Test Runner (renders only with ?jstest=true URL parameter) -->
+            <block class="Swissup\BreezeThemeEditor\Block\TestRunner"
+                   name="breeze.editor.test.runner"
+                   template="Swissup_BreezeThemeEditor::admin/test-runner.phtml"
+                   after="breeze.editor.index"/>
         </referenceContainer>
     </body>
 </page>
