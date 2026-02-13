@@ -122,8 +122,17 @@ define([
             
             // Use native DOM API instead of jQuery for reliable iframe manipulation
             var style = $style[0]; // Get native DOM element
+            
+            // Set disabled first
             style.disabled = false;
+            
+            // Then set media (order matters!)
             style.media = 'all';
+            
+            // Force reflow to ensure changes are applied
+            if (currentIframeDoc && currentIframeDoc.body) {
+                currentIframeDoc.body.offsetHeight; // Trigger reflow
+            }
             
             console.log('✅ Enabled style:', style.id, '| media:', style.media, '| disabled:', style.disabled);
         },

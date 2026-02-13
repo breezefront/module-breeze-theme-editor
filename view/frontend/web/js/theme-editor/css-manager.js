@@ -120,8 +120,15 @@ define([
          */
         _enableStyle: function($style) {
             if (!$style || !$style.length) return;
-            $style.attr('media', 'all');        // Primary method (HTML5 standard)
-            $style.prop('disabled', false);     // Fallback for older browsers
+            
+            // Set attributes in correct order
+            $style.prop('disabled', false);      // Set disabled first
+            $style.attr('media', 'all');         // Then media attribute
+            
+            // Force reflow to ensure changes are applied
+            if (iframeDocument && iframeDocument.body) {
+                iframeDocument.body.offsetHeight; // Trigger reflow
+            }
         },
 
         /**
