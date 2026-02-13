@@ -1,0 +1,261 @@
+// ============================================================================
+// Palette Section Styles
+// Matrix layout with color swatches (5 per row)
+// ============================================================================
+
+.bte-palette-section {
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03); // Dark background like preset selector
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 16px 0;
+    border-radius: 6px;
+
+    // Header
+    .bte-palette-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        cursor: pointer;
+        padding: 8px 0;
+        transition: background 0.2s;
+        
+        &:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        &.active {
+            .bte-palette-arrow {
+                transform: rotate(180deg);
+            }
+        }
+
+        .bte-palette-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: @bte-toolbar-text; // Light text for dark background
+            display: block;
+        }
+        
+        // Header actions container
+        .bte-palette-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        
+        // Badges container in header
+        .bte-palette-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        
+        // Reset button for palette (styled like field reset button)
+        .bte-palette-reset-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            line-height: 1;
+            padding: 2px 6px;
+            margin: 0;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+            vertical-align: middle;
+            
+            &:hover {
+                color: rgba(255, 255, 255, 0.9);
+                background: rgba(255, 255, 255, 0.1);
+            }
+            
+            &:active {
+                background: rgba(255, 255, 255, 0.15);
+                transform: scale(0.95);
+            }
+        }
+        
+        .bte-palette-arrow {
+            font-size: 18px;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+            color: @bte-toolbar-text;
+        }
+    }
+    
+    // Content (collapsible)
+    .bte-palette-content {
+        display: none;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+        
+        &.active {
+            display: block;
+        }
+    }
+
+    // Grid container (flex layout for groups)
+    .bte-palette-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 16px; // Space between groups
+    }
+
+    // Group container wrapper
+    .bte-palette-group-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    // Group separator (line between groups)
+    .bte-palette-group-separator {
+        height: 2px;
+        background: rgba(255, 255, 255, 0.15);
+        margin: 8px 0 16px 0;
+    }
+
+    // Group label (SHOW, not hide)
+    .bte-palette-group-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        display: block; // Changed from display: none
+    }
+
+    // Swatches grid (8 columns)
+    .bte-palette-group-grid {
+        display: grid;
+        grid-template-columns: repeat(8, 30px); // 8 columns × 30px (fits 320px panel)
+        gap: 5px;
+    }
+
+    // Individual color swatch
+    .bte-palette-swatch {
+        width: 30px;  // 30px for 8-column layout (fits 320px panel)
+        height: 30px;
+        border: 2px solid rgba(255, 255, 255, 0.2); // Dark theme border
+        border-radius: 4px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s ease;
+        overflow: hidden;
+
+        // Hover effect
+        &:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        // Active/selected state
+        &.selected {
+            border: 3px solid #1979c3; // Blue border matching theme
+            border-width: 3px;
+        }
+
+        // Quick Select active state (when selected from color field)
+        &.quick-select-active {
+            border-color: #10b981; // Green to differentiate from user selection
+            border-width: 3px;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        // Dirty state (unsaved changes) - YELLOW BORDER
+        &.bte-swatch-dirty {
+            border: 2px solid #fbbf24 !important; // Yellow border (Tailwind yellow-400)
+            box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3); // Yellow glow
+            
+            &:hover {
+                border-color: #f59e0b !important; // Darker yellow on hover
+                box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4);
+            }
+        }
+        
+        // Modified state (saved but different from default) - ORANGE BORDER
+        &.bte-swatch-modified {
+            border: 2px solid #f97316 !important; // Orange (Tailwind orange-500)
+            
+            &:hover {
+                border-color: #ea580c !important; // Darker orange on hover
+            }
+        }
+        
+        // Dirty + Modified (dirty wins for border color)
+        &.bte-swatch-dirty.bte-swatch-modified {
+            border-color: #fbbf24 !important; // Yellow (dirty priority)
+        }
+
+        // Visual color square
+        .bte-swatch-visual {
+            width: 100%;
+            height: 100%;
+            pointer-events: none; // Click goes through to container
+        }
+
+        // Hidden color input
+        .bte-swatch-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+    }
+
+    // No palettes message
+    .bte-no-palettes {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 13px;
+        font-style: italic;
+        margin: 0;
+        padding: 8px 0;
+    }
+}
+
+// ============================================================================
+// Dark mode support (optional, if theme has dark mode)
+// ============================================================================
+
+@media (prefers-color-scheme: dark) {
+    .bte-palette-section {
+        background: #1f2937;
+        border-bottom-color: #374151;
+
+        .bte-palette-header .bte-palette-title {
+            color: #f3f4f6;
+        }
+
+        .bte-palette-swatch {
+            border-color: #4b5563;
+
+            &:hover {
+                border-color: #6b7280;
+            }
+
+            &.selected {
+                border-color: #3b82f6;
+            }
+        }
+
+        .bte-palette-group.bte-palette-group-separator {
+            border-top-color: #4b5563;
+        }
+
+        .bte-no-palettes {
+            color: #9ca3af;
+        }
+    }
+}

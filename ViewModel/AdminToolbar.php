@@ -66,6 +66,11 @@ class AdminToolbar extends Toolbar
     private $authorization;
 
     /**
+     * @var \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver
+     */
+    private $themeResolver;
+
+    /**
      * @param \Swissup\BreezeThemeEditor\Helper\Data $helper
      * @param \Swissup\BreezeThemeEditor\Model\Data\AccessToken $accessToken
      * @param \Magento\Framework\App\RequestInterface $request
@@ -81,6 +86,7 @@ class AdminToolbar extends Toolbar
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator $tokenGenerator
      * @param \Magento\Framework\AuthorizationInterface $authorization
+     * @param \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver
      */
     public function __construct(
         \Swissup\BreezeThemeEditor\Helper\Data $helper,
@@ -97,7 +103,8 @@ class AdminToolbar extends Toolbar
         PublicationRepositoryInterface $publicationRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator $tokenGenerator,
-        \Magento\Framework\AuthorizationInterface $authorization
+        \Magento\Framework\AuthorizationInterface $authorization,
+        \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver
     ) {
         parent::__construct(
             $helper,
@@ -122,6 +129,7 @@ class AdminToolbar extends Toolbar
         $this->urlBuilder = $urlBuilder;
         $this->tokenGenerator = $tokenGenerator;
         $this->authorization = $authorization;
+        $this->themeResolver = $themeResolver;
     }
 
     /**
@@ -155,48 +163,38 @@ class AdminToolbar extends Toolbar
     }
 
     /**
+     * Override parent getThemeId() to return frontend theme ID instead of backend theme
+     * 
+     * Parent method uses DesignInterface which returns backend theme (ID=2) in admin area.
+     * We need the actual frontend theme assigned to the store for publications/values.
+     *
+     * @return int Theme ID from store configuration
+     */
+    public function getThemeId()
+    {
+        try {
+            $storeId = $this->getStoreId();
+            return $this->themeResolver->getThemeIdByStoreId($storeId);
+        } catch (\Exception $e) {
+            // Fallback to parent method if ThemeResolver fails
+            return parent::getThemeId();
+        }
+    }
+
+    /**
      * Get list of publications from database (real data via Repository)
      * 
-     * Fetches last 10 publications for current theme+store combination
-     *
-     * @return array
+     * NOTE: Publications are now loaded via GraphQL in frontend (publication-selector.js).
+     * This method is kept for backward compatibility but returns empty array.
+     * 
+     * @deprecated Use GraphQL query 'getPublications' instead
+     * @return array Empty array - publications loaded via GraphQL
      */
     public function getPublications()
     {
-        try {
-            $searchCriteria = $this->searchCriteriaBuilder
-                ->addFilter('theme_id', $this->getThemeId())
-                ->addFilter('store_id', $this->getStoreId())
-                ->addSortOrder(
-                    $this->searchCriteriaBuilder->create()->getSortOrders()[0] ?? 
-                    $this->createSortOrder('published_at', SortOrder::SORT_DESC)
-                )
-                ->setPageSize(10)
-                ->create();
-            
-            // Add sort order manually if not working through builder
-            $searchCriteria->setSortOrders([
-                $this->createSortOrder('published_at', SortOrder::SORT_DESC)
-            ]);
-            
-            $result = $this->publicationRepository->getList($searchCriteria);
-            
-            $publications = [];
-            foreach ($result->getItems() as $publication) {
-                $publications[] = [
-                    'id' => (int)$publication->getPublicationId(),
-                    'title' => $publication->getTitle(),
-                    'date' => $publication->getPublishedAt(),
-                    'status' => 'PUBLISHED'
-                ];
-            }
-            
-            return $publications;
-            
-        } catch (\Exception $e) {
-            // Return empty array on error (e.g., table doesn't exist yet)
-            return [];
-        }
+        // Publications are loaded dynamically via GraphQL
+        // See: view/adminhtml/web/js/graphql/queries/get-publications.js
+        return [];
     }
 
     /**

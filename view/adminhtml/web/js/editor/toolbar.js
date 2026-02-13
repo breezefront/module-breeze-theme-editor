@@ -21,10 +21,12 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/util/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/util/url-builder',
     'Swissup_BreezeThemeEditor/js/graphql/client',
-    'Swissup_BreezeThemeEditor/js/editor/preview-manager'
+    'Swissup_BreezeThemeEditor/js/editor/preview-manager',
+    'Swissup_BreezeThemeEditor/js/editor/css-manager',
+    'Swissup_BreezeThemeEditor/js/editor/panel/settings-editor'
 ], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation, 
              publicationSelector, scopeSelector, pageSelector, highlightToggle, 
-             toolbarToggle, exitButton, configManager, urlBuilder, graphQLClient, previewManager) {
+             toolbarToggle, exitButton, configManager, urlBuilder, graphQLClient, previewManager, cssManager, settingsEditor) {
     'use strict';
     
     /**
@@ -91,6 +93,25 @@ define([
             console.log('✅ Navigation initialized');
         }
         
+        // Initialize settings editor panel
+        if ($('#theme-editor-panel').length) {
+            // Store config globally for settings-editor to access
+            window.breezeThemeEditorConfig = {
+                storeId: config.storeId,
+                themeId: config.themeId,
+                themeName: config.themeName || 'Theme',
+                adminUrl: config.adminUrl || '/admin',
+                graphqlEndpoint: config.graphqlEndpoint
+            };
+            
+            $('#theme-editor-panel').breezeSettingsEditor({
+                storeId: config.storeId,
+                themeId: config.themeId,
+                themeName: config.themeName || 'Theme'
+            });
+            console.log('✅ Settings editor panel initialized');
+        }
+        
         // Initialize device switcher widget
         if ($('#bte-device-switcher').length && config.components && config.components.deviceSwitcher) {
             $('#bte-device-switcher').breezeDeviceSwitcher({
@@ -117,7 +138,9 @@ define([
                 publications: config.publications || [],
                 currentStatus: config.currentStatus || 'DRAFT',
                 changesCount: config.changesCount || 0,
-                currentPublicationId: config.currentPublicationId || null
+                currentPublicationId: config.currentPublicationId || null,
+                storeId: config.storeId,
+                themeId: config.themeId
             });
             console.log('✅ Publication selector initialized');
         }
@@ -296,7 +319,7 @@ define([
         }
         
         /**
-         * Bind global events for preview updates
+         * Bind global events for cross-component communication
          * 
          * @param {Object} config - Toolbar configuration
          */
@@ -304,28 +327,17 @@ define([
             var iframeSelector = config.iframeSelector || '#bte-iframe';
             var iframeId = iframeSelector.replace('#', '');
             
-            // Refresh preview after save
-            $(document).on('bte:saved', function(e, data) {
-                console.log('🔄 Refreshing preview after save...');
-                
-                var currentConfig = configManager.get();
-                previewManager.refresh(
-                    iframeId,
-                    data.storeId || currentConfig.storeId || config.storeId,
-                    data.themeId || currentConfig.themeId || config.themeId
-                );
-            });
+            // Note: bte:saved event disabled - no Settings Editor yet (Phase 3B)
+            // $(document).on('bte:saved', function(e, data) {
+            //     console.log('🔄 Refreshing preview after save...');
+            //     cssManager.refresh();
+            // });
             
-            // Refresh preview after status change
-            $(document).on('bte:statusChanged', function(e, status) {
-                console.log('🔄 Refreshing preview after status change to:', status);
-                
-                var currentConfig = configManager.get();
-                previewManager.refresh(
-                    iframeId,
-                    currentConfig.storeId || config.storeId,
-                    currentConfig.themeId || config.themeId
-                );
+            // Refresh CSS after status change (handled by publication-selector + css-manager)
+            // This event is informational only - css-manager already switched CSS
+            $(document).on('bte:statusChanged', function(e, status, publicationId) {
+                console.log('✅ Status changed event received:', status, publicationId || '');
+                // No action needed - css-manager already switched CSS in publication-selector
             });
             
             console.log('✅ Global events bound');

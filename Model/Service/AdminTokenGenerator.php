@@ -8,14 +8,19 @@ use Magento\Integration\Api\UserTokenIssuerInterface;
 use Magento\Integration\Model\UserToken\UserTokenParametersFactory;
 use Magento\Integration\Model\CustomUserContext;
 use Magento\Authorization\Model\UserContextInterface;
+use Magento\Framework\Jwt\JwtManagerInterface;
+use Magento\Framework\Jwt\Payload\ClaimsPayloadInterface;
+use Magento\JwtUserToken\Model\JwtSettingsProviderInterface;
+use Magento\JwtUserToken\Api\ConfigReaderInterface;
 use Psr\Log\LoggerInterface;
 
 /**
  * Generate Magento admin integration tokens for Theme Editor
  * 
- * Uses native Magento token system (oauth_token table).
- * Tokens are valid for 4 hours (configurable in oauth/access_token_lifetime/admin).
- * Token is cached in admin session to avoid creating new token on each request.
+ * Uses native Magento JWT token system.
+ * Token lifetime is controlled by webapi/jwtauth/admin_expiration config (default 60 minutes).
+ * Token expiration is read directly from JWT 'exp' claim to match Magento's validation.
+ * Token is cached in admin session with real expiration timestamp.
  */
 class AdminTokenGenerator
 {
@@ -28,11 +33,6 @@ class AdminTokenGenerator
      * Session key for storing token expiration time
      */
     private const SESSION_KEY_EXPIRES = 'bte_admin_token_expires';
-    
-    /**
-     * Token lifetime in seconds (4 hours, same as Magento config default)
-     */
-    private const TOKEN_LIFETIME = 4 * 3600; // 4 hours
     
     /**
      * Buffer time before expiration (generate new token 5 minutes before expiry)
@@ -60,28 +60,52 @@ class AdminTokenGenerator
     private $logger;
 
     /**
+     * @var JwtManagerInterface
+     */
+    private $jwtManager;
+
+    /**
+     * @var JwtSettingsProviderInterface
+     */
+    private $settingsProvider;
+
+    /**
+     * @var ConfigReaderInterface
+     */
+    private $configReader;
+
+    /**
      * @param AdminSession $adminSession
      * @param UserTokenIssuerInterface $tokenIssuer
      * @param UserTokenParametersFactory $tokenParametersFactory
      * @param LoggerInterface $logger
+     * @param JwtManagerInterface $jwtManager
+     * @param JwtSettingsProviderInterface $settingsProvider
+     * @param ConfigReaderInterface $configReader
      */
     public function __construct(
         AdminSession $adminSession,
         UserTokenIssuerInterface $tokenIssuer,
         UserTokenParametersFactory $tokenParametersFactory,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        JwtManagerInterface $jwtManager,
+        JwtSettingsProviderInterface $settingsProvider,
+        ConfigReaderInterface $configReader
     ) {
         $this->adminSession = $adminSession;
         $this->tokenIssuer = $tokenIssuer;
         $this->tokenParametersFactory = $tokenParametersFactory;
         $this->logger = $logger;
+        $this->jwtManager = $jwtManager;
+        $this->settingsProvider = $settingsProvider;
+        $this->configReader = $configReader;
     }
 
     /**
      * Generate Magento admin token for currently logged-in admin
      * 
-     * Returns cached token if still valid, otherwise creates new one.
-     * Token is stored in admin session with expiration timestamp.
+     * Returns cached token if still valid (checks real JWT expiration time).
+     * Token lifetime is determined by webapi/jwtauth/admin_expiration config.
      * 
      * @return string Bearer token for GraphQL authentication
      * @throws \Exception If no admin user logged in
@@ -142,19 +166,39 @@ class AdminTokenGenerator
     /**
      * Cache token in admin session with expiration time
      * 
+     * Reads actual expiration time from JWT token.
+     * Falls back to config-based TTL if JWT reading fails.
+     * 
      * @param string $token
      * @return void
      */
     private function cacheToken(string $token): void
     {
-        $expiresAt = time() + self::TOKEN_LIFETIME;
+        // Try to read real expiration from JWT
+        $expiresAt = $this->getTokenExpiration($token);
         
+        // Fallback: if failed to read JWT, calculate from config
+        if (!$expiresAt) {
+            $ttlMinutes = $this->configReader->getAdminTtl();
+            $expiresAt = time() + ($ttlMinutes * 60);
+            
+            $this->logger->warning(sprintf(
+                '[BTE] Could not read JWT expiration, using config TTL: %d minutes',
+                $ttlMinutes
+            ));
+        }
+        
+        // Cache token and expiration in session
         $this->adminSession->setData(self::SESSION_KEY_TOKEN, $token);
         $this->adminSession->setData(self::SESSION_KEY_EXPIRES, $expiresAt);
         
+        $secondsUntilExpiry = $expiresAt - time();
+        
         $this->logger->debug(sprintf(
-            '[BTE] Token cached in session, expires at: %s',
-            date('Y-m-d H:i:s', $expiresAt)
+            '[BTE] Token cached in session, expires at: %s (%d seconds / %.1f minutes from now)',
+            date('Y-m-d H:i:s', $expiresAt),
+            $secondsUntilExpiry,
+            $secondsUntilExpiry / 60
         ));
     }
 
@@ -167,6 +211,56 @@ class AdminTokenGenerator
     {
         $this->adminSession->unsetData(self::SESSION_KEY_TOKEN);
         $this->adminSession->unsetData(self::SESSION_KEY_EXPIRES);
+    }
+
+    /**
+     * Get token expiration timestamp from JWT
+     * 
+     * Reads the 'exp' claim directly from JWT token using JwtManager.
+     * This matches Magento's validation logic in ExpirationValidator.
+     * 
+     * @param string $token JWT token string
+     * @return int|null Unix timestamp when token expires, or null if failed to read
+     */
+    private function getTokenExpiration(string $token): ?int
+    {
+        try {
+            // Read JWT using same mechanism as Magento's ExpirationValidator
+            $jwt = $this->jwtManager->read(
+                $token, 
+                $this->settingsProvider->prepareAllAccepted()
+            );
+            
+            // Extract payload
+            $payload = $jwt->getPayload();
+            if (!$payload instanceof ClaimsPayloadInterface) {
+                $this->logger->warning('[BTE] JWT payload does not contain claims');
+                return null;
+            }
+            
+            // Get exp claim
+            $claims = $payload->getClaims();
+            if (empty($claims['exp'])) {
+                $this->logger->warning('[BTE] JWT does not contain exp claim');
+                return null;
+            }
+            
+            $expiration = (int) $claims['exp']->getValue();
+            
+            $this->logger->debug(sprintf(
+                '[BTE] Token expiration read from JWT: %s (%d seconds from now)',
+                date('Y-m-d H:i:s', $expiration),
+                $expiration - time()
+            ));
+            
+            return $expiration;
+            
+        } catch (\Exception $e) {
+            $this->logger->error(
+                '[BTE] Failed to read JWT token expiration: ' . $e->getMessage()
+            );
+            return null;
+        }
     }
 
     /**
@@ -183,11 +277,18 @@ class AdminTokenGenerator
         $expiresAt = $this->adminSession->getData(self::SESSION_KEY_EXPIRES);
         
         if (!$expiresAt) {
+            $this->logger->debug('[BTE] No expiration time found in session');
             return false;
         }
         
         // Check if token expires in less than buffer time
         $expiresIn = $expiresAt - time();
+        
+        $this->logger->debug(sprintf(
+            '[BTE] Token validation: expires in %d seconds (buffer: %d seconds)',
+            $expiresIn,
+            self::TOKEN_EXPIRATION_BUFFER
+        ));
         
         if ($expiresIn <= self::TOKEN_EXPIRATION_BUFFER) {
             $this->logger->debug(sprintf(
@@ -198,6 +299,7 @@ class AdminTokenGenerator
             return false;
         }
         
+        $this->logger->debug('[BTE] Token is still valid');
         return true;
     }
 

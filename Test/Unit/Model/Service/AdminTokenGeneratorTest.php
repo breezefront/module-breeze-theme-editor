@@ -7,6 +7,12 @@ use Magento\Backend\Model\Auth\Session as BackendSession;
 use Magento\Integration\Model\CustomUserContext;
 use Magento\Integration\Model\UserToken\UserTokenParametersFactory;
 use Magento\Integration\Api\UserTokenIssuerInterface;
+use Magento\Framework\Jwt\JwtManagerInterface;
+use Magento\Framework\Jwt\Payload\ClaimsPayloadInterface;
+use Magento\Framework\Jwt\Jws\JwsInterface;
+use Magento\Framework\Jwt\Claim\ExpirationTime;
+use Magento\JwtUserToken\Model\JwtSettingsProviderInterface;
+use Magento\JwtUserToken\Api\ConfigReaderInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator;
@@ -18,6 +24,9 @@ class AdminTokenGeneratorTest extends TestCase
     private UserTokenIssuerInterface $tokenIssuer;
     private UserTokenParametersFactory $tokenParamsFactory;
     private LoggerInterface $logger;
+    private JwtManagerInterface $jwtManager;
+    private JwtSettingsProviderInterface $settingsProvider;
+    private ConfigReaderInterface $configReader;
 
     protected function setUp(): void
     {
@@ -34,13 +43,39 @@ class AdminTokenGeneratorTest extends TestCase
         $this->tokenIssuer = $this->createMock(UserTokenIssuerInterface::class);
         $this->tokenParamsFactory = $this->createMock(UserTokenParametersFactory::class);
         $this->logger = $this->createMock(LoggerInterface::class);
+        $this->jwtManager = $this->createMock(JwtManagerInterface::class);
+        $this->settingsProvider = $this->createMock(JwtSettingsProviderInterface::class);
+        $this->configReader = $this->createMock(ConfigReaderInterface::class);
 
         $this->adminTokenGenerator = new AdminTokenGenerator(
             $this->backendSession,
             $this->tokenIssuer,
             $this->tokenParamsFactory,
-            $this->logger
+            $this->logger,
+            $this->jwtManager,
+            $this->settingsProvider,
+            $this->configReader
         );
+    }
+
+    /**
+     * Create mock JWT with expiration claim
+     *
+     * @param int $expiresAt Unix timestamp
+     * @return JwsInterface
+     */
+    private function createMockJwt(int $expiresAt): JwsInterface
+    {
+        $expClaim = $this->createMock(ExpirationTime::class);
+        $expClaim->method('getValue')->willReturn($expiresAt);
+        
+        $payload = $this->createMock(ClaimsPayloadInterface::class);
+        $payload->method('getClaims')->willReturn(['exp' => $expClaim]);
+        
+        $jwt = $this->createMock(JwsInterface::class);
+        $jwt->method('getPayload')->willReturn($payload);
+        
+        return $jwt;
     }
 
     public function testGenerateForCurrentAdminCreatesNewToken(): void
@@ -48,6 +83,7 @@ class AdminTokenGeneratorTest extends TestCase
         // Arrange
         $userId = 42;
         $expectedToken = 'test-token-abc123';
+        $jwtExpiration = time() + 3600; // 1 hour from now
         
         $user = $this->createMock(\Magento\User\Model\User::class);
         $user->method('getId')->willReturn($userId);
@@ -68,15 +104,26 @@ class AdminTokenGeneratorTest extends TestCase
         $this->tokenIssuer->method('create')
             ->willReturn($expectedToken);
         
-        // Expect session to store token
+        // Mock JWT expiration reading
+        $mockJwt = $this->createMockJwt($jwtExpiration);
+        $this->jwtManager->expects($this->once())
+            ->method('read')
+            ->with($expectedToken, $this->anything())
+            ->willReturn($mockJwt);
+        
+        $this->settingsProvider->expects($this->once())
+            ->method('prepareAllAccepted')
+            ->willReturn([]);
+        
+        // Expect session to store token with JWT expiration
         $this->backendSession->expects($this->exactly(2))
             ->method('setData')
-            ->willReturnCallback(function ($key, $value) use ($expectedToken) {
+            ->willReturnCallback(function ($key, $value) use ($expectedToken, $jwtExpiration) {
                 if ($key === 'bte_admin_token') {
                     $this->assertEquals($expectedToken, $value);
                 } elseif ($key === 'bte_admin_token_expires') {
-                    $this->assertIsInt($value);
-                    $this->assertGreaterThan(time(), $value);
+                    // Should match JWT expiration
+                    $this->assertEquals($jwtExpiration, $value);
                 }
                 return $this->backendSession;
             });
@@ -131,6 +178,7 @@ class AdminTokenGeneratorTest extends TestCase
         $oldToken = 'old-expired-token';
         $newToken = 'new-refreshed-token';
         $pastExpiry = time() - 100; // Expired 100 seconds ago
+        $newJwtExpiration = time() + 3600; // New token expires in 1 hour
         
         $user = $this->createMock(\Magento\User\Model\User::class);
         $user->method('getId')->willReturn(42);
@@ -156,6 +204,15 @@ class AdminTokenGeneratorTest extends TestCase
         
         // Mock token issuer to create new token
         $this->tokenIssuer->method('create')->willReturn($newToken);
+        
+        // Mock JWT reading for new token
+        $mockJwt = $this->createMockJwt($newJwtExpiration);
+        $this->jwtManager->expects($this->once())
+            ->method('read')
+            ->with($newToken, $this->anything())
+            ->willReturn($mockJwt);
+        
+        $this->settingsProvider->method('prepareAllAccepted')->willReturn([]);
         
         // Expect session to store new token
         $this->backendSession->expects($this->exactly(2))
@@ -191,6 +248,7 @@ class AdminTokenGeneratorTest extends TestCase
         // Arrange
         $oldToken = 'old-cached-token';
         $newToken = 'force-refreshed-token';
+        $newJwtExpiration = time() + 3600;
         
         $user = $this->createMock(\Magento\User\Model\User::class);
         $user->method('getId')->willReturn(42);
@@ -212,6 +270,15 @@ class AdminTokenGeneratorTest extends TestCase
             ->method('create')
             ->willReturn($newToken);
         
+        // Mock JWT reading for new token
+        $mockJwt = $this->createMockJwt($newJwtExpiration);
+        $this->jwtManager->expects($this->once())
+            ->method('read')
+            ->with($newToken, $this->anything())
+            ->willReturn($mockJwt);
+        
+        $this->settingsProvider->method('prepareAllAccepted')->willReturn([]);
+        
         // Expect unsetData to be called (clearing old token)
         $this->backendSession->expects($this->exactly(2))
             ->method('unsetData');
@@ -228,11 +295,12 @@ class AdminTokenGeneratorTest extends TestCase
         $this->assertEquals($newToken, $result);
     }
 
-    public function testTokenExpiryIsSetTo4Hours(): void
+    public function testTokenExpirationIsReadFromJwt(): void
     {
         // Arrange
         $userId = 42;
-        $expectedToken = 'test-token-with-expiry';
+        $expectedToken = 'test-jwt-token';
+        $jwtExpiration = time() + 3600; // 1 hour from now
         
         $user = $this->createMock(\Magento\User\Model\User::class);
         $user->method('getId')->willReturn($userId);
@@ -246,6 +314,15 @@ class AdminTokenGeneratorTest extends TestCase
         $this->tokenParamsFactory->method('create')->willReturn($tokenParams);
         
         $this->tokenIssuer->method('create')->willReturn($expectedToken);
+        
+        // Mock JWT reading to return specific expiration
+        $mockJwt = $this->createMockJwt($jwtExpiration);
+        $this->jwtManager->expects($this->once())
+            ->method('read')
+            ->with($expectedToken, $this->anything())
+            ->willReturn($mockJwt);
+        
+        $this->settingsProvider->method('prepareAllAccepted')->willReturn([]);
         
         // Capture the expiry time set in session
         $capturedExpiry = null;
@@ -261,8 +338,63 @@ class AdminTokenGeneratorTest extends TestCase
         // Act
         $this->adminTokenGenerator->generateForCurrentAdmin();
 
-        // Assert - expiry should be approximately 4 hours from now
-        $expectedExpiry = time() + (4 * 3600); // 4 hours
+        // Assert - expiry should match JWT expiration exactly
+        $this->assertEquals($jwtExpiration, $capturedExpiry);
+    }
+
+    public function testTokenExpirationFallsBackToConfigWhenJwtReadFails(): void
+    {
+        // Arrange
+        $userId = 42;
+        $expectedToken = 'test-jwt-token';
+        $configTtlMinutes = 60; // From config
+        
+        $user = $this->createMock(\Magento\User\Model\User::class);
+        $user->method('getId')->willReturn($userId);
+        $user->method('getUsername')->willReturn('admin');
+        
+        $this->backendSession->method('getUser')->willReturn($user);
+        $this->backendSession->method('getData')->with('bte_admin_token')->willReturn(null);
+        
+        // Mock token parameters
+        $tokenParams = $this->createMock(\Magento\Integration\Api\Data\UserTokenParametersInterface::class);
+        $this->tokenParamsFactory->method('create')->willReturn($tokenParams);
+        
+        $this->tokenIssuer->method('create')->willReturn($expectedToken);
+        
+        // Mock JWT reading to throw exception
+        $this->jwtManager->expects($this->once())
+            ->method('read')
+            ->willThrowException(new \Exception('JWT read failed'));
+        
+        $this->settingsProvider->method('prepareAllAccepted')->willReturn([]);
+        
+        // Mock config reader to return TTL
+        $this->configReader->expects($this->once())
+            ->method('getAdminTtl')
+            ->willReturn($configTtlMinutes);
+        
+        // Expect error to be logged
+        $this->logger->expects($this->atLeastOnce())
+            ->method('error')
+            ->with($this->stringContains('Failed to read JWT token expiration'));
+        
+        // Capture the expiry time set in session
+        $capturedExpiry = null;
+        $this->backendSession->expects($this->exactly(2))
+            ->method('setData')
+            ->willReturnCallback(function ($key, $value) use (&$capturedExpiry) {
+                if ($key === 'bte_admin_token_expires') {
+                    $capturedExpiry = $value;
+                }
+                return $this->backendSession;
+            });
+
+        // Act
+        $this->adminTokenGenerator->generateForCurrentAdmin();
+
+        // Assert - expiry should be calculated from config TTL
+        $expectedExpiry = time() + ($configTtlMinutes * 60);
         $this->assertNotNull($capturedExpiry);
         $this->assertEqualsWithDelta($expectedExpiry, $capturedExpiry, 10); // Allow 10 seconds delta
     }

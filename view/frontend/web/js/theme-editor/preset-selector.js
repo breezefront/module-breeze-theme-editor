@@ -349,7 +349,7 @@ define([
                     console.error('❌ Apply preset failed:', error);
                     Toastify.show('error', 'Failed to apply preset: ' + error.message);
                 })
-                .finally(function () {
+                .always(function () {
                     // Re-enable button
                     self.$applyBtn.prop('disabled', false).text('Apply Preset');
                 });

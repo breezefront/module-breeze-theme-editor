@@ -1,29 +1,39 @@
 /**
- * Publication Selector Widget
+ * Publication Selector Widget (Admin)
  * 
- * Allows switching between Draft and Published states,
- * viewing publication history, and publishing changes.
+ * Simplified version for admin - loads publications via GraphQL,
+ * switches CSS via css-manager module.
  */
 define([
     'jquery',
+    'jquery-ui-modules/widget',
     'mage/template',
+    'mage/translate',
     'text!Swissup_BreezeThemeEditor/template/editor/publication-selector.html',
+    'Swissup_BreezeThemeEditor/js/utils/permissions',
+    'Swissup_BreezeThemeEditor/js/utils/error-handler',
+    'Swissup_BreezeThemeEditor/js/utils/loading',
+    'Swissup_BreezeThemeEditor/js/editor/css-manager',
     'Swissup_BreezeThemeEditor/js/graphql/client',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-publications',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/publish',
-    'Swissup_BreezeThemeEditor/js/utils/permissions',
-    'Swissup_BreezeThemeEditor/js/utils/error-handler',
-    'Swissup_BreezeThemeEditor/js/utils/loading'
-], function ($, mageTemplate, template, graphqlClient, getPublicationsQuery, publishMutation, permissions, errorHandler, loading) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
+    'Swissup_BreezeThemeEditor/js/lib/toastify',
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
+], function ($, widget, mageTemplate, $t, template, permissions, errorHandler, loading, cssManager, graphqlClient, getPublications, publishMutation, PanelState, Toastify, StorageHelper) {
     'use strict';
 
     $.widget('swissup.breezePublicationSelector', {
         options: {
-            publications: [],           // Array from ViewModel
-            currentStatus: 'DRAFT',     // DRAFT | PUBLISHED
+            publications: [],           // Array loaded via GraphQL
+            currentStatus: 'DRAFT',     // DRAFT | PUBLISHED | PUBLICATION
             changesCount: 0,            // Number of unsaved changes
             currentPublicationId: null, // Current publication ID
-            graphqlEndpoint: '/graphql' // Admin GraphQL endpoint
+            currentPublicationTitle: null, // Current publication title
+            storeId: null,
+            themeId: null,
+            publicationsPage: 1,        // Current page for pagination
+            publicationsPageSize: 10    // Items per page
         },
 
         /**
@@ -38,13 +48,81 @@ define([
             this.storeId = config.storeId || this.options.storeId;
             this.themeId = config.themeId || this.options.themeId;
             
+            // Initialize StorageHelper and restore state from localStorage
+            if (this.storeId && this.themeId) {
+                StorageHelper.init(this.storeId, this.themeId);
+                
+                // Restore state from localStorage
+                this.options.currentStatus = StorageHelper.getCurrentStatus() || 'DRAFT';
+                this.options.currentPublicationId = StorageHelper.getCurrentPublicationId();
+                this.options.currentPublicationTitle = StorageHelper.getCurrentPublicationTitle();
+                
+                console.log('📦 State restored from localStorage:', {
+                    status: this.options.currentStatus,
+                    publicationId: this.options.currentPublicationId,
+                    publicationTitle: this.options.currentPublicationTitle
+                });
+            }
+            
+            // Initialize CSS Manager
+            cssManager.init({
+                storeId: this.storeId,
+                themeId: this.themeId,
+                iframeId: 'bte-iframe'
+            });
+            
             this._render();
             this._bindEvents();
+            this._bindGlobalEvents();
             
-            // Load publications from GraphQL on init
+            // Load publications from GraphQL
             this._loadPublications();
             
+            // Wait for CSS Manager to be ready before restoring state
+            var self = this;
+            if (cssManager.isReady()) {
+                // Already ready - restore immediately
+                this._restoreCssState();
+            } else {
+                // Wait for ready event
+                $(document).one('bte:cssManagerReady', function() {
+                    self._restoreCssState();
+                });
+            }
+            
             console.log('✅ Publication selector initialized');
+        },
+
+        /**
+         * Restore CSS state from localStorage
+         * @private
+         */
+        _restoreCssState: function() {
+            var self = this;
+            
+            console.log('🔄 Restoring CSS state from localStorage...');
+            
+            // Restore CSS state if PUBLICATION mode
+            if (this.options.currentStatus === 'PUBLICATION' && this.options.currentPublicationId) {
+                cssManager.switchTo('PUBLICATION', this.options.currentPublicationId).then(function() {
+                    console.log('✅ Restored PUBLICATION mode:', self.options.currentPublicationId);
+                }).catch(function(error) {
+                    console.error('❌ Failed to restore publication:', error);
+                    // Fallback to DRAFT if restoration fails
+                    self.options.currentStatus = 'DRAFT';
+                    self.options.currentPublicationId = null;
+                    self.options.currentPublicationTitle = null;
+                    StorageHelper.setCurrentStatus('DRAFT');
+                    StorageHelper.clearCurrentPublication();
+                    self._render();
+                });
+            } else if (this.options.currentStatus === 'PUBLISHED') {
+                cssManager.switchTo('PUBLISHED').then(function() {
+                    console.log('✅ Restored PUBLISHED mode');
+                }).catch(function(error) {
+                    console.error('❌ Failed to restore published state:', error);
+                });
+            }
         },
 
         /**
@@ -56,6 +134,8 @@ define([
                 status: this.options.currentStatus,
                 changesCount: this.options.changesCount,
                 publications: this.options.publications,
+                currentPublicationId: this.options.currentPublicationId,
+                currentPublicationTitle: this.options.currentPublicationTitle,
                 canPublish: permissions.canPublish() && 
                            this.options.changesCount > 0 && 
                            this.options.currentStatus === 'DRAFT',
@@ -115,6 +195,43 @@ define([
         },
 
         /**
+         * Bind global events
+         * @private
+         */
+        _bindGlobalEvents: function() {
+            var self = this;
+            
+            // Listen: Draft saved → update changes count
+            $(document).on('bte:saved', function(e, data) {
+                console.log('📥 Draft saved event received');
+                // Update changes count if provided
+                if (data && typeof data.changesCount !== 'undefined') {
+                    self.options.changesCount = data.changesCount;
+                    self._render();
+                }
+            });
+            
+            // Listen: Published → reload publications + reset changes count
+            $(document).on('bte:published', function(e, data) {
+                console.log('📥 Published event received');
+                self.options.currentStatus = 'PUBLISHED';
+                self.options.changesCount = 0;
+                
+                // Add new publication to list if provided
+                if (data && data.publicationId) {
+                    var newPub = {
+                        id: data.publicationId,
+                        title: 'Publication #' + data.publicationId,
+                        date: new Date().toLocaleString()
+                    };
+                    self.options.publications.unshift(newPub);
+                }
+                
+                self._render();
+            });
+        },
+
+        /**
          * Toggle dropdown visibility
          * @private
          */
@@ -153,14 +270,35 @@ define([
                 return;
             }
             
-            this.options.currentStatus = status;
-            this._render();
-            this._closeDropdown();
+            var self = this;
             
-            // Trigger event for other components to reload data
-            $(document).trigger('bte:statusChanged', [status]);
+            // Show loading
+            loading.show(this.element);
             
-            console.log('✅ Switched to ' + status);
+            // Switch CSS in preview
+            cssManager.switchTo(status).then(function() {
+                self.options.currentStatus = status;
+                self.options.currentPublicationId = null; // Clear publication when switching to Draft/Published
+                self.options.currentPublicationTitle = null;
+                
+                // Save to localStorage
+                StorageHelper.setCurrentStatus(status);
+                StorageHelper.clearCurrentPublication();
+                
+                self._render();
+                self._closeDropdown();
+                
+                // Trigger event for other components to reload data
+                $(document).trigger('bte:statusChanged', [status]);
+                
+                console.log('✅ Switched to ' + status);
+                
+                loading.hide(self.element);
+            }).catch(function(error) {
+                console.error('❌ Failed to switch status:', error);
+                errorHandler.handle(error, 'switch-status');
+                loading.hide(self.element);
+            });
         },
 
         /**
@@ -193,6 +331,7 @@ define([
             
             if (this.options.changesCount === 0) {
                 console.warn('⚠️ No changes to publish');
+                Toastify.show('notice', $t('No changes to publish'));
                 return;
             }
             
@@ -204,18 +343,74 @@ define([
                 return;
             }
             
+            // Check for unsaved changes
+            if (!this._confirmUnsavedChanges()) {
+                return;
+            }
+            
+            // Prompt for title
+            var title = prompt($t('Enter publication title:'));
+            if (!title || !title.trim()) {
+                console.log('❌ Publish cancelled (no title)');
+                return;
+            }
+            
+            this._executePublish(title.trim());
+        },
+
+        /**
+         * Check if there are unsaved changes and confirm with user
+         * @private
+         * @returns {Boolean} - true if user confirmed or no unsaved changes
+         */
+        _confirmUnsavedChanges: function() {
+            var hasUnsaved = PanelState.hasChanges();
+            if (!hasUnsaved) {
+                return true;
+            }
+            
+            var unsavedCount = PanelState.getChangesCount();
+            var message = $t('You have %1 unsaved change(s).\n\nPublish will ignore them. Continue?')
+                .replace('%1', unsavedCount);
+            
+            var confirmed = confirm(message);
+            if (confirmed) {
+                console.log('📤 User chose: Publish only saved changes (ignoring %1 unsaved)', unsavedCount);
+            } else {
+                console.log('❌ Publish cancelled by user');
+            }
+            
+            return confirmed;
+        },
+
+        /**
+         * Execute publish mutation
+         * @private
+         * @param {String} title - Publication title
+         */
+        _executePublish: function(title) {
             var self = this;
+            
+            console.log('📤 Publishing draft:', {
+                title: title,
+                storeId: this.storeId,
+                themeId: this.themeId,
+                savedChangesCount: this.options.changesCount
+            });
             
             // Show loading state
             loading.show(this.element);
             
-            // Execute GraphQL mutation
-            graphqlClient.mutate(publishMutation, {
-                storeId: parseInt(this.storeId),
-                themeId: parseInt(this.themeId)
-            }).then(function(response) {
-                if (response.data && response.data.publishBreezeThemeEditor) {
-                    var result = response.data.publishBreezeThemeEditor;
+            // Use centralized mutation
+            publishMutation(
+                parseInt(this.storeId),
+                parseInt(this.themeId),
+                title,
+                null, // description (optional)
+                false // notifyUsers (optional)
+            ).then(function(response) {
+                if (response && response.publishBreezeThemeEditor) {
+                    var result = response.publishBreezeThemeEditor;
                     
                     if (result.success) {
                         // Update UI
@@ -223,31 +418,42 @@ define([
                         self.options.changesCount = 0;
                         self._render();
                         
-                        // Show success message
-                        console.log('✅', result.message);
+                        // Show success toast
+                        Toastify.show('success', $t('Published successfully: %1').replace('%1', title));
+                        
+                        console.log('✅ Published:', result.publication);
                         
                         // Trigger event for other components
                         $(document).trigger('bte:published', {
-                            publicationId: result.publicationId,
+                            publication: result.publication,
                             storeId: self.storeId,
                             themeId: self.themeId
                         });
                         
-                        // Reload publications list
-                        self._loadPublications();
-                        
                         self._closeDropdown();
+                        
+                        // Reload publications list
+                        self.options.publicationsPage = 1;
+                        self._loadPublications();
                     } else {
-                        errorHandler.handle({
-                            message: result.message || 'Publish failed'
-                        }, 'publish-draft');
+                        self._onPublishError(result.message || 'Publish failed');
                     }
                 }
             }).catch(function(error) {
-                errorHandler.handle(error, 'publish-draft');
-            }).finally(function() {
+                console.error('❌ Publish failed:', error);
+                self._onPublishError(error.message || 'Unknown error');
                 loading.hide(self.element);
             });
+        },
+
+        /**
+         * Handle publish error
+         * @private
+         * @param {String} message - Error message
+         */
+        _onPublishError: function(message) {
+            Toastify.show('error', $t('Publish failed: %1').replace('%1', message));
+            errorHandler.handle({ message: message }, 'publish-draft');
         },
 
         /**
@@ -271,13 +477,38 @@ define([
                 return;
             }
             
-            // Trigger event - other components will handle loading the actual data
-            // (This is intentional: publication-selector manages UI, panel handles data loading)
-            $(this.element).trigger('publicationLoaded', [publicationId, publication]);
+            var self = this;
             
-            this._closeDropdown();
+            // Show loading
+            loading.show(this.element);
             
-            console.log('✅ Publication selected:', publication.title);
+            // Switch CSS to publication
+            cssManager.switchTo('PUBLICATION', publicationId).then(function() {
+                // Update UI state
+                self.options.currentStatus = 'PUBLICATION';
+                self.options.currentPublicationId = publicationId;
+                self.options.currentPublicationTitle = publication.title;
+                
+                // Save to localStorage
+                StorageHelper.setCurrentStatus('PUBLICATION');
+                StorageHelper.setCurrentPublicationId(publicationId);
+                StorageHelper.setCurrentPublicationTitle(publication.title);
+                
+                self._render();
+                self._closeDropdown();
+                
+                // Trigger event for other components
+                $(document).trigger('bte:statusChanged', ['PUBLICATION', publicationId]);
+                $(self.element).trigger('publicationLoaded', [publicationId, publication]);
+                
+                console.log('✅ Publication loaded:', publication.title);
+                
+                loading.hide(self.element);
+            }).catch(function(error) {
+                console.error('❌ Failed to load publication:', error);
+                errorHandler.handle(error, 'load-publication');
+                loading.hide(self.element);
+            });
         },
 
         /**
@@ -287,33 +518,66 @@ define([
         _loadPublications: function() {
             var self = this;
             
-            // Don't show loading for initial load (to avoid UI flicker)
-            // loading.show(this.element);
+            if (!this.storeId) {
+                console.warn('⚠️ Cannot load publications: storeId missing');
+                return;
+            }
             
-            graphqlClient.query(getPublicationsQuery, {
-                storeId: parseInt(this.storeId),
-                themeId: parseInt(this.themeId),
-                pageSize: 10,
-                currentPage: this.options.publicationsPage || 1
-            }).then(function(response) {
-                if (response.data && response.data.breezeThemeEditorPublications) {
-                    var publications = response.data.breezeThemeEditorPublications.items || [];
-                    
-                    // Append or replace
-                    if (self.options.publicationsPage > 1) {
-                        self.options.publications = self.options.publications.concat(publications);
-                    } else {
-                        self.options.publications = publications;
-                    }
-                    
-                    self._render();
-                    console.log('✅ Loaded', publications.length, 'publications');
+            console.log('📥 Loading publications (page ' + this.options.publicationsPage + ')...');
+            
+            // Use getPublications function
+            getPublications(
+                parseInt(this.storeId),
+                parseInt(this.themeId) || null,
+                this.options.publicationsPageSize,
+                this.options.publicationsPage,
+                null // search
+            ).then(function(data) {
+                console.log('✅ Publications loaded:', data);
+                
+                // Update publications list
+                if (self.options.publicationsPage === 1) {
+                    // First page - replace
+                    self.options.publications = self._formatPublications(data.items || []);
+                } else {
+                    // Next pages - append
+                    self.options.publications = self.options.publications.concat(
+                        self._formatPublications(data.items || [])
+                    );
                 }
+                
+                // Store total count and page info
+                self.totalPublications = data.total_count || 0;
+                self.pageInfo = data.page_info || {};
+                
+                // Re-render
+                self._render();
+                
+                console.log('✅ Loaded ' + self.options.publications.length + ' / ' + self.totalPublications + ' publications');
             }).catch(function(error) {
-                console.error('Failed to load publications:', error);
+                console.error('❌ Failed to load publications:', error);
                 // Don't show error to user - publications are optional
-            }).finally(function() {
-                // loading.hide(self.element);
+            });
+        },
+
+        /**
+         * Format publications for template
+         * @private
+         */
+        _formatPublications: function(items) {
+            return items.map(function(pub) {
+                var date = new Date(pub.publishedAt);
+                return {
+                    id: pub.publicationId,
+                    title: pub.title || 'Publication #' + pub.publicationId,
+                    date: date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }),
+                    description: pub.description || '',
+                    publishedBy: pub.publishedByName || pub.publishedByEmail || 'Unknown',
+                    changesCount: pub.changesCount || 0
+                };
             });
         },
 
@@ -324,10 +588,14 @@ define([
         _loadMorePublications: function() {
             console.log('📜 Loading more publications...');
             
-            // Increment page number
-            this.options.publicationsPage = (this.options.publicationsPage || 1) + 1;
+            // Check if there are more pages
+            if (this.options.publications.length >= this.totalPublications) {
+                console.log('ℹ️ All publications loaded');
+                return;
+            }
             
-            // Load next page
+            // Increment page and load
+            this.options.publicationsPage++;
             this._loadPublications();
         },
 

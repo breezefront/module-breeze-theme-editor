@@ -1,0 +1,44 @@
+<div class="bte-field bte-field-font 
+    <%= data.isModified ? 'bte-field-modified' : '' %> 
+    <%= data.isDirty ? 'bte-field-dirty' : '' %>">
+    <div class="bte-field-header">
+        <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.code %>">
+            <%= data.label %>
+            <% if (data.required) { %>
+                <span class="bte-required">*</span>
+            <% } %>
+        </label>
+        <%= data.badgesHtml %>
+    </div>
+
+    <% if (data.description) { %>
+        <div class="bte-field-description"><%= data.description %></div>
+    <% } %>
+
+    <div class="bte-field-control">
+        <select
+            id="field-<%= data.sectionCode %>-<%= data.code %>"
+            class="bte-font-picker"
+            data-section="<%= data.sectionCode %>"
+            data-field="<%= data.code %>"
+            data-css-var="<%= data.cssVar %>"
+            data-type="font_picker"
+            data-default="<%= data.default %>"
+            <%= data.required ? 'required' : '' %>
+        >
+            <% _.each(data.fonts, function(font) { %>
+                <option
+                    value="<%= font.value %>"
+                    <%= String(font.value) === String(data.value) ? 'selected' : '' %>
+                    style="font-family: <%= font.fontFamily || font.value %>;"
+                >
+                    <%= font.label %>
+                </option>
+            <% }); %>
+        </select>
+    </div>
+
+    <% if (data.helpText) { %>
+        <div class="bte-field-help"><%= data.helpText %></div>
+    <% } %>
+</div>

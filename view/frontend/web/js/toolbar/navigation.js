@@ -3,7 +3,7 @@ define([
     'jquery-ui-modules/widget',
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/toolbar/navigation.html',
-    'Swissup_BreezeThemeEditor/js/theme-editor/panel'
+    'Swissup_BreezeThemeEditor/js/theme-editor/settings-editor'
 ], function ($, widget, mageTemplate, navigationTemplate) {
     'use strict';
 
@@ -15,7 +15,7 @@ define([
             panelWidgets: {
                 'theme-editor': {
                     selector: '#theme-editor-panel',
-                    widget: 'themeEditorPanel',
+                    widget: 'themeSettingsEditor',
                     config: {
                         title: 'Theme Editor',
                         closeTitle: 'Close Panel',

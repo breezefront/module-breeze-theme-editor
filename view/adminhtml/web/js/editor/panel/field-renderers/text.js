@@ -1,0 +1,13 @@
+define([
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/base',
+    'text!Swissup_BreezeThemeEditor/template/editor/panel/fields/text.html'
+], function(BaseFieldRenderer, template) {
+    'use strict';
+
+    var TextRenderer = Object.create(BaseFieldRenderer);
+    TextRenderer.templateString = template;
+
+    // No custom prepareData needed - uses base class logic
+
+    return TextRenderer;
+});

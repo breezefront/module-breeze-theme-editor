@@ -35,17 +35,53 @@ define([
                 payload.operationName = operationName;
             }
 
-            return $.ajax({
-                url: this._getEndpoint(),
-                type: 'POST',
-                contentType: 'application/json',
-                dataType: 'json',
-                data: JSON.stringify(payload),
-                headers: this._getHeaders()
-            }).then(
-                this._handleSuccess.bind(this),
-                this._handleError.bind(this)
-            );
+            // Use native XMLHttpRequest to avoid Magento's jQuery AJAX hooks
+            var self = this;
+            var deferred = $.Deferred();
+            var xhr = new XMLHttpRequest();
+            
+            xhr.open('POST', this._getEndpoint(), true);
+            
+            // Set headers
+            var headers = this._getHeaders();
+            for (var key in headers) {
+                if (headers.hasOwnProperty(key)) {
+                    xhr.setRequestHeader(key, headers[key]);
+                }
+            }
+            
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        deferred.resolve(self._handleSuccess(response));
+                    } catch (e) {
+                        deferred.reject(self._handleError({
+                            status: xhr.status,
+                            statusText: 'JSON Parse Error',
+                            responseText: xhr.responseText
+                        }));
+                    }
+                } else {
+                    deferred.reject(self._handleError({
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        responseText: xhr.responseText
+                    }));
+                }
+            };
+            
+            xhr.onerror = function() {
+                deferred.reject(self._handleError({
+                    status: 0,
+                    statusText: 'Network Error',
+                    responseText: ''
+                }));
+            };
+            
+            xhr.send(JSON.stringify(payload));
+            
+            return deferred.promise();
         },
 
         /**
@@ -120,15 +156,21 @@ define([
         /**
          * Handle AJAX error
          *
-         * @param {Object} xhr
-         * @param {String} status
-         * @param {String} error
+         * @param {Object} xhr - XHR object or error object with {status, statusText, responseText}
+         * @param {String} status - Optional status (for jQuery compatibility)
+         * @param {String} error - Optional error (for jQuery compatibility)
          */
         _handleError: function(xhr, status, error) {
+            // Support both jQuery format (xhr, status, error) and custom format ({status, statusText, responseText})
+            var statusCode = xhr.status || 0;
+            var statusText = xhr.statusText || status || '';
+            var responseText = xhr.responseText || '';
+            
             console.error('GraphQL Request Failed:', {
-                status: status,
-                error:  error,
-                response: xhr.responseText
+                status: statusCode,
+                statusText: statusText,
+                error: error || statusText,
+                response: responseText
             });
 
             var message = 'Network error';
@@ -136,9 +178,9 @@ define([
             var graphqlErrors = [];
 
             // GUARD: Check if responseText exists and is not empty
-            if (xhr && xhr.responseText) {
+            if (responseText) {
                 try {
-                    var response = JSON.parse(xhr.responseText);
+                    var response = JSON.parse(responseText);
                     
                     // GUARD: Check if response exists after parsing
                     if (response && response.errors && response.errors.length > 0) {
@@ -153,11 +195,11 @@ define([
                     }
                 } catch (e) {
                     // JSON parse failed - use status/error as fallback
-                    message = error || status || 'Network error';
+                    message = error || statusText || 'Network error';
                 }
             } else {
                 // No response body - likely network issue
-                message = error || status || 'Network error';
+                message = error || statusText || 'Network error';
             }
 
             // Create error object with extensions and graphqlErrors

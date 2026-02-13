@@ -159,12 +159,10 @@ define([
                 return;
             }
             
-            graphqlClient.query(getStatusesQuery, {
-                storeId: parseInt(this.storeId),
-                themeId: parseInt(this.themeId)
-            }).then(function(response) {
-                if (response.data && response.data.breezeThemeEditorStatuses) {
-                    var statuses = response.data.breezeThemeEditorStatuses;
+            // Call the query function (it doesn't accept parameters)
+            getStatusesQuery().then(function(response) {
+                if (response && response.breezeThemeEditorStatuses) {
+                    var statuses = response.breezeThemeEditorStatuses;
                     
                     // Update options
                     self.options.currentStatus = statuses.currentStatus;

@@ -32,13 +32,11 @@ define([
             
             console.log('🎨 Loading draft CSS for store', storeId, 'theme', themeId);
             
-            // Load CSS from GraphQL
-            graphqlClient.query(getCssQuery, {
-                storeId: parseInt(storeId),
-                status: 'DRAFT'
-            }).then(function(response) {
-                if (response.data && response.data.getThemeEditorCss) {
-                    var css = response.data.getThemeEditorCss.css;
+            // Load CSS from GraphQL using the query function
+            getCssQuery(parseInt(storeId), themeId ? parseInt(themeId) : null, 'DRAFT', null)
+                .then(function(response) {
+                if (response && response.getThemeEditorCss) {
+                    var css = response.getThemeEditorCss.css;
                     
                     if (css && css.trim()) {
                         self._injectCSS($iframe[0], css);
@@ -70,14 +68,14 @@ define([
                 }
                 
                 // Remove existing injected style
-                var existingStyle = doc.getElementById('bte-draft-css');
+                var existingStyle = doc.getElementById('bte-theme-css-variables-draft');
                 if (existingStyle) {
                     existingStyle.remove();
                 }
                 
                 // Create new style element
                 var style = doc.createElement('style');
-                style.id = 'bte-draft-css';
+                style.id = 'bte-theme-css-variables-draft';
                 style.type = 'text/css';
                 style.textContent = css;
                 
@@ -135,6 +133,96 @@ define([
                     if (existingStyle) {
                         existingStyle.remove();
                         console.log('✅ Draft CSS removed from preview');
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to remove CSS from iframe:', e);
+            }
+        },
+        
+        /**
+         * Inject arbitrary CSS into preview iframe
+         * 
+         * Generic method to inject any CSS with custom style ID.
+         * Used by css-manager to inject Draft/Published/Publication CSS.
+         * 
+         * @param {string} iframeId - ID of the iframe element
+         * @param {string} css - CSS content to inject
+         * @param {string} styleId - ID for the style element (default: 'bte-injected-css')
+         */
+        injectCSS: function(iframeId, css, styleId) {
+            styleId = styleId || 'bte-injected-css';
+            
+            var $iframe = $('#' + iframeId);
+            
+            if (!$iframe.length) {
+                console.error('Preview iframe not found:', iframeId);
+                return;
+            }
+            
+            try {
+                var iframe = $iframe[0];
+                var doc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                if (!doc) {
+                    console.error('Cannot access iframe document');
+                    return;
+                }
+                
+                // Remove existing style with same ID
+                var existingStyle = doc.getElementById(styleId);
+                if (existingStyle) {
+                    existingStyle.remove();
+                    console.log('🗑️ Removed existing style:', styleId);
+                }
+                
+                // Create new style element
+                var style = doc.createElement('style');
+                style.id = styleId;
+                style.type = 'text/css';
+                style.textContent = css;
+                
+                // Append to head
+                if (doc.head) {
+                    doc.head.appendChild(style);
+                    console.log('✅ CSS injected into iframe:', styleId, '(' + css.length + ' chars)');
+                } else {
+                    console.error('Iframe document has no head element');
+                }
+                
+            } catch (e) {
+                console.error('Failed to inject CSS into iframe:', e);
+                
+                // Check for CORS error
+                if (e.name === 'SecurityError') {
+                    console.error('CORS Error: Cannot access iframe content. Check same-origin policy.');
+                }
+            }
+        },
+        
+        /**
+         * Remove CSS from iframe by style ID
+         * 
+         * @param {string} iframeId - ID of the iframe element
+         * @param {string} styleId - ID of the style element to remove
+         */
+        removeCSS: function(iframeId, styleId) {
+            var $iframe = $('#' + iframeId);
+            
+            if (!$iframe.length) {
+                console.error('Preview iframe not found:', iframeId);
+                return;
+            }
+            
+            try {
+                var iframe = $iframe[0];
+                var doc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                if (doc) {
+                    var existingStyle = doc.getElementById(styleId);
+                    if (existingStyle) {
+                        existingStyle.remove();
+                        console.log('✅ CSS removed from preview:', styleId);
                     }
                 }
             } catch (e) {

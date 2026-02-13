@@ -2,7 +2,7 @@ define([
     'jquery',
     'jquery-ui-modules/widget',
     'mage/template',
-    'text!Swissup_BreezeThemeEditor/template/theme-editor/panel.html',
+    'text!Swissup_BreezeThemeEditor/template/theme-editor/settings-editor.html',
     'Swissup_BreezeThemeEditor/js/theme-editor/panel-state',
     'Swissup_BreezeThemeEditor/js/theme-editor/palette-manager',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderer',
@@ -37,7 +37,7 @@ define([
 ) {
     'use strict';
 
-    $.widget('swissup.themeEditorPanel', {
+    $.widget('swissup.themeSettingsEditor', {
         options: {
             title: 'Theme Editor',
             closeTitle: 'Close Panel',
@@ -627,7 +627,7 @@ define([
                     console.error('❌ Save failed:', error);
                     self._showToast('error', 'Failed to save settings: ' + error.message);
                 })
-                .finally(function() {
+                .always(function() {
                     self.$saveButton.prop('disabled', false);//.text('Save');
                     self._updateChangesCount();
                 });
@@ -931,5 +931,5 @@ define([
         }
     });
 
-    return $.swissup.themeEditorPanel;
+    return $.swissup.themeSettingsEditor;
 });

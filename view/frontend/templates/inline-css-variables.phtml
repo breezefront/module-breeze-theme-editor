@@ -27,8 +27,9 @@ if (!$isTestMode && !$hasToken && !$hasPublishedContent) {
 <?= /* @noEscape */ $inlineCssContent ?>
 </style>
 
-<?php if ($isTestMode || $hasToken): ?>
+<?php if (false && ($isTestMode || $hasToken)): ?>
 <!-- Draft CSS (for toolbar users and test mode, always rendered even if empty) -->
+<!-- DISABLED: Draft CSS is now created dynamically by JS when needed -->
 <style id="bte-theme-css-variables-draft" data-status="draft" media="not all" disabled>
 <?= /* @noEscape */ $inlineCssContentDraft ?>
 </style>

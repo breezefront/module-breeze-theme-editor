@@ -1,0 +1,64 @@
+<!-- Theme Editor Panel -->
+<div class="bte-theme-editor-panel">
+    <!-- Header -->
+    <div class="bte-panel-header">
+        <h2 class="bte-panel-title">
+            <span class="bte-panel-icon">🎨</span>
+            <%= data.title %>
+        </h2>
+        <button type="button" class="bte-panel-close" title="<%= data.closeTitle %>">
+            <span class="bte-icon">✕</span>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="bte-panel-content">
+        <!-- 🔥 LOADER STATE -->
+        <div class="bte-panel-loader" style="display: none;">
+            <div class="bte-loader-spinner"></div>
+            <p class="bte-loader-text">Loading configuration...</p>
+        </div>
+
+        <!-- 🔥 ERROR STATE -->
+        <div class="bte-panel-error" style="display: none;">
+            <div class="bte-error-icon">⚠️</div>
+            <h3 class="bte-error-title">Configuration Error</h3>
+            <p class="bte-error-message"></p>
+            <div class="bte-error-details" style="display: none;">
+                <button type="button" class="bte-error-toggle">Show technical details</button>
+                <pre class="bte-error-stack"></pre>
+            </div>
+            <button type="button" class="bte-button bte-button-secondary bte-error-retry">
+                <span class="bte-icon">↺</span>
+                Retry
+            </button>
+        </div>
+
+        <!-- 🔥 DYNAMIC SECTIONS CONTAINER (rendered from GraphQL) -->
+        <div class="bte-sections-container">
+            <!-- Динамічно згенеровані секції з field-renderer.js -->
+        </div>
+        
+        <!-- 🎨 COLOR PALETTES -->
+        <div class="bte-palette-container">
+            <!-- Palette section widget буде тут -->
+        </div>
+        
+        <!-- ✨ PRESET SELECTOR -->
+        <div class="bte-preset-container">
+            <!-- Preset selector widget буде тут -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="bte-panel-footer">
+        <button type="button" class="bte-button bte-button-secondary bte-reset-button" disabled>
+            <span class="bte-icon">↺</span>
+            Reset
+        </button>
+        <button type="button" class="bte-button bte-button-primary bte-save-button" disabled>
+            <span class="bte-icon">✓</span>
+            Save (0)
+        </button>
+    </div>
+</div>

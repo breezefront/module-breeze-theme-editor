@@ -91,7 +91,7 @@ define([
                     console.error('❌ Publish failed:', error);
                     self._onError(error.message);
                 })
-                .finally(function() {
+                .always(function() {
                     $button.prop('disabled', false);
                     self.renderer.updateButton();
                 });
