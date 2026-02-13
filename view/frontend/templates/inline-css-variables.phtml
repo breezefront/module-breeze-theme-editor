@@ -1,36 +1,20 @@
 <?php
-/** @var \Swissup\BreezeThemeEditor\Block\ThemeCssVariables $block */
+/**
+ * Breeze Theme Editor: Inline CSS Variables
+ * 
+ * Renders PUBLISHED CSS only. Draft CSS is created dynamically by JavaScript.
+ * 
+ * @var \Swissup\BreezeThemeEditor\Block\ThemeCssVariables $block
+ */
 $viewModel = $block->getViewModel();
-
 $inlineCssContent = $viewModel->getInlineCssContent();
-$inlineCssContentDraft = $viewModel->getInlineCssContentDraft();
 
-// Render strategy:
-// 1. Test mode (?jstest=true) → ALWAYS render both styles (even if empty)
-//    - JS tests need these elements to run properly
-// 2. Admin (has access token) → ALWAYS render both styles (even if empty)
-//    - CSS Manager needs these elements to function properly
-//    - Allows editing themes without saved values (new/blank themes)
-// 3. Regular user (no token) → only render published if has content
-//    - Avoid empty CSS for performance
-$isTestMode = $viewModel->isTestMode();
-$hasToken = $viewModel->hasAccessToken();
-$hasPublishedContent = $viewModel->hasRealCssContent($inlineCssContent);
-
-// Skip rendering only if: regular user + no published content + not in test mode
-if (!$isTestMode && !$hasToken && !$hasPublishedContent) {
+// Skip rendering if module disabled or no CSS content
+if (empty($inlineCssContent) || $inlineCssContent === ":root {\n}\n") {
     return;
 }
 ?>
-<!-- Published CSS (always present when needed) -->
+<!-- Breeze Theme Editor: Published CSS -->
 <style id="bte-theme-css-variables" data-status="published" media="all">
 <?= /* @noEscape */ $inlineCssContent ?>
 </style>
-
-<?php if (false && ($isTestMode || $hasToken)): ?>
-<!-- Draft CSS (for toolbar users and test mode, always rendered even if empty) -->
-<!-- DISABLED: Draft CSS is now created dynamically by JS when needed -->
-<style id="bte-theme-css-variables-draft" data-status="draft" media="not all" disabled>
-<?= /* @noEscape */ $inlineCssContentDraft ?>
-</style>
-<?php endif; ?>

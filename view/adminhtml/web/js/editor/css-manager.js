@@ -76,7 +76,7 @@ define([
             
             if (!$publishedStyle.length) {
                 if (retries < 20) {
-                    console.log('⏳ CSS Manager: CSS elements not ready, retry', retries + 1);
+                    console.log('⏳ CSS Manager: #bte-theme-css-variables not ready, retry', retries + 1);
                     setTimeout(function() {
                         self.init(config, retries + 1);
                     }, 200);
@@ -85,6 +85,9 @@ define([
                 console.error('❌ CSS Manager: #bte-theme-css-variables not found after retries!');
                 return false;
             }
+            
+            // Draft CSS will be created dynamically when switching to DRAFT
+            // No need to check for it in init()
             
             // Store iframe document reference
             currentIframeDoc = iframeDoc;
@@ -134,8 +137,17 @@ define([
             
             // Use native DOM API instead of jQuery for reliable iframe manipulation
             var style = $style[0]; // Get native DOM element
+            
+            // Set disabled first
             style.disabled = true;
-            style.media = ''; // Clear media attribute
+            
+            // Then set media (order matters!)
+            style.media = 'not all';
+            
+            // Force reflow to ensure changes are applied
+            if (currentIframeDoc && currentIframeDoc.body) {
+                currentIframeDoc.body.offsetHeight; // Trigger reflow
+            }
             
             console.log('🚫 Disabled style:', style.id, '| media:', style.media, '| disabled:', style.disabled);
         },
@@ -219,17 +231,17 @@ define([
             
             switch (status) {
                 case 'DRAFT':
-                    // Load draft CSS via GraphQL
+                    // Load draft CSS via GraphQL and create style dynamically
                     return getCss(storeId, themeId, 'DRAFT', null)
                         .then(function(response) {
                             if (response && response.getThemeEditorCss) {
                                 var css = response.getThemeEditorCss.css || '';
                                 
-                                // Create/update draft style
+                                // ALWAYS create/update draft style dynamically (not from PHP)
                                 self._updateStyleContent('bte-theme-css-variables-draft', css);
                                 $draftStyle = self._getOrCreateStyle('bte-theme-css-variables-draft');
                                 
-                                // Enable draft, disable others
+                                // Enable draft, disable published
                                 self._enableStyle($draftStyle);
                                 self._disableStyle($publishedStyle);
                                 
@@ -240,7 +252,7 @@ define([
                                     self._disableStyle($(styleElement));
                                 });
                                 
-                                console.log('📗 CSS Manager: Showing DRAFT');
+                                console.log('📗 CSS Manager: Showing DRAFT (created dynamically)');
                                 return {status: 'DRAFT', success: true};
                             } else {
                                 throw new Error('Invalid response from GraphQL');

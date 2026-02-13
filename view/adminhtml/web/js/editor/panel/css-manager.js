@@ -71,7 +71,7 @@ define([
 
             if (!$publishedStyle.length) {
                 if (retries < 20) {
-                    console.log('⏳ CSS Manager: CSS elements not ready, retry', retries + 1);
+                    console.log('⏳ CSS Manager: #bte-theme-css-variables not ready, retry', retries + 1);
                     setTimeout(function() {
                         self.init(store, theme, retries + 1);
                     }, 200);
@@ -79,6 +79,11 @@ define([
                 }
                 console.error('❌ CSS Manager: #bte-theme-css-variables not found after retries!');
                 return false;
+            }
+            
+            // Draft CSS will be created dynamically when switching to DRAFT
+            if (!$draftStyle.length) {
+                console.log('ℹ️ Draft CSS not in DOM - will be created dynamically when needed');
             }
 
             // Check localStorage for current status
@@ -125,8 +130,15 @@ define([
          */
         _disableStyle: function($style) {
             if (!$style || !$style.length) return;
-            $style.attr('media', 'not all');    // Primary method (HTML5 standard)
-            $style.prop('disabled', true);      // Fallback for older browsers
+            
+            // Set attributes in correct order
+            $style.prop('disabled', true);       // Set disabled first
+            $style.attr('media', 'not all');     // Then media attribute
+            
+            // Force reflow to ensure changes are applied
+            if (iframeDocument && iframeDocument.body) {
+                iframeDocument.body.offsetHeight; // Trigger reflow
+            }
         },
 
         /**
@@ -207,8 +219,11 @@ define([
         /**
          * Show DRAFT CSS (enable draft and live-preview, remove publication)
          * Editable mode - editing allowed
+         * Draft CSS is loaded from GraphQL and created dynamically
          */
         showDraft: function() {
+            var self = this;
+            
             // Refresh style references (may appear later)
             if (!$publishedStyle || !$publishedStyle.length) {
                 $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
@@ -220,11 +235,59 @@ define([
                 $livePreviewStyle = $(iframeDocument).find('#bte-live-preview');
             }
 
+            // Load draft CSS from GraphQL if not in DOM
             if (!$draftStyle || !$draftStyle.length) {
-                console.warn('⚠️ CSS Manager: Draft CSS not available');
-                return false;
+                console.log('📥 Loading draft CSS from GraphQL...');
+                
+                return getCss(storeId, themeId, 'DRAFT', null)
+                    .then(function(response) {
+                        if (response && response.getThemeEditorCss) {
+                            var css = response.getThemeEditorCss.css || '';
+                            
+                            // Create draft style element
+                            $draftStyle = $('<style>', {
+                                id: 'bte-theme-css-variables-draft',
+                                type: 'text/css',
+                                media: 'all'
+                            }).text(css);
+                            
+                            // Insert after published style
+                            if ($publishedStyle && $publishedStyle.length) {
+                                $publishedStyle.after($draftStyle);
+                                console.log('✅ Draft CSS created dynamically');
+                            } else {
+                                $(iframeDocument.head).append($draftStyle);
+                                console.log('✅ Draft CSS created in head');
+                            }
+                            
+                            // Enable published CSS (base)
+                            self._enableStyle($publishedStyle);
+
+                            // Enable draft CSS
+                            self._enableStyle($draftStyle);
+
+                            // Enable live preview (editable in DRAFT mode)
+                            self._enableStyle($livePreviewStyle);
+
+                            // Remove publication CSS
+                            self._removePublicationStyle();
+
+                            currentStatus = 'DRAFT';
+                            console.log('📗 CSS Manager: Showing DRAFT (editable mode, created dynamically)');
+                            
+                            // Trigger event to notify panel about status change
+                            $(document).trigger('publicationStatusChanged', {status: 'DRAFT'});
+                            
+                            return true;
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('❌ Failed to load draft CSS:', error);
+                        return false;
+                    });
             }
 
+            // Draft already exists - just enable it
             // Enable published CSS (base)
             this._enableStyle($publishedStyle);
 
@@ -239,12 +302,11 @@ define([
 
             currentStatus = 'DRAFT';
             console.log('📗 CSS Manager: Showing DRAFT (editable mode)');
-            // console.trace('📗 showDraft() call stack');
             
-            // ✅ Trigger event to notify panel about status change
+            // Trigger event to notify panel about status change
             $(document).trigger('publicationStatusChanged', {status: 'DRAFT'});
             
-            return true;
+            return Promise.resolve(true);
         },
 
         /**

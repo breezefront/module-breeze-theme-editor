@@ -61,67 +61,6 @@ class ThemeCssVariables implements ArgumentInterface
     }
 
     /**
-     * Get generated CSS for DRAFT status
-     * Only generates if toolbar session is active (user has access token)
-     *
-     * @return string
-     */
-    public function getInlineCssContentDraft(): string
-    {
-        try {
-            // Check if toolbar is active (user has access token)
-            if (!$this->canGenerateDraftCss()) {
-                return '';
-            }
-
-            $storeId = (int) $this->storeManager->getStore()->getId();
-            $themeId = $this->themeResolver->getThemeIdByStoreId($storeId);
-
-            return $this->cssGenerator->generate($themeId, $storeId, 'DRAFT');
-        } catch (\Exception $e) {
-            return "/* Breeze Theme Editor: Error generating draft CSS - {$e->getMessage()} */";
-        }
-    }
-
-    /**
-     * Check if draft CSS should be generated
-     * Only for users with active toolbar session
-     *
-     * @return bool
-     */
-    private function canGenerateDraftCss(): bool
-    {
-        // Same logic as Toolbar::canShow()
-        if (!$this->helper->isEnabled()) {
-            return false;
-        }
-
-        return $this->accessToken->validateRequest($this->request);
-    }
-
-    /**
-     * Check if user has valid access token (is admin with toolbar)
-     * 
-     * @return bool
-     */
-    public function hasAccessToken(): bool
-    {
-        return $this->accessToken->validateRequest($this->request);
-    }
-
-    /**
-     * Check if currently running in test mode
-     * Test mode is activated by ?jstest=true or ?jstest=1 URL parameter
-     * 
-     * @return bool
-     */
-    public function isTestMode(): bool
-    {
-        $jstest = $this->request->getParam('jstest');
-        return $jstest === 'true' || $jstest === '1';
-    }
-
-    /**
      * Check if CSS has real content (contains CSS variables)
      *
      * @param string $css

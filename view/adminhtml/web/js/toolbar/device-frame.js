@@ -88,9 +88,10 @@ define([
                 }
 
                 // Не переміщувати CSS Manager style теги - вони потрібні в головному документі
-                // Але вони будуть скопійовані в iframe окремо
+                // Published CSS буде скопійований в iframe окремо
+                // Draft CSS створюється динамічно JavaScript
                 // Note: #bte-live-preview НЕ існує в parent - створюється в iframe
-                if ($el.is('#bte-theme-css-variables, #bte-theme-css-variables-draft')) {
+                if ($el.is('#bte-theme-css-variables')) {
                     console.log('⛔ Skipping CSS Manager style:', $el.attr('id'));
                     return false;
                 }
@@ -276,7 +277,7 @@ define([
             });
 
             // Копіювати style теги з head (окрім CSS Manager styles)
-            $('head style').not('#bte-theme-css-variables, #bte-theme-css-variables-draft, #bte-live-preview').each(function() {
+            $('head style').not('#bte-theme-css-variables, #bte-live-preview').each(function() {
                 $iframeHead.append($(this).clone());
                 styleCount++;
             });
@@ -286,7 +287,8 @@ define([
 
         /**
          * Копіювати CSS Manager style теги в правильному порядку
-         * Note: #bte-live-preview НЕ копіюється - він створюється безпосередньо в iframe через css-preview-manager.js
+         * Note: Draft CSS створюється динамічно через css-manager.js
+         * Note: #bte-live-preview створюється безпосередньо в iframe через css-preview-manager.js
          */
         _copyCssManagerStyles: function() {
             if (!iframeDocument) {
@@ -294,59 +296,46 @@ define([
             }
 
             var $iframeBody = $(iframeDocument.body);
-            var cssManagerStyleCount = 0;
-
-            // Копіювати ТІЛЬКИ published та draft styles (live-preview створюється окремо)
-            var styleIds = [
-                'bte-theme-css-variables',        // 1. Published (базові стилі)
-                'bte-theme-css-variables-draft'   // 2. Draft (незбережені зміни)
-                // 3. Live preview створюється динамічно через CssPreviewManager
-            ];
-
-            styleIds.forEach(function(styleId) {
-                var $original = $('#' + styleId);
-                if (!$original.length) {
-                    console.warn('⚠️ CSS Manager style not found:', styleId);
-                    return;
-                }
-
-                // Remove old clone from iframe if exists (cleanup after navigation)
-                var $oldClone = $(iframeDocument).find('#' + styleId);
-                if ($oldClone.length) {
-                    $oldClone.remove();
-                }
-
-                var $clone = $original.clone();
-                
-                // IMPORTANT: Preserve both media and disabled attributes from original
-                // Copy media attribute (primary disable method)
-                var mediaAttr = $original.attr('media') || 'all';
-                $clone.attr('media', mediaAttr);
-                
-                // Copy disabled state (fallback)
-                var isDisabled = $original.prop('disabled');
-                $clone.prop('disabled', isDisabled);
-                
-                // Зберегти посилання на оригінал та клон для синхронізації
-                // IMPORTANT: Update the reference to the NEW clone
-                $original.data('iframe-clone', $clone[0]);
-                
-                $iframeBody.append($clone);
-                cssManagerStyleCount++;
-                console.log('📋 Copied CSS Manager style to iframe:', styleId, '(media:', mediaAttr, ', disabled:', isDisabled + ')');
-            });
-
-            console.log('📄 Copied CSS Manager styles to iframe body:', cssManagerStyleCount);
+            
+            // Копіювати ТІЛЬКИ published style (draft створюється динамічно)
+            var $publishedStyle = $('#bte-theme-css-variables');
+            
+            if (!$publishedStyle.length) {
+                console.warn('⚠️ Published CSS not found in parent document');
+                return;
+            }
+            
+            // Remove old clone if exists
+            var $oldClone = $(iframeDocument).find('#bte-theme-css-variables');
+            if ($oldClone.length) {
+                $oldClone.remove();
+            }
+            
+            var $clone = $publishedStyle.clone();
+            
+            // IMPORTANT: Preserve both media and disabled attributes from original
+            var mediaAttr = $publishedStyle.attr('media') || 'all';
+            $clone.attr('media', mediaAttr);
+            
+            var isDisabled = $publishedStyle.prop('disabled');
+            $clone.prop('disabled', isDisabled);
+            
+            // Store reference to clone for syncing
+            $publishedStyle.data('iframe-clone', $clone[0]);
+            
+            $iframeBody.append($clone);
+            console.log('📋 Copied published CSS to iframe (draft will be created dynamically by JS)');
         },
 
         /**
          * Налаштувати синхронізацію media та disabled атрибутів для CSS Manager styles
+         * Note: Тільки для published style (draft створюється динамічно в iframe)
          * Note: live-preview створюється безпосередньо в iframe, тому не потребує синхронізації
          */
         _setupCssManagerSync: function() {
             var self = this;
             
-            // Observer для media та disabled атрибутів (published та draft)
+            // Observer для media та disabled атрибутів (тільки published)
             var styleObserver = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
                     if (mutation.type === 'attributes') {
@@ -369,14 +358,16 @@ define([
             });
 
             // Спостерігати за змінами media та disabled атрибутів для published та draft
-            $('#bte-theme-css-variables, #bte-theme-css-variables-draft').each(function() {
-                styleObserver.observe(this, {
+            // Спостерігати за змінами тільки published style (draft створюється динамічно в iframe)
+            var $publishedStyle = $('#bte-theme-css-variables');
+            if ($publishedStyle.length) {
+                styleObserver.observe($publishedStyle[0], {
                     attributes: true,
                     attributeFilter: ['media', 'disabled']
                 });
-            });
+            }
 
-            console.log('👁️ CSS Manager sync observer initialized (media + disabled)');
+            console.log('👁️ CSS Manager sync observer initialized for published style');
         },
 
         _syncBodyClasses: function() {
