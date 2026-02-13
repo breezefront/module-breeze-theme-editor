@@ -9,8 +9,9 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
-    'Swissup_BreezeThemeEditor/js/editor/preview-manager'
-], function($, getCss, previewManager) {
+    'Swissup_BreezeThemeEditor/js/editor/preview-manager',
+    'Swissup_BreezeThemeEditor/js/toolbar/device-frame'
+], function($, getCss, previewManager, DeviceFrame) {
     'use strict';
     
     var currentStatus = 'DRAFT';
@@ -18,7 +19,6 @@ define([
     var storeId = null;
     var themeId = null;
     var iframeId = null;
-    var currentIframeDoc = null;
     
     return {
         /**
@@ -89,9 +89,6 @@ define([
             // Draft CSS will be created dynamically when switching to DRAFT
             // No need to check for it in init()
             
-            // Store iframe document reference
-            currentIframeDoc = iframeDoc;
-            
             console.log('✅ CSS Manager initialized', {
                 storeId: storeId,
                 themeId: themeId,
@@ -110,7 +107,27 @@ define([
          * @returns {Boolean}
          */
         isReady: function() {
-            return !!(storeId && currentIframeDoc);
+            return !!(storeId && this._getCurrentIframeDoc());
+        },
+        
+        /**
+         * Get iframe element (always fresh)
+         * @private
+         * @returns {HTMLIFrameElement|null}
+         */
+        _getIframe: function() {
+            return DeviceFrame.getIframe();
+        },
+        
+        /**
+         * Get current iframe document (always fresh)
+         * Important: After navigation iframe gets a new document,
+         * so we always get it dynamically from DeviceFrame
+         * @private
+         * @returns {Document|null}
+         */
+        _getCurrentIframeDoc: function() {
+            return DeviceFrame.getDocument();
         },
         
         /**
@@ -130,8 +147,9 @@ define([
             style.media = 'all';
             
             // Force reflow to ensure changes are applied
-            if (currentIframeDoc && currentIframeDoc.body) {
-                currentIframeDoc.body.offsetHeight; // Trigger reflow
+            var doc = this._getCurrentIframeDoc();
+            if (doc && doc.body) {
+                doc.body.offsetHeight; // Trigger reflow
             }
             
             console.log('✅ Enabled style:', style.id, '| media:', style.media, '| disabled:', style.disabled);
@@ -154,26 +172,29 @@ define([
             style.media = 'not all';
             
             // Force reflow to ensure changes are applied
-            if (currentIframeDoc && currentIframeDoc.body) {
-                currentIframeDoc.body.offsetHeight; // Trigger reflow
+            var doc = this._getCurrentIframeDoc();
+            if (doc && doc.body) {
+                doc.body.offsetHeight; // Trigger reflow
             }
             
             console.log('🚫 Disabled style:', style.id, '| media:', style.media, '| disabled:', style.disabled);
         },
         
         /**
-         * Get or create style element in iframe
+         * Get or create style element
          * @private
          * @param {String} styleId - Style element ID
          * @returns {jQuery}
          */
         _getOrCreateStyle: function(styleId) {
-            if (!currentIframeDoc) {
-                console.error('❌ CSS Manager: iframe document not initialized');
+            var doc = this._getCurrentIframeDoc();
+            
+            if (!doc) {
+                console.error('❌ CSS Manager: iframe document not available');
                 return null;
             }
             
-            var $style = $(currentIframeDoc).find('#' + styleId);
+            var $style = $(doc).find('#' + styleId);
             
             // If not exists - create it
             if (!$style.length) {
@@ -185,13 +206,13 @@ define([
                 });
                 
                 // Insert after published style (correct priority order)
-                var $publishedStyle = $(currentIframeDoc).find('#bte-theme-css-variables');
+                var $publishedStyle = $(doc).find('#bte-theme-css-variables');
                 if ($publishedStyle.length) {
                     $publishedStyle.after($style);
                     console.log('📝 Created style element:', styleId);
                 } else {
                     // Fallback - append to head
-                    $(currentIframeDoc.head).append($style);
+                    $(doc.head).append($style);
                     console.log('📝 Created style element (in head):', styleId);
                 }
             }
@@ -223,18 +244,20 @@ define([
         switchTo: function(status, publicationId) {
             console.log('🔄 CSS Manager: Switching to', status, publicationId || '');
             
-            if (!storeId || !currentIframeDoc) {
-                console.error('❌ CSS Manager not initialized');
+            var doc = this._getCurrentIframeDoc();
+            
+            if (!storeId || !doc) {
+                console.error('❌ CSS Manager not initialized or iframe document not available');
                 return Promise.reject(new Error('CSS Manager not initialized'));
             }
             
             currentStatus = status;
             currentPublicationId = publicationId || null;
             
-            // Get style elements
-            var $publishedStyle = $(currentIframeDoc).find('#bte-theme-css-variables');
-            var $draftStyle = $(currentIframeDoc).find('#bte-theme-css-variables-draft');
-            var $publicationStyle = $(currentIframeDoc).find('#bte-publication-css-' + publicationId);
+            // Get style elements from current iframe document
+            var $publishedStyle = $(doc).find('#bte-theme-css-variables');
+            var $draftStyle = $(doc).find('#bte-theme-css-variables-draft');
+            var $publicationStyle = $(doc).find('#bte-publication-css-' + publicationId);
             
             var self = this;
             
@@ -255,7 +278,8 @@ define([
                                 self._disableStyle($publishedStyle);
                                 
                                 // Disable all publications using native DOM
-                                var publicationStyles = currentIframeDoc.querySelectorAll('style[id^="bte-publication-css-"]');
+                                var currentDoc = self._getCurrentIframeDoc();
+                                var publicationStyles = currentDoc.querySelectorAll('style[id^="bte-publication-css-"]');
                                 console.log('🔍 Found', publicationStyles.length, 'publication styles to disable');
                                 Array.prototype.forEach.call(publicationStyles, function(styleElement) {
                                     self._disableStyle($(styleElement));
@@ -278,7 +302,8 @@ define([
                     self._disableStyle($draftStyle);
                     
                     // Disable all publications using native DOM
-                    var publicationStyles = currentIframeDoc.querySelectorAll('style[id^="bte-publication-css-"]');
+                    var publishedDoc = this._getCurrentIframeDoc();
+                    var publicationStyles = publishedDoc.querySelectorAll('style[id^="bte-publication-css-"]');
                     console.log('🔍 Found', publicationStyles.length, 'publication styles to disable');
                     Array.prototype.forEach.call(publicationStyles, function(styleElement) {
                         self._disableStyle($(styleElement));
@@ -309,7 +334,8 @@ define([
                                 self._disableStyle($draftStyle);
                                 
                                 // Disable other publications, enable current using native DOM
-                                var publicationStyles = currentIframeDoc.querySelectorAll('style[id^="bte-publication-css-"]');
+                                var publicationDoc = self._getCurrentIframeDoc();
+                                var publicationStyles = publicationDoc.querySelectorAll('style[id^="bte-publication-css-"]');
                                 console.log('🔍 Found', publicationStyles.length, 'publication styles');
                                 
                                 Array.prototype.forEach.call(publicationStyles, function(styleElement) {

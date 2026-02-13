@@ -6,7 +6,6 @@ define([
 ], function ($, DeviceFrame, getCss, StorageHelper) {
     'use strict';
 
-    var iframeDocument = null;
     var $publishedStyle = null;
     var $draftStyle = null;
     var $livePreviewStyle = null;
@@ -14,6 +13,14 @@ define([
     var currentStatus = null;
     var storeId = null;
     var themeId = null;
+
+    /**
+     * Get current iframe document (always fresh from DeviceFrame)
+     * @returns {Document|null}
+     */
+    function getIframeDocument() {
+        return DeviceFrame.getDocument();
+    }
 
     /**
      * Reset live preview changes (lazy loaded to avoid circular dependency)
@@ -51,8 +58,7 @@ define([
                 return false;
             }
             
-            iframeDocument = DeviceFrame.getDocument();
-            if (!iframeDocument) {
+            if (!getIframeDocument()) {
                 if (retries < 20) {
                     console.log('⏳ CSS Manager: iframe not ready, retry', retries + 1);
                     setTimeout(function() {
@@ -65,9 +71,9 @@ define([
             }
 
             // Find existing CSS elements
-            $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
-            $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
-            $livePreviewStyle = $(iframeDocument).find('#bte-live-preview');
+            $publishedStyle = $(getIframeDocument()).find('#bte-theme-css-variables');
+            $draftStyle = $(getIframeDocument()).find('#bte-theme-css-variables-draft');
+            $livePreviewStyle = $(getIframeDocument()).find('#bte-live-preview');
 
             if (!$publishedStyle.length) {
                 if (retries < 20) {
@@ -126,8 +132,8 @@ define([
             $style.attr('media', 'all');         // Then media attribute
             
             // Force reflow to ensure changes are applied
-            if (iframeDocument && iframeDocument.body) {
-                iframeDocument.body.offsetHeight; // Trigger reflow
+            if (getIframeDocument() && getIframeDocument().body) {
+                getIframeDocument().body.offsetHeight; // Trigger reflow
             }
         },
 
@@ -143,8 +149,8 @@ define([
             $style.attr('media', 'not all');     // Then media attribute
             
             // Force reflow to ensure changes are applied
-            if (iframeDocument && iframeDocument.body) {
-                iframeDocument.body.offsetHeight; // Trigger reflow
+            if (getIframeDocument() && getIframeDocument().body) {
+                getIframeDocument().body.offsetHeight; // Trigger reflow
             }
         },
 
@@ -185,13 +191,13 @@ define([
         showPublished: function() {
             // Refresh style references (may appear later)
             if (!$publishedStyle || !$publishedStyle.length) {
-                $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
+                $publishedStyle = $(getIframeDocument()).find('#bte-theme-css-variables');
             }
             if (!$draftStyle || !$draftStyle.length) {
-                $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
+                $draftStyle = $(getIframeDocument()).find('#bte-theme-css-variables-draft');
             }
             if (!$livePreviewStyle || !$livePreviewStyle.length) {
-                $livePreviewStyle = $(iframeDocument).find('#bte-live-preview');
+                $livePreviewStyle = $(getIframeDocument()).find('#bte-live-preview');
             }
 
             if (!$publishedStyle || !$publishedStyle.length) {
@@ -233,13 +239,13 @@ define([
             
             // Refresh style references (may appear later)
             if (!$publishedStyle || !$publishedStyle.length) {
-                $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
+                $publishedStyle = $(getIframeDocument()).find('#bte-theme-css-variables');
             }
             if (!$draftStyle || !$draftStyle.length) {
-                $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
+                $draftStyle = $(getIframeDocument()).find('#bte-theme-css-variables-draft');
             }
             if (!$livePreviewStyle || !$livePreviewStyle.length) {
-                $livePreviewStyle = $(iframeDocument).find('#bte-live-preview');
+                $livePreviewStyle = $(getIframeDocument()).find('#bte-live-preview');
             }
 
             // Load draft CSS from GraphQL if not in DOM
@@ -263,7 +269,7 @@ define([
                                 $publishedStyle.after($draftStyle);
                                 console.log('✅ Draft CSS created dynamically');
                             } else {
-                                $(iframeDocument.head).append($draftStyle);
+                                $(getIframeDocument().head).append($draftStyle);
                                 console.log('✅ Draft CSS created in head');
                             }
                             
@@ -335,13 +341,13 @@ define([
 
             // Refresh style references (may appear later)
             if (!$publishedStyle || !$publishedStyle.length) {
-                $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
+                $publishedStyle = $(getIframeDocument()).find('#bte-theme-css-variables');
             }
             if (!$draftStyle || !$draftStyle.length) {
-                $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
+                $draftStyle = $(getIframeDocument()).find('#bte-theme-css-variables-draft');
             }
             if (!$livePreviewStyle || !$livePreviewStyle.length) {
-                $livePreviewStyle = $(iframeDocument).find('#bte-live-preview');
+                $livePreviewStyle = $(getIframeDocument()).find('#bte-live-preview');
             }
 
             // Disable published CSS
@@ -410,7 +416,7 @@ define([
             }).text(css);
 
             // Insert AFTER draft but BEFORE live-preview (правильний порядок пріоритету)
-            var $livePreview = $(iframeDocument).find('#bte-live-preview');
+            var $livePreview = $(getIframeDocument()).find('#bte-live-preview');
             
             if ($livePreview && $livePreview.length) {
                 // Insert before live-preview (щоб live-preview мав найвищий пріоритет)
@@ -484,19 +490,19 @@ define([
         /**
          * Refresh iframe document reference after navigation
          * This must be called when iframe loads a new page
+         * NOTE: With DeviceFrame.getDocument() we always get fresh document,
+         * so this method just updates cached jQuery references
          */
         refreshIframeDocument: function() {
-            iframeDocument = DeviceFrame.getDocument();
-            
-            if (!iframeDocument) {
+            if (!getIframeDocument()) {
                 console.error('❌ CSS Manager: Cannot refresh - iframe document not available');
                 return false;
             }
             
             // Update style element references
-            $publishedStyle = $(iframeDocument).find('#bte-theme-css-variables');
-            $draftStyle = $(iframeDocument).find('#bte-theme-css-variables-draft');
-            $livePreviewStyle = $(iframeDocument).find('#bte-live-preview');
+            $publishedStyle = $(getIframeDocument()).find('#bte-theme-css-variables');
+            $draftStyle = $(getIframeDocument()).find('#bte-theme-css-variables-draft');
+            $livePreviewStyle = $(getIframeDocument()).find('#bte-live-preview');
             $publicationStyle = null; // Reset publication style
             
             console.log('🔄 CSS Manager: iframe document refreshed');
@@ -521,14 +527,13 @@ define([
         },
 
         /**
-         * Destroy CSS manager
+         * Destroy CSS manager and clean up
          */
         destroy: function() {
             this._removePublicationStyle();
             $publishedStyle = null;
             $draftStyle = null;
             $livePreviewStyle = null;
-            iframeDocument = null;
             currentStatus = null;
             console.log('🗑️ CSS Manager destroyed');
         }

@@ -245,6 +245,14 @@ define([
         },
 
         /**
+         * Отримати iframe element (завжди свіжий)
+         * @returns {HTMLIFrameElement|null}
+         */
+        getIframe: function() {
+            return $iframe ? $iframe[0] : null;
+        },
+
+        /**
          * Отримати iframe window
          */
         getWindow: function() {
@@ -252,10 +260,25 @@ define([
         },
 
         /**
-         * Отримати iframe document
+         * Отримати iframe document (завжди свіжий)
+         * Важливо: після navigation iframe отримує новий document,
+         * тому завжди отримуємо його динамічно, а не з кешу
+         * @returns {Document|null}
          */
         getDocument: function() {
-            return iframeDocument || null;
+            if (!$iframe || !$iframe.length) {
+                return null;
+            }
+            
+            var iframe = $iframe[0];
+            var doc = iframe.contentDocument || iframe.contentWindow.document;
+            
+            if (!doc) {
+                console.warn('⚠️ Cannot access iframe document');
+                return null;
+            }
+            
+            return doc;
         },
 
         /**
