@@ -9,9 +9,8 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
-    'Swissup_BreezeThemeEditor/js/editor/preview-manager',
-    'Swissup_BreezeThemeEditor/js/toolbar/device-frame'
-], function($, getCss, previewManager, DeviceFrame) {
+    'Swissup_BreezeThemeEditor/js/editor/preview-manager'
+], function($, getCss, previewManager) {
     'use strict';
     
     var currentStatus = 'DRAFT';
@@ -116,18 +115,35 @@ define([
          * @returns {HTMLIFrameElement|null}
          */
         _getIframe: function() {
-            return DeviceFrame.getIframe();
+            if (!iframeId) {
+                return null;
+            }
+            return document.getElementById(iframeId);
         },
         
         /**
          * Get current iframe document (always fresh)
          * Important: After navigation iframe gets a new document,
-         * so we always get it dynamically from DeviceFrame
+         * so we always get it dynamically instead of caching
          * @private
          * @returns {Document|null}
          */
         _getCurrentIframeDoc: function() {
-            return DeviceFrame.getDocument();
+            var iframe = this._getIframe();
+            
+            if (!iframe) {
+                console.warn('⚠️ Iframe not found:', iframeId);
+                return null;
+            }
+            
+            var doc = iframe.contentDocument || iframe.contentWindow.document;
+            
+            if (!doc) {
+                console.warn('⚠️ Cannot access iframe document');
+                return null;
+            }
+            
+            return doc;
         },
         
         /**
