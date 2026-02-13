@@ -18,15 +18,18 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/toolbar/highlight-toggle',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/toolbar-toggle',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/exit-button',
-    'Swissup_BreezeThemeEditor/js/editor/util/config-manager',
-    'Swissup_BreezeThemeEditor/js/editor/util/url-builder',
+    'Swissup_BreezeThemeEditor/js/editor/utils/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/url-builder',
     'Swissup_BreezeThemeEditor/js/graphql/client',
     'Swissup_BreezeThemeEditor/js/editor/preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/css-manager',
-    'Swissup_BreezeThemeEditor/js/editor/panel/settings-editor'
+    'Swissup_BreezeThemeEditor/js/editor/panel/settings-editor',
+    'Swissup_BreezeThemeEditor/js/editor/utils/iframe-helper',
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
 ], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation, 
              publicationSelector, scopeSelector, pageSelector, highlightToggle, 
-             toolbarToggle, exitButton, configManager, urlBuilder, graphQLClient, previewManager, cssManager, settingsEditor) {
+             toolbarToggle, exitButton, configManager, urlBuilder, graphQLClient, 
+             previewManager, cssManager, settingsEditor, iframeHelper, StorageHelper) {
     'use strict';
     
     /**
@@ -305,12 +308,18 @@ define([
             $iframe.on('load.bte-preview', function() {
                 console.log('🎨 Iframe loaded, triggering CSS state restoration...');
                 
+                // Save current URL to localStorage
+                iframeHelper.saveCurrentUrl();
+                
                 // Trigger event to restore CSS state (Draft/Published/Publication)
                 // Publication selector will handle restoring the correct CSS from localStorage
                 $(document).trigger('bte:iframeReloaded', {
                     iframeId: iframeSelector.replace('#', '')
                 });
             });
+            
+            // Start URL synchronization (localStorage + parent URL)
+            iframeHelper.startUrlSync();
             
             console.log('✅ Preview manager initialized');
         }

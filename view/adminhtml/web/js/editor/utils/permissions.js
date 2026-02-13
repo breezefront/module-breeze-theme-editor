@@ -4,7 +4,7 @@
  * Manages ACL permission checks and applies permission-based UI restrictions.
  * Reads permissions from window.breezeThemeEditorConfig.permissions.
  * 
- * @module Swissup_BreezeThemeEditor/js/utils/permissions
+ * @module Swissup_BreezeThemeEditor/js/editor/utils/permissions
  */
 define(['jquery'], function($) {
     'use strict';

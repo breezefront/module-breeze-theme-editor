@@ -4,7 +4,7 @@
  * Handles GraphQL errors and displays user-friendly messages.
  * Provides consistent error handling across all components.
  * 
- * @module Swissup_BreezeThemeEditor/js/utils/error-handler
+ * @module Swissup_BreezeThemeEditor/js/editor/utils/error-handler
  */
 define(['jquery'], function($) {
     'use strict';

@@ -151,6 +151,38 @@ define([], function () {
         clearCurrentPublication: function() {
             this.removeItem('current_publication_id');
             this.removeItem('current_publication_title');
+        },
+
+        /**
+         * Get current iframe URL (path + query + hash)
+         * @returns {String}
+         */
+        getCurrentUrl: function() {
+            return this.getItem('current_url') || '/';
+        },
+
+        /**
+         * Set current iframe URL
+         * @param {String} url - Full path with query and hash
+         */
+        setCurrentUrl: function(url) {
+            this.setItem('current_url', url);
+        },
+
+        /**
+         * Get current page ID (for page-selector dropdown)
+         * @returns {String}
+         */
+        getCurrentPageId: function() {
+            return this.getItem('current_page_id') || 'cms_index_index';
+        },
+
+        /**
+         * Set current page ID
+         * @param {String} pageId
+         */
+        setCurrentPageId: function(pageId) {
+            this.setItem('current_page_id', pageId);
         }
     };
 });

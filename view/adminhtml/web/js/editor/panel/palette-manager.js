@@ -1,5 +1,5 @@
 define([
-    'Swissup_BreezeThemeEditor/js/editor/util/color-utils',
+    'Swissup_BreezeThemeEditor/js/editor/utils/color-utils',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-palette-value',
     'Swissup_BreezeThemeEditor/js/editor/panel/storage-helper',
     'Swissup_BreezeThemeEditor/js/lib/toastify'

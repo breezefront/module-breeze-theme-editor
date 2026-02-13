@@ -4,7 +4,7 @@
  * Manages loading indicators and disabled states during async operations.
  * Provides consistent loading UX across all components.
  * 
- * @module Swissup_BreezeThemeEditor/js/utils/loading
+ * @module Swissup_BreezeThemeEditor/js/editor/utils/loading
  */
 define(['jquery'], function($) {
     'use strict';

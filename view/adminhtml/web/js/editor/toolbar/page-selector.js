@@ -8,10 +8,11 @@ define([
     'jquery',
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/editor/page-selector.html',
-    'Swissup_BreezeThemeEditor/js/editor/util/cookie-manager',
-    'Swissup_BreezeThemeEditor/js/editor/util/config-manager',
-    'Swissup_BreezeThemeEditor/js/editor/util/url-builder'
-], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/cookie-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/url-builder',
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
+], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder, StorageHelper) {
     'use strict';
 
     $.widget('swissup.breezePageSelector', {
@@ -35,6 +36,13 @@ define([
          * @private
          */
         _create: function() {
+            // Try to restore currentPageId from localStorage
+            var savedPageId = StorageHelper.getCurrentPageId();
+            if (savedPageId && this._isValidPageId(savedPageId)) {
+                this.options.currentPageId = savedPageId;
+                console.log('📥 Restored page ID from localStorage:', savedPageId);
+            }
+            
             this.currentPageLabel = this._findPageLabel(this.options.currentPageId);
             this._initializeCurrentParams();
             this._render();
@@ -68,6 +76,22 @@ define([
                 }
             });
             return label;
+        },
+
+        /**
+         * Check if page ID exists in available pages
+         * @param {String} pageId
+         * @returns {Boolean}
+         * @private
+         */
+        _isValidPageId: function(pageId) {
+            var found = false;
+            this.options.pages.forEach(function(page) {
+                if (page.id === pageId) {
+                    found = true;
+                }
+            });
+            return found;
         },
 
         /**
@@ -201,6 +225,10 @@ define([
 
             // Trigger event
             $(this.element).trigger('pageChanged', [pageId, pageData]);
+            
+            // Save page ID to localStorage
+            StorageHelper.setCurrentPageId(pageId);
+            console.log('💾 Saved page ID to localStorage:', pageId);
             
             console.log('✅ Page switched to:', pageData.label);
         },

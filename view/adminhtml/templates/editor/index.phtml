@@ -13,10 +13,14 @@ $jstest = $block->getData('jstest') ?: false;
 // Get full toolbar configuration from ViewModel
 $toolbarConfig = $viewModel ? $viewModel->getToolbarConfig() : [];
 
+// Read 'url' parameter from GET (priority for URL sharing)
+// If not present, will be restored from localStorage via JavaScript
+$requestedUrl = $block->getRequest()->getParam('url', '/');
+
 // Build iframe URL (theme is determined automatically from store config)
 $iframeUrl = $block->getUrl('breeze_editor/editor/iframe', [
     'store' => $storeId,
-    'url' => '/',
+    'url' => $requestedUrl,
     'jstest' => $jstest
 ]);
 ?>
@@ -48,3 +52,45 @@ $iframeUrl = $block->getUrl('breeze_editor/editor/iframe', [
     }
 }
 </script>
+
+<!-- URL restoration from localStorage -->
+<script>
+require([
+    'jquery',
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
+], function($, StorageHelper) {
+    'use strict';
+    
+    // Initialize StorageHelper with current store/theme
+    var toolbarConfig = <?= /* @noEscape */ json_encode($toolbarConfig) ?>;
+    if (toolbarConfig.storeId && toolbarConfig.themeId) {
+        StorageHelper.init(toolbarConfig.storeId, toolbarConfig.themeId);
+    }
+    
+    // If URL parameter is '/' (default), try to restore from localStorage
+    var urlParams = new URLSearchParams(window.location.search);
+    var urlParam = urlParams.get('url');
+    
+    if (!urlParam || urlParam === '/' || urlParam === '%2F') {
+        var savedUrl = StorageHelper.getCurrentUrl();
+        
+        if (savedUrl && savedUrl !== '/') {
+            console.log('🔄 Restoring URL from localStorage:', savedUrl);
+            
+            // Update iframe src with saved URL
+            var $iframe = $('#bte-iframe');
+            var currentSrc = $iframe.attr('src');
+            
+            // Replace /url/%2F/ or /url/.../ with /url/{encoded_path}/
+            var encodedUrl = encodeURIComponent(savedUrl);
+            var newSrc = currentSrc.replace(/\/url\/[^\/]+\//, '/url/' + encodedUrl + '/');
+            
+            console.log('   Old src:', currentSrc);
+            console.log('   New src:', newSrc);
+            
+            $iframe.attr('src', newSrc);
+        }
+    }
+});
+</script>
+
