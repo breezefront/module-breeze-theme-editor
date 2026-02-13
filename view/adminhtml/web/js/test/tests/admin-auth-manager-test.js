@@ -7,7 +7,7 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/test/test-framework',
     'Swissup_BreezeThemeEditor/js/graphql/client',
-    'Swissup_BreezeThemeEditor/js/editor/utils/config-manager'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager'
 ], function($, TestFramework, GraphQLClient, ConfigManager) {
     'use strict';
     

@@ -1,6 +1,6 @@
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/editor/utils/config-manager'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager'
 ], function ($, ConfigManager) {
     'use strict';
 

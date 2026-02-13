@@ -1,7 +1,7 @@
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/editor/utils/color-utils',
-    'Swissup_BreezeThemeEditor/js/editor/utils/iframe-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/dom/color-utils',
+    'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-manager'
 ], function ($, ColorUtils, IframeHelper, CssManager) {
     'use strict';

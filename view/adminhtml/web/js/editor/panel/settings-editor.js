@@ -15,7 +15,7 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values',
-    'Swissup_BreezeThemeEditor/js/editor/panel/storage-helper'
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
 ], function (
     $,
     widget,

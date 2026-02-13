@@ -1,8 +1,8 @@
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/editor/utils/iframe-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
-    'Swissup_BreezeThemeEditor/js/editor/panel/storage-helper'
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
 ], function ($, IframeHelper, getCss, StorageHelper) {
     'use strict';
 

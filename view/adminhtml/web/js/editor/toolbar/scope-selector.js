@@ -8,9 +8,9 @@ define([
     'jquery',
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/editor/scope-selector.html',
-    'Swissup_BreezeThemeEditor/js/editor/utils/cookie-manager',
-    'Swissup_BreezeThemeEditor/js/editor/utils/config-manager',
-    'Swissup_BreezeThemeEditor/js/editor/utils/url-builder'
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/cookie-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder'
 ], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder) {
     'use strict';
 

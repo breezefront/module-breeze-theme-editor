@@ -1,7 +1,7 @@
 define([
-    'Swissup_BreezeThemeEditor/js/editor/utils/color-utils',
+    'Swissup_BreezeThemeEditor/js/editor/utils/dom/color-utils',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-palette-value',
-    'Swissup_BreezeThemeEditor/js/editor/panel/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper',
     'Swissup_BreezeThemeEditor/js/lib/toastify'
 ], function (ColorUtils, savePaletteValueMutation, StorageHelper, Toastify) {
     'use strict';
