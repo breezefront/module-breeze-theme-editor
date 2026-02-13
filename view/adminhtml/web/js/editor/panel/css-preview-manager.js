@@ -1,9 +1,9 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/util/color-utils',
-    'Swissup_BreezeThemeEditor/js/toolbar/device-frame',
+    'Swissup_BreezeThemeEditor/js/editor/util/iframe-helper',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-manager'
-], function ($, ColorUtils, DeviceFrame, CssManager) {
+], function ($, ColorUtils, IframeHelper, CssManager) {
     'use strict';
 
     var changes = {};
@@ -15,7 +15,7 @@ define([
          * Initialize preview manager
          */
         init: function() {
-            iframeDocument = DeviceFrame.getDocument();
+            iframeDocument = IframeHelper.getDocument();
             if (!iframeDocument) {
                 console.warn('⚠️ CSS Preview Manager: iframe not initialized');
                 return false;
@@ -590,11 +590,11 @@ define([
 
         /**
          * Re-create live preview style element after iframe navigation
-         * Called by DeviceFrame when iframe loads new page
+         * Called by device-frame (frontend) or manually (admin) when iframe loads new page
          */
         recreateLivePreviewStyle: function() {
             // Update iframe reference
-            iframeDocument = DeviceFrame.getDocument();
+            iframeDocument = IframeHelper.getDocument();
             if (!iframeDocument) {
                 console.warn('⚠️ Cannot recreate live preview: iframe not initialized');
                 return false;

@@ -491,7 +491,7 @@ define([
             });
             
             // Detach iframe click listener
-            var $iframe = $('#breeze-device-frame');
+            var $iframe = $('#bte-iframe');
             if ($iframe.length) {
                 var iframe = $iframe[0];
                 var iframeDoc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
@@ -510,11 +510,11 @@ define([
 
         /**
          * Attach click listener to iframe preview to close popup
-         * Handles clicks inside .breeze-device-frame iframe
+         * Handles clicks inside #bte-iframe (admin iframe)
          */
         _attachIframeClickListener: function() {
             var self = this;
-            var $iframe = $('#breeze-device-frame');
+            var $iframe = $('#bte-iframe');
             
             if (!$iframe.length) {
                 return; // No iframe present

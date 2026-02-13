@@ -1,9 +1,9 @@
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/toolbar/device-frame',
+    'Swissup_BreezeThemeEditor/js/editor/util/iframe-helper',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
     'Swissup_BreezeThemeEditor/js/editor/panel/storage-helper'
-], function ($, DeviceFrame, getCss, StorageHelper) {
+], function ($, IframeHelper, getCss, StorageHelper) {
     'use strict';
 
     var $publishedStyle = null;
@@ -15,11 +15,11 @@ define([
     var themeId = null;
 
     /**
-     * Get current iframe document (always fresh from DeviceFrame)
+     * Get current iframe document (always fresh from IframeHelper)
      * @returns {Document|null}
      */
     function getIframeDocument() {
-        return DeviceFrame.getDocument();
+        return IframeHelper.getDocument();
     }
 
     /**
@@ -490,7 +490,7 @@ define([
         /**
          * Refresh iframe document reference after navigation
          * This must be called when iframe loads a new page
-         * NOTE: With DeviceFrame.getDocument() we always get fresh document,
+         * NOTE: With IframeHelper.getDocument() we always get fresh document,
          * so this method just updates cached jQuery references
          */
         refreshIframeDocument: function() {
