@@ -19,7 +19,8 @@ define([
     $.widget('swissup.breezeNavigation', {
         options: {
             items: [],
-            panelSelector: null
+            panelSelector: null,
+            panelWidgets: {} // Config for lazy-loaded panel widgets
         },
 
         /**
@@ -187,6 +188,9 @@ define([
                 return;
             }
 
+            // Initialize panel widget on first open (lazy loading)
+            this._initializePanel(itemId);
+
             var panelId = item.panelId || itemId + '-panel';
             var $panel = $('#' + panelId);
 
@@ -275,6 +279,45 @@ define([
             $('body').removeClass('bte-panel-active');
 
             console.log('🙈 All panels hidden');
+        },
+
+        /**
+         * Initialize panel widget on first open (lazy loading)
+         * @param {String} itemId - Navigation item ID (e.g., 'theme-editor')
+         * @return {Boolean} - True if initialized successfully
+         */
+        _initializePanel: function(itemId) {
+            var panelConfig = this.options.panelWidgets[itemId];
+
+            if (!panelConfig) {
+                console.warn('⚠️ No panel widget config for:', itemId);
+                return false;
+            }
+
+            var $panel = $(panelConfig.selector);
+
+            if (!$panel.length) {
+                console.error('❌ Panel element not found:', panelConfig.selector);
+                return false;
+            }
+
+            // Check if already initialized
+            if ($panel.data('panel-initialized')) {
+                console.log('ℹ️ Panel already initialized:', itemId);
+                return true;
+            }
+
+            try {
+                // Initialize widget
+                $panel[panelConfig.widget](panelConfig.config);
+                $panel.data('panel-initialized', true);
+
+                console.log('✅ Panel initialized:', itemId, '→', panelConfig.widget);
+                return true;
+            } catch (e) {
+                console.error('❌ Failed to initialize panel:', itemId, e);
+                return false;
+            }
         },
 
         /**

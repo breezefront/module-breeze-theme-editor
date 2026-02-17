@@ -91,29 +91,30 @@ define([
         if ($('#bte-navigation').length && config.components && config.components.navigation) {
             $('#bte-navigation').breezeNavigation({
                 items: config.components.navigation.items || [],
-                panelSelector: '#bte-panels'
+                panelSelector: '#bte-panels-container',
+                panelWidgets: {
+                    'theme-editor': {
+                        selector: '#theme-editor-panel',
+                        widget: 'themeSettingsEditor',
+                        config: {
+                            storeId: config.storeId,
+                            themeId: config.themeId,
+                            themeName: config.themeName || 'Theme'
+                        }
+                    }
+                }
             });
-            console.log('✅ Navigation initialized');
+            console.log('✅ Navigation initialized with lazy panel loading');
         }
         
-        // Initialize settings editor panel
-        if ($('#theme-editor-panel').length) {
-            // Store config globally for settings-editor to access
-            window.breezeThemeEditorConfig = {
-                storeId: config.storeId,
-                themeId: config.themeId,
-                themeName: config.themeName || 'Theme',
-                adminUrl: config.adminUrl || '/admin',
-                graphqlEndpoint: config.graphqlEndpoint
-            };
-            
-            $('#theme-editor-panel').breezeSettingsEditor({
-                storeId: config.storeId,
-                themeId: config.themeId,
-                themeName: config.themeName || 'Theme'
-            });
-            console.log('✅ Settings editor panel initialized');
-        }
+        // Store config globally for settings-editor to access (when initialized lazily)
+        window.breezeThemeEditorConfig = {
+            storeId: config.storeId,
+            themeId: config.themeId,
+            themeName: config.themeName || 'Theme',
+            adminUrl: config.adminUrl || '/admin',
+            graphqlEndpoint: config.graphqlEndpoint
+        };
         
         // Initialize device switcher widget
         if ($('#bte-device-switcher').length && config.components && config.components.deviceSwitcher) {

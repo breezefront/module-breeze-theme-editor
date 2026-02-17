@@ -37,7 +37,7 @@ define([
 ) {
     'use strict';
 
-    $.widget('swissup.breezeSettingsEditor', {
+    $.widget('swissup.themeSettingsEditor', {
         options: {
             title: 'Theme Editor',
             closeTitle: 'Close Panel',
@@ -925,5 +925,5 @@ define([
         }
     });
 
-    return $.swissup.breezeSettingsEditor;
+    return $.swissup.themeSettingsEditor;
 });

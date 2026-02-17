@@ -15,7 +15,7 @@ define([], function() {
             // Main toolbar elements
             IFRAME: '#bte-iframe',
             TOOLBAR: '#bte-toolbar',
-            PANELS: '#bte-panels',
+            PANELS: '#bte-panels-container',
             
             // Toolbar widgets
             ADMIN_LINK: '#bte-admin-link',
