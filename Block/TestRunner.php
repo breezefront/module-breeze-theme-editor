@@ -165,6 +165,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/navigation-widget-test',
             'Swissup_BreezeThemeEditor/js/test/tests/panel-events-test',
             'Swissup_BreezeThemeEditor/js/test/tests/panel-integration-test',
+            // Panel Close Integration Tests (5 tests)
+            'Swissup_BreezeThemeEditor/js/test/tests/panel-close-integration-test',
         ];
     }
 }

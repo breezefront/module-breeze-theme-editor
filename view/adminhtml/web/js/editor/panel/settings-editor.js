@@ -63,6 +63,10 @@ define([
                     .replace('%2', this.themeName);
             }
 
+            // Store reference to navigation widget for closing panel
+            // Supports both admin (#bte-navigation) and frontend (#toolbar-navigation)
+            this.$navigation = $('#bte-navigation, #toolbar-navigation');
+
             // Initialize storage helper
             if (this.storeId && this.themeId) {
                 StorageHelper.init(this.storeId, this.themeId);
@@ -542,11 +546,22 @@ define([
         },
 
         /**
-         * Close panel
+         * Close panel using navigation widget API
          */
         _close: function () {
             console.log('❌ Closing panel');
-            $('#toolbar-navigation .nav-item[data-id="theme-editor"]').click();
+            
+            // Get navigation widget instance
+            var navigationWidget = this.$navigation.data('swissupBreezeNavigation');
+            
+            if (navigationWidget) {
+                // Use widget API to deactivate (proper architecture)
+                navigationWidget.deactivate('theme-editor');
+                console.log('✅ Panel closed via navigation.deactivate()');
+            } else {
+                console.error('❌ Navigation widget not found - cannot close panel');
+                console.error('   Expected widget on:', this.$navigation.selector);
+            }
         },
 
         /**
