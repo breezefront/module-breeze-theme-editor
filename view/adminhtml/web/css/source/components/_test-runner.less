@@ -1,0 +1,164 @@
+//
+// Breeze Test Runner - Admin Panel
+// _____________________________________________
+
+.breeze-test-runner-admin {
+    position: fixed;
+    top: @bte-toolbar-height;
+    right: 0;
+    width: @test-runner-width;
+    max-height: ~"calc(100vh - @{bte-toolbar-height})";
+    overflow-y: auto;
+    background: @test-runner-bg;
+    border-left: 2px solid @test-runner-border;
+    box-shadow: @test-runner-shadow;
+    z-index: @test-runner-z-index;
+    font-family: @bte-toolbar-font-family;
+    font-size: 13px;
+
+    // Hidden state
+    &.hidden {
+        display: none;
+    }
+
+    // Header
+    .test-runner-header {
+        padding: 20px;
+        background: @test-runner-header-bg;
+        color: @test-runner-header-color;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+
+        h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        #test-summary {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+    }
+
+    // Test Results Container
+    .test-runner-results {
+        padding: 15px;
+        min-height: 300px;
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+
+            .icon {
+                font-size: 48px;
+            }
+
+            p {
+                margin: 10px 0 0 0;
+            }
+        }
+    }
+
+    // Footer Controls
+    .test-runner-footer {
+        padding: 15px;
+        background: @test-runner-footer-bg;
+        border-top: 1px solid @test-runner-footer-border;
+        position: sticky;
+        bottom: 0;
+    }
+
+    // Buttons
+    .test-runner-button {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid @test-runner-footer-border;
+        border-radius: @bte-toolbar-border-radius;
+        cursor: pointer;
+        font-size: 13px;
+        transition: @bte-toolbar-transition;
+        background: @test-runner-bg;
+        color: #666;
+
+        &:hover {
+            background: #f9f9f9;
+            border-color: #999;
+        }
+
+        // Primary button (Run All Tests)
+        &.primary {
+            padding: 12px;
+            background: @test-runner-button-bg;
+            color: @test-runner-header-color;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(245, 124, 0, 0.3);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
+
+        // Button spacing
+        & + & {
+            margin-top: 8px;
+        }
+    }
+
+    // Responsive - Tablet (приховуємо майже все)
+    .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__m) {
+        width: 60px;
+        
+        .test-runner-header,
+        .test-runner-results,
+        .test-runner-footer {
+            display: none;
+        }
+
+        &::before {
+            content: '🧪';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(90deg);
+            font-size: 24px;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+
+        &::after {
+            content: 'Not for small screens';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, calc(-50% + 40px)) rotate(90deg);
+            font-size: 10px;
+            color: #999;
+            white-space: nowrap;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+    }
+
+    // Responsive - Mobile (ще більше зменшуємо)
+    .media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__s) {
+        width: 40px;
+
+        &::before {
+            font-size: 20px;
+        }
+
+        &::after {
+            font-size: 9px;
+            transform: translate(-50%, calc(-50% + 30px)) rotate(90deg);
+        }
+    }
+}

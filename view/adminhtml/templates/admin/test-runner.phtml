@@ -4,94 +4,40 @@
  */
 ?>
 <?php if ($block->shouldRenderTests()): ?>
-<div id="breeze-test-runner-admin" style="
-    position: fixed;
-    top: 56px;
-    right: 0;
-    width: 450px;
-    max-height: calc(100vh - 56px);
-    overflow-y: auto;
-    background: #fff;
-    border-left: 2px solid #333;
-    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
-    z-index: 10000;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 13px;
-">
+<div id="breeze-test-runner-admin" class="breeze-test-runner-admin">
     <!-- Header -->
-    <div style="padding: 20px; background: linear-gradient(135deg, #f57c00 0%, #ff6f00 100%); color: #fff; position: sticky; top: 0; z-index: 1;">
-        <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600;">
+    <div class="test-runner-header">
+        <h3>
             🧪 Admin JS Tests
         </h3>
-        <div id="test-summary" style="font-size: 12px; opacity: 0.9;">
+        <div id="test-summary">
             ⏳ Loading tests...
         </div>
     </div>
     
     <!-- Test Results -->
-    <div id="test-results" style="padding: 15px; min-height: 300px;">
-        <div style="text-align: center; padding: 40px 20px; color: #999;">
-            <div style="font-size: 48px;">🧪</div>
-            <p style="margin: 10px 0 0 0;">Ready to run tests</p>
+    <div id="test-results" class="test-runner-results">
+        <div class="empty-state">
+            <div class="icon">🧪</div>
+            <p>Ready to run tests</p>
         </div>
     </div>
     
     <!-- Footer Controls -->
-    <div style="padding: 15px; background: #f5f5f5; border-top: 1px solid #ddd; position: sticky; bottom: 0;">
-        <button id="run-all-tests" style="
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #f57c00 0%, #ff6f00 100%);
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: transform 0.2s;
-        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+    <div class="test-runner-footer">
+        <button id="run-all-tests" class="test-runner-button primary">
             ▶ Run All Tests
         </button>
         
-        <button id="clear-tests" style="
-            width: 100%;
-            padding: 10px;
-            margin-top: 8px;
-            background: #fff;
-            color: #666;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-        ">
+        <button id="clear-tests" class="test-runner-button">
             🗑️ Clear Results
         </button>
         
-        <button id="copy-results" style="
-            width: 100%;
-            padding: 10px;
-            margin-top: 8px;
-            background: #fff;
-            color: #666;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-        ">
+        <button id="copy-results" class="test-runner-button">
             📋 Copy Results
         </button>
         
-        <button id="close-tests" style="
-            width: 100%;
-            padding: 10px;
-            margin-top: 8px;
-            background: #fff;
-            color: #666;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-        " onclick="document.getElementById('breeze-test-runner-admin').style.display='none'">
+        <button id="close-tests" class="test-runner-button" onclick="document.getElementById('breeze-test-runner-admin').classList.add('hidden')">
             ✖ Close
         </button>
     </div>
