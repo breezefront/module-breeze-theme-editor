@@ -227,6 +227,173 @@ define([
             isPanelReady: function() {
                 var $panel = this.$panel();
                 return $panel.length > 0 && $panel.is(':visible');
+            },
+            
+            /**
+             * Open admin panel (Phase 3 helper)
+             * 
+             * @param {String} itemId - Navigation item ID (default: 'theme-editor')
+             * @param {Function} callback - Callback(error)
+             */
+            openPanel: function(itemId, callback) {
+                itemId = itemId || 'theme-editor';
+                
+                var $navigation = $('#bte-navigation');
+                var widget = $navigation.data('swissupBreezeNavigation');
+                
+                if (!widget) {
+                    console.error('❌ Navigation widget not initialized');
+                    if (callback) callback(new Error('Navigation widget not initialized'));
+                    return;
+                }
+                
+                var $panel = $('#' + itemId + '-panel');
+                
+                if (!$panel.length) {
+                    console.error('❌ Panel element not found:', itemId + '-panel');
+                    if (callback) callback(new Error('Panel element not found: ' + itemId + '-panel'));
+                    return;
+                }
+                
+                // Check if already open
+                if ($panel.hasClass('active') && $panel.is(':visible')) {
+                    console.log('✅ Panel already open:', itemId);
+                    if (callback) callback(null);
+                    return;
+                }
+                
+                // Open panel
+                console.log('🔓 Opening panel:', itemId);
+                widget.setActive(itemId, true);
+                
+                // Wait for panel to open
+                this.waitFor(function() {
+                    return $panel.hasClass('active') && $panel.is(':visible');
+                }, 2000, function(err) {
+                    if (err) {
+                        console.error('❌ Failed to open panel:', err.message);
+                    } else {
+                        console.log('✅ Panel opened:', itemId);
+                    }
+                    if (callback) callback(err);
+                });
+            },
+            
+            /**
+             * Close admin panel (Phase 3 helper)
+             * 
+             * @param {String} itemId - Navigation item ID (default: 'theme-editor')
+             * @param {Function} callback - Callback(error)
+             */
+            closePanel: function(itemId, callback) {
+                itemId = itemId || 'theme-editor';
+                
+                var $navigation = $('#bte-navigation');
+                var widget = $navigation.data('swissupBreezeNavigation');
+                
+                if (!widget) {
+                    console.error('❌ Navigation widget not initialized');
+                    if (callback) callback(new Error('Navigation widget not initialized'));
+                    return;
+                }
+                
+                var $panel = $('#' + itemId + '-panel');
+                
+                if (!$panel.length) {
+                    console.error('❌ Panel element not found:', itemId + '-panel');
+                    if (callback) callback(new Error('Panel element not found'));
+                    return;
+                }
+                
+                console.log('🔒 Closing panel:', itemId);
+                widget.deactivate(itemId, true);
+                
+                // Wait for panel to close
+                this.waitFor(function() {
+                    return !$panel.hasClass('active') && !$panel.is(':visible');
+                }, 2000, function(err) {
+                    if (err) {
+                        console.error('❌ Failed to close panel:', err.message);
+                    } else {
+                        console.log('✅ Panel closed:', itemId);
+                    }
+                    if (callback) callback(err);
+                });
+            },
+            
+            /**
+             * Check if panel is open (Phase 3 helper)
+             * 
+             * @param {String} itemId - Navigation item ID (default: 'theme-editor')
+             * @return {Boolean}
+             */
+            isPanelOpen: function(itemId) {
+                itemId = itemId || 'theme-editor';
+                var $panel = $('#' + itemId + '-panel');
+                return $panel.length > 0 && $panel.hasClass('active') && $panel.is(':visible');
+            },
+            
+            /**
+             * Get CSS transition duration (Phase 3 helper)
+             * 
+             * @param {jQuery} $element - Element to check
+             * @param {String} property - CSS property (default: 'all')
+             * @return {Number} Duration in milliseconds
+             */
+            getTransitionDuration: function($element, property) {
+                property = property || 'all';
+                
+                if (!$element || !$element.length) {
+                    return 0;
+                }
+                
+                var duration = $element.css('transition-duration');
+                
+                if (!duration || duration === '0s') {
+                    return 0;
+                }
+                
+                // Parse "0.3s" → 300ms
+                if (duration.indexOf('ms') !== -1) {
+                    return parseInt(duration, 10);
+                } else if (duration.indexOf('s') !== -1) {
+                    return parseFloat(duration) * 1000;
+                }
+                
+                return 0;
+            },
+            
+            /**
+             * Wait for CSS transition to complete (Phase 3 helper)
+             * 
+             * @param {jQuery} $element - Element with transition
+             * @param {Function} callback - Callback(error)
+             * @param {Number} timeout - Timeout in ms (default: 1000)
+             */
+            waitForTransition: function($element, callback, timeout) {
+                timeout = timeout || 1000;
+                
+                if (!$element || !$element.length) {
+                    if (callback) callback(new Error('Element not found'));
+                    return;
+                }
+                
+                var transitionEnded = false;
+                
+                $element.one('transitionend', function() {
+                    if (!transitionEnded) {
+                        transitionEnded = true;
+                        if (callback) callback(null);
+                    }
+                });
+                
+                // Fallback timeout
+                setTimeout(function() {
+                    if (!transitionEnded) {
+                        transitionEnded = true;
+                        if (callback) callback(new Error('Transition timeout'));
+                    }
+                }, timeout);
             }
         };
     }

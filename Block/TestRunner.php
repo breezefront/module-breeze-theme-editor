@@ -160,6 +160,11 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/url-navigation-persistence-test',
             // Page Selector Sync Tests (10 tests)
             'Swissup_BreezeThemeEditor/js/test/tests/page-selector-sync-test',
+            // Phase 3: Navigation Panel Tests (20 tests)
+            'Swissup_BreezeThemeEditor/js/test/tests/panel-positioning-test',
+            'Swissup_BreezeThemeEditor/js/test/tests/navigation-widget-test',
+            'Swissup_BreezeThemeEditor/js/test/tests/panel-events-test',
+            'Swissup_BreezeThemeEditor/js/test/tests/panel-integration-test',
         ];
     }
 }

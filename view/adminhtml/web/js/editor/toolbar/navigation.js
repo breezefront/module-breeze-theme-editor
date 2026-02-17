@@ -191,7 +191,17 @@ define([
             var $panel = $('#' + panelId);
 
             if ($panel.length) {
-                $panel.addClass('active').show();
+                // Step 1: Show panel (display: block) - makes it visible but off-screen
+                $panel.show();
+                
+                // Step 2: Trigger reflow to ensure display:block is applied before transform
+                $panel[0].offsetHeight; // Force reflow
+                
+                // Step 3: Add active class to trigger transform animation (slide in from LEFT)
+                setTimeout(function() {
+                    $panel.addClass('active');
+                }, 10);
+                
                 console.log('👁️ Panel shown:', panelId);
 
                 // Додати клас до body для зсуву контенту
@@ -227,8 +237,16 @@ define([
             var $panel = $('#' + panelId);
 
             if ($panel.length) {
-                $panel.removeClass('active').hide();
+                var self = this;
+                
+                // Step 1: Remove active class to trigger transform animation (slide out to LEFT)
+                $panel.removeClass('active');
                 console.log('🙈 Panel hidden:', panelId);
+
+                // Step 2: Wait for animation to complete (300ms), then hide panel (display: none)
+                setTimeout(function() {
+                    $panel.hide();
+                }, 300); // Match CSS transition duration
 
                 // Видалити клас з body (якщо немає інших активних панелей)
                 if ($(this.options.panelSelector).find('.bte-panel.active').length === 0) {
