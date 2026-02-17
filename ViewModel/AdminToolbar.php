@@ -352,36 +352,22 @@ class AdminToolbar extends Toolbar
     }
 
     /**
-     * Get admin user email
-     *
-     * @return string|null
-     */
-    public function getUserEmail()
-    {
-        $user = $this->authSession->getUser();
-        return $user ? $user->getEmail() : null;
-    }
-
-    /**
-     * Get admin dashboard URL
+     * Get admin URL
      * 
-     * Override parent to generate correct admin dashboard URL
-     * without double "admin/" prefix and without security key
-     *
+     * Uses UrlBuilder to generate correct admin URL
+     * that respects custom backend frontName from app/etc/env.php
+     * 
      * @return string
      */
     public function getAdminUrl()
     {
         try {
-            $baseUrl = $this->storeManager->getStore()->getBaseUrl(
-                \Magento\Framework\UrlInterface::URL_TYPE_WEB
-            );
-            
-            // Return admin dashboard URL (without security key)
-            return rtrim($baseUrl, '/') . '/admin/dashboard/';
+            // Generate admin dashboard URL using UrlBuilder
+            // This automatically uses correct backend frontName from config
+            return $this->urlBuilder->getUrl('admin/dashboard/index', ['_nosid' => true]);
         } catch (\Exception $e) {
-            // Fallback to relative URL
-            return '/admin/dashboard/';
+            // Fallback to parent's implementation
+            return parent::getAdminUrl();
         }
     }
 
