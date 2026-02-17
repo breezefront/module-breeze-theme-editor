@@ -2,9 +2,10 @@
 
 namespace Swissup\BreezeThemeEditor\Controller\Adminhtml\Editor;
 
+use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\Controller\ResultInterface;
 
-class Index extends AbstractEditor
+class Index extends AbstractEditor implements HttpGetActionInterface
 {
     /**
      * Editor index page - main admin interface
