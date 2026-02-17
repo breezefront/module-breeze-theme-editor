@@ -31,7 +31,34 @@ $iframeUrl = $block->getUrl('breeze_editor/editor/iframe', [
     <div id="bte-toolbar" class="bte-toolbar"></div>
     
     <!-- Panels container - for side panels (theme editor, etc) -->
-    <div id="bte-panels" class="bte-panels"></div>
+    <div id="bte-panels" class="bte-panels">
+        <!-- Theme Editor Panel -->
+        <div id="theme-editor-panel" class="bte-panel" style="display: none;">
+            <div class="bte-panel-header">
+                <h2 class="bte-panel-title">Theme Editor</h2>
+                <button class="bte-panel-close" data-panel="theme-editor-panel" title="Close Panel">
+                    <span>×</span>
+                </button>
+            </div>
+            <div class="bte-panel-content">
+                <!-- Settings Editor Widget Container -->
+                <div id="bte-settings-editor-widget"></div>
+            </div>
+        </div>
+
+        <!-- Content Builder Panel (future feature) -->
+        <div id="content-builder-panel" class="bte-panel" style="display: none;">
+            <div class="bte-panel-header">
+                <h2 class="bte-panel-title">Content Builder</h2>
+                <button class="bte-panel-close" data-panel="content-builder-panel" title="Close Panel">
+                    <span>×</span>
+                </button>
+            </div>
+            <div class="bte-panel-content">
+                <p class="bte-placeholder">Content Builder coming soon...</p>
+            </div>
+        </div>
+    </div>
     
     <!-- Iframe container -->
     <div id="bte-preview" class="bte-preview">

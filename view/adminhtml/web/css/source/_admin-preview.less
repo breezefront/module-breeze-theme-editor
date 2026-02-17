@@ -30,20 +30,62 @@
     transition: width 0.3s ease;
 }
 
-// Panels
+// Panels container (right sidebar)
 .bte-panels {
     position: fixed;
-    top: 60px;
-    right: -400px;
-    width: 400px;
+    top: 60px; // Below toolbar
+    right: 0;
+    width: 360px;
     height: ~"calc(100vh - 60px)";
-    background: #fff;
-    border-left: 1px solid #ddd;
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
-    transition: right 0.3s;
     z-index: 1000;
+    pointer-events: none; // Allow clicks to pass through when no panel is active
 
-    &.active {
-        right: 0;
+    // Individual panels
+    .bte-panel {
+        position: absolute;
+        top: 0;
+        right: -360px; // Hidden by default
+        width: 100%;
+        height: 100%;
+        background: @bte-toolbar-bg;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+        transition: right 0.3s ease;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        pointer-events: auto; // Enable clicks on panels
+
+        &.active {
+            right: 0; // Slide in from right
+        }
+    }
+}
+
+// Body class when panel is active (shifts iframe)
+body.bte-panel-active {
+    #bte-iframe {
+        width: ~"calc(100% - 360px)";
+    }
+}
+
+// Responsive
+@media (max-width: @screen__m) {
+    .bte-panels {
+        width: 320px;
+
+        .bte-panel {
+            right: -320px;
+
+            &.active {
+                right: 0;
+            }
+        }
+    }
+
+    body.bte-panel-active {
+        #bte-iframe {
+            width: ~"calc(100% - 320px)";
+        }
     }
 }
