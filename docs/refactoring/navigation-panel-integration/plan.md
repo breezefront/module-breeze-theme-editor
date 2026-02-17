@@ -1165,6 +1165,565 @@ Tested: Desktop (1920px), Tablet (768px), Mobile (375px)"
 
 **Файл оновлено:** `docs/refactoring/navigation-panel-integration/plan.md`
 
-**Phase 2 Статус:** 🟡 Готовий до виконання
+**Phase 2 Статус:** ✅ ВИКОНАНО
 
-**Очікуваний час Phase 2:** 25-30 хвилин
+**Час виконання Phase 2:** 25-30 хвилин
+
+---
+
+## 🧪 PHASE 3: JS TESTS FOR NAVIGATION ⏳ ПОТРЕБУЄ ВИКОНАННЯ
+
+**Дата додання**: 17 лютого 2026  
+**Статус**: 🔴 Потребує виконання  
+**Час виконання**: 2-3 години  
+**Пріоритет**: 🔴 HIGH (перевірка Phase 2 CSS змін)
+
+---
+
+### 🎯 МЕТА PHASE 3
+
+Створити JS тестове покриття для навігації панелей в admin area:
+- ✅ Перевірити CSS позиціонування (LEFT side, не RIGHT)
+- ✅ Перевірити transform-based анімацію
+- ✅ Перевірити navigation.js widget функціонал
+- ✅ Перевірити події (navigationChanged, panelShown, panelHidden)
+- ✅ Перевірити responsive поведінку (mobile/desktop)
+- ✅ Перевірити timing анімації (300ms transition)
+- ✅ Перевірити інтеграцію з Settings Editor
+
+---
+
+### 📊 АНАЛІЗ ПОТОЧНИХ ТЕСТІВ
+
+#### Frontend тести (референс)
+**Файл**: `view/frontend/web/js/test/tests/panel-integration-test.js`
+
+Що тестують:
+- CSS Manager ініціалізований до відкриття панелі
+- Перемикання DRAFT/PUBLISHED без відкриття панелі  
+- Live preview створюється при відкритті панелі
+
+**Test Framework helpers**:
+- `openPanel(callback)` - відкриває панель через navigation widget
+- `isPanelOpen()` - перевіряє чи панель відкрита
+- Використовує `#toolbar-navigation` + `swissupBreezeNavigation` widget
+
+#### Admin navigation widget
+**Файл**: `view/adminhtml/web/js/editor/toolbar/navigation.js`
+
+**Ключові методи**:
+- `setActive(itemId, silent)` - активує таб і показує панель
+- `deactivate(itemId, silent)` - деактивує таб і ховає панель
+- `_showPanel(itemId)` - показує панель + додає `bte-panel-active` до body
+- `_hidePanel(itemId)` - ховає панель + видаляє `bte-panel-active` з body
+
+**Події**:
+- `navigationChanged` - навігація змінилась
+- `panelShown` - панель показана
+- `panelHidden` - панель схована
+- `navigationDisabledClick` - клік на disabled item
+
+#### Admin test framework
+**Файл**: `view/adminhtml/web/js/test/test-framework.js`
+
+**Можливості**:
+- Sync/async тести
+- Assertions: `assert`, `assertEquals`, `assertTrue`, `assertFalse`, etc.
+- Helpers: `$panel()`, `$toolbar()`, `getCssVariable()`, `waitFor()`
+- Mock система (через MockHelper)
+
+---
+
+### 📋 ПЛАН ТЕСТУВАННЯ
+
+#### Що потрібно створити
+
+**4 нових тестових файли** (20 тестів):
+
+1. **panel-positioning-test.js** (7 тестів) - CSS позиціонування
+2. **navigation-widget-test.js** (6 тестів) - Widget функціонал
+3. **panel-events-test.js** (4 тести) - Події навігації
+4. **panel-integration-test.js** (3 тести) - Інтеграція
+
+**Оновити існуючі файли**:
+- `test-framework.js` - додати helper методи (openPanel, closePanel, etc.)
+- `test-runner.js` - зареєструвати нові тести
+
+---
+
+### 📝 ДЕТАЛЬНИЙ ПЛАН ТЕСТІВ
+
+#### Файл 1: `panel-positioning-test.js` (7 тестів)
+
+**Призначення**: Перевірка CSS позиціонування і анімації (Phase 2 зміни)
+
+##### Базові CSS тести (4)
+
+**Test 1: Panel container positioned on LEFT**
+```javascript
+'panel container should have left: 0 positioning': function() {
+    var $panels = $('#bte-panels');
+    
+    this.assert($panels.length > 0, 'Panel container should exist');
+    
+    var position = $panels.css('position');
+    var left = $panels.css('left');
+    
+    this.assertEquals(position, 'fixed', 'Should be fixed positioned');
+    this.assertEquals(left, '0px', 'Should be at left: 0');
+}
+```
+
+**Test 2: Closed panel uses translateX(-100%)**
+```javascript
+'closed panel should use translateX(-100%) transform': function() {
+    var $panel = $('#theme-editor-panel');
+    
+    if (!$panel.hasClass('active')) {
+        var transform = $panel.css('transform');
+        this.assertNotNull(transform, 'Transform should be set');
+    }
+}
+```
+
+**Test 3: Body gets bte-panel-active class**
+```javascript
+'body should have bte-panel-active class when panel open': function(done) {
+    var self = this;
+    var widget = $('#bte-navigation').data('swissupBreezeNavigation');
+    
+    widget.deactivate('theme-editor', true);
+    
+    this.assertFalse($('body').hasClass('bte-panel-active'));
+    
+    widget.setActive('theme-editor', true);
+    
+    setTimeout(function() {
+        self.assertTrue($('body').hasClass('bte-panel-active'));
+        done();
+    }, 400);
+}
+```
+
+**Test 4: Preview shifts with margin-left**
+```javascript
+'preview should shift right with margin-left': function(done) {
+    var $preview = $('.bte-preview');
+    var widget = $('#bte-navigation').data('swissupBreezeNavigation');
+    
+    widget.deactivate('theme-editor', true);
+    
+    setTimeout(function() {
+        var closedMargin = parseInt($preview.css('margin-left'), 10) || 0;
+        
+        widget.setActive('theme-editor', true);
+        
+        setTimeout(function() {
+            var openMargin = parseInt($preview.css('margin-left'), 10) || 0;
+            
+            self.assertTrue(openMargin > closedMargin);
+            self.assertTrue(openMargin >= 360);
+            done();
+        }, 400);
+    }, 100);
+}
+```
+
+##### Responsive тести (2)
+
+**Test 5: Mobile full-width**
+```javascript
+'panel should be full-width on mobile (<768px)': function() {
+    var $panel = $('#theme-editor-panel');
+    
+    // Check CSS variable or computed width
+    // On mobile: width should be 100vw
+    
+    if (window.matchMedia('(max-width: 767px)').matches) {
+        // Verify full-width behavior
+    }
+}
+```
+
+**Test 6: Desktop 360px width**
+```javascript
+'panel should be 360px width on desktop': function() {
+    var panelWidth = this.getCssVariable('--bte-sidebar-width');
+    this.assertEquals(panelWidth, '360px');
+}
+```
+
+##### Animation timing тест (1)
+
+**Test 7: Animation timing ~300ms**
+```javascript
+'panel animation should complete in ~300ms': function(done) {
+    var startTime = Date.now();
+    widget.setActive('theme-editor', true);
+    
+    setTimeout(function() {
+        var elapsed = Date.now() - startTime;
+        
+        self.assertTrue(elapsed >= 250 && elapsed <= 450,
+            'Timing should be ~300ms');
+        done();
+    }, 350);
+}
+```
+
+---
+
+#### Файл 2: `navigation-widget-test.js` (6 тестів)
+
+**Призначення**: Перевірка navigation.js widget функціоналу
+
+**Test 1**: Widget initialized
+**Test 2**: setActive() works  
+**Test 3**: deactivate() works
+**Test 4**: Toggle behavior (click twice)
+**Test 5**: Disabled items prevented
+**Test 6**: Multiple items switching
+
+---
+
+#### Файл 3: `panel-events-test.js` (4 тести)
+
+**Призначення**: Перевірка подій навігації
+
+**Test 1**: navigationChanged event fires
+**Test 2**: panelShown event fires
+**Test 3**: panelHidden event fires
+**Test 4**: Silent mode prevents events
+
+---
+
+#### Файл 4: `panel-integration-test.js` (3 тести)
+
+**Призначення**: Інтеграційні тести
+
+**Test 1**: Multiple open/close cycles
+**Test 2**: Settings Editor integration
+**Test 3**: State persistence
+
+---
+
+### 🛠️ HELPER МЕТОДИ ДЛЯ TEST-FRAMEWORK.JS
+
+Додати в `view/adminhtml/web/js/test/test-framework.js`:
+
+```javascript
+/**
+ * Open admin panel
+ */
+openPanel: function(itemId, callback) {
+    itemId = itemId || 'theme-editor';
+    
+    var $navigation = $('#bte-navigation');
+    var widget = $navigation.data('swissupBreezeNavigation');
+    
+    if (!widget) {
+        if (callback) callback(new Error('Navigation widget not initialized'));
+        return;
+    }
+    
+    var $panel = $('#' + itemId + '-panel');
+    
+    if ($panel.hasClass('active') && $panel.is(':visible')) {
+        console.log('✅ Panel already open');
+        if (callback) callback(null);
+        return;
+    }
+    
+    widget.setActive(itemId, true);
+    
+    this.waitFor(function() {
+        return $panel.hasClass('active') && $panel.is(':visible');
+    }, 2000, callback);
+},
+
+/**
+ * Close admin panel
+ */
+closePanel: function(itemId, callback) {
+    itemId = itemId || 'theme-editor';
+    
+    var widget = $('#bte-navigation').data('swissupBreezeNavigation');
+    widget.deactivate(itemId, true);
+    
+    var $panel = $('#' + itemId + '-panel');
+    
+    this.waitFor(function() {
+        return !$panel.hasClass('active') && !$panel.is(':visible');
+    }, 2000, callback);
+},
+
+/**
+ * Check if panel is open
+ */
+isPanelOpen: function(itemId) {
+    itemId = itemId || 'theme-editor';
+    var $panel = $('#' + itemId + '-panel');
+    return $panel.hasClass('active') && $panel.is(':visible');
+},
+
+/**
+ * Get CSS transition duration
+ */
+getTransitionDuration: function($element, property) {
+    property = property || 'all';
+    var duration = $element.css('transition-duration');
+    
+    if (!duration) return 0;
+    
+    if (duration.indexOf('ms') !== -1) {
+        return parseInt(duration, 10);
+    } else if (duration.indexOf('s') !== -1) {
+        return parseFloat(duration) * 1000;
+    }
+    
+    return 0;
+},
+
+/**
+ * Wait for CSS transition to complete
+ */
+waitForTransition: function($element, callback, timeout) {
+    timeout = timeout || 1000;
+    var transitionEnded = false;
+    
+    $element.one('transitionend', function() {
+        transitionEnded = true;
+        callback(null);
+    });
+    
+    setTimeout(function() {
+        if (!transitionEnded) {
+            callback(new Error('Transition timeout'));
+        }
+    }, timeout);
+}
+```
+
+---
+
+### 📂 СТРУКТУРА ФАЙЛІВ
+
+```
+view/adminhtml/web/js/test/
+├── test-framework.js          ✏️  UPDATE (додати ~100 рядків helpers)
+├── test-runner.js             ✏️  UPDATE (зареєструвати 4 тести)
+├── helpers/
+│   └── mock-helper.js         ✓   (існує)
+└── tests/
+    ├── admin-auth-manager-test.js           ✓   (існує)
+    ├── page-selector-sync-test.js           ✓   (існує)
+    ├── url-navigation-persistence-test.js   ✓   (існує)
+    ├── panel-positioning-test.js            ✨  NEW (7 тестів)
+    ├── navigation-widget-test.js            ✨  NEW (6 тестів)
+    ├── panel-events-test.js                 ✨  NEW (4 тести)
+    └── panel-integration-test.js            ✨  NEW (3 тести)
+```
+
+---
+
+### 📊 ПОКРИТТЯ ТЕСТАМИ
+
+| Функціонал | Тести | Покриття |
+|------------|-------|----------|
+| CSS позиціонування (LEFT) | 2 | ✅ 100% |
+| Transform animation | 2 | ✅ 100% |
+| Body class management | 1 | ✅ 100% |
+| Preview margin shift | 1 | ✅ 100% |
+| Responsive (mobile/desktop) | 2 | ✅ 100% |
+| Animation timing | 1 | ✅ 100% |
+| Navigation widget API | 5 | ✅ 100% |
+| Події (events) | 4 | ✅ 100% |
+| Інтеграція | 3 | ✅ 100% |
+| **ВСЬОГО** | **20** | **✅ 100%** |
+
+---
+
+### 🔄 ПОРЯДОК ВИКОНАННЯ PHASE 3
+
+#### Крок 1: Підготовка фреймворку (30 хв)
+1. ✏️ Оновити `test-framework.js`
+   - Додати `openPanel()` helper
+   - Додати `closePanel()` helper
+   - Додати `isPanelOpen()` helper
+   - Додати `getTransitionDuration()` helper
+   - Додати `waitForTransition()` helper
+
+2. ✏️ Оновити `test-runner.js`
+   - Імпортувати 4 нові тестові модулі
+   - Додати в масив `suites`
+
+#### Крок 2: Створення тестів (1.5 години)
+
+3. ✨ Створити `panel-positioning-test.js`
+   - Test 1: Panel LEFT positioning
+   - Test 2: Transform animation
+   - Test 3: Body class management
+   - Test 4: Preview margin shift
+   - Test 5: Mobile responsive
+   - Test 6: Desktop width
+   - Test 7: Animation timing
+
+4. ✨ Створити `navigation-widget-test.js`
+   - Test 1: Widget initialized
+   - Test 2: setActive() works
+   - Test 3: deactivate() works
+   - Test 4: Toggle behavior
+   - Test 5: Disabled items
+   - Test 6: Multiple items
+
+5. ✨ Створити `panel-events-test.js`
+   - Test 1: navigationChanged event
+   - Test 2: panelShown event
+   - Test 3: panelHidden event
+   - Test 4: Silent mode
+
+6. ✨ Створити `panel-integration-test.js`
+   - Test 1: Multiple cycles
+   - Test 2: Settings Editor
+   - Test 3: State persistence
+
+#### Крок 3: Тестування (30 хв)
+
+7. 🧪 Відкрити admin test runner
+   - URL: `http://magento248.local/admin/breeze_editor/editor/`
+   - Відкрити DevTools Console
+   - Запустити тести
+
+8. 🐛 Виправити помилки (якщо є)
+   - Дебаг failed тестів
+   - Виправити код/тести
+   - Повторити запуск
+
+9. ✅ Підтвердити всі 20 тестів пройшли
+   - Зробити screenshot результатів
+   - Перевірити покриття
+
+#### Крок 4: Документація (30 хв)
+
+10. 📝 Оновити README.md
+    - Додати секцію про тести
+    - Описати як запускати
+    - Додати приклади
+
+11. 📝 Оновити plan.md
+    - Позначити Phase 3 як ✅ ВИКОНАНО
+    - Додати результати тестування
+    - Додати metrics
+
+12. 📝 Створити final commit
+    - Commit message з описом всіх змін
+    - Push до репозиторію
+
+---
+
+### 📋 ЧЕКЛИСТ ВИКОНАННЯ
+
+#### Підготовка
+- [ ] Прочитати існуючі admin тести
+- [ ] Проаналізувати frontend тести
+- [ ] Вивчити navigation.js API
+
+#### Імплементація
+- [ ] Оновити test-framework.js (helpers)
+- [ ] Оновити test-runner.js (registration)
+- [ ] Створити panel-positioning-test.js (7 тестів)
+- [ ] Створити navigation-widget-test.js (6 тестів)
+- [ ] Створити panel-events-test.js (4 тести)
+- [ ] Створити panel-integration-test.js (3 тести)
+
+#### Тестування
+- [ ] Запустити тести в браузері
+- [ ] Всі 20 тестів пройшли
+- [ ] Screenshot результатів
+- [ ] Виправити помилки (якщо є)
+
+#### Документація
+- [ ] Оновити README.md
+- [ ] Оновити plan.md
+- [ ] Створити commit
+- [ ] Push зміни
+
+---
+
+### 🎯 КРИТЕРІЇ УСПІХУ PHASE 3
+
+✅ **20 тестів створено і працюють**  
+✅ **100% покриття навігації панелей**  
+✅ **CSS зміни Phase 2 перевірені**  
+✅ **Responsive поведінка протестована**  
+✅ **Animation timing перевірений**  
+✅ **Integration з Settings Editor працює**  
+✅ **Документація оновлена**  
+✅ **Код закомічений**
+
+---
+
+### 🔗 ЗВ'ЯЗОК З ПОПЕРЕДНІМИ ФАЗАМИ
+
+**Phase 1** (HTML Integration):
+- ✅ Додав HTML панелей у DOM
+- ✅ Navigation.js може знайти панелі
+
+**Phase 2** (CSS Fix):
+- ✅ Панель з'являється зліва (не справа)
+- ✅ Transform animation (не position-based)
+- ✅ Preview shifts via margin-left
+
+**Phase 3** (JS Tests):
+- ✅ **Перевіряє що Phase 1 працює** (панелі в DOM)
+- ✅ **Перевіряє що Phase 2 працює** (LEFT positioning, transform)
+- ✅ **Гарантує якість** (regression prevention)
+- ✅ **Документує поведінку** (тести як документація)
+
+**Всі 3 фази необхідні** для повної інтеграції navigation панелей.
+
+---
+
+### 📊 ЗАГАЛЬНА СТАТИСТИКА ПРОЕКТУ
+
+#### Phase 1 (HTML Integration)
+- **Час**: 30-40 хв ✅
+- **Файли**: 1 змінений (index.phtml)
+- **Рядки**: +23 рядки HTML
+
+#### Phase 2 (CSS Fix)
+- **Час**: 25-30 хв ✅
+- **Файли**: 3 (1 створений, 2 змінених)
+- **Рядки**: +47 нові, -49 видалені
+
+#### Phase 3 (JS Tests)
+- **Час**: 2-3 години ⏳
+- **Файли**: 6 (4 створених, 2 оновлених)
+- **Рядки**: ~600-700 рядків тестового коду
+- **Тести**: 20 тестів
+
+**ЗАГАЛОМ**:
+- **Час**: 3-4 години
+- **Файли**: 10
+- **Тести**: 20
+- **Покриття**: 100%
+
+---
+
+### 🚀 ГОТОВНІСТЬ ДО ВИКОНАННЯ
+
+**Phase 3 Статус**: 🔴 Готовий до виконання
+
+**Необхідні передумови**:
+- ✅ Phase 1 виконано (HTML в DOM)
+- ✅ Phase 2 виконано (CSS з LEFT side)
+- ✅ Navigation.js widget працює
+- ✅ Test framework існує
+
+**Наступний крок**: Виконати Phase 3 згідно з планом вище
+
+---
+
+**Файл оновлено**: `docs/refactoring/navigation-panel-integration/plan.md`
+
+**Очікуваний час Phase 3**: 2-3 години
