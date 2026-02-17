@@ -290,6 +290,42 @@ define([
             this.currentPageLabel = this._findPageLabel('cms_index_index');
             this._render();
             console.log('✅ Page selector reset to home');
+        },
+
+        /**
+         * Public API: Update current page type without navigation
+         * Used by iframe URL sync to update dropdown when user navigates within iframe
+         * 
+         * This method updates the UI only - it does NOT reload the iframe.
+         * It's called automatically when user clicks links inside iframe and page type changes.
+         * 
+         * @param {string} pageType - New page type (e.g. 'catalog_product_view')
+         * @returns {boolean} - Success status
+         */
+        updateCurrentPageType: function(pageType) {
+            if (!this._isValidPageId(pageType)) {
+                console.warn('⚠️ Page Selector: Invalid page type:', pageType);
+                return false;
+            }
+            
+            // Check if already on this page type
+            if (this.options.currentPageId === pageType) {
+                console.log('ℹ️ Page Selector: Already on page type:', pageType);
+                return true;
+            }
+            
+            // Update internal state
+            this.options.currentPageId = pageType;
+            this.currentPageLabel = this._findPageLabel(pageType);
+            
+            // Re-render dropdown to show new selection
+            this._render();
+            
+            // Save to localStorage
+            StorageHelper.setCurrentPageId(pageType);
+            
+            console.log('✅ Page Selector: Updated to', pageType, '(' + this.currentPageLabel + ')');
+            return true;
         }
     });
 

@@ -157,7 +157,9 @@ class TestRunner extends Template
         return [
             // Admin-specific tests
             'Swissup_BreezeThemeEditor/js/test/tests/admin-auth-manager-test',
-            // Add more admin tests here as they are created
+            'Swissup_BreezeThemeEditor/js/test/tests/url-navigation-persistence-test',
+            // Page Selector Sync Tests (10 tests)
+            'Swissup_BreezeThemeEditor/js/test/tests/page-selector-sync-test',
         ];
     }
 }

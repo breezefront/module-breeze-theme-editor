@@ -346,6 +346,28 @@ define([
                 // No action needed - css-manager already switched CSS in publication-selector
             });
             
+            // Update page-selector when iframe navigates to different page type
+            // Triggered by iframe-helper.js when body class changes
+            $(document).on('bte:pageTypeChanged', function(e, data) {
+                console.log('🔄 Page type changed - updating page selector');
+                console.log('   URL:', data.url);
+                console.log('   Page Type:', data.pageType);
+                
+                // Update page-selector widget
+                var $pageSelector = $('#bte-page-selector');
+                if ($pageSelector.length && $pageSelector.data('swissupBreezePageSelector')) {
+                    var success = $pageSelector.breezePageSelector('updateCurrentPageType', data.pageType);
+                    
+                    if (success) {
+                        console.log('✅ Page selector updated successfully');
+                    } else {
+                        console.warn('⚠️ Failed to update page selector');
+                    }
+                } else {
+                    console.warn('⚠️ Page selector widget not found or not initialized');
+                }
+            });
+            
             console.log('✅ Global events bound');
         }
         

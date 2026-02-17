@@ -197,8 +197,75 @@ define([
         },
 
         /**
+         * Detect page type from iframe body CSS classes
+         * 
+         * Reads body classes from iframe and extracts Magento's full action name.
+         * Body classes use format: module-controller-action (dashes)
+         * Page types use format: module_controller_action (underscores)
+         * 
+         * Examples:
+         * - <body class="catalog-category-view"> → "catalog_category_view"
+         * - <body class="cms-index-index"> → "cms_index_index"
+         * - <body class="checkout-cart-index"> → "checkout_cart_index"
+         * 
+         * @returns {String|null} - Page type (action name) or null if not detected
+         */
+        detectPageTypeFromBody: function() {
+            try {
+                var doc = this.getDocument();
+                if (!doc || !doc.body) {
+                    console.warn('⚠️ Iframe Helper: Cannot detect page type - iframe body not accessible');
+                    return null;
+                }
+                
+                var bodyClasses = doc.body.className;
+                if (!bodyClasses) {
+                    console.warn('⚠️ Iframe Helper: Cannot detect page type - body has no classes');
+                    return null;
+                }
+                
+                // Known page type patterns (from PageUrlProvider.php)
+                // Order matters: check specific patterns before generic ones
+                var pagePatterns = [
+                    'checkout-cart-index',        // Shopping cart
+                    'checkout-index-index',       // Checkout
+                    'customer-account-login',     // Login page
+                    'customer-account-index',     // My Account
+                    'catalog-category-view',      // Category page
+                    'catalog-product-view',       // Product page
+                    'catalogsearch-result-index', // Search results
+                    'cms-index-index',            // Home page
+                    'cms-page-view'               // CMS page
+                ];
+                
+                // Find matching pattern in body classes
+                for (var i = 0; i < pagePatterns.length; i++) {
+                    var pattern = pagePatterns[i];
+                    if (bodyClasses.indexOf(pattern) !== -1) {
+                        // Convert dashes to underscores for page type
+                        var pageType = pattern.replace(/-/g, '_');
+                        console.log('✅ Iframe Helper: Detected page type from body class:', pattern, '→', pageType);
+                        return pageType;
+                    }
+                }
+                
+                console.warn('⚠️ Iframe Helper: No known page type found in body classes');
+                return null;
+                
+            } catch (e) {
+                console.error('❌ Iframe Helper: Failed to detect page type from body:', e.message);
+                return null;
+            }
+        },
+
+        /**
          * Start URL synchronization (both localStorage and parent URL)
-         * Checks every 500ms for URL changes and syncs automatically
+         * Also detects page type from body classes and updates page-selector
+         * 
+         * Checks every 500ms for:
+         * - URL changes → saves to localStorage + syncs to parent URL
+         * - Page type changes → triggers bte:pageTypeChanged event
+         * 
          * Call this once during toolbar initialization
          * 
          * @returns {Number} - Interval ID (can be used to stop with clearInterval)
@@ -206,6 +273,7 @@ define([
         startUrlSync: function() {
             var self = this;
             var lastUrl = '';
+            var lastPageType = '';
             
             var intervalId = setInterval(function() {
                 var currentUrl = self.getCurrentUrl();
@@ -213,11 +281,30 @@ define([
                 if (currentUrl && currentUrl !== lastUrl) {
                     lastUrl = currentUrl;
                     
-                    // Save to localStorage
+                    // Save URL to localStorage
                     self.saveCurrentUrl();
                     
-                    // Sync to parent URL
+                    // Sync URL to parent window
                     self.syncUrlToParent();
+                    
+                    // Detect page type from body classes
+                    var pageType = self.detectPageTypeFromBody();
+                    
+                    // Only update if page type changed and is valid
+                    if (pageType && pageType !== lastPageType) {
+                        lastPageType = pageType;
+                        
+                        // Save page type to localStorage
+                        StorageHelper.setCurrentPageId(pageType);
+                        
+                        // Trigger event for page-selector to update
+                        $(document).trigger('bte:pageTypeChanged', {
+                            url: self.extractPath(currentUrl),
+                            pageType: pageType
+                        });
+                        
+                        console.log('🔄 Iframe Helper: Page type changed to:', pageType);
+                    }
                 }
             }, 500);
             
