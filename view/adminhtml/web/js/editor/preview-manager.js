@@ -129,7 +129,7 @@ define([
                 var doc = iframe.contentDocument || iframe.contentWindow.document;
                 
                 if (doc) {
-                    var existingStyle = doc.getElementById('bte-draft-css');
+                    var existingStyle = doc.getElementById('bte-theme-css-variables-draft');
                     if (existingStyle) {
                         existingStyle.remove();
                         console.log('✅ Draft CSS removed from preview');

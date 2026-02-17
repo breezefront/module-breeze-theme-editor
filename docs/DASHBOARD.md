@@ -47,15 +47,17 @@
 
 ### 🔧 2. CSS Manager Refactor
 
-**Статус:** 🟡 Готово до виконання  
-**Час:** 90-120 хвилин  
+**Статус:** ✅ ЗАВЕРШЕНО (17.02.2026)  
+**Час витрачено:** 15 хвилин (замість 90-120 хв - більшість було вже зроблено)  
 **Документація:** [refactoring/css-manager/plan.md](refactoring/css-manager/plan.md)
 
-**Проблема:**
-- Admin використовує `preview-frame`, потрібно `bte-iframe`
-- Style tag IDs не співпадають з frontend версією
-
-**План:** 6 конкретних змін з номерами рядків
+**Що зроблено:**
+- ✅ Виправлено ID inconsistency в preview-manager.js (line 132)
+- ✅ Підтверджено: всі інші зміни вже були виконані раніше
+- ✅ PHP template не рендерить draft CSS
+- ✅ iframe ID = `bte-iframe`
+- ✅ ID схема консистентна: `bte-theme-css-variables`, `bte-theme-css-variables-draft`, `bte-publication-css-{id}`
+- ✅ CSS Manager з retry логікою та правильним switching
 
 ---
 
@@ -79,6 +81,7 @@
 
 | Проект | Дата | Результат | Документація |
 |--------|------|-----------|--------------|
+| **CSS Manager** | 17.02.2026 | Консистентні ID, dynamic draft CSS, retry logic | [refactoring/css-manager/plan.md](refactoring/css-manager/plan.md) |
 | **Publication Selector** | 13.02.2026 | Модульна архітектура, -33% код, +70% performance | Видалено (завершено) |
 | **Admin Toolbar** | 11.02.2026 | Extends frontend, -67 рядків дублікату | [completed/admin-toolbar-refactoring.md](refactoring/completed/admin-toolbar-refactoring.md) |
 
