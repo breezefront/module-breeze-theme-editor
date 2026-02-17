@@ -1,0 +1,47 @@
+//
+// Breeze Theme Editor - Panels Container
+// _____________________________________________
+
+// Admin має інший контейнер: #bte-panels замість #bte-panels-container
+#bte-panels {
+    position: fixed;
+    top: @bte-toolbar-height;  // 56px
+    left: 0;                   // 👈 ЗЛІВА (не справа!)
+    width: 360px;
+    height: ~"calc(100vh - @{bte-toolbar-height})";
+    z-index: @bte-toolbar-z-index - 1;
+    pointer-events: none;
+
+    .bte-panel {
+        position: absolute;
+        top: 0;
+        left: 0;               // 👈 ЗЛІВА (не справа!)
+        width: 100%;
+        height: 100%;
+        background: @bte-toolbar-bg;
+        color: @bte-toolbar-text;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);  // 👈 Тінь СПРАВА
+        transform: translateX(-100%);  // 👈 Приховано ЗЛІВА
+        transition: transform 0.3s ease;
+        pointer-events: auto;
+        overflow: hidden;
+
+        &.active {
+            transform: translateX(0);  // 👈 Виїжджає З ЛІВА
+        }
+
+        // Responsive - full width on mobile
+        @media (max-width: @screen__m) {
+            width: 100vw;
+        }
+    }
+}
+
+// CSS змінна для зсуву контенту (для консистентності з frontend)
+body.bte-panel-active {
+    --bte-sidebar-width: 360px;
+
+    @media (max-width: @screen__m) {
+        --bte-sidebar-width: 0px;
+    }
+}
