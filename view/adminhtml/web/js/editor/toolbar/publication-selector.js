@@ -286,7 +286,10 @@ define([
                 self.renderer.updateCheckmarks(self._getState());
                 self.renderer.closeDropdown();
                 
-                $(document).trigger('bte:statusChanged', [status]);
+                $(document).trigger('publicationStatusChanged', {
+                    status: status,
+                    publicationId: null
+                });
                 console.log('✅ Switched to ' + status);
                 
                 loading.hide(self.element);
@@ -324,8 +327,10 @@ define([
                 self.renderer.updateCheckmarks(self._getState());
                 self.renderer.closeDropdown();
                 
-                $(document).trigger('bte:statusChanged', ['PUBLICATION', publicationId]);
-                $(self.element).trigger('publicationLoaded', [publicationId, publication]);
+                $(document).trigger('publicationStatusChanged', {
+                    status: 'PUBLICATION',
+                    publicationId: publicationId
+                });
                 
                 console.log('✅ Publication loaded:', publication.title);
                 loading.hide(self.element);

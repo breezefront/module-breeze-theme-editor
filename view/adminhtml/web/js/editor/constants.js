@@ -14,12 +14,12 @@ define([], function() {
         SELECTORS: {
             // Main toolbar elements
             IFRAME: '#bte-iframe',
-            TOOLBAR: '#bte-toolbar',
+            TOOLBAR: '#breeze-theme-editor-toolbar',
             PANELS: '#bte-panels-container',
             
             // Toolbar widgets
             ADMIN_LINK: '#bte-admin-link',
-            NAVIGATION: '#bte-navigation',
+            NAVIGATION: '#toolbar-navigation',
             DEVICE_SWITCHER: '#bte-device-switcher',
             PUBLICATION_SELECTOR: '#bte-publication-selector',
             SCOPE_SELECTOR: '#bte-scope-selector',

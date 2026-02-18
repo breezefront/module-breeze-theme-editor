@@ -76,7 +76,7 @@ define([
         // Render toolbar HTML from template
         var template = mageTemplate(toolbarTemplate);
         var html = template({ data: config });
-        $('#bte-toolbar').html(html);
+        $('#breeze-theme-editor-toolbar').html(html);
         
         // Initialize admin link widget
         if ($('#bte-admin-link').length) {
@@ -88,8 +88,8 @@ define([
         }
         
         // Initialize navigation widget
-        if ($('#bte-navigation').length && config.components && config.components.navigation) {
-            $('#bte-navigation').breezeNavigation({
+        if ($('#toolbar-navigation').length && config.components && config.components.navigation) {
+            $('#toolbar-navigation').breezeNavigation({
                 items: config.components.navigation.items || [],
                 panelSelector: '#bte-panels-container',
                 panelWidgets: {
@@ -342,8 +342,8 @@ define([
             
             // Refresh CSS after status change (handled by publication-selector + css-manager)
             // This event is informational only - css-manager already switched CSS
-            $(document).on('bte:statusChanged', function(e, status, publicationId) {
-                console.log('✅ Status changed event received:', status, publicationId || '');
+            $(document).on('publicationStatusChanged', function(e, data) {
+                console.log('✅ Publication status changed:', data.status, data.publicationId || '');
                 // No action needed - css-manager already switched CSS in publication-selector
             });
             

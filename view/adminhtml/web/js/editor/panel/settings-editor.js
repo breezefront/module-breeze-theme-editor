@@ -64,8 +64,7 @@ define([
             }
 
             // Store reference to navigation widget for closing panel
-            // Supports both admin (#bte-navigation) and frontend (#toolbar-navigation)
-            this.$navigation = $('#bte-navigation, #toolbar-navigation');
+            this.$navigation = $('#toolbar-navigation');
 
             // Initialize storage helper
             if (this.storeId && this.themeId) {
