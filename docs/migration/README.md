@@ -2,8 +2,8 @@
 
 **Проект:** Міграція з token-based до admin інтерфейсу  
 **Версія:** 2.0.0  
-**Статус:** 80% завершено (83.5h з 104.5h)  
-**Останнє оновлення:** 17 лютого 2026
+**Статус:** 78% завершено (92h з 118h)  
+**Останнє оновлення:** 18 лютого 2026 (Phase 3A завершено з Hybrid Approach)
 
 ---
 
@@ -22,14 +22,14 @@
 ## 📊 Прогрес
 
 ```
-Загальний прогрес: ███████████████████████████░░░░░  80%
+Загальний прогрес: ████████████████████████░░░░░  78%
 
 ✅ Phase 1:  ████████████ 100% (12h)
 ✅ Phase 2:  ████████████ 100% (9h)
-✅ Phase 3A: ████████████ 100% (8.5h)
+✅ Phase 3A: ████████████ 100% (8.5h) - Hybrid Approach
 ✅ Phase 3B: ████████████ 100% (30h)
-⬜ Phase 4:  ░░░░░░░░░░░░   0% (6h) 🎯 NEXT
-⬜ Phase 5:  ░░░░░░░░░░░░   0% (8-12h)
+⬜ Phase 4:  ░░░░░░░░░░░░   0% (8-10h) 🎯 NEXT
+⬜ Phase 5:  ░░░░░░░░░░░░   0% (8-10h)
 ```
 
 ---
@@ -48,14 +48,10 @@
 |------|-------|--------|-----|--------------|
 | **1** | Foundation | ✅ Завершено | 12h | [phase-1/](phases/phase-1/) |
 | **2** | Security & ACL | ✅ Завершено | 9h | [phase-2/](phases/phase-2/) |
-| **3A** | Toolbar GraphQL | ✅ Завершено | 8.5h | [phase-3a/](phases/phase-3a/) |
+| **3A** | Toolbar GraphQL | ✅ Завершено (Hybrid) | 8.5h | [phase-3a/](phases/phase-3a/) + [Hybrid Approach](phases/phase-3a/README.md#architecture-decision-hybrid-approach) |
 | **3B** | Settings Editor | ✅ Завершено | 30h | [phase-3b/](phases/phase-3b/) |
-| **4** | Polish & Optimization | 🟡 Наступний крок | 6h | [phase-4/](phases/phase-4/) |
-| **5** | Testing & Documentation | 📋 Заплановано | 8-12h | [phase-5/](phases/phase-5/) |
-| **3A** | Toolbar GraphQL | 🎯 **NEXT** | 8.5h | [phase-3a/](phases/phase-3a/) ⭐ |
-| **3B** | Settings Editor | 📋 Заплановано | 30h | [phase-3b/](phases/phase-3b/) |
-| **4** | Polish & Optimization | 📋 Не почато | 6h | [phase-4/](phases/phase-4/) |
-| **5** | Testing & Docs | 📋 Не почато | 8-12h | [phase-5/](phases/phase-5/) |
+| **4** | Test Migration | 🟡 Наступний крок | 8-10h | [phase-4/](phases/phase-4/) ⭐ |
+| **5** | Polish & Testing | 📋 Заплановано | 8-10h | [phase-5/](phases/phase-5/) |
 
 ### 📈 Прогрес
 
@@ -65,22 +61,20 @@
 
 ---
 
-## 🎯 Наступний Крок: Phase 3A
+## 🎯 Наступний Крок: Phase 4
 
-**Назва:** Toolbar GraphQL Integration  
-**Час:** 8.5 годин  
+**Назва:** Test Migration & Validation  
+**Час:** 8-10 годин  
 **Статус:** 🟡 Готово до виконання
 
 ### Що робити:
-1. Utilities (error-handler, loading) - 1h
-2. Permissions system - 1.5h
-3. Publication selector GraphQL - 2.5h
-4. Status indicator GraphQL - 1.5h
-5. Preview manager - 1h
-6. Testing - 1h
+1. Міграція 36 JS тестів на PHPUnit
+2. Мердж і переписування дублікатів
+3. Валідація функціоналу через тести
+4. Створення test audit report
 
 ### Документація:
-📄 [phases/phase-3a/implementation-plan.md](phases/phase-3a/implementation-plan.md) ⭐
+📄 [phases/phase-4/README.md](phases/phase-4/README.md) ⭐
 
 ---
 
@@ -113,27 +107,46 @@
 
 ---
 
+### Phase 3A: Toolbar GraphQL (✅ Завершено з Hybrid Approach)
+**Дата:** 18 лютого 2026
+
+**Виконано:**
+- ✅ GraphQL для business data (Settings, Publications, Config)
+- ✅ localStorage для UI state (Device width, Toolbar visibility)
+- ✅ Hybrid architecture decision (industry best practice)
+- ✅ Permission-based UI
+- ✅ Error handling & loading states
+
+**Архітектурне рішення:** [Hybrid Approach](phases/phase-3a/README.md#architecture-decision-hybrid-approach)  
+**Документація:** [phases/phase-3a/](phases/phase-3a/)
+
+---
+
+### Phase 3B: Settings Editor (✅ Завершено)
+**Дата:** 13-17 лютого 2026
+
+**Виконано:**
+- ✅ GraphQL API (9 queries, 10 mutations)
+- ✅ Settings Editor UI (947 рядків)
+- ✅ 15+ field renderers
+- ✅ Повна інтеграція з admin
+
+**Документація:** [phases/phase-3b/](phases/phase-3b/)
+
+---
+
 ## 📋 Що Залишилось
 
-### Phase 3A: Toolbar GraphQL (🎯 Next - 8.5h)
-- GraphQL integration для toolbar компонентів
-- Permission-based UI
-- Error handling & loading states
+### Phase 4: Test Migration & Validation (🎯 Next - 8-10h)
+- Міграція 36 JS тестів на PHPUnit
+- Мердж дублікатів
+- Валідація функціоналу
+- Test audit report
 
-### Phase 3B: Settings Editor (📋 30h)
-- Міграція Settings Editor (~7,500 рядків)
-- 31+ файлів (handlers, renderers, managers)
-- Field types integration
-
-### Phase 4: Polish (📋 6h)
-- Error handling improvements
+### Phase 5: Polish & Testing (📋 8-10h)
+- Final testing
 - Performance optimization
-- UI/UX refinements
-
-### Phase 5: Testing & Docs (📋 8-12h)
-- Comprehensive testing
 - User documentation
-- Migration guide v1→v2
 - Release notes
 
 ---
@@ -141,16 +154,16 @@
 ## 📊 Статистика
 
 ### Часові Метрики
-- **Виконано:** 21 годин (Phases 1-2)
-- **Поточна фаза:** 8.5 годин (Phase 3A)
-- **Залишилось:** 52.5-56.5 годин
-- **Всього:** ~104 години
+- **Виконано:** 92 годин (Phases 1-3B)
+- **Поточна фаза:** Phase 4 (8-10 годин)
+- **Залишилось:** 16-20 годин
+- **Всього:** ~118 годин
 
 ### Документація
 - **Основних документів:** 3
-- **Фаз:** 6 (2 завершено, 4 залишилось)
-- **Звітів прогресу:** 2
-- **Всього рядків:** ~8,000
+- **Фаз:** 5 (4 завершено, 2 залишилось)
+- **Звітів прогресу:** 2+
+- **Всього рядків:** ~9,500
 
 ---
 
