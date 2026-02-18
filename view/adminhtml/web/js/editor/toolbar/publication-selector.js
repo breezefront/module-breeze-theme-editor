@@ -360,6 +360,12 @@ define([
                 self.renderer.render(self._getState());
                 self._applyPermissions();
                 
+                // Update Load More button visibility
+                self.renderer.updateLoadMoreButton({
+                    publications: self.options.publications,
+                    totalPublications: self.totalPublications
+                });
+                
                 console.log('✅ Loaded ' + self.options.publications.length + ' / ' + self.totalPublications + ' publications');
             }).catch(function(error) {
                 console.error('❌ Failed to load publications:', error);
@@ -501,6 +507,7 @@ define([
                 currentPublicationId: this.options.currentPublicationId,
                 currentPublicationTitle: this.options.currentPublicationTitle,
                 publications: this.options.publications,
+                totalPublications: this.totalPublications || 0,
                 changesCount: this.options.changesCount,
                 canPublish: permissions.canPublish() && 
                            this.options.changesCount > 0 && 

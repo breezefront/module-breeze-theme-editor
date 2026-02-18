@@ -157,6 +157,40 @@ define([
             this.$element.find('.toolbar-dropdown').hide();
         },
 
+        /**
+         * Update Load More button visibility based on publications count
+         * @param {Object} data - State data with publications array and totalPublications count
+         */
+        updateLoadMoreButton: function(data) {
+            var $loadMore = this.$element.find('[data-action="load-more"]');
+            var $allLoaded = this.$element.find('[data-status="all-loaded"]');
+            var $count = $loadMore.find('.item-meta');
+            
+            if (!data.publications || !data.totalPublications) {
+                $loadMore.hide();
+                $allLoaded.hide();
+                return;
+            }
+            
+            var loadedCount = data.publications.length;
+            var totalCount = data.totalPublications;
+            
+            if (loadedCount >= totalCount) {
+                // All loaded → hide "Load More", show "All Loaded"
+                $loadMore.hide();
+                $allLoaded.show();
+                console.log('✅ All ' + totalCount + ' publications loaded');
+            } else {
+                // Show "Load More" with count
+                $loadMore.show();
+                $allLoaded.hide();
+                $count.text($t('Showing %1 of %2')
+                    .replace('%1', loadedCount)
+                    .replace('%2', totalCount));
+                console.log('📊 Showing ' + loadedCount + ' of ' + totalCount + ' publications');
+            }
+        },
+
         // ============ Helper Methods (Computed Values) ============
 
         /**

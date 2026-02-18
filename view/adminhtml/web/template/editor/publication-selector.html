@@ -74,10 +74,17 @@
                 <div class="dropdown-divider"></div>
 
                 <!-- Load More Action -->
-                <a href="#" class="dropdown-item dropdown-action" data-action="load-more">
+                <a href="#" class="dropdown-item dropdown-action" data-action="load-more" style="display: none;">
                     <span class="item-icon">⬇️</span>
                     <span class="item-text">Load More Publications</span>
+                    <span class="item-meta" id="publications-count"></span>
                 </a>
+
+                <!-- All Loaded Message -->
+                <div class="dropdown-item dropdown-info" data-status="all-loaded" style="display: none;">
+                    <span class="item-icon">✅</span>
+                    <span class="item-text">All publications loaded</span>
+                </div>
             <% } %>
         </div>
     </div>
