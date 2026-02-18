@@ -1,0 +1,296 @@
+//
+//  Color Picker (Pickr) Styles
+//  _____________________________________________
+//
+//  Custom popup container with palette grid (left) and Pickr widget (right)
+//  Dark theme adaptation for Pickr nano theme
+//
+
+// ============================================================================
+// COLOR POPUP (Custom Container + Pickr Widget)
+// ============================================================================
+
+.bte-color-popup {
+    position: absolute;
+    background: @bte-toolbar-bg;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    padding: 16px;
+    display: flex;
+    gap: 16px;
+    z-index: 10001;
+    max-height: 90vh;
+    overflow: hidden;
+}
+
+.bte-popup-close {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 24px;
+    line-height: 20px;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    z-index: 10005; // Much higher to ensure visibility above all popup content
+    
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    &:active {
+        background: rgba(255, 255, 255, 0.15);
+    }
+}
+
+// ============================================================================
+// LEFT SIDE: Custom Grouped Palette Grid
+// ============================================================================
+
+.bte-popup-palette {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 8px;
+    min-width: 220px; // 8 columns × 24px + gaps
+    
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 3px;
+        
+        &:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    }
+}
+
+.bte-palette-group-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.bte-palette-group-separator {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 8px 0;
+    border-radius: 2px;
+}
+
+.bte-palette-group-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 24px);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.bte-popup-palette .bte-palette-swatch {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s ease;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: scale(1.15);
+        z-index: 1;
+    }
+
+    &.selected {
+        border-color: #1979c3;
+        border-width: 3px;
+        box-shadow: 0 0 0 2px rgba(25, 121, 195, 0.3);
+    }
+
+    .bte-swatch-visual {
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        border-radius: 1px;
+    }
+}
+
+// ============================================================================
+// RIGHT SIDE: Pickr Widget Container
+// ============================================================================
+
+.bte-popup-pickr-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.bte-pickr-widget {
+    // Pickr will inject its DOM here
+}
+
+// ============================================================================
+// PICKR THEME OVERRIDES (Dark theme adaptation)
+// ============================================================================
+
+// Hide Pickr's default trigger button (we have our own .bte-color-trigger)
+.bte-popup-pickr-container .pickr .pcr-button {
+    display: none !important;
+}
+
+// Override Pickr's default light theme to match our dark sidebar
+.pcr-app[data-theme="nano"] {
+    background: @bte-toolbar-bg;
+    border: none;
+    box-shadow: none;
+    z-index: 10002; // Higher than popup (10001) and toolbar (9999)
+    
+    // Color palette (Box for Saturation/Value)
+    .pcr-selection {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        
+        .pcr-color-preview {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .pcr-color-chooser {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        // Hue slider
+        .pcr-hue {
+            background: linear-gradient(to bottom,
+                #f00 0%, #ff0 17%, #0f0 33%,
+                #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        // Opacity slider (if not locked)
+        .pcr-opacity {
+            background: linear-gradient(to right,
+                transparent, currentColor);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    }
+    
+    // Interaction bar (buttons + input)
+    .pcr-interaction {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0 -0.2em 0 -0.2em;
+        background: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        
+        > * {
+            margin: 0 0.2em;
+        }
+        
+        input {
+            padding: 0.45em 0.5em;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: @bte-toolbar-text;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75em;
+            letter-spacing: 0.07em;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 0.15em;
+            transition: all 0.15s;
+            margin-top: 0.75em;
+            
+            &:hover {
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+            
+            &:focus {
+                border-color: #1979c3;
+                outline: none;
+                box-shadow: 0 0 0 1px rgba(255,255,255,.85), 0 0 0 3px rgba(25,121,195,.75);
+            }
+        }
+        
+        .pcr-result {
+            color: @bte-toolbar-text;
+            text-align: left;
+            flex: 1 1 8em;
+            min-width: 8em;
+            background: rgba(0, 0, 0, 0.3);
+            cursor: text;
+        }
+        
+        button,
+        input[type="button"] {
+            padding: 0.45em 0.5em;
+            background: rgba(255, 255, 255, 0.1);
+            color: @bte-toolbar-text;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.75em;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 0.15em;
+            transition: all 0.15s;
+            margin-top: 0.75em;
+            width: auto;
+            
+            &:hover {
+                background: rgba(255, 255, 255, 0.15);
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+            
+            &:focus {
+                box-shadow: 0 0 0 1px rgba(255,255,255,.85), 0 0 0 3px rgba(25,121,195,.75);
+            }
+            
+            &.pcr-save {
+                background: #1979c3;
+                border-color: #1979c3;
+                color: #fff;
+                
+                &:hover {
+                    background: #1565a8;
+                }
+            }
+            
+            &.pcr-cancel,
+            &.pcr-clear {
+                background: #f44250;
+                border-color: #f44250;
+                color: #fff;
+                
+                &:hover {
+                    filter: brightness(0.925);
+                }
+                
+                &:focus {
+                    box-shadow: 0 0 0 1px rgba(255,255,255,.85), 0 0 0 3px rgba(244,66,80,.75);
+                }
+            }
+        }
+    }
+}
