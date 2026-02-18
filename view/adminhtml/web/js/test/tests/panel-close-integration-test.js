@@ -19,7 +19,7 @@ define([
          * Test 1: Navigation widget should be accessible from settings editor
          */
         'settings editor should store reference to navigation widget': function () {
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var $panel = $('#theme-editor-panel');
             
             if (!$navigation.length) {
@@ -63,7 +63,7 @@ define([
          * Test 2: Close button should call navigation.deactivate()
          */
         'close button should deactivate navigation item': function () {
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var $panel = $('#theme-editor-panel');
             
             if (!$navigation.length || !$panel.length) {
@@ -116,7 +116,7 @@ define([
          * Test 3: Panel should close when navigation.deactivate() is called
          */
         'navigation.deactivate should close panel': function () {
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var $panel = $('#theme-editor-panel');
             
             if (!$navigation.length || !$panel.length) {
@@ -166,7 +166,7 @@ define([
          * Test 4: Navigation button should lose active class when panel closes
          */
         'navigation button should deactivate when panel closes': function () {
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var $navButton = $navigation.find('.nav-item[data-id="theme-editor"]');
             var $panel = $('#theme-editor-panel');
             

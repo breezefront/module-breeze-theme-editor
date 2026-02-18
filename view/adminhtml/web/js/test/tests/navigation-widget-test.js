@@ -15,8 +15,8 @@ define([
         /**
          * Test 1: Navigation widget should be initialized
          */
-        'navigation widget should be initialized on #bte-navigation': function() {
-            var $navigation = $('#bte-navigation');
+        'navigation widget should be initialized on #toolbar-navigation': function() {
+            var $navigation = $('#toolbar-navigation');
             
             this.assert($navigation.length > 0, 
                 'Navigation element should exist');
@@ -40,7 +40,7 @@ define([
          */
         'setActive() should activate navigation item and show panel': function(done) {
             var self = this;
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {
@@ -84,7 +84,7 @@ define([
          */
         'deactivate() should hide panel and remove active state': function(done) {
             var self = this;
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {
@@ -125,7 +125,7 @@ define([
          */
         'clicking active navigation item should deactivate it': function(done) {
             var self = this;
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {
@@ -165,7 +165,7 @@ define([
          * Test 5: Should prevent activating disabled items
          */
         'should not activate disabled navigation items': function() {
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {
@@ -217,7 +217,7 @@ define([
          */
         'should support multiple navigation items switching': function(done) {
             var self = this;
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {

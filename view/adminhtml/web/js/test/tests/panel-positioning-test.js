@@ -16,10 +16,10 @@ define([
          * Test 1: Panel container should be positioned on LEFT side
          */
         'panel container should have left: 0 positioning': function() {
-            var $panels = $('#bte-panels');
+            var $panels = $('#bte-panels-container');
             
             this.assert($panels.length > 0, 
-                'Panel container #bte-panels should exist');
+                'Panel container #bte-panels-container should exist');
             
             // Check CSS positioning (computed style)
             var position = $panels.css('position');
@@ -41,7 +41,7 @@ define([
         'closed panel should use translateX transform for animation': function(done) {
             var self = this;
             var $panel = $('#theme-editor-panel');
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             this.assert($panel.length > 0, 
@@ -96,7 +96,7 @@ define([
         'body should have bte-panel-active class when panel is open': function(done) {
             var self = this;
             var $body = $('body');
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {
@@ -143,7 +143,7 @@ define([
                 return;
             }
             
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {
@@ -256,7 +256,7 @@ define([
          */
         'panel open animation should complete in ~300ms': function(done) {
             var self = this;
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             var $panel = $('#theme-editor-panel');
             

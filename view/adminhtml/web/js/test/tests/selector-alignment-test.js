@@ -18,12 +18,13 @@
  * 6. No dual selectors remain (e.g., '#bte-navigation, #toolbar-navigation')
  */
 
-(function() {
+define([
+    'jquery',
+    'Swissup_BreezeThemeEditor/js/test/test-framework'
+], function($, TestFramework) {
     'use strict';
 
-    var TestFramework = window.BreezeThemeEditorTestFramework;
-
-    TestFramework.suite('Selector Alignment: Admin-Frontend Consistency', function() {
+    return TestFramework.suite('Selector Alignment: Admin-Frontend Consistency', {
 
         // ========================================================================
         // Test 1: Toolbar Selector Alignment
@@ -335,4 +336,4 @@
 
     });
 
-})();
+});

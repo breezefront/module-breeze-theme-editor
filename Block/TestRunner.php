@@ -170,6 +170,8 @@ class TestRunner extends Template
             // Admin-Frontend Alignment Tests (14 tests)
             'Swissup_BreezeThemeEditor/js/test/tests/publication-events-alignment-test',
             'Swissup_BreezeThemeEditor/js/test/tests/selector-alignment-test',
+            // Critical Fixes Tests (5 tests) - Pickr CSS + Field Editability
+            'Swissup_BreezeThemeEditor/js/test/tests/critical-fixes-test',
         ];
     }
 }

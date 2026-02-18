@@ -17,7 +17,7 @@ define([
          */
         'navigationChanged event should fire when activating panel': function(done) {
             var self = this;
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {
@@ -65,7 +65,7 @@ define([
          */
         'panelShown event should fire when panel opens': function(done) {
             var self = this;
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {
@@ -113,7 +113,7 @@ define([
          */
         'panelHidden event should fire when panel closes': function(done) {
             var self = this;
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {
@@ -159,7 +159,7 @@ define([
          */
         'silent mode should prevent navigationChanged event from firing': function(done) {
             var self = this;
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {

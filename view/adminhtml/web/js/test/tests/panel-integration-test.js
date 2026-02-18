@@ -17,7 +17,7 @@ define([
          */
         'should handle multiple open/close cycles': function(done) {
             var self = this;
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             var $panel = $('#theme-editor-panel');
             
@@ -75,7 +75,7 @@ define([
         'settings editor should be initialized inside panel': function(done) {
             var self = this;
             var $panel = $('#theme-editor-panel');
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             
             if (!widget) {
@@ -129,7 +129,7 @@ define([
          */
         'panel state should persist during toolbar interactions': function(done) {
             var self = this;
-            var $navigation = $('#bte-navigation');
+            var $navigation = $('#toolbar-navigation');
             var widget = $navigation.data('swissupBreezeNavigation');
             var $panel = $('#theme-editor-panel');
             

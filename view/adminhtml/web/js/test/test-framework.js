@@ -106,6 +106,24 @@ define([
             },
             
             /**
+             * Assert null
+             */
+            assertNull: function(value, message) {
+                if (value !== null) {
+                    throw new Error(message || 'Value is not null: ' + value);
+                }
+            },
+            
+            /**
+             * Assert not null
+             */
+            assertNotNull: function(value, message) {
+                if (value === null) {
+                    throw new Error(message || 'Value is null');
+                }
+            },
+            
+            /**
              * Fail test explicitly
              */
             fail: function(message) {
