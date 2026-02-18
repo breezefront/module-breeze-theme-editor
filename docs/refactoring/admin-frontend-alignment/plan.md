@@ -1053,54 +1053,54 @@ grep -rn "#bte-panels\|breezeSettingsEditor" view/adminhtml/web/js/test --includ
 
 ## ✅ CHECKLIST ВИКОНАННЯ
 
-### Етап 0: 🔴 Виправити події (КРИТИЧНО)
-- [ ] Змінено `bte:statusChanged` → `publicationStatusChanged` в publication-selector.js (line 289)
-- [ ] Змінено `bte:statusChanged` → `publicationStatusChanged` в publication-selector.js (line 327)
-- [ ] Видалено orphan event `publicationLoaded` (line 328)
-- [ ] Змінено listener `bte:statusChanged` → `publicationStatusChanged` в toolbar.js (line 345)
-- [ ] Тест: Settings Editor перезавантажується при зміні публікацій ✅
+### Етап 0: 🔴 Виправити події (КРИТИЧНО) ✅
+- [x] Змінено `bte:statusChanged` → `publicationStatusChanged` в publication-selector.js (line 289)
+- [x] Змінено `bte:statusChanged` → `publicationStatusChanged` в publication-selector.js (line 327)
+- [x] Видалено orphan event `publicationLoaded` (line 328)
+- [x] Змінено listener `bte:statusChanged` → `publicationStatusChanged` в toolbar.js (line 345)
+- [x] Тест: Settings Editor перезавантажується при зміні публікацій ✅
 
-### Етап 1: Перейменування контейнера + селекторів
-- [ ] Оновлено constants.js (`#bte-panels-container`)
-- [ ] 🆕 Оновлено constants.js (`#breeze-theme-editor-toolbar`, `#toolbar-navigation`)
-- [ ] Оновлено index.phtml (`id="bte-panels-container"`)
-- [ ] 🆕 Оновлено index.phtml (`id="breeze-theme-editor-toolbar"`)
-- [ ] 🆕 Оновлено index.phtml (`id="toolbar-navigation"`)
-- [ ] Оновлено _panels.less (`#bte-panels-container`)
-- [ ] 🆕 Перевірено CSS файли на `#bte-toolbar` та `#bte-navigation`
-- [ ] Оновлено toolbar.js (`panelSelector`, `$toolbar`, `$navigation`)
-- [ ] 🆕 Спрощено settings-editor.js (видалено dual selector)
+### Етап 1: Перейменування контейнера + селекторів ✅
+- [x] Оновлено constants.js (`#bte-panels-container`)
+- [x] 🆕 Оновлено constants.js (`#breeze-theme-editor-toolbar`, `#toolbar-navigation`)
+- [x] Оновлено index.phtml (`id="bte-panels-container"`)
+- [x] 🆕 Оновлено index.phtml (`id="breeze-theme-editor-toolbar"`)
+- [x] 🆕 Оновлено index.phtml (`id="toolbar-navigation"`)
+- [x] Оновлено _panels.less (`#bte-panels-container`)
+- [x] 🆕 Перевірено CSS файли на `#bte-toolbar` та `#bte-navigation`
+- [x] Оновлено toolbar.js (`panelSelector`, `$toolbar`, `$navigation`)
+- [x] 🆕 Спрощено settings-editor.js (видалено dual selector)
 
-### Етап 2: Очистити HTML
-- [ ] Видалено header/wrapper з `#theme-editor-panel`
-- [ ] Видалено header/wrapper з `#content-builder-panel`
-- [ ] Панелі порожні (тільки `<div id="..."></div>`)
+### Етап 2: Очистити HTML ✅
+- [x] Видалено header/wrapper з `#theme-editor-panel`
+- [x] Видалено header/wrapper з `#content-builder-panel`
+- [x] Панелі порожні (тільки `<div id="..."></div>`)
 
-### Етап 3: Перейменувати widget
-- [ ] Змінено назву widget → `themeSettingsEditor` (line 40)
-- [ ] Змінено return statement (line 928)
-- [ ] Перевірено інші входження (grep)
-- [ ] Оновлено документацію/коментарі
+### Етап 3: Перейменувати widget ✅
+- [x] Змінено назву widget → `themeSettingsEditor` (line 40)
+- [x] Змінено return statement (line 928)
+- [x] Перевірено інші входження (grep)
+- [x] Оновлено документацію/коментарі
 
-### Етап 4: Перенести ініціалізацію
-- [ ] Додано `panelWidgets` в navigation options
-- [ ] Додано `_initializePanel()` метод
-- [ ] Оновлено `_showPanel()` - викликає ініціалізацію
-- [ ] Видалено init блок з toolbar.js (lines 99-116)
-- [ ] Залишено global config в toolbar.js
-- [ ] Передано `panelWidgets` в navigation init
+### Етап 4: Перенести ініціалізацію ✅
+- [x] Додано `panelWidgets` в navigation options
+- [x] Додано `_initializePanel()` метод
+- [x] Оновлено `_showPanel()` - викликає ініціалізацію
+- [x] Видалено init блок з toolbar.js (lines 99-116)
+- [x] Залишено global config в toolbar.js
+- [x] Передано `panelWidgets` в navigation init
 
-### Етап 5: Тестування
-- [ ] Очищено кеш (static + LESS + Magento)
-- [ ] 🔴 **Тест 0:** Зміна публікацій → Settings Editor перезавантажується
-- [ ] Тест 1: Контейнер існує (`#bte-panels-container`)
-- [ ] 🆕 Тест 1a: Navigation існує (`#toolbar-navigation`)
-- [ ] 🆕 Тест 1b: Toolbar існує (`#breeze-theme-editor-toolbar`)
-- [ ] Тест 2: Панель порожня (до відкриття)
-- [ ] Тест 3: Панель відкривається → lazy init
-- [ ] Тест 4: Закриття працює (× кнопка + toggle)
-- [ ] Тест 5: Повторне відкриття (без repeat init)
-- [ ] Тест 6: Settings Editor працює (форми, save, preview)
+### Етап 5: Тестування ✅
+- [x] Очищено кеш (static + LESS + Magento)
+- [x] 🔴 **Тест 0:** Зміна публікацій → Settings Editor перезавантажується
+- [x] Тест 1: Контейнер існує (`#bte-panels-container`)
+- [x] 🆕 Тест 1a: Navigation існує (`#toolbar-navigation`)
+- [x] 🆕 Тест 1b: Toolbar існує (`#breeze-theme-editor-toolbar`)
+- [x] Тест 2: Панель порожня (до відкриття)
+- [x] Тест 3: Панель відкривається → lazy init
+- [x] Тест 4: Закриття працює (× кнопка + toggle)
+- [x] Тест 5: Повторне відкриття (без repeat init)
+- [x] Тест 6: Settings Editor працює (форми, save, preview)
 
 ---
 
