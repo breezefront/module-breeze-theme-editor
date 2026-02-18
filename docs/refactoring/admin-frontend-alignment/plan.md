@@ -1,9 +1,76 @@
 # Admin → Frontend Architecture Alignment
 
 **Дата створення**: 17 лютого 2026  
-**Статус**: 🔴 Потребує виконання  
+**Дата завершення**: 18 лютого 2026  
+**Статус**: ✅ **ЗАВЕРШЕНО** (Phase 4 + Critical Fixes)  
 **Пріоритет**: 🔴 Високий (довгострокова якість коду)  
-**Час виконання**: 1.5-2 години
+**Час виконання**: 1.5-2 години (план) → **4 години** (фактично, з тестами)
+
+---
+
+## 📊 СТАН ВИКОНАННЯ (18 лютого 2026)
+
+### ✅ ЕТАП 0 - ВИПРАВЛЕНО (18 лют 2026)
+**Коміт:** `080edc3` - refactor(admin): align with frontend architecture + fix publication events
+
+**Виправлено:**
+- ✅ Події публікацій синхронізовані: `bte:statusChanged` → `publicationStatusChanged`
+- ✅ Видалено orphan event `publicationLoaded`
+- ✅ Settings Editor тепер перезавантажується при зміні публікацій
+- ✅ Селектори уніфіковані: `#bte-navigation` → `#toolbar-navigation`
+- ✅ Селектори уніфіковані: `#bte-toolbar` → `#breeze-theme-editor-toolbar`
+
+### ✅ ЕТАП 1-4 - ВИПРАВЛЕНО (18 лют 2026)
+**Коміт:** `080edc3` - refactor(admin): align with frontend architecture + fix publication events
+
+**Виправлено:**
+- ✅ Контейнер: `#bte-panels` → `#bte-panels-container`
+- ✅ Widget: `breezeSettingsEditor` → `themeSettingsEditor`
+- ✅ Lazy loading через navigation.js
+- ✅ Чиста HTML структура (widget renders all)
+- ✅ Всі селектори в тестах оновлено
+
+### ✅ КРИТИЧНІ ВИПРАВЛЕННЯ POST-TESTING (18 лют 2026)
+
+**Коміт 1:** `cce8fca` - fix(admin): fix Pickr CSS loading and field editability race condition
+
+**Проблема 1: Pickr CSS Missing**
+- ❌ **Bug:** Колір-пікер відкривався але не мав стилів (невидимий UI)
+- 🔍 **Root cause:** `pickr-nano.min.css` не імпортувався в admin `_module.less`
+- ✅ **Fix:** Додано `@import (less) '../lib/pickr-nano.min.css'` в admin _module.less
+- 📂 **Files:**
+  - NEW: `view/adminhtml/web/css/lib/pickr-nano.min.css`
+  - MODIFIED: `view/adminhtml/web/css/source/_module.less:9`
+
+**Проблема 2: Field Editability Race Condition**
+- ❌ **Bug:** Поля disabled навіть в DRAFT mode при першому завантаженні
+- 🔍 **Root cause:** `_updateFieldsEditability()` викликав `CssManager.isEditable()` який повертав `false` через async ініціалізацію
+- ✅ **Fix:** Змінено на синхронну локальну перевірку: `isEditable = (status === 'DRAFT')`
+- 📂 **Files:**
+  - MODIFIED: `view/adminhtml/web/js/editor/panel/settings-editor.js:426-430`
+
+**Додаткові виправлення:**
+- ✅ RequireJS Pickr path: `pickr.min.js` → `pickr.min` (prevent double .js.js)
+  - `view/adminhtml/requirejs-config.js`
+  - `view/frontend/requirejs-config.js`
+- ✅ CSS Manager listener для `publicationStatusChanged` event
+  - `view/adminhtml/web/js/editor/panel/css-manager.js`
+
+**Коміт 2:** `34b9599` - test(admin): add critical fixes tests and improve test framework
+
+**Нові тести (4):**
+- ✅ Test 1: Pickr CSS loading validation
+- ✅ Test 2: Field editability logic (DRAFT/PUBLISHED/PUBLICATION)
+- ✅ Test 3: DRAFT→PUBLISHED switching
+- ✅ Test 4: PUBLISHED→DRAFT switching
+
+**Test Framework покращення:**
+- ✅ Додано `assertNull()` та `assertNotNull()` методи
+- ✅ Виправлено selector-alignment-test.js RequireJS syntax
+- ✅ Всі panel тести оновлено на нові селектори
+
+**Результат тестування:**
+- ✅ **84/84 tests passing (100%)** 🎉
 
 ---
 
