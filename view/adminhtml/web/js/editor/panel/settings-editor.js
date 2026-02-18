@@ -424,8 +424,11 @@ define([
          * Update field editability based on current mode
          */
         _updateFieldsEditability: function() {
-            var isEditable = CssManager.isEditable();
             var status = this.options.status;
+            
+            // Check editability based on local status instead of CssManager.isEditable()
+            // CSS Manager may not be initialized yet on first load
+            var isEditable = (status === 'DRAFT');
             
             console.log('🔒 Updating fields editability:', {status: status, isEditable: isEditable});
             

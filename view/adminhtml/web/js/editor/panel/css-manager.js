@@ -98,6 +98,15 @@ define([
             // Apply initial CSS based on stored status
             this._applyStoredState();
 
+            // Listen for publication status changes to keep currentStatus in sync
+            // This ensures isEditable() returns correct value when status changes
+            $(document).on('publicationStatusChanged', function(e, data) {
+                if (data && data.status) {
+                    currentStatus = data.status;
+                    console.log('🔄 CSS Manager: currentStatus updated to:', currentStatus);
+                }
+            });
+
             console.log('✅ CSS Manager initialized (status:', currentStatus + ')');
             return true;
         },

@@ -3,7 +3,7 @@
  */
 var config = {
     paths: {
-        'pickr': 'Swissup_BreezeThemeEditor/js/lib/pickr.min.js'
+        'pickr': 'Swissup_BreezeThemeEditor/js/lib/pickr.min'
     },
     shim: {
         'pickr': {
