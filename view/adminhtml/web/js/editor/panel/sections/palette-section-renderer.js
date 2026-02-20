@@ -42,6 +42,15 @@ define([
             }
 
             this._render();
+
+            // Guard flag: native color picker (Linux/GTK) fires a focus-return click
+            // on the page when the OS dialog closes.  If the reset button was just
+            // made visible by the colour-change badge update, that spurious click
+            // would trigger an unwanted palette reset.  We suppress reset clicks for
+            // 500 ms after any palette colour change.
+            this._justChanged = false;
+            this._justChangedTimer = null;
+
             this._bind();
         },
 
@@ -245,6 +254,16 @@ define([
 
                 // Update via PaletteManager (NO auto-save now)
                 PaletteManager.updateColor(cssVar, hexValue);
+
+                // Arm the cooldown: ignore reset-button clicks for the next 500 ms.
+                // Native <input type="color"> on Linux/GTK dispatches a focus-return
+                // click to the page after the OS colour dialog closes.  Without this
+                // guard that click lands on the reset button if it just appeared.
+                self._justChanged = true;
+                clearTimeout(self._justChangedTimer);
+                self._justChangedTimer = setTimeout(function() {
+                    self._justChanged = false;
+                }, 500);
                 
                 // Update header badges
                 self._updateHeaderBadges();
@@ -257,7 +276,12 @@ define([
             this.element.on('click', '.bte-palette-reset-btn', function(e) {
                 e.preventDefault();
                 e.stopPropagation(); // Don't trigger accordion toggle
-                
+
+                // Ignore focus-return click from native colour picker (see _justChanged comment)
+                if (self._justChanged) {
+                    return;
+                }
+
                 if (!PaletteManager.hasDirtyChanges()) {
                     console.log('⚠️ No changes to reset');
                     return;
@@ -459,6 +483,7 @@ define([
          * Destroy widget
          */
         _destroy: function () {
+            clearTimeout(this._justChangedTimer);
             this.$header.off('click');
             this.$grid.off('click', '.bte-palette-swatch');
             this.$grid.off('change', '.bte-swatch-input');
