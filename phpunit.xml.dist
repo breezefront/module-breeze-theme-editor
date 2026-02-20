@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
          bootstrap="../../../dev/tests/unit/framework/bootstrap.php"
          colors="true"
          beStrictAboutTestsThatDoNotTestAnything="false"
@@ -10,12 +10,12 @@
             <directory>./Test/Unit</directory>
         </testsuite>
     </testsuites>
-    <coverage>
+    <source>
         <include>
             <directory suffix=".php">./Model</directory>
             <directory suffix=".php">./Helper</directory>
         </include>
-    </coverage>
+    </source>
     <php>
         <ini name="date.timezone" value="UTC"/>
         <ini name="xdebug.max_nesting_level" value="200"/>
