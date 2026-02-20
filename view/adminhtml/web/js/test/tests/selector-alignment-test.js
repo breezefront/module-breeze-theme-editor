@@ -269,10 +269,13 @@ define([
             var eventReceived = false;
             var eventData = null;
 
-            // Listen for publication status change (Settings Editor pattern)
-            $(document).one('publicationStatusChanged', function(event, data) {
+            // Use a namespaced handler so other tests' triggers cannot consume it
+            // and so we can clean up reliably after this test runs.
+            $(document).on('publicationStatusChanged.selectorAlignTest', function(event, data) {
                 eventReceived = true;
                 eventData = data;
+                // Remove immediately — behave like .one() but scoped to our namespace
+                $(document).off('publicationStatusChanged.selectorAlignTest');
             });
 
             // Simulate publication selector triggering event
@@ -280,6 +283,9 @@ define([
                 status: 'DRAFT',
                 publicationId: null
             });
+
+            // Ensure handler is always cleaned up (safety net if trigger failed)
+            $(document).off('publicationStatusChanged.selectorAlignTest');
 
             this.assert(
                 eventReceived,
