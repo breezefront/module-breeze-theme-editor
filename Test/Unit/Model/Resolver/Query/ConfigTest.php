@@ -39,11 +39,11 @@ class ConfigTest extends TestCase
     private CompareProvider $compareProviderMock;
     private ThemeResolver $themeResolverMock;
     private UserResolver $userResolverMock;
-    
+
     private Field $fieldMock;
     private ContextInterface $contextMock;
     private ResolveInfo $infoMock;
-    
+
     protected function setUp(): void
     {
         // Create all dependency mocks
@@ -57,7 +57,7 @@ class ConfigTest extends TestCase
         $this->compareProviderMock = $this->createMock(CompareProvider::class);
         $this->themeResolverMock = $this->createMock(ThemeResolver::class);
         $this->userResolverMock = $this->createMock(UserResolver::class);
-        
+
         // Create GraphQL mocks
         $this->fieldMock = $this->createMock(Field::class);
         $this->contextMock = $this->getMockBuilder(ContextInterface::class)
@@ -66,17 +66,17 @@ class ConfigTest extends TestCase
         $this->contextMock->method('getUserId')->willReturn(1);
         $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->infoMock = $this->createMock(ResolveInfo::class);
-        
+
         // Setup default serializer behavior (passthrough for simplicity)
         $this->serializerMock->method('serialize')->willReturnCallback(function($value) {
             return json_encode($value);
         });
-        
+
         // Setup default ColorFormatter behavior (passthrough for simplicity)
         $this->colorFormatterMock->method('formatColorValue')->willReturnCallback(function($value, $format) {
             return $value; // Passthrough in tests - actual conversion tested separately
         });
-        
+
         // Instantiate Config resolver
         $this->config = new Config(
             $this->serializerMock,
@@ -91,7 +91,7 @@ class ConfigTest extends TestCase
             $this->userResolverMock
         );
     }
-    
+
     /**
      * Test 1: Should throw exception when status is PUBLICATION
      * 
@@ -106,12 +106,12 @@ class ConfigTest extends TestCase
             'themeId' => 1,
             'status' => 'PUBLICATION'
         ];
-        
+
         $this->expectException(GraphQlInputException::class);
         $this->expectExceptionMessage(
             'PUBLICATION status is not supported. Use breezeThemeEditorConfigFromPublication query instead.'
         );
-        
+
         $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -120,7 +120,7 @@ class ConfigTest extends TestCase
             $args
         );
     }
-    
+
     /**
      * Test 2: Should successfully load config for DRAFT status
      * 
@@ -138,7 +138,7 @@ class ConfigTest extends TestCase
             ->method('getStatusId')
             ->with('DRAFT')
             ->willReturn(1);
-        
+
         $mockConfig = [
             'version' => '1.0',
             'sections' => [
@@ -157,10 +157,10 @@ class ConfigTest extends TestCase
             ],
             'presets' => []
         ];
-        
+
         $this->configProviderMock->method('getConfigurationWithInheritance')
             ->willReturn($mockConfig);
-        
+
         $mockValues = [
             [
                 'section_code' => 'colors',
@@ -169,25 +169,25 @@ class ConfigTest extends TestCase
                 'updated_at' => '2026-01-01'
             ]
         ];
-        
+
         $this->valueInheritanceResolverMock->expects($this->once())
             ->method('resolveAllValues')
             ->with(1, 1, 1, 1) // themeId, storeId, statusId, userId
             ->willReturn($mockValues);
-        
+
         $this->configProviderMock->method('getAllDefaults')->willReturn(['colors.primary' => '#0000ff']);
         $this->configProviderMock->method('getMetadata')->willReturn([
             'themeId' => 1,
             'themeName' => 'Test Theme'
         ]);
-        
+
         $this->compareProviderMock->method('compare')->willReturn([
             'hasChanges' => true,
             'changesCount' => 3
         ]);
-        
+
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
-        
+
         // Execute
         $args = ['storeId' => 1, 'status' => 'DRAFT'];
         $result = $this->config->resolve(
@@ -197,7 +197,7 @@ class ConfigTest extends TestCase
             null,
             $args
         );
-        
+
         // Assert
         $this->assertIsArray($result);
         $this->assertArrayHasKey('version', $result);
@@ -207,7 +207,7 @@ class ConfigTest extends TestCase
         $this->assertArrayHasKey('metadata', $result);
         $this->assertEquals('1.0', $result['version']);
     }
-    
+
     /**
      * Test 3: Should successfully load config for PUBLISHED status
      * 
@@ -225,29 +225,29 @@ class ConfigTest extends TestCase
             ->method('getStatusId')
             ->with('PUBLISHED')
             ->willReturn(2);
-        
+
         $mockConfig = [
             'version' => '1.0',
             'sections' => [],
             'presets' => []
         ];
-        
+
         $this->configProviderMock->method('getConfigurationWithInheritance')
             ->willReturn($mockConfig);
-        
+
         $this->valueInheritanceResolverMock->expects($this->once())
             ->method('resolveAllValues')
             ->with(1, 1, 2, null) // userId = null for PUBLISHED
             ->willReturn([]);
-        
+
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn([
             'themeId' => 1,
             'themeName' => 'Test Theme'
         ]);
-        
+
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
-        
+
         // Execute
         $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
         $result = $this->config->resolve(
@@ -257,12 +257,12 @@ class ConfigTest extends TestCase
             null,
             $args
         );
-        
+
         // Assert
         $this->assertIsArray($result);
         $this->assertEquals('1.0', $result['version']);
     }
-    
+
     /**
      * Test 4: Should default to PUBLISHED when status not provided
      * 
@@ -275,19 +275,19 @@ class ConfigTest extends TestCase
             ->with($this->contextMock)
             ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
-        
+
         $this->statusProviderMock->expects($this->once())
             ->method('getStatusId')
             ->with('PUBLISHED')
             ->willReturn(2);
-        
+
         $this->configProviderMock->method('getConfigurationWithInheritance')
             ->willReturn(['version' => '1.0', 'sections' => [], 'presets' => []]);
         $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
-        
+
         $args = ['storeId' => 1]; // no status
         $this->config->resolve(
             $this->fieldMock,
@@ -297,7 +297,7 @@ class ConfigTest extends TestCase
             $args
         );
     }
-    
+
     /**
      * Test 5: Should auto-detect themeId when not provided
      * 
@@ -309,12 +309,12 @@ class ConfigTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        
+
         $this->themeResolverMock->expects($this->once())
             ->method('getThemeIdByStoreId')
             ->with(1)
             ->willReturn(5);
-        
+
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         $this->configProviderMock->method('getConfigurationWithInheritance')
             ->willReturn(['version' => '1.0', 'sections' => [], 'presets' => []]);
@@ -322,7 +322,7 @@ class ConfigTest extends TestCase
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 5]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
-        
+
         $args = ['storeId' => 1, 'status' => 'PUBLISHED']; // no themeId
         $this->config->resolve(
             $this->fieldMock,
@@ -332,7 +332,7 @@ class ConfigTest extends TestCase
             $args
         );
     }
-    
+
     /**
      * Test 6: Should load draft changes count for DRAFT status
      * 
@@ -346,14 +346,14 @@ class ConfigTest extends TestCase
             ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
-        
+
         $this->configProviderMock->method('getConfigurationWithInheritance')
             ->willReturn(['version' => '1.0', 'sections' => [], 'presets' => []]);
         $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
-        
+
         // Setup comparison result
         $this->compareProviderMock->expects($this->once())
             ->method('compare')
@@ -361,7 +361,7 @@ class ConfigTest extends TestCase
                 'hasChanges' => true,
                 'changesCount' => 5
             ]);
-        
+
         $args = ['storeId' => 1, 'status' => 'DRAFT'];
         $result = $this->config->resolve(
             $this->fieldMock,
@@ -370,12 +370,12 @@ class ConfigTest extends TestCase
             null,
             $args
         );
-        
+
         // Assert metadata
         $this->assertTrue($result['metadata']['hasUnpublishedChanges']);
         $this->assertEquals(5, $result['metadata']['draftChangesCount']);
     }
-    
+
     /**
      * Test 7: Should NOT load draft changes for PUBLISHED status
      * 
@@ -389,18 +389,18 @@ class ConfigTest extends TestCase
             ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
-        
+
         $this->configProviderMock->method('getConfigurationWithInheritance')
             ->willReturn(['version' => '1.0', 'sections' => [], 'presets' => []]);
         $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
-        
+
         // CompareProvider should NEVER be called for PUBLISHED
         $this->compareProviderMock->expects($this->never())
             ->method('compare');
-        
+
         $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
         $result = $this->config->resolve(
             $this->fieldMock,
@@ -409,11 +409,11 @@ class ConfigTest extends TestCase
             null,
             $args
         );
-        
+
         $this->assertFalse($result['metadata']['hasUnpublishedChanges']);
         $this->assertEquals(0, $result['metadata']['draftChangesCount']);
     }
-    
+
     /**
      * Test: Should convert HEX color values to RGB format when format="rgb"
      * 
@@ -427,7 +427,7 @@ class ConfigTest extends TestCase
         // Create REAL ColorFormatter (not mock) for actual conversion testing
         $realColorConverter = new \Swissup\BreezeThemeEditor\Model\Utility\ColorConverter();
         $realColorFormatter = new \Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter($realColorConverter);
-        
+
         // Recreate Config resolver with real ColorFormatter
         $config = new Config(
             $this->serializerMock,
@@ -441,14 +441,14 @@ class ConfigTest extends TestCase
             $this->themeResolverMock,
             $this->userResolverMock
         );
-        
+
         // Setup mocks
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
-        
+
         // Mock config with color field (format="rgb")
         $mockConfig = [
             'version' => '1.0',
@@ -469,10 +469,10 @@ class ConfigTest extends TestCase
             ],
             'presets' => []
         ];
-        
+
         $this->configProviderMock->method('getConfigurationWithInheritance')
             ->willReturn($mockConfig);
-        
+
         // Mock value from DB (HEX format)
         $mockValues = [
             [
@@ -482,24 +482,24 @@ class ConfigTest extends TestCase
                 'updated_at' => '2026-02-20'
             ]
         ];
-        
+
         $this->valueInheritanceResolverMock->method('resolveAllValues')
             ->willReturn($mockValues);
-        
+
         $this->configProviderMock->method('getAllDefaults')
             ->willReturn(['colors.text_color' => '#111827']);
-        
+
         // Mock ColorFormatResolver to return 'rgb'
         $this->colorFormatResolverMock->method('resolve')
             ->willReturn('rgb');
-        
+
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->compareProviderMock->method('compare')->willReturn([
             'hasChanges' => true,
             'changesCount' => 1
         ]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
-        
+
         // Execute with REAL ColorFormatter
         $args = ['storeId' => 1, 'status' => 'DRAFT'];
         $result = $config->resolve(
@@ -509,19 +509,19 @@ class ConfigTest extends TestCase
             null,
             $args
         );
-        
+
         // Assert: Value should be converted to RGB
         $this->assertArrayHasKey('sections', $result);
         $this->assertCount(1, $result['sections']);
         $this->assertArrayHasKey('fields', $result['sections'][0]);
         $this->assertCount(1, $result['sections'][0]['fields']);
-        
+
         $textColorField = $result['sections'][0]['fields'][0];
         $this->assertEquals('0, 0, 0', $textColorField['value'], 
             'Color value should be converted from HEX (#000000) to RGB format (0, 0, 0)');
         $this->assertEquals('rgb', $textColorField['format']);
     }
-    
+
     /**
      * Test: Should NOT apply color conversion to non-color fields
      * 
@@ -536,7 +536,7 @@ class ConfigTest extends TestCase
             ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
-        
+
         // Mock config with text field
         $mockConfig = [
             'version' => '1.0',
@@ -556,10 +556,10 @@ class ConfigTest extends TestCase
             ],
             'presets' => []
         ];
-        
+
         $this->configProviderMock->method('getConfigurationWithInheritance')
             ->willReturn($mockConfig);
-        
+
         // Mock value from DB
         $mockValues = [
             [
@@ -569,24 +569,24 @@ class ConfigTest extends TestCase
                 'updated_at' => '2026-02-20'
             ]
         ];
-        
+
         $this->valueInheritanceResolverMock->method('resolveAllValues')
             ->willReturn($mockValues);
-        
+
         $this->configProviderMock->method('getAllDefaults')
             ->willReturn(['layout.container_width' => '1280px']);
-        
+
         // ColorFormatter should NOT be called for non-color fields
         $this->colorFormatterMock->expects($this->never())
             ->method('formatColorValue');
-        
+
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->compareProviderMock->method('compare')->willReturn([
             'hasChanges' => true,
             'changesCount' => 1
         ]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
-        
+
         // Execute
         $args = ['storeId' => 1, 'status' => 'DRAFT'];
         $result = $this->config->resolve(
@@ -596,13 +596,13 @@ class ConfigTest extends TestCase
             null,
             $args
         );
-        
+
         // Assert: Value should NOT be modified
         $this->assertArrayHasKey('sections', $result);
         $this->assertCount(1, $result['sections']);
         $this->assertArrayHasKey('fields', $result['sections'][0]);
         $this->assertCount(1, $result['sections'][0]['fields']);
-        
+
         $containerWidthField = $result['sections'][0]['fields'][0];
         $this->assertEquals('1400px', $containerWidthField['value'], 
             'Non-color field values should not be modified');

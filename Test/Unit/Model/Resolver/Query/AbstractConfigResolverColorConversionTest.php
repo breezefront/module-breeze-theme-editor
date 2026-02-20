@@ -37,12 +37,12 @@ use Swissup\BreezeThemeEditor\Model\Resolver\Query\Config;
 class AbstractConfigResolverColorConversionTest extends TestCase
 {
     private Config $config;
-    
+
     // Real objects (no mocks)
     private ColorConverter $colorConverter;
     private ColorFormatter $colorFormatter;
     private ColorFormatResolver $colorFormatResolver;
-    
+
     // Mocked dependencies
     private SerializerInterface $serializerMock;
     private ConfigProvider $configProviderMock;
@@ -52,18 +52,18 @@ class AbstractConfigResolverColorConversionTest extends TestCase
     private CompareProvider $compareProviderMock;
     private ThemeResolver $themeResolverMock;
     private UserResolver $userResolverMock;
-    
+
     private Field $fieldMock;
     private ContextInterface $contextMock;
     private ResolveInfo $infoMock;
-    
+
     protected function setUp(): void
     {
         // Create REAL color utilities (no mocks)
         $this->colorConverter = new ColorConverter();
         $this->colorFormatter = new ColorFormatter($this->colorConverter);
         $this->colorFormatResolver = new ColorFormatResolver($this->colorConverter);
-        
+
         // Mock external dependencies
         $this->serializerMock = $this->createMock(SerializerInterface::class);
         $this->configProviderMock = $this->createMock(ConfigProvider::class);
@@ -73,7 +73,7 @@ class AbstractConfigResolverColorConversionTest extends TestCase
         $this->compareProviderMock = $this->createMock(CompareProvider::class);
         $this->themeResolverMock = $this->createMock(ThemeResolver::class);
         $this->userResolverMock = $this->createMock(UserResolver::class);
-        
+
         // Create GraphQL mocks
         $this->fieldMock = $this->createMock(Field::class);
         $this->contextMock = $this->getMockBuilder(ContextInterface::class)
@@ -82,12 +82,12 @@ class AbstractConfigResolverColorConversionTest extends TestCase
         $this->contextMock->method('getUserId')->willReturn(1);
         $this->contextMock->method('getUserType')->willReturn(2);
         $this->infoMock = $this->createMock(ResolveInfo::class);
-        
+
         // Setup serializer
         $this->serializerMock->method('serialize')->willReturnCallback(function($value) {
             return json_encode($value);
         });
-        
+
         // Instantiate Config resolver with REAL color utilities
         $this->config = new Config(
             $this->serializerMock,
@@ -102,122 +102,122 @@ class AbstractConfigResolverColorConversionTest extends TestCase
             $this->userResolverMock
         );
     }
-    
+
     /**
      * Test: Converts black HEX (#000000) to RGB (0, 0, 0)
      */
     public function testConvertsBlackHexToRgb(): void
     {
         $this->setupMocksForColorTest('#000000', 'rgb', '#111827');
-        
+
         $result = $this->executeResolver();
         $field = $result['sections'][0]['fields'][0];
-        
+
         $this->assertEquals('0, 0, 0', $field['value'], 
             'Black HEX #000000 should convert to RGB "0, 0, 0"');
         $this->assertEquals('rgb', $field['format']);
     }
-    
+
     /**
      * Test: Converts white HEX (#ffffff) to RGB (255, 255, 255)
      */
     public function testConvertsWhiteHexToRgb(): void
     {
         $this->setupMocksForColorTest('#ffffff', 'rgb', '#000000');
-        
+
         $result = $this->executeResolver();
         $field = $result['sections'][0]['fields'][0];
-        
+
         $this->assertEquals('255, 255, 255', $field['value'], 
             'White HEX #ffffff should convert to RGB "255, 255, 255"');
         $this->assertEquals('rgb', $field['format']);
     }
-    
+
     /**
      * Test: Converts colorful HEX (#FF5733) to RGB (255, 87, 51)
      */
     public function testConvertsColorfulHexToRgb(): void
     {
         $this->setupMocksForColorTest('#FF5733', 'rgb', '#000000');
-        
+
         $result = $this->executeResolver();
         $field = $result['sections'][0]['fields'][0];
-        
+
         $this->assertEquals('255, 87, 51', $field['value'], 
             'HEX #FF5733 should convert to RGB "255, 87, 51"');
     }
-    
+
     /**
      * Test: Preserves HEX format when format="hex"
      */
     public function testPreservesHexWhenFormatIsHex(): void
     {
         $this->setupMocksForColorTest('#ff5733', 'hex', '#000000');
-        
+
         $result = $this->executeResolver();
         $field = $result['sections'][0]['fields'][0];
-        
+
         $this->assertEquals('#ff5733', $field['value'], 
             'HEX value should be preserved when format="hex"');
         $this->assertEquals('hex', $field['format']);
     }
-    
+
     /**
      * Test: Preserves palette references unchanged
      */
     public function testPreservesPaletteReferences(): void
     {
         $this->setupMocksForColorTest('--color-primary', 'rgb', '#000000');
-        
+
         $result = $this->executeResolver();
         $field = $result['sections'][0]['fields'][0];
-        
+
         $this->assertEquals('--color-primary', $field['value'], 
             'Palette references should NEVER be converted');
     }
-    
+
     /**
      * Test: Preserves CSS var() wrappers unchanged
      */
     public function testPreservesCssVarWrappers(): void
     {
         $this->setupMocksForColorTest('var(--custom-color)', 'rgb', '#000000');
-        
+
         $result = $this->executeResolver();
         $field = $result['sections'][0]['fields'][0];
-        
+
         $this->assertEquals('var(--custom-color)', $field['value'], 
             'CSS var() wrappers should NEVER be converted');
     }
-    
+
     /**
      * Test: Handles null values correctly
      */
     public function testHandlesNullValues(): void
     {
         $this->setupMocksForColorTest(null, 'rgb', '#000000');
-        
+
         $result = $this->executeResolver();
         $field = $result['sections'][0]['fields'][0];
-        
+
         $this->assertNull($field['value'], 
             'Null values should remain null');
     }
-    
+
     /**
      * Test: Converts short HEX (#FFF) to RGB
      */
     public function testConvertsShortHexToRgb(): void
     {
         $this->setupMocksForColorTest('#FFF', 'rgb', '#000');
-        
+
         $result = $this->executeResolver();
         $field = $result['sections'][0]['fields'][0];
-        
+
         $this->assertEquals('255, 255, 255', $field['value'], 
             'Short HEX #FFF should convert to RGB "255, 255, 255"');
     }
-    
+
     /**
      * Helper: Setup mocks for color field testing
      */
@@ -226,7 +226,7 @@ class AbstractConfigResolverColorConversionTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
-        
+
         $mockConfig = [
             'version' => '1.0',
             'sections' => [
@@ -246,10 +246,10 @@ class AbstractConfigResolverColorConversionTest extends TestCase
             ],
             'presets' => []
         ];
-        
+
         $this->configProviderMock->method('getConfigurationWithInheritance')
             ->willReturn($mockConfig);
-        
+
         $mockValues = $value !== null ? [
             [
                 'section_code' => 'colors',
@@ -258,10 +258,10 @@ class AbstractConfigResolverColorConversionTest extends TestCase
                 'updated_at' => '2026-02-20'
             ]
         ] : [];
-        
+
         $this->valueInheritanceResolverMock->method('resolveAllValues')
             ->willReturn($mockValues);
-        
+
         $this->configProviderMock->method('getAllDefaults')
             ->willReturn(['colors.test_color' => $default]);
         $this->configProviderMock->method('getMetadata')
@@ -271,7 +271,7 @@ class AbstractConfigResolverColorConversionTest extends TestCase
         $this->paletteProviderMock->method('getPalettes')
             ->willReturn([]);
     }
-    
+
     /**
      * Helper: Execute resolver
      */
