@@ -14,9 +14,12 @@
  */
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
-], function ($, StorageHelper) {
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, StorageHelper, Logger) {
     'use strict';
+
+    var log = Logger.for('utils/dom/iframe-helper');
 
     return {
         /**
@@ -29,7 +32,7 @@ define([
             var $iframe = $('#bte-iframe');
             
             if (!$iframe.length) {
-                console.warn('⚠️ Iframe Helper: #bte-iframe not found in DOM');
+                log.warn('⚠️ Iframe Helper: #bte-iframe not found in DOM');
                 return null;
             }
             
@@ -38,13 +41,13 @@ define([
                 var doc = iframe.contentDocument || iframe.contentWindow.document;
                 
                 if (!doc) {
-                    console.warn('⚠️ Iframe Helper: Cannot access iframe document');
+                    log.warn('⚠️ Iframe Helper: Cannot access iframe document');
                     return null;
                 }
                 
                 return doc;
             } catch (e) {
-                console.error('❌ Iframe Helper: Failed to access iframe document:', e.message);
+                log.error('❌ Iframe Helper: Failed to access iframe document:', e.message);
                 return null;
             }
         },
@@ -59,14 +62,14 @@ define([
             var $iframe = $('#bte-iframe');
             
             if (!$iframe.length) {
-                console.warn('⚠️ Iframe Helper: #bte-iframe not found in DOM');
+                log.warn('⚠️ Iframe Helper: #bte-iframe not found in DOM');
                 return null;
             }
             
             try {
                 return $iframe[0].contentWindow;
             } catch (e) {
-                console.error('❌ Iframe Helper: Failed to access iframe window:', e.message);
+                log.error('❌ Iframe Helper: Failed to access iframe window:', e.message);
                 return null;
             }
         },
@@ -109,7 +112,7 @@ define([
                 // Return path + query + hash
                 return urlObj.pathname + urlObj.search + urlObj.hash;
             } catch(e) {
-                console.warn('⚠️ Iframe Helper: Cannot get current URL (cross-origin)');
+                log.warn('⚠️ Iframe Helper: Cannot get current URL (cross-origin)');
                 return null;
             }
         },
@@ -148,13 +151,13 @@ define([
             var currentUrl = this.getCurrentUrl();
             
             if (!currentUrl) {
-                console.warn('⚠️ Iframe Helper: Cannot save URL (not accessible)');
+                log.warn('⚠️ Iframe Helper: Cannot save URL (not accessible)');
                 return false;
             }
             
             var cleanPath = this.extractPath(currentUrl);
             StorageHelper.setCurrentUrl(cleanPath);
-            console.log('💾 Iframe Helper: Saved URL:', cleanPath);
+                log.info('💾 Iframe Helper: Saved URL:', cleanPath);
             
             return true;
         },
@@ -185,13 +188,13 @@ define([
                 
                 if (currentAdminUrl !== newAdminUrl) {
                     window.history.replaceState(null, '', newAdminUrl);
-                    console.log('🔄 Iframe Helper: Synced URL to parent');
+                    log.info('🔄 Iframe Helper: Synced URL to parent');
                     return true;
                 }
                 
                 return false;
             } catch(e) {
-                console.error('❌ Iframe Helper: Failed to sync URL:', e.message);
+                log.error('❌ Iframe Helper: Failed to sync URL:', e.message);
                 return false;
             }
         },
@@ -214,13 +217,13 @@ define([
             try {
                 var doc = this.getDocument();
                 if (!doc || !doc.body) {
-                    console.warn('⚠️ Iframe Helper: Cannot detect page type - iframe body not accessible');
+                    log.warn('⚠️ Iframe Helper: Cannot detect page type - iframe body not accessible');
                     return null;
                 }
                 
                 var bodyClasses = doc.body.className;
                 if (!bodyClasses) {
-                    console.warn('⚠️ Iframe Helper: Cannot detect page type - body has no classes');
+                    log.warn('⚠️ Iframe Helper: Cannot detect page type - body has no classes');
                     return null;
                 }
                 
@@ -244,16 +247,16 @@ define([
                     if (bodyClasses.indexOf(pattern) !== -1) {
                         // Convert dashes to underscores for page type
                         var pageType = pattern.replace(/-/g, '_');
-                        console.log('✅ Iframe Helper: Detected page type from body class:', pattern, '→', pageType);
+                        log.info('✅ Iframe Helper: Detected page type from body class: ' + pattern + ' → ' + pageType);
                         return pageType;
                     }
                 }
                 
-                console.warn('⚠️ Iframe Helper: No known page type found in body classes');
+                log.warn('⚠️ Iframe Helper: No known page type found in body classes');
                 return null;
                 
             } catch (e) {
-                console.error('❌ Iframe Helper: Failed to detect page type from body:', e.message);
+                log.error('❌ Iframe Helper: Failed to detect page type from body:', e.message);
                 return null;
             }
         },
@@ -303,12 +306,12 @@ define([
                             pageType: pageType
                         });
                         
-                        console.log('🔄 Iframe Helper: Page type changed to:', pageType);
+                        log.info('🔄 Iframe Helper: Page type changed to:', pageType);
                     }
                 }
             }, 500);
             
-            console.log('🔄 Iframe Helper: URL sync started (interval:', intervalId + ')');
+            log.info('🔄 Iframe Helper: URL sync started (interval: ' + intervalId + ')');
             return intervalId;
         }
     };

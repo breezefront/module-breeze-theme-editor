@@ -12,9 +12,12 @@ define([
     'jquery',
     'jquery-ui-modules/widget',
     'mage/template',
-    'text!Swissup_BreezeThemeEditor/template/editor/navigation.html'
-], function ($, widget, mageTemplate, navigationTemplate) {
+    'text!Swissup_BreezeThemeEditor/template/editor/navigation.html',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, widget, mageTemplate, navigationTemplate, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar/navigation');
 
     $.widget('swissup.breezeNavigation', {
         options: {
@@ -27,7 +30,7 @@ define([
          * Initialize widget
          */
         _create: function () {
-            console.log('✅ Initializing Navigation with', this.options.items.length, 'items');
+            log.info('Initializing Navigation with ' + this.options.items.length + ' items');
 
             this.template = mageTemplate(navigationTemplate);
             this._render();
@@ -47,7 +50,7 @@ define([
             this.element.html(html);
             this.$items = this.element.find('.nav-item');
 
-            console.log('📋 Navigation rendered');
+            log.info('Navigation rendered');
         },
 
         /**
@@ -69,20 +72,20 @@ define([
 
             // Ignore disabled items
             if ($item.hasClass('disabled') || $item.prop('disabled')) {
-                console.warn('⚠️ Navigation item is disabled:', itemId);
+                log.warn('Navigation item is disabled: ' + itemId);
                 this._showDisabledMessage(itemId);
                 return;
             }
 
             // Toggle: Якщо вже активний → деактивувати
             if ($item.hasClass('active')) {
-                console.log('🔄 Toggling off active navigation:', itemId);
+                log.info('Toggling off active navigation: ' + itemId);
                 this.deactivate(itemId);
                 return;
             }
 
             // Активувати новий таб
-            console.log('🔄 Switching navigation to:', itemId);
+            log.info('Switching navigation to: ' + itemId);
             this.setActive(itemId);
         },
 
@@ -97,12 +100,12 @@ define([
             });
 
             if (!item) {
-                console.error('❌ Navigation item not found:', itemId);
+                log.error('Navigation item not found: ' + itemId);
                 return;
             }
 
             if (item.disabled) {
-                console.warn('⚠️ Cannot activate disabled item:', itemId);
+                log.warn('Cannot activate disabled item: ' + itemId);
                 return;
             }
 
@@ -117,7 +120,7 @@ define([
             $activeItem.addClass('active');
             item.active = true;
 
-            console.log('✅ Navigation activated:', itemId);
+            log.info('Navigation activated: ' + itemId);
 
             // Сховати всі панелі
             this._hideAllPanels();
@@ -155,7 +158,7 @@ define([
             $item.removeClass('active');
             item.active = false;
 
-            console.log('✅ Navigation deactivated:', itemId);
+            log.info('Navigation deactivated: ' + itemId);
 
             // Сховати панель
             this._hidePanel(itemId);
@@ -206,7 +209,7 @@ define([
                     $panel.addClass('active');
                 }, 10);
                 
-                console.log('👁️ Panel shown:', panelId);
+                log.info('Panel shown: ' + panelId);
 
                 // Додати клас до body для зсуву контенту
                 $('body').addClass('bte-panel-active');
@@ -216,7 +219,7 @@ define([
                     itemId: itemId
                 }]);
             } else {
-                console.warn('⚠️ Panel not found:', panelId);
+                log.warn('Panel not found: ' + panelId);
             }
         },
 
@@ -245,7 +248,7 @@ define([
                 
                 // Step 1: Remove active class to trigger transform animation (slide out to LEFT)
                 $panel.removeClass('active');
-                console.log('🙈 Panel hidden:', panelId);
+                log.info('Panel hidden: ' + panelId);
 
                 // Step 2: Wait for animation to complete (300ms), then hide panel (display: none)
                 setTimeout(function() {
@@ -278,7 +281,7 @@ define([
             // Видалити клас з body
             $('body').removeClass('bte-panel-active');
 
-            console.log('🙈 All panels hidden');
+            log.info('All panels hidden');
         },
 
         /**
@@ -290,20 +293,20 @@ define([
             var panelConfig = this.options.panelWidgets[itemId];
 
             if (!panelConfig) {
-                console.warn('⚠️ No panel widget config for:', itemId);
+                log.warn('No panel widget config for: ' + itemId);
                 return false;
             }
 
             var $panel = $(panelConfig.selector);
 
             if (!$panel.length) {
-                console.error('❌ Panel element not found:', panelConfig.selector);
+                log.error('Panel element not found: ' + panelConfig.selector);
                 return false;
             }
 
             // Check if already initialized
             if ($panel.data('panel-initialized')) {
-                console.log('ℹ️ Panel already initialized:', itemId);
+                log.info('Panel already initialized: ' + itemId);
                 return true;
             }
 
@@ -312,10 +315,10 @@ define([
                 $panel[panelConfig.widget](panelConfig.config);
                 $panel.data('panel-initialized', true);
 
-                console.log('✅ Panel initialized:', itemId, '→', panelConfig.widget);
+                log.info('Panel initialized: ' + itemId + ' -> ' + panelConfig.widget);
                 return true;
             } catch (e) {
-                console.error('❌ Failed to initialize panel:', itemId, e);
+                log.error('Failed to initialize panel: ' + itemId + ' ' + e);
                 return false;
             }
         },
@@ -345,7 +348,7 @@ define([
                 message: message
             }]);
 
-            console.log('ℹ️ Disabled item clicked:', itemId, '→', message);
+            log.info('Disabled item clicked: ' + itemId + ' -> ' + message);
         }
     });
 

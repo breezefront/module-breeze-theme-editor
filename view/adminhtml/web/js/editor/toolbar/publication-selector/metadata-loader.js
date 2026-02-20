@@ -5,9 +5,12 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-publications',
-    'Swissup_BreezeThemeEditor/js/graphql/queries/get-config'
-], function($, getPublications, getConfig) {
+    'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function($, getPublications, getConfig, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar/publication-selector/metadata-loader');
 
     return {
         /**
@@ -22,11 +25,7 @@ define([
             this.themeId = options.themeId;
             this.pageSize = options.pageSize || 10;
             
-            console.log('📦 Metadata loader initialized:', {
-                storeId: this.storeId,
-                themeId: this.themeId,
-                pageSize: this.pageSize
-            });
+            log.debug('Metadata loader initialized: storeId=' + this.storeId + ' themeId=' + this.themeId + ' pageSize=' + this.pageSize);
             
             return this;
         },
@@ -39,11 +38,11 @@ define([
          */
         loadMetadata: function() {
             if (!this.storeId) {
-                console.warn('⚠️ Cannot load metadata: storeId missing');
+                log.warn('Cannot load metadata: storeId missing');
                 return $.Deferred().reject('Store ID missing').promise();
             }
 
-            console.log('📥 Loading draft metadata...');
+            log.info('Loading draft metadata...');
 
             return getConfig(
                 parseInt(this.storeId),
@@ -55,10 +54,10 @@ define([
                     draftChangesCount: meta.draftChangesCount || 0,
                     lastPublished: meta.lastPublished || null
                 };
-                console.log('📊 Draft metadata loaded:', result);
+                log.debug('Draft metadata loaded: draftChangesCount=' + result.draftChangesCount);
                 return result;
             }).catch(function(error) {
-                console.error('❌ Failed to load draft metadata:', error);
+                log.error('Failed to load draft metadata: ' + error);
                 throw error;
             });
         },
@@ -74,11 +73,11 @@ define([
             search = search || null;
             
             if (!this.storeId) {
-                console.warn('⚠️ Cannot load publications: storeId missing');
+                log.warn('Cannot load publications: storeId missing');
                 return $.Deferred().reject('Store ID missing').promise();
             }
             
-            console.log('📥 Loading publications (page ' + page + ')...');
+            log.info('Loading publications (page ' + page + ')...');
             
             var self = this;
             
@@ -90,11 +89,7 @@ define([
                 page,
                 search
             ).then(function(data) {
-                console.log('✅ Publications loaded:', {
-                    page: page,
-                    count: data.items ? data.items.length : 0,
-                    total: data.total_count
-                });
+                log.debug('Publications loaded: page=' + page + ' count=' + (data.items ? data.items.length : 0) + ' total=' + data.total_count);
                 
                 // Format publications for UI
                 return {
@@ -103,7 +98,7 @@ define([
                     page_info: data.page_info || {}
                 };
             }).catch(function(error) {
-                console.error('❌ Failed to load publications:', error);
+                log.error('Failed to load publications: ' + error);
                 throw error;
             });
         },

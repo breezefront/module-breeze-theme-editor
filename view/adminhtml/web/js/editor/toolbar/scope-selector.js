@@ -10,9 +10,12 @@ define([
     'text!Swissup_BreezeThemeEditor/template/editor/scope-selector.html',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/cookie-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
-    'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder'
-], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar/scope-selector');
 
     $.widget('swissup.breezeScopeSelector', {
         options: {
@@ -28,11 +31,11 @@ define([
          * @private
          */
         _create: function() {
-            console.log('🎨 Initializing scope selector', this.options);
+            log.debug('Initializing scope selector: ' + JSON.stringify(this.options));
             this._processHierarchy();
             this._render();
             this._bindEvents();
-            console.log('✅ Scope selector initialized');
+            log.info('Scope selector initialized');
         },
 
         /**
@@ -50,7 +53,7 @@ define([
 
             // Find current store name
             this.currentStoreName = this._findStoreName(this.options.currentStoreId);
-            console.log('📍 Current store:', this.currentStoreName, '(ID: ' + this.options.currentStoreId + ')');
+            log.debug('Current store: ' + this.currentStoreName + ' (ID: ' + this.options.currentStoreId + ')');
         },
 
         /**
@@ -151,7 +154,7 @@ define([
             $dropdown.toggle();
             $button.toggleClass('active', !isVisible);
             
-            console.log(isVisible ? '🔽 Closing scope dropdown' : '🔼 Opening scope dropdown');
+            log.info(isVisible ? 'Closing scope dropdown' : 'Opening scope dropdown');
         },
 
         /**
@@ -177,7 +180,7 @@ define([
             $groups.toggle();
             $toggle.text(isVisible ? '▶' : '▼');
             
-            console.log((isVisible ? '📁' : '📂') + ' Website toggled:', websiteId);
+            log.debug((isVisible ? 'Collapsed' : 'Expanded') + ' website: ' + websiteId);
         },
 
         /**
@@ -194,7 +197,7 @@ define([
             $stores.toggle();
             $toggle.text(isVisible ? '▶' : '▼');
             
-            console.log((isVisible ? '📁' : '📂') + ' Group toggled:', groupId);
+            log.debug((isVisible ? 'Collapsed' : 'Expanded') + ' group: ' + groupId);
         },
 
         /**
@@ -205,10 +208,10 @@ define([
          * @private
          */
         _selectStore: function(storeId, storeCode, storeName) {
-            console.log('🏪 Switching to store:', storeCode, '(ID: ' + storeId + ')');
+            log.info('Switching to store: ' + storeCode + ' (ID: ' + storeId + ')');
 
             if (storeId == this.options.currentStoreId) {
-                console.log('ℹ️ Already viewing store:', storeCode);
+                log.info('Already viewing store: ' + storeCode);
                 this._closeDropdown();
                 return;
             }
@@ -226,9 +229,9 @@ define([
                 .replace(/\/store\/\d+\//, '/store/' + storeId + '/')
                 .replace(/\/url\/[^\/]*\//, '/url/%2F/');
             
-            console.log('🔄 Updating iframe src');
-            console.log('   Old:', currentSrc);
-            console.log('   New:', newSrc);
+            log.info('Updating iframe src');
+            log.debug('Old: ' + currentSrc);
+            log.debug('New: ' + newSrc);
             
             // Set store cookie only (theme determined automatically from store config)
             cookieManager.setStoreCookie(storeCode);
@@ -239,7 +242,7 @@ define([
                 maxAge: 86400,  // 24 hours
                 sameSite: 'Lax'
             });
-            console.log('💾 Saved last store ID:', storeId);
+            log.debug('Saved last store ID: ' + storeId);
             
             // Update iframe src (triggers reload with new store + homepage)
             $iframe.attr('src', newSrc);
@@ -257,7 +260,7 @@ define([
             
             // Trigger event
             $(this.element).trigger('storeChanged', [storeId, storeCode]);
-            console.log('✅ Store switched to:', storeName);
+            log.info('Store switched to: ' + storeName);
             
             // Update config
             configManager.update({
@@ -272,7 +275,7 @@ define([
          * @param {string} storeCode
          */
         setStore: function(storeId, storeCode) {
-            console.log('📝 Setting store externally:', storeCode);
+            log.info('Setting store externally: ' + storeCode);
             var storeName = this._findStoreName(storeId);
             this._selectStore(storeId, storeCode, storeName);
         }

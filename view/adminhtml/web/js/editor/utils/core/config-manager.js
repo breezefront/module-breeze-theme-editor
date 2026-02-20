@@ -7,8 +7,10 @@
  * This eliminates code duplication where multiple widgets access config via:
  * var toolbarConfig = $('body').data('bte-admin-config');
  */
-define(['jquery'], function($) {
+define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function($, Logger) {
     'use strict';
+
+    var log = Logger.for('utils/core/config-manager');
     
     /**
      * Key used to store config in jQuery.data()
@@ -47,12 +49,12 @@ define(['jquery'], function($) {
          */
         set: function(config) {
             if (!config || typeof config !== 'object') {
-                console.error('❌ Config must be an object');
+                log.error('❌ Config must be an object');
                 return;
             }
             
             $('body').data(CONFIG_KEY, config);
-            console.log('✅ Toolbar config set:', config);
+            log.info('✅ Toolbar config set:', config);
         },
         
         /**
@@ -63,14 +65,14 @@ define(['jquery'], function($) {
          */
         update: function(updates) {
             if (!updates || typeof updates !== 'object') {
-                console.error('❌ Updates must be an object');
+                log.error('❌ Updates must be an object');
                 return;
             }
             
             var current = this.get();
             var newConfig = $.extend({}, current, updates);
             $('body').data(CONFIG_KEY, newConfig);
-            console.log('🔄 Toolbar config updated:', updates);
+            log.info('🔄 Toolbar config updated:', updates);
         },
         
         /**
@@ -158,7 +160,7 @@ define(['jquery'], function($) {
          */
         clear: function() {
             $('body').removeData(CONFIG_KEY);
-            console.log('🗑️  Toolbar config cleared');
+            log.info('🗑️  Toolbar config cleared');
         }
     };
 });

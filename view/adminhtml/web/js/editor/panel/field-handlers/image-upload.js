@@ -1,8 +1,11 @@
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/base'
-], function ($, BaseHandler) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/base',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, BaseHandler, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/field-handlers/image-upload');
 
     /**
      * Image Upload Field Handler
@@ -86,7 +89,7 @@ define([
                 BaseHandler.handleChange($hiddenInput, callback);
             });
 
-            console.log('✅ Image upload field handler initialized');
+            log.info('Image upload field handler initialized');
         },
 
         /**

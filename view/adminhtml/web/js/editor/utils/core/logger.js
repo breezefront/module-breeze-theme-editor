@@ -12,7 +12,16 @@
  *   localStorage.setItem('bte-log-level', 'INFO')  // back to default
  *   localStorage.removeItem('bte-log-level')        // reset to default
  *
- * Usage:
+ * Usage (bound — preferred for per-file use):
+ *   define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logger) {
+ *       var log = Logger.for('my-module');
+ *       log.info ('Widget initialized');
+ *       log.debug('Detailed state', { foo: 1 });
+ *       log.warn ('Unexpected condition', data);
+ *       log.error('Something broke', err);
+ *   });
+ *
+ * Usage (unbound — for shared utilities that pass module name dynamically):
  *   define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logger) {
  *       Logger.info ('my-module', 'Widget initialized');
  *       Logger.debug('my-module', 'Detailed state', { foo: 1 });
@@ -132,7 +141,24 @@ define([], function () {
          * @param {String} msg
          * @param {*}      [data]
          */
-        error: function (module, msg, data) { log(LEVELS.ERROR, module, msg, data); }
+        error: function (module, msg, data) { log(LEVELS.ERROR, module, msg, data); },
+
+        /**
+         * Create a module-bound logger (preferred for per-file usage).
+         * Returns an object with debug/info/warn/error methods that do not
+         * require repeating the module name on every call.
+         *
+         * @param   {String} moduleName  - short identifier for this module/component
+         * @returns {{ debug: Function, info: Function, warn: Function, error: Function }}
+         */
+        for: function (moduleName) {
+            return {
+                debug: function (msg, data) { log(LEVELS.DEBUG, moduleName, msg, data); },
+                info:  function (msg, data) { log(LEVELS.INFO,  moduleName, msg, data); },
+                warn:  function (msg, data) { log(LEVELS.WARN,  moduleName, msg, data); },
+                error: function (msg, data) { log(LEVELS.ERROR, moduleName, msg, data); }
+            };
+        }
     };
 
     return Logger;

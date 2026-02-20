@@ -6,8 +6,10 @@
  * 
  * @module Swissup_BreezeThemeEditor/js/editor/utils/ui/error-handler
  */
-define(['jquery'], function($) {
+define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function($, Logger) {
     'use strict';
+
+    var log = Logger.for('utils/ui/error-handler');
     
     return {
         /**
@@ -17,7 +19,7 @@ define(['jquery'], function($) {
          * @param {string} context - Context of where error occurred (e.g., 'publish-draft')
          */
         handle: function(error, context) {
-            console.error('[BTE Error]', context, error);
+            log.error('[BTE Error] ' + context, error);
             
             var message = this._getErrorMessage(error);
             this._showError(message, context);
@@ -108,7 +110,7 @@ define(['jquery'], function($) {
         _logToServer: function(error, context) {
             // TODO: Implement server-side error logging endpoint
             // For now, just log to console
-            console.log('Would log to server:', {
+            log.info('Would log to server:', {
                 context: context,
                 error: error.message,
                 status: error.response ? error.response.status : null,

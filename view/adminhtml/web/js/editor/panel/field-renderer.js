@@ -14,7 +14,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/social-links',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/image-upload',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/spacing',
-    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/repeater'
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/repeater',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function(
     BaseFieldRenderer,
     ColorRenderer,
@@ -31,9 +32,12 @@ define([
     SocialLinksRenderer,
     ImageUploadRenderer,
     SpacingRenderer,
-    RepeaterRenderer
+    RepeaterRenderer,
+    Logger
 ) {
     'use strict';
+
+    var log = Logger.for('panel/field-renderer');
 
     /**
      * Field Renderer - Main Orchestrator
@@ -70,7 +74,7 @@ define([
          */
         register: function(type, renderer) {
             this.renderers[type] = renderer;
-            console.log('✅ Registered custom renderer:', type);
+            log.debug('Registered custom renderer: ' + type);
         },
 
         /**
@@ -83,24 +87,24 @@ define([
         render: function(field, sectionCode) {
             // Validate field structure
             if (!field.code) {
-                console.error('❌ Field missing "code" property:', field);
+                log.error('Field missing "code" property');
             }
             if (!field.type) {
-                console.error('❌ Field missing "type" property:', field);
+                log.error('Field missing "type" property');
             }
 
             var renderer = this.renderers[field.type];
 
             if (!renderer) {
-                console.warn('⚠️ No renderer for field type:', field.type, '- Using fallback');
+                log.warn('No renderer for field type: ' + field.type + ' - Using fallback');
                 return this._renderUnsupported(field, sectionCode);
             }
 
             try {
                 return renderer.render(field, sectionCode);
             } catch (e) {
-                console.error('❌ Failed to render field:', field.code || 'unknown', e);
-                console.error('Field data:', field);
+                log.error('Failed to render field: ' + (field.code || 'unknown') + ' ' + e);
+                log.error('Field data: ' + JSON.stringify(field));
                 return this._renderError(field, sectionCode, e);
             }
         },
@@ -115,12 +119,12 @@ define([
             var self = this;
             var html = '<div class="bte-accordion-content" data-section="' + section.code + '">';
 
-            console.log('📋 Rendering section:', section.code, 'with', section.fields.length, 'fields');
+            log.debug('Rendering section: ' + section.code + ' with ' + section.fields.length + ' fields');
 
             section.fields.forEach(function(field) {
                 // Validate each field
                 if (!field.code) {
-                    console.error('❌ Field missing code in section:', section.code, field);
+                    log.error('Field missing code in section: ' + section.code);
                 }
 
                 html += '<div class="bte-field-wrapper" data-field="' + (field.code || 'unknown') + '">';
@@ -130,7 +134,7 @@ define([
 
             html += '</div>';
 
-            console.log('📋 Rendered section:', section.code, '(' + section.fields.length + ' fields)');
+            log.debug('Rendered section: ' + section.code + ' (' + section.fields.length + ' fields)');
             return html;
         },
 

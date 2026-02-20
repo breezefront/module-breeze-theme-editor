@@ -9,9 +9,12 @@ define([
     'mage/template',
     'jquery-ui-modules/widget',
     'text!Swissup_BreezeThemeEditor/template/editor/toolbar-toggle.html',
-    'text!Swissup_BreezeThemeEditor/template/editor/compact-toggle-button.html'
-], function ($, mageTemplate, widget, toggleTemplate, compactTemplate) {
+    'text!Swissup_BreezeThemeEditor/template/editor/compact-toggle-button.html',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, mageTemplate, widget, toggleTemplate, compactTemplate, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar/toolbar-toggle');
 
     $.widget('breeze.breezeToolbarToggle', {
         options: {
@@ -26,13 +29,13 @@ define([
          * @private
          */
         _create: function() {
-            console.log('🎨 Initializing toolbar toggle');
+            log.info('Initializing toolbar toggle');
             this.mainButtonTemplate = mageTemplate(toggleTemplate);
             this.compactButtonTemplate = mageTemplate(compactTemplate);
             this._render();
             this._bindEvents();
             this._restoreState();
-            console.log('✅ Toolbar toggle initialized');
+            log.info('Toolbar toggle initialized');
         },
 
         /**
@@ -85,7 +88,7 @@ define([
          * @private
          */
         _hideToolbar: function() {
-            console.log('📦 Hiding toolbar');
+            log.info('Hiding toolbar');
             
             this.options.collapsed = true;
             
@@ -109,7 +112,7 @@ define([
             // Trigger event
             $(this.element).trigger('toolbarHidden');
             
-            console.log('✅ Toolbar hidden, compact button shown');
+            log.info('Toolbar hidden, compact button shown');
         },
 
         /**
@@ -117,7 +120,7 @@ define([
          * @private
          */
         _showToolbar: function() {
-            console.log('📂 Showing toolbar');
+            log.info('Showing toolbar');
             
             this.options.collapsed = false;
             
@@ -138,7 +141,7 @@ define([
             // Trigger event
             $(this.element).trigger('toolbarShown');
             
-            console.log('✅ Toolbar shown, compact button hidden');
+            log.info('Toolbar shown, compact button hidden');
         },
 
         /**
@@ -149,7 +152,7 @@ define([
             try {
                 localStorage.setItem(this.options.storageKey, isVisible ? '1' : '0');
             } catch (e) {
-                console.warn('⚠️ Could not save toolbar state:', e);
+                log.warn('Could not save toolbar state: ' + e);
             }
         },
 
@@ -165,7 +168,7 @@ define([
                     setTimeout($.proxy(this._hideToolbar, this), 100);
                 }
             } catch (e) {
-                console.warn('⚠️ Could not restore toolbar state:', e);
+                log.warn('Could not restore toolbar state: ' + e);
             }
         }
     });

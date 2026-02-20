@@ -3,9 +3,12 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/color-utils',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-palette-value',
     'Swissup_BreezeThemeEditor/js/editor/storage-helper',
-    'Swissup_BreezeThemeEditor/js/lib/toastify'
-], function ($, ColorUtils, savePaletteValueMutation, StorageHelper, Toastify) {
+    'Swissup_BreezeThemeEditor/js/lib/toastify',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, ColorUtils, savePaletteValueMutation, StorageHelper, Toastify, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/palette-manager');
 
     /**
      * Palette Manager - Central state management for color palettes
@@ -30,7 +33,7 @@ define([
          */
         init: function(config) {
             if (!config || !config.palettes) {
-                console.log('⚠️ No palettes found in config');
+                log.warn('No palettes found in config');
                 return;
             }
 
@@ -51,7 +54,7 @@ define([
                 }
             }
 
-            console.log('✅ Palette Manager initialized with', Object.keys(this.palettes).length, 'palettes');
+            log.info('Palette Manager initialized with ' + Object.keys(this.palettes).length + ' palettes');
         },
 
         /**
@@ -192,7 +195,7 @@ define([
         updateColor: function(cssVar, hexValue) {
             var color = this.getColor(cssVar);
             if (!color) {
-                console.warn('⚠️ Color not found:', cssVar);
+                log.warn('Color not found: ' + cssVar);
                 return;
             }
 
@@ -216,7 +219,7 @@ define([
             color.value = hexValue;
             color.hex = hexValue;
 
-            console.log('🎨 Updating palette color:', cssVar, '=', hexValue, '(not saved yet)');
+            log.debug('Updating palette color: ' + cssVar + ' = ' + hexValue + ' (not saved yet)');
 
             // Notify subscribers immediately (for live CSS preview)
             this.notify(cssVar, hexValue);
@@ -254,7 +257,7 @@ define([
                 try {
                     callback(cssVar, hexValue);
                 } catch (e) {
-                    console.error('❌ Error in palette listener:', e);
+                    log.error('Error in palette listener: ' + e);
                 }
             });
         },
@@ -273,7 +276,7 @@ define([
                     value: dirty.value  // HEX format (Breeze 3.0)
                 });
             }
-            console.log('📦 Palette dirty changes:', changes.length);
+            log.debug('Palette dirty changes: ' + changes.length);
             return changes;
         },
 
@@ -283,7 +286,7 @@ define([
         markAsSaved: function() {
             var count = Object.keys(this.dirtyColors).length;
             this.dirtyColors = {};
-            console.log('✅ Palette marked as saved, cleared', count, 'dirty colors');
+            log.info('Palette marked as saved, cleared ' + count + ' dirty colors');
         },
 
         /**
@@ -308,7 +311,7 @@ define([
          */
         revertDirtyChanges: function() {
             if (!this.hasDirtyChanges()) {
-                console.log('⚠️ No dirty changes to revert');
+                log.warn('No dirty changes to revert');
                 return 0;
             }
             
@@ -334,7 +337,7 @@ define([
             // Clear dirty state
             this.dirtyColors = {};
             
-            console.log('↩️ Reverted', revertedCount, 'palette changes');
+            log.info('Reverted ' + revertedCount + ' palette changes');
             
             // Trigger event for UI update
             $(document).trigger('paletteChangesReverted', { count: revertedCount });
@@ -407,7 +410,7 @@ define([
                 }
             }
 
-            console.warn('⚠️ Unknown color format:', color);
+            log.warn('Unknown color format: ' + color);
             return '#000000';
         },
 

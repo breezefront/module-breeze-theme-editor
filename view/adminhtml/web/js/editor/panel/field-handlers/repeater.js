@@ -1,8 +1,11 @@
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/base'
-], function ($, BaseHandler) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/base',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, BaseHandler, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/field-handlers/repeater');
 
     /**
      * Repeater Field Handler
@@ -58,7 +61,7 @@ define([
             // Initialize sortable (basic implementation with mouse events)
             self.initSortable($element);
 
-            console.log('✅ Repeater field handler initialized');
+            log.info('Repeater field handler initialized');
         },
 
         /**
@@ -298,7 +301,7 @@ define([
         initSortable: function($element) {
             // Basic drag-and-drop implementation would go here
             // For now, just log that it's initialized
-            console.log('ℹ️ Repeater sortable initialized (basic implementation)');
+            log.debug('Repeater sortable initialized (basic implementation)');
         },
 
         /**

@@ -9,9 +9,12 @@ define([
     'jquery',
     'jquery-ui-modules/widget',
     'mage/template',
-    'text!Swissup_BreezeThemeEditor/template/editor/device-switcher.html'
-], function ($, widget, mageTemplate, deviceSwitcherTemplate) {
+    'text!Swissup_BreezeThemeEditor/template/editor/device-switcher.html',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, widget, mageTemplate, deviceSwitcherTemplate, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar/device-switcher');
 
     $.widget('swissup.breezeDeviceSwitcher', {
         options: {
@@ -49,7 +52,7 @@ define([
             this._bind();
             this._applyDevice(this.currentDevice);
             
-            console.log('📱 Device switcher initialized:', this.currentDevice);
+            log.info('📱 Device switcher initialized:', this.currentDevice);
         },
 
         /**
@@ -113,7 +116,7 @@ define([
          */
         _switchDevice: function (device) {
             if (!this.options.deviceConfig[device]) {
-                console.error('❌ Unknown device:', device);
+                log.error('❌ Unknown device:', device);
                 return;
             }
 
@@ -131,7 +134,7 @@ define([
             // Trigger event for other components
             this.element.trigger('deviceChanged', [device]);
             
-            console.log('📱 Device switched to:', device);
+            log.info('📱 Device switched to:', device);
         },
 
         /**
@@ -143,7 +146,7 @@ define([
             var $iframe = $(this.options.iframeSelector);
             
             if (!$iframe.length) {
-                console.warn('⚠️ Iframe not found:', this.options.iframeSelector);
+                log.warn('⚠️ Iframe not found:', this.options.iframeSelector);
                 return;
             }
 

@@ -7,9 +7,12 @@ define([
     'jquery',
     'mage/template',
     'jquery-ui-modules/widget',
-    'text!Swissup_BreezeThemeEditor/template/editor/exit-button.html'
-], function ($, mageTemplate, widget, exitTemplate) {
+    'text!Swissup_BreezeThemeEditor/template/editor/exit-button.html',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, mageTemplate, widget, exitTemplate, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar/exit-button');
 
     $.widget('breeze.breezeExitButton', {
         options: {
@@ -22,9 +25,9 @@ define([
          * @private
          */
         _create: function() {
-            console.log('🎨 Initializing exit button');
+            log.debug('🎨 Initializing exit button');
             this._render();
-            console.log('✅ Exit button initialized');
+            log.info('✅ Exit button initialized');
         },
 
         /**

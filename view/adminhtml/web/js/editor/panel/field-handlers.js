@@ -8,9 +8,12 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/image-upload',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/spacing',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/repeater',
-    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/base'
-], function (BaseHandler, ColorHandler, RangeHandler, NumberHandler, RadioHandler, SimpleHandler, ImageUploadHandler, SpacingHandler, RepeaterHandler, BaseRenderer) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/base',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function (BaseHandler, ColorHandler, RangeHandler, NumberHandler, RadioHandler, SimpleHandler, ImageUploadHandler, SpacingHandler, RepeaterHandler, BaseRenderer, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/field-handlers');
 
     /**
      * Field Change Handler Orchestrator
@@ -49,7 +52,7 @@ define([
          * @param {Function} callback - Change callback
          */
         init: function($element, callback) {
-            console.log('🎯 Initializing field change handlers');
+            log.debug('Initializing field change handlers');
 
             ColorHandler.init($element, callback);
             RangeHandler.init($element, callback);
@@ -63,7 +66,7 @@ define([
             // Attach reset button handlers with registry for smart dispatching
             BaseHandler.attachResetHandler($element, this.handlersByType);
 
-            console.log('✅ All field handlers initialized');
+            log.info('All field handlers initialized');
         },
 
         /**
@@ -81,7 +84,7 @@ define([
             SpacingHandler.destroy($element);
             RepeaterHandler.destroy($element);
 
-            console.log('🗑️ All field handlers destroyed');
+            log.debug('All field handlers destroyed');
         },
 
         /**

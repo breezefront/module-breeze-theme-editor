@@ -1,9 +1,12 @@
 define([
     'mage/template',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
-    'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer'
-], function(mageTemplate, PanelState, BadgeRenderer) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function(mageTemplate, PanelState, BadgeRenderer, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/field-renderers/base');
 
     /**
      * Base Field Renderer
@@ -44,7 +47,7 @@ define([
             var template = this.getTemplate();
 
             if (!template) {
-                console.error('❌ No template for renderer:', this);
+                log.error('No template for renderer');
                 return '';
             }
 
@@ -61,10 +64,10 @@ define([
         prepareData: function(field, sectionCode) {
             // Validate required properties
             if (!field.code) {
-                console.error('❌ Field missing "code" property:', field);
+                log.error('Field missing "code" property');
             }
             if (!sectionCode) {
-                console.error('❌ Missing sectionCode for field:', field.code || 'unknown');
+                log.error('Missing sectionCode for field: ' + (field.code || 'unknown'));
             }
 
             var fieldCode = field.code || 'unknown';
@@ -132,12 +135,12 @@ define([
             var fieldState = PanelState.getFieldState(sectionCode, fieldCode);
 
             if (!fieldState) {
-                console.warn('⚠️ Field state not found:', sectionCode + '.' + fieldCode);
+                log.warn('Field state not found: ' + sectionCode + '.' + fieldCode);
                 return false;
             }
             
-            console.log('🐛 updateFieldBadges called:', sectionCode + '.' + fieldCode);
-            console.log('🐛 Field state:', JSON.stringify({
+            log.debug('updateFieldBadges called: ' + sectionCode + '.' + fieldCode);
+            log.debug('Field state: ' + JSON.stringify({
                 value: fieldState.value,
                 savedValue: fieldState.savedValue,
                 defaultValue: fieldState.defaultValue,
@@ -149,14 +152,14 @@ define([
             var $input = $element.find('[data-section="' + sectionCode + '"][data-field="' + fieldCode + '"]');
 
             if ($input.length === 0) {
-                console.warn('⚠️ Field input not found in DOM:', sectionCode + '.' + fieldCode);
+                log.warn('Field input not found in DOM: ' + sectionCode + '.' + fieldCode);
                 return false;
             }
 
             var $field = $input.closest('.bte-field');
 
             if ($field.length === 0) {
-                console.warn('⚠️ Field container not found:', sectionCode + '.' + fieldCode);
+                log.warn('Field container not found: ' + sectionCode + '.' + fieldCode);
                 return false;
             }
 
@@ -168,7 +171,7 @@ define([
             var $header = $field.find('.bte-field-header');
 
             if ($header.length === 0) {
-                console.warn('⚠️ Field header not found:', sectionCode + '.' + fieldCode);
+                log.warn('Field header not found: ' + sectionCode + '.' + fieldCode);
                 return false;
             }
 
@@ -182,10 +185,7 @@ define([
                 $header.append(badgesHtml);
             }
 
-            console.log('🔄 Badges updated:', sectionCode + '.' + fieldCode, {
-                isDirty: fieldState.isDirty,
-                isModified: fieldState.isModified
-            });
+            log.debug('Badges updated: ' + sectionCode + '.' + fieldCode + ' isDirty=' + fieldState.isDirty + ' isModified=' + fieldState.isModified);
 
             return true;
         },

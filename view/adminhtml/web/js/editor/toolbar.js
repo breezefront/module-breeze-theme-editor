@@ -25,12 +25,15 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/css-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/settings-editor',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
-    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation, 
              publicationSelector, scopeSelector, pageSelector, highlightToggle, 
              toolbarToggle, exitButton, configManager, urlBuilder, graphQLClient, 
-             previewManager, cssManager, settingsEditor, iframeHelper, StorageHelper) {
+             previewManager, cssManager, settingsEditor, iframeHelper, StorageHelper, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar');
     
     /**
      * Initialize admin toolbar
@@ -38,13 +41,8 @@ define([
      * @param {HTMLElement} element - Root element
      */
     return function(config, element) {
-        console.log('🎨 Initializing admin toolbar', config);
-        console.log('📦 Config details:', {
-            storeId: config.storeId,
-            storeCode: config.storeCode,
-            themeId: config.themeId,
-            iframeBaseUrl: config.iframeBaseUrl
-        });
+        log.info('Initializing admin toolbar');
+        log.debug('Config details: storeId=' + config.storeId + ' storeCode=' + config.storeCode + ' themeId=' + config.themeId + ' iframeBaseUrl=' + config.iframeBaseUrl);
         
         // Store config globally for child widgets to access via configManager
         configManager.set({
@@ -58,11 +56,11 @@ define([
         // Token is stored in localStorage for persistence between page loads
         if (config.token) {
             localStorage.setItem('bte_admin_token', config.token);
-            console.log('✅ Admin Bearer token initialized');
+            log.info('Admin Bearer token initialized');
         } else {
-            console.warn('⚠️  No admin token provided - GraphQL requests will fail');
-            console.warn('    This usually means AdminTokenGenerator failed to create token');
-            console.warn('    Check backend logs for errors');
+            log.warn('No admin token provided - GraphQL requests will fail');
+            log.warn('This usually means AdminTokenGenerator failed to create token');
+            log.warn('Check backend logs for errors');
         }
         
         // Setup link interception for iframe navigation
@@ -70,7 +68,7 @@ define([
         var $iframe = $(iframeSelector);
         if ($iframe.length && config.storeCode && config.themeId) {
             _setupLinkInterceptor($iframe, config);
-            console.log('✅ Link interceptor initialized with store:', config.storeCode, 'theme:', config.themeId);
+            log.info('Link interceptor initialized with store: ' + config.storeCode + ' theme: ' + config.themeId);
         }
         
         // Render toolbar HTML from template
@@ -84,7 +82,7 @@ define([
                 adminUrl: config.adminUrl || '/admin',
                 username: config.username || 'Admin'
             });
-            console.log('✅ Admin link initialized');
+            log.info('Admin link initialized');
         }
         
         // Initialize navigation widget
@@ -104,7 +102,7 @@ define([
                     }
                 }
             });
-            console.log('✅ Navigation initialized with lazy panel loading');
+            log.info('Navigation initialized with lazy panel loading');
         }
         
         // Store config globally for settings-editor to access (when initialized lazily)
@@ -123,7 +121,7 @@ define([
                 activeDevice: config.components.deviceSwitcher.default || 'desktop',
                 iframeSelector: config.iframeSelector || '#bte-iframe'
             });
-            console.log('✅ Device switcher initialized');
+            log.info('Device switcher initialized');
         }
         
         // TODO: Status indicator removed (duplicate of publication selector)
@@ -146,7 +144,7 @@ define([
                 storeId: config.storeId,
                 themeId: config.themeId
             });
-            console.log('✅ Publication selector initialized');
+            log.info('Publication selector initialized');
         }
         
         // Initialize scope selector widget
@@ -157,7 +155,7 @@ define([
                 iframeSelector: config.iframeSelector || '#bte-iframe',
                 themeId: config.themeId || null
             });
-            console.log('✅ Scope selector initialized');
+            log.info('Scope selector initialized');
         }
         
         // Initialize page selector widget
@@ -170,7 +168,7 @@ define([
                 iframeSelector: config.iframeSelector || '#bte-iframe',
                 themeId: config.themeId || null
             });
-            console.log('✅ Page selector initialized');
+            log.info('Page selector initialized');
         }
         
         // Initialize highlight toggle widget
@@ -179,7 +177,7 @@ define([
                 enabled: false,
                 iframeSelector: config.iframeSelector || '#bte-iframe'
             });
-            console.log('✅ Highlight toggle initialized');
+            log.info('Highlight toggle initialized');
         }
         
         // Initialize toolbar toggle widget
@@ -188,7 +186,7 @@ define([
                 collapsed: false,
                 toolbarSelector: '.bte-toolbar'
             });
-            console.log('✅ Toolbar toggle initialized');
+            log.info('Toolbar toggle initialized');
         }
         
         // Initialize exit button widget
@@ -198,7 +196,7 @@ define([
                 exitUrl: exitUrl,
                 label: 'Exit'
             });
-            console.log('✅ Exit button initialized');
+            log.info('Exit button initialized');
         }
         
         // Initialize preview manager
@@ -207,7 +205,7 @@ define([
         // Bind global events
         _bindGlobalEvents(config);
         
-        console.log('✅ Admin toolbar initialized successfully');
+        log.info('Admin toolbar initialized successfully');
         
         /**
          * Setup link interception inside iframe
@@ -231,18 +229,18 @@ define([
                         var $link = $(this);
                         var href = $link.attr('href');
                         
-                        console.log('🔗 Link clicked:', href);
+                        log.debug('Link clicked: ' + href);
                         
                         // Skip special links
                         if (_shouldSkipLink(href)) {
-                            console.log('⏭️  Skipping special link:', href);
+                            log.debug('Skipping special link: ' + href);
                             return; // Let browser handle normally
                         }
                         
                         try {
                             // Get current config (may be updated by scope selector)
                             var currentConfig = configManager.get();
-                            console.log('📦 Using config - storeCode:', currentConfig.storeCode, 'themeId:', currentConfig.themeId);
+                            log.debug('Using config - storeCode: ' + currentConfig.storeCode + ' themeId: ' + currentConfig.themeId);
                             
                             // Build URL with parameters using urlBuilder utility
                             var newUrl = urlBuilder.addNavigationParams(href, {
@@ -252,7 +250,7 @@ define([
                             
                             // Skip if external link (different origin)
                             if (!_isSameOrigin(href, iframeWindow.location.origin)) {
-                                console.log('🌍 External link detected, skipping:', href);
+                                log.debug('External link detected, skipping: ' + href);
                                 return;
                             }
                             
@@ -269,24 +267,24 @@ define([
                                 e.stopPropagation();
                                 
                                 // Navigate with parameters
-                                console.log('🎯 Navigating with params:', newUrl);
+                                log.debug('Navigating with params: ' + newUrl);
                                 iframeWindow.location.href = newUrl;
                             } else {
-                                console.log('✓ Link already has parameters, using default navigation');
+                                log.debug('Link already has parameters, using default navigation');
                             }
                             // If URL unchanged (already has params), let browser navigate normally
                             
                         } catch (err) {
-                            console.warn('⚠️  Failed to parse URL:', href, err);
+                            log.warn('Failed to parse URL: ' + href + ' ' + err);
                             // Let browser handle on error
                         }
                     });
                     
-                    console.log('✅ Link interceptor attached to iframe document');
+                    log.info('Link interceptor attached to iframe document');
                     
                 } catch (err) {
-                    console.error('❌ Failed to setup link interceptor:', err);
-                    console.error('   This may happen if iframe content is from different origin');
+                    log.error('Failed to setup link interceptor: ' + err);
+                    log.error('This may happen if iframe content is from different origin');
                 }
             });
         }
@@ -301,13 +299,13 @@ define([
             var $iframe = $(iframeSelector);
             
             if (!$iframe.length) {
-                console.warn('⚠️  Preview iframe not found:', iframeSelector);
+                log.warn('Preview iframe not found: ' + iframeSelector);
                 return;
             }
             
             // Wait for iframe to load
             $iframe.on('load.bte-preview', function() {
-                console.log('🎨 Iframe loaded, triggering CSS state restoration...');
+                log.debug('Iframe loaded, triggering CSS state restoration...');
                 
                 // Save current URL to localStorage
                 iframeHelper.saveCurrentUrl();
@@ -322,7 +320,7 @@ define([
             // Start URL synchronization (localStorage + parent URL)
             iframeHelper.startUrlSync();
             
-            console.log('✅ Preview manager initialized');
+            log.info('Preview manager initialized');
         }
         
         /**
@@ -343,16 +341,16 @@ define([
             // Refresh CSS after status change (handled by publication-selector + css-manager)
             // This event is informational only - css-manager already switched CSS
             $(document).on('publicationStatusChanged', function(e, data) {
-                console.log('✅ Publication status changed:', data.status, data.publicationId || '');
+                log.info('Publication status changed: ' + data.status + ' ' + (data.publicationId || ''));
                 // No action needed - css-manager already switched CSS in publication-selector
             });
             
             // Update page-selector when iframe navigates to different page type
             // Triggered by iframe-helper.js when body class changes
             $(document).on('bte:pageTypeChanged', function(e, data) {
-                console.log('🔄 Page type changed - updating page selector');
-                console.log('   URL:', data.url);
-                console.log('   Page Type:', data.pageType);
+                log.debug('Page type changed - updating page selector');
+                log.debug('URL: ' + data.url);
+                log.debug('Page Type: ' + data.pageType);
                 
                 // Update page-selector widget
                 var $pageSelector = $('#bte-page-selector');
@@ -360,16 +358,16 @@ define([
                     var success = $pageSelector.breezePageSelector('updateCurrentPageType', data.pageType);
                     
                     if (success) {
-                        console.log('✅ Page selector updated successfully');
+                        log.info('Page selector updated successfully');
                     } else {
-                        console.warn('⚠️ Failed to update page selector');
+                        log.warn('Failed to update page selector');
                     }
                 } else {
-                    console.warn('⚠️ Page selector widget not found or not initialized');
+                    log.warn('Page selector widget not found or not initialized');
                 }
             });
             
-            console.log('✅ Global events bound');
+            log.info('Global events bound');
         }
         
         /**

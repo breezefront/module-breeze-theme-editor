@@ -2,8 +2,10 @@
  * Storage Helper - Centralized localStorage management with store/theme scoping
  * Admin version
  */
-define([], function () {
+define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logger) {
     'use strict';
+
+    var log = Logger.for('storage-helper');
 
     var currentStoreId = null;
     var currentThemeId = null;
@@ -17,7 +19,7 @@ define([], function () {
         init: function(storeId, themeId) {
             currentStoreId = storeId;
             currentThemeId = themeId;
-            console.log('🗄️ Storage Helper initialized:', {storeId: storeId, themeId: themeId});
+            log.info('🗄️ Storage Helper initialized:', {storeId: storeId, themeId: themeId});
         },
 
         /**
@@ -49,7 +51,7 @@ define([], function () {
                     
                     // Migrate to new format
                     if (value !== null && currentStoreId && currentThemeId) {
-                        console.log('📦 Migrating', oldKey, 'to', scopedKey);
+                        log.info('📦 Migrating ' + oldKey + ' → ' + scopedKey);
                         localStorage.setItem(scopedKey, value);
                         // Keep old key for other stores that might still use it
                     }
@@ -57,7 +59,7 @@ define([], function () {
                 
                 return value;
             } catch (e) {
-                console.error('❌ Storage error:', e);
+                log.error('❌ Storage error:', e);
                 return null;
             }
         },
@@ -71,9 +73,9 @@ define([], function () {
             try {
                 var scopedKey = this._getKey(key);
                 localStorage.setItem(scopedKey, value);
-                console.log('💾 Stored:', scopedKey, '=', value);
+                log.info('💾 Stored: ' + scopedKey + ' = ' + value);
             } catch (e) {
-                console.error('❌ Storage error:', e);
+                log.error('❌ Storage error:', e);
             }
         },
 
@@ -90,9 +92,9 @@ define([], function () {
                 var oldKey = 'bte_' + key;
                 localStorage.removeItem(oldKey);
                 
-                console.log('🗑️ Removed:', scopedKey);
+                log.info('🗑️ Removed:', scopedKey);
             } catch (e) {
-                console.error('❌ Storage error:', e);
+                log.error('❌ Storage error:', e);
             }
         },
 

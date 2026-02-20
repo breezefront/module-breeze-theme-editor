@@ -7,8 +7,10 @@
  * This eliminates code duplication between scope-selector.js and page-selector.js
  * where identical cookie management methods were previously defined.
  */
-define([], function() {
+define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logger) {
     'use strict';
+
+    var log = Logger.for('utils/browser/cookie-manager');
     
     /**
      * Cookie names used by Magento
@@ -38,7 +40,7 @@ define([], function() {
          */
         setStoreCookie: function(storeCode) {
             if (!storeCode) {
-                console.warn('⚠️ Cannot set store cookie: storeCode is empty');
+                log.warn('⚠️ Cannot set store cookie: storeCode is empty');
                 return false;
             }
             
@@ -48,10 +50,10 @@ define([], function() {
                                  '; SameSite=' + COOKIE_OPTIONS.sameSite;
                 
                 document.cookie = cookieString;
-                console.log('🏪 Set store cookie:', storeCode);
+                log.info('🏪 Set store cookie:', storeCode);
                 return true;
             } catch (e) {
-                console.error('❌ Failed to set store cookie:', e);
+                log.error('❌ Failed to set store cookie:', e);
                 return false;
             }
         },
@@ -67,7 +69,7 @@ define([], function() {
          */
         setThemePreviewCookie: function(themeId) {
             if (!themeId) {
-                console.warn('⚠️ Cannot set theme preview cookie: themeId is empty');
+                log.warn('⚠️ Cannot set theme preview cookie: themeId is empty');
                 return false;
             }
             
@@ -77,10 +79,10 @@ define([], function() {
                                  '; SameSite=' + COOKIE_OPTIONS.sameSite;
                 
                 document.cookie = cookieString;
-                console.log('🎨 Set preview_theme cookie:', themeId);
+                log.info('🎨 Set preview_theme cookie:', themeId);
                 return true;
             } catch (e) {
-                console.error('❌ Failed to set theme preview cookie:', e);
+                log.error('❌ Failed to set theme preview cookie:', e);
                 return false;
             }
         },
@@ -152,7 +154,7 @@ define([], function() {
          */
         setCookie: function(name, value, options) {
             if (!name || value === undefined || value === null) {
-                console.warn('⚠️ Cannot set cookie: name or value is empty');
+                log.warn('⚠️ Cannot set cookie: name or value is empty');
                 return false;
             }
             
@@ -174,10 +176,10 @@ define([], function() {
                 }
                 
                 document.cookie = cookieString;
-                console.log('🍪 Set cookie:', name, '=', value);
+                log.info('🍪 Set cookie: ' + name + ' = ' + value);
                 return true;
             } catch (e) {
-                console.error('❌ Failed to set cookie:', name, e);
+                log.error('❌ Failed to set cookie: ' + name, e);
                 return false;
             }
         },
@@ -196,7 +198,7 @@ define([], function() {
          */
         deleteStoreCookie: function() {
             this.deleteCookie(COOKIE_NAMES.STORE);
-            console.log('🗑️  Deleted store cookie');
+            log.info('🗑️  Deleted store cookie');
         },
         
         /**
@@ -204,7 +206,7 @@ define([], function() {
          */
         deleteThemePreviewCookie: function() {
             this.deleteCookie(COOKIE_NAMES.THEME_PREVIEW);
-            console.log('🗑️  Deleted theme preview cookie');
+            log.info('🗑️  Deleted theme preview cookie');
         }
     };
 });

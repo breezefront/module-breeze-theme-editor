@@ -11,9 +11,12 @@ define([
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/editor/status-indicator.html',
     'Swissup_BreezeThemeEditor/js/graphql/client',
-    'Swissup_BreezeThemeEditor/js/graphql/queries/get-statuses'
-], function ($, widget, mageTemplate, statusTemplate, graphqlClient, getStatusesQuery) {
+    'Swissup_BreezeThemeEditor/js/graphql/queries/get-statuses',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, widget, mageTemplate, statusTemplate, graphqlClient, getStatusesQuery, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar/status-indicator');
 
     $.widget('swissup.breezeStatusIndicator', {
         options: {
@@ -54,7 +57,7 @@ define([
             // Initial status refresh from GraphQL
             this._refreshStatus();
             
-            console.log('📊 Status indicator initialized:', this.options.currentStatus);
+            log.info('Status indicator initialized: ' + this.options.currentStatus);
         },
 
         /**
@@ -64,7 +67,7 @@ define([
             var statusConfig = this.options.statuses[this.options.currentStatus];
             
             if (!statusConfig) {
-                console.warn('⚠️ Unknown status:', this.options.currentStatus);
+                log.warn('Unknown status: ' + this.options.currentStatus);
                 statusConfig = this.options.statuses['DRAFT'];
             }
 
@@ -95,7 +98,7 @@ define([
                 draftCount: draftCount
             }]);
             
-            console.log('📊 Status updated:', status, '| Drafts:', draftCount);
+            log.info('Status updated: ' + status + ' | Drafts: ' + draftCount);
         },
 
         /**
@@ -155,7 +158,7 @@ define([
             var self = this;
             
             if (!this.storeId || !this.themeId) {
-                console.warn('⚠️ Status refresh skipped: missing storeId or themeId');
+                log.warn('Status refresh skipped: missing storeId or themeId');
                 return;
             }
             
@@ -176,11 +179,10 @@ define([
                     // Re-render
                     self._render();
                     
-                    console.log('✅ Status updated:', statuses.currentStatus, 
-                               'Changes:', statuses.draftChangesCount);
+                    log.info('Status updated: ' + statuses.currentStatus + ' Changes: ' + statuses.draftChangesCount);
                 }
             }).catch(function(error) {
-                console.error('Failed to refresh status:', error);
+                log.error('Failed to refresh status: ' + error);
                 // Don't show error to user - status refresh is background operation
             });
         },

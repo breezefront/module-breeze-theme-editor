@@ -1,8 +1,11 @@
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/base'
-], function ($, BaseHandler) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/base',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, BaseHandler, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/field-handlers/number');
 
     /**
      * Number Field Handler
@@ -32,7 +35,7 @@ define([
                 });
             });
 
-            console.log('✅ Number field handler initialized');
+            log.info('Number field handler initialized');
         },
 
         /**

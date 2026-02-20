@@ -11,9 +11,12 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/cookie-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder',
-    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
-], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder, StorageHelper) {
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder, StorageHelper, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar/page-selector');
 
     $.widget('swissup.breezePageSelector', {
         options: {
@@ -40,14 +43,14 @@ define([
             var savedPageId = StorageHelper.getCurrentPageId();
             if (savedPageId && this._isValidPageId(savedPageId)) {
                 this.options.currentPageId = savedPageId;
-                console.log('📥 Restored page ID from localStorage:', savedPageId);
+                log.info('Restored page ID from localStorage: ' + savedPageId);
             }
             
             this.currentPageLabel = this._findPageLabel(this.options.currentPageId);
             this._initializeCurrentParams();
             this._render();
             this._bindEvents();
-            console.log('✅ Page selector initialized');
+            log.info('Page selector initialized');
         },
 
         /**
@@ -59,7 +62,7 @@ define([
                 store: this.options.storeCode || '',
                 jstest: this.options.jstest || false
             };
-            console.log('📦 Initialized params:', this.currentParams);
+            log.debug('Initialized params: ' + JSON.stringify(this.currentParams));
         },
 
         /**
@@ -152,7 +155,7 @@ define([
             $dropdown.toggle();
             $button.toggleClass('active', !isVisible);
             
-            console.log(isVisible ? '🔽 Closing page dropdown' : '🔼 Opening page dropdown');
+            log.info(isVisible ? 'Closing page dropdown' : 'Opening page dropdown');
         },
 
         /**
@@ -170,10 +173,10 @@ define([
          * @private
          */
         _selectPage: function(pageId) {
-            console.log('📄 Switching to page:', pageId);
+            log.info('Switching to page: ' + pageId);
 
             if (pageId === this.options.currentPageId) {
-                console.log('ℹ️ Already viewing page:', pageId);
+                log.info('Already viewing page: ' + pageId);
                 this._closeDropdown();
                 return;
             }
@@ -187,7 +190,7 @@ define([
             });
 
             if (!pageData) {
-                console.error('❌ Page not found:', pageId);
+                log.error('Page not found: ' + pageId);
                 return;
             }
 
@@ -202,8 +205,8 @@ define([
             // Build new URL with current params
             var newUrl = this._buildPageUrlWithParams(pageData.url);
 
-            console.log('🔄 Reloading iframe with page:', pageData.label);
-            console.log('   New URL:', newUrl);
+            log.info('Reloading iframe with page: ' + pageData.label);
+            log.debug('New URL: ' + newUrl);
             
             // Set navigation cookies BEFORE navigation
             var storeCode = configManager.getStoreCode(this.currentParams.store);
@@ -215,7 +218,7 @@ define([
                 iframe.contentWindow.location.href = newUrl;
             } catch (e) {
                 // Fallback to iframe.src if contentWindow access fails
-                console.warn('⚠️ Cannot set iframe contentWindow.location, using src attribute');
+                log.warn('Cannot set iframe contentWindow.location, using src attribute');
                 $iframe.attr('src', newUrl);
             }
 
@@ -228,9 +231,9 @@ define([
             
             // Save page ID to localStorage
             StorageHelper.setCurrentPageId(pageId);
-            console.log('💾 Saved page ID to localStorage:', pageId);
+            log.info('Saved page ID to localStorage: ' + pageId);
             
-            console.log('✅ Page switched to:', pageData.label);
+            log.info('Page switched to: ' + pageData.label);
         },
 
         /**
@@ -246,7 +249,7 @@ define([
                 var storeCode = configManager.getStoreCode(this.currentParams.store);
                 var themeId = configManager.getThemeId(this.options.themeId);
                 
-                console.log('📦 Building URL with - storeCode:', storeCode, 'themeId:', themeId);
+                log.debug('Building URL with - storeCode: ' + storeCode + ' themeId: ' + themeId);
                 
                 // Add navigation parameters
                 return urlBuilder.addNavigationParams(pageUrl, {
@@ -255,8 +258,7 @@ define([
                     jstest: this.currentParams.jstest
                 });
             } catch (e) {
-                console.error('❌ Error building page URL:', e);
-                console.error('   pageUrl:', pageUrl);
+                log.error('Error building page URL: ' + e + ' pageUrl: ' + pageUrl);
                 return pageUrl;
             }
         },
@@ -266,7 +268,7 @@ define([
          * @param {string} pageId
          */
         setPage: function(pageId) {
-            console.log('📝 Setting page externally:', pageId);
+            log.info('Setting page externally: ' + pageId);
             this._selectPage(pageId);
         },
 
@@ -276,7 +278,7 @@ define([
          * @param {string} storeCode
          */
         updateStoreParam: function(storeCode) {
-            console.log('🏪 Updating store parameter:', storeCode);
+            log.info('Updating store parameter: ' + storeCode);
             this.currentParams.store = storeCode;
         },
 
@@ -285,11 +287,11 @@ define([
          * Called by scope-selector when store changes to reset page selection
          */
         resetToHomePage: function() {
-            console.log('🏠 Resetting page selector to home');
+            log.info('Resetting page selector to home');
             this.options.currentPageId = 'cms_index_index';
             this.currentPageLabel = this._findPageLabel('cms_index_index');
             this._render();
-            console.log('✅ Page selector reset to home');
+            log.info('Page selector reset to home');
         },
 
         /**
@@ -304,13 +306,13 @@ define([
          */
         updateCurrentPageType: function(pageType) {
             if (!this._isValidPageId(pageType)) {
-                console.warn('⚠️ Page Selector: Invalid page type:', pageType);
+                log.warn('Page Selector: Invalid page type: ' + pageType);
                 return false;
             }
             
             // Check if already on this page type
             if (this.options.currentPageId === pageType) {
-                console.log('ℹ️ Page Selector: Already on page type:', pageType);
+                log.info('Page Selector: Already on page type: ' + pageType);
                 return true;
             }
             
@@ -324,7 +326,7 @@ define([
             // Save to localStorage
             StorageHelper.setCurrentPageId(pageType);
             
-            console.log('✅ Page Selector: Updated to', pageType, '(' + this.currentPageLabel + ')');
+            log.info('Page Selector: Updated to ' + pageType + ' (' + this.currentPageLabel + ')');
             return true;
         }
     });

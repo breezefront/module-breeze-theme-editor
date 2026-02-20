@@ -8,9 +8,12 @@ define([
     'jquery',
     'mage/template',
     'jquery-ui-modules/widget',
-    'text!Swissup_BreezeThemeEditor/template/editor/highlight-toggle.html'
-], function ($, mageTemplate, widget, highlightTemplate) {
+    'text!Swissup_BreezeThemeEditor/template/editor/highlight-toggle.html',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, mageTemplate, widget, highlightTemplate, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar/highlight-toggle');
 
     $.widget('breeze.breezeHighlightToggle', {
         options: {
@@ -23,10 +26,10 @@ define([
          * @private
          */
         _create: function() {
-            console.log('🎨 Initializing highlight toggle');
+            log.info('Initializing highlight toggle');
             this._render();
             this._bindEvents();
-            console.log('✅ Highlight toggle initialized');
+            log.info('Highlight toggle initialized');
         },
 
         /**
@@ -60,7 +63,7 @@ define([
         _toggleHighlight: function() {
             this.options.enabled = !this.options.enabled;
             
-            console.log(this.options.enabled ? '✨ Highlight enabled' : '🔴 Highlight disabled');
+            log.info(this.options.enabled ? 'Highlight enabled' : 'Highlight disabled');
             
             // Update button visual state
             this.element.find('.toolbar-button').toggleClass('active', this.options.enabled);

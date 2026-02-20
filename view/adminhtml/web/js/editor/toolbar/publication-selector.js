@@ -16,9 +16,12 @@ define([
     'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/editor/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/renderer',
-    'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/metadata-loader'
-], function ($, widget, $t, template, permissions, errorHandler, loading, cssManager, publishMutation, PanelState, Toastify, StorageHelper, Renderer, MetadataLoader) {
+    'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/metadata-loader',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, widget, $t, template, permissions, errorHandler, loading, cssManager, publishMutation, PanelState, Toastify, StorageHelper, Renderer, MetadataLoader, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar/publication-selector');
 
     $.widget('swissup.breezePublicationSelector', {
         options: {
@@ -37,7 +40,7 @@ define([
          * Widget initialization
          */
         _create: function() {
-            console.log('🎨 Initializing publication selector');
+            log.info('Initializing publication selector');
             
             // Get store and theme IDs
             var config = window.breezeThemeEditorConfig || {};
@@ -65,7 +68,7 @@ define([
             // Restore CSS state when ready
             this._setupCssStateRestoration();
             
-            console.log('✅ Publication selector initialized');
+            log.info('Publication selector initialized');
         },
 
         /**
@@ -99,10 +102,7 @@ define([
             this.options.currentPublicationId = StorageHelper.getCurrentPublicationId();
             this.options.currentPublicationTitle = StorageHelper.getCurrentPublicationTitle();
             
-            console.log('📦 State restored from localStorage:', {
-                status: this.options.currentStatus,
-                publicationId: this.options.currentPublicationId
-            });
+            log.debug('State restored from localStorage: status=' + this.options.currentStatus + ' publicationId=' + this.options.currentPublicationId);
         },
 
         /**
@@ -138,23 +138,23 @@ define([
             
             if (this.options.currentStatus === 'PUBLICATION' && this.options.currentPublicationId) {
                 cssManager.switchTo('PUBLICATION', this.options.currentPublicationId).then(function() {
-                    console.log('✅ Restored PUBLICATION mode:', self.options.currentPublicationId);
+                    log.info('Restored PUBLICATION mode: ' + self.options.currentPublicationId);
                 }).catch(function(error) {
-                    console.error('❌ Failed to restore publication:', error);
+                    log.error('Failed to restore publication: ' + error);
                     self._fallbackToDraft();
                 });
             } else if (this.options.currentStatus === 'PUBLISHED') {
                 cssManager.switchTo('PUBLISHED').then(function() {
-                    console.log('✅ Restored PUBLISHED mode');
+                    log.info('Restored PUBLISHED mode');
                 }).catch(function(error) {
-                    console.error('❌ Failed to restore published state:', error);
+                    log.error('Failed to restore published state: ' + error);
                 });
             } else if (this.options.currentStatus === 'DRAFT') {
                 // Restore DRAFT mode - load draft CSS via GraphQL
                 cssManager.switchTo('DRAFT').then(function() {
-                    console.log('✅ Restored DRAFT mode');
+                    log.info('Restored DRAFT mode');
                 }).catch(function(error) {
-                    console.error('❌ Failed to restore draft state:', error);
+                    log.error('Failed to restore draft state: ' + error);
                 });
             }
         },
@@ -224,7 +224,7 @@ define([
             
             // Iframe reloaded → restore CSS state
             $(document).on('bte:iframeReloaded', function() {
-                console.log('📥 Iframe reloaded, restoring CSS state...');
+                log.info('Iframe reloaded, restoring CSS state...');
                 self._restoreCssState();
             });
             
@@ -266,7 +266,7 @@ define([
             $('.toolbar-dropdown').not($dropdown).hide();
             $dropdown.toggle();
             
-            console.log(isVisible ? '🔽 Closing dropdown' : '🔼 Opening dropdown');
+            log.info(isVisible ? 'Closing dropdown' : 'Opening dropdown');
         },
 
         /**
@@ -274,7 +274,7 @@ define([
          */
         _switchStatus: function(status) {
             if (status === this.options.currentStatus) {
-                console.log('ℹ️ Already in ' + status + ' mode');
+                log.info('Already in ' + status + ' mode');
                 this.renderer.closeDropdown();
                 return;
             }
@@ -298,11 +298,11 @@ define([
                     status: status,
                     publicationId: null
                 });
-                console.log('✅ Switched to ' + status);
+                log.info('Switched to ' + status);
                 
                 loading.hide(self.element);
             }).catch(function(error) {
-                console.error('❌ Failed to switch status:', error);
+                log.error('Failed to switch status: ' + error);
                 errorHandler.handle(error, 'switch-status');
                 loading.hide(self.element);
             });
@@ -315,7 +315,7 @@ define([
             var publication = this.metadataLoader.findPublicationById(this.options.publications, publicationId);
             
             if (!publication) {
-                console.error('❌ Publication not found:', publicationId);
+                log.error('Publication not found: ' + publicationId);
                 return;
             }
             
@@ -340,10 +340,10 @@ define([
                     publicationId: publicationId
                 });
                 
-                console.log('✅ Publication loaded:', publication.title);
+                log.info('Publication loaded: ' + publication.title);
                 loading.hide(self.element);
             }).catch(function(error) {
-                console.error('❌ Failed to load publication:', error);
+                log.error('Failed to load publication: ' + error);
                 errorHandler.handle(error, 'load-publication');
                 loading.hide(self.element);
             });
@@ -384,7 +384,7 @@ define([
                     });
                 }
 
-                console.log('✅ Initial data loaded:', (resolved.pubData ? self.options.publications.length : 0) + ' publications, ' + self.options.changesCount + ' changes');
+                log.info('Initial data loaded: ' + (resolved.pubData ? self.options.publications.length : 0) + ' publications, ' + self.options.changesCount + ' changes');
             }
 
             this.metadataLoader.loadPublications(1, null)
@@ -394,7 +394,7 @@ define([
                     finalize();
                 })
                 .catch(function(error) {
-                    console.error('❌ Failed to load publications:', error);
+                    log.error('Failed to load publications: ' + error);
                     resolved.pub = true;
                     finalize();
                 });
@@ -406,7 +406,7 @@ define([
                     finalize();
                 })
                 .catch(function(error) {
-                    console.warn('⚠️ Could not load draft metadata:', error);
+                    log.warn('Could not load draft metadata: ' + error);
                     resolved.meta = true;
                     finalize();
                 });
@@ -437,9 +437,9 @@ define([
                     totalPublications: self.totalPublications
                 });
                 
-                console.log('✅ Loaded ' + self.options.publications.length + ' / ' + self.totalPublications + ' publications');
+                log.info('Loaded ' + self.options.publications.length + ' / ' + self.totalPublications + ' publications');
             }).catch(function(error) {
-                console.error('❌ Failed to load publications:', error);
+                log.error('Failed to load publications: ' + error);
             });
         },
 
@@ -448,7 +448,7 @@ define([
          */
         _loadMorePublications: function() {
             if (this.options.publications.length >= this.totalPublications) {
-                console.log('ℹ️ All publications loaded');
+                log.info('All publications loaded');
                 return;
             }
             

@@ -1,9 +1,12 @@
 define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/base',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/fields/color.html',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/color-utils'
-], function(BaseFieldRenderer, template, ColorUtils) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/color-utils',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function(BaseFieldRenderer, template, ColorUtils, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/field-renderers/color');
 
     var ColorRenderer = Object.create(BaseFieldRenderer);
     ColorRenderer.templateString = template;
@@ -19,21 +22,21 @@ define([
             data.paletteRef = value;
             data.value = this._getPaletteHexFromMapping(value, data.default);
             data.hexValue = data.value;
-            console.log('🎨 Resolved palette reference:', value, '→', data.value);
+            log.debug('Resolved palette reference: ' + value + ' \u2192 ' + data.value);
         } else {
             // Regular HEX color or RGB fallback
             if (typeof value !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(value)) {
                 // Value is not HEX - check if it's RGB
                 if (ColorUtils.isRgbColor(value)) {
                     data.value = ColorUtils.rgbToHex(value);
-                    console.log('🎨 Converted RGB to HEX:', value, '→', data.value);
+                    log.debug('Converted RGB to HEX: ' + value + ' \u2192 ' + data.value);
                 } else if (typeof data.default === 'string' && /^#[0-9A-Fa-f]{6}$/.test(data.default)) {
                     // Try default as HEX
                     data.value = data.default;
                 } else if (ColorUtils.isRgbColor(data.default)) {
                     // Try default as RGB
                     data.value = ColorUtils.rgbToHex(data.default);
-                    console.log('🎨 Using default RGB as HEX:', data.default, '→', data.value);
+                    log.debug('Using default RGB as HEX: ' + data.default + ' \u2192 ' + data.value);
                 } else {
                     // Ultimate fallback
                     data.value = '#000000';
@@ -63,7 +66,7 @@ define([
     ColorRenderer._getPaletteHexFromMapping = function(paletteRef, fallbackDefault) {
         // Check if require is available
         if (typeof require === 'undefined') {
-            console.warn('⚠️ require not available for palette resolution');
+            log.warn('require not available for palette resolution');
             return fallbackDefault || '#000000';
         }
         
@@ -71,7 +74,7 @@ define([
             var PaletteManager = require('Swissup_BreezeThemeEditor/js/editor/panel/palette-manager');
             
             if (!PaletteManager || !PaletteManager.palettes) {
-                console.warn('⚠️ PaletteManager not initialized');
+                log.warn('PaletteManager not initialized');
                 return fallbackDefault || '#000000';
             }
             
@@ -79,33 +82,33 @@ define([
             var color = PaletteManager.palettes[paletteRef];
             
             if (!color) {
-                console.warn('⚠️ Palette color not found:', paletteRef, '- using fallback:', fallbackDefault || '#000000');
+                log.warn('Palette color not found: ' + paletteRef + ' - using fallback: ' + (fallbackDefault || '#000000'));
                 return fallbackDefault || '#000000';
             }
             
             // Return HEX value (already in HEX format in Breeze 3.0)
             if (color.hex) {
-                console.log('✅ Resolved palette ref:', paletteRef, '→', color.hex);
+                log.debug('Resolved palette ref: ' + paletteRef + ' \u2192 ' + color.hex);
                 return color.hex;
             }
             
             // Fallback to value (also HEX in Breeze 3.0)
             if (color.value) {
-                console.log('✅ Using palette value:', paletteRef, '→', color.value);
+                log.debug('Using palette value: ' + paletteRef + ' \u2192 ' + color.value);
                 return color.value;
             }
             
             // Fallback to default if available
             if (color.default && color.default.startsWith('#')) {
-                console.log('✅ Using palette default:', paletteRef, '→', color.default);
+                log.debug('Using palette default: ' + paletteRef + ' \u2192 ' + color.default);
                 return color.default;
             }
             
-            console.warn('⚠️ No valid color value found for:', paletteRef);
+            log.warn('No valid color value found for: ' + paletteRef);
             return fallbackDefault || '#000000';
             
         } catch (e) {
-            console.error('❌ Error accessing PaletteManager:', e);
+            log.error('Error accessing PaletteManager: ' + e);
             return fallbackDefault || '#000000';
         }
     };

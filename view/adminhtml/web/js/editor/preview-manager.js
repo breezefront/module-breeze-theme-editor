@@ -9,9 +9,12 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/graphql/client',
-    'Swissup_BreezeThemeEditor/js/graphql/queries/get-css'
-], function($, graphqlClient, getCssQuery) {
+    'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function($, graphqlClient, getCssQuery, Logger) {
     'use strict';
+
+    var log = Logger.for('preview-manager');
     
     return {
         /**
@@ -26,11 +29,11 @@ define([
             var $iframe = $('#' + iframeId);
             
             if (!$iframe.length) {
-                console.error('Preview iframe not found:', iframeId);
+                log.error('Preview iframe not found: ' + iframeId);
                 return;
             }
             
-            console.log('🎨 Loading draft CSS for store', storeId, 'theme', themeId);
+            log.debug('Loading draft CSS for store ' + storeId + ' theme ' + themeId);
             
             // Load CSS from GraphQL using the query function
             getCssQuery(parseInt(storeId), themeId ? parseInt(themeId) : null, 'DRAFT', null)
@@ -40,13 +43,13 @@ define([
                     
                     if (css && css.trim()) {
                         self._injectCSS($iframe[0], css);
-                        console.log('✅ Draft CSS injected into preview (' + css.length + ' chars)');
+                        log.info('Draft CSS injected into preview (' + css.length + ' chars)');
                     } else {
-                        console.log('ℹ️ No draft CSS to inject');
+                        log.info('No draft CSS to inject');
                     }
                 }
             }).catch(function(error) {
-                console.error('Failed to load draft CSS:', error);
+                log.error('Failed to load draft CSS: ' + error);
                 // Don't show error to user - preview will show published CSS instead
             });
         },
@@ -63,7 +66,7 @@ define([
                 var doc = iframe.contentDocument || iframe.contentWindow.document;
                 
                 if (!doc) {
-                    console.error('Cannot access iframe document');
+                    log.error('Cannot access iframe document');
                     return;
                 }
                 
@@ -82,17 +85,17 @@ define([
                 // Append to head
                 if (doc.head) {
                     doc.head.appendChild(style);
-                    console.log('✅ CSS injected into iframe head');
+                    log.info('CSS injected into iframe head');
                 } else {
-                    console.error('Iframe document has no head element');
+                    log.error('Iframe document has no head element');
                 }
                 
             } catch (e) {
-                console.error('Failed to inject CSS into iframe:', e);
+                log.error('Failed to inject CSS into iframe: ' + e);
                 
                 // Check for CORS error
                 if (e.name === 'SecurityError') {
-                    console.error('CORS Error: Cannot access iframe content. Check same-origin policy.');
+                    log.error('CORS Error: Cannot access iframe content. Check same-origin policy.');
                 }
             }
         },
@@ -107,7 +110,7 @@ define([
          * @param {number} themeId - Theme ID (optional)
          */
         refresh: function(iframeId, storeId, themeId) {
-            console.log('🔄 Refreshing preview CSS...');
+            log.debug('Refreshing preview CSS...');
             this.injectDraftCSS(iframeId, storeId, themeId);
         },
         
@@ -120,7 +123,7 @@ define([
             var $iframe = $('#' + iframeId);
             
             if (!$iframe.length) {
-                console.error('Preview iframe not found:', iframeId);
+                log.error('Preview iframe not found: ' + iframeId);
                 return;
             }
             
@@ -132,11 +135,11 @@ define([
                     var existingStyle = doc.getElementById('bte-theme-css-variables-draft');
                     if (existingStyle) {
                         existingStyle.remove();
-                        console.log('✅ Draft CSS removed from preview');
+                        log.info('Draft CSS removed from preview');
                     }
                 }
             } catch (e) {
-                console.error('Failed to remove CSS from iframe:', e);
+                log.error('Failed to remove CSS from iframe: ' + e);
             }
         },
         
@@ -156,7 +159,7 @@ define([
             var $iframe = $('#' + iframeId);
             
             if (!$iframe.length) {
-                console.error('Preview iframe not found:', iframeId);
+                log.error('Preview iframe not found: ' + iframeId);
                 return;
             }
             
@@ -165,7 +168,7 @@ define([
                 var doc = iframe.contentDocument || iframe.contentWindow.document;
                 
                 if (!doc) {
-                    console.error('Cannot access iframe document');
+                    log.error('Cannot access iframe document');
                     return;
                 }
                 
@@ -173,7 +176,7 @@ define([
                 var existingStyle = doc.getElementById(styleId);
                 if (existingStyle) {
                     existingStyle.remove();
-                    console.log('🗑️ Removed existing style:', styleId);
+                    log.debug('Removed existing style: ' + styleId);
                 }
                 
                 // Create new style element
@@ -185,17 +188,17 @@ define([
                 // Append to head
                 if (doc.head) {
                     doc.head.appendChild(style);
-                    console.log('✅ CSS injected into iframe:', styleId, '(' + css.length + ' chars)');
+                    log.info('CSS injected into iframe: ' + styleId + ' (' + css.length + ' chars)');
                 } else {
-                    console.error('Iframe document has no head element');
+                    log.error('Iframe document has no head element');
                 }
                 
             } catch (e) {
-                console.error('Failed to inject CSS into iframe:', e);
+                log.error('Failed to inject CSS into iframe: ' + e);
                 
                 // Check for CORS error
                 if (e.name === 'SecurityError') {
-                    console.error('CORS Error: Cannot access iframe content. Check same-origin policy.');
+                    log.error('CORS Error: Cannot access iframe content. Check same-origin policy.');
                 }
             }
         },
@@ -210,7 +213,7 @@ define([
             var $iframe = $('#' + iframeId);
             
             if (!$iframe.length) {
-                console.error('Preview iframe not found:', iframeId);
+                log.error('Preview iframe not found: ' + iframeId);
                 return;
             }
             
@@ -222,11 +225,11 @@ define([
                     var existingStyle = doc.getElementById(styleId);
                     if (existingStyle) {
                         existingStyle.remove();
-                        console.log('✅ CSS removed from preview:', styleId);
+                        log.info('CSS removed from preview: ' + styleId);
                     }
                 }
             } catch (e) {
-                console.error('Failed to remove CSS from iframe:', e);
+                log.error('Failed to remove CSS from iframe: ' + e);
             }
         },
         

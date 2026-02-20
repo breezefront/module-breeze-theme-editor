@@ -5,9 +5,12 @@
 define([
     'jquery',
     'mage/template',
-    'mage/translate'
-], function($, mageTemplate, $t) {
+    'mage/translate',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function($, mageTemplate, $t, Logger) {
     'use strict';
+
+    var log = Logger.for('toolbar/publication-selector/renderer');
 
     return {
         /**
@@ -20,7 +23,7 @@ define([
             this.$element = options.element;
             this.template = mageTemplate(options.templateString);
             
-            console.log('🎨 Renderer initialized');
+            log.info('Renderer initialized');
             return this;
         },
 
@@ -46,7 +49,7 @@ define([
             });
             
             this.$element.html(html);
-            console.log('🔄 Full render completed');
+            log.debug('Full render completed');
         },
 
         /**
@@ -70,7 +73,7 @@ define([
             // Update badge
             this.updateBadge(data);
             
-            console.log('🔄 Button updated:', data.status);
+            log.debug('Button updated: ' + data.status);
         },
 
         /**
@@ -96,7 +99,7 @@ define([
                 $button.find('.select-arrow').before(badgeHtml);
             }
             
-            console.log('🔄 Badge updated:', data.status, data.changesCount);
+            log.debug('Badge updated: ' + data.status + ' ' + data.changesCount);
         },
 
         /**
@@ -131,7 +134,7 @@ define([
                 }
             }
             
-            console.log('🔄 Checkmarks updated:', data.status);
+            log.debug('Checkmarks updated: ' + data.status);
         },
 
         /**
@@ -179,7 +182,7 @@ define([
                 // All loaded → hide "Load More", show "All Loaded"
                 $loadMore.hide();
                 $allLoaded.show();
-                console.log('✅ All ' + totalCount + ' publications loaded');
+                log.info('All ' + totalCount + ' publications loaded');
             } else {
                 // Show "Load More" with count
                 $loadMore.show();
@@ -187,7 +190,7 @@ define([
                 $count.text($t('Showing %1 of %2')
                     .replace('%1', loadedCount)
                     .replace('%2', totalCount));
-                console.log('📊 Showing ' + loadedCount + ' of ' + totalCount + ' publications');
+                log.debug('Showing ' + loadedCount + ' of ' + totalCount + ' publications');
             }
         },
 
