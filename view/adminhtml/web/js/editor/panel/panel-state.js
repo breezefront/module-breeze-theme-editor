@@ -204,6 +204,18 @@ define([], function() {
         },
 
         /**
+         * Get count of fields that are saved but differ from their default value
+         * (isModified = true). Used for the publication selector draft badge.
+         *
+         * @returns {Number}
+         */
+        getModifiedCount: function() {
+            return Object.keys(this.values).filter(function(key) {
+                return this.values[key].isModified;
+            }.bind(this)).length;
+        },
+
+        /**
          * Reset dirty changes to saved values
          */
         reset: function() {

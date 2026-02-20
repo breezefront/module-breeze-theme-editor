@@ -131,7 +131,7 @@ define([
             var self = this;
             
             // Refresh after save
-            $(document).on('bte:saved', function() {
+            $(document).on('themeEditorDraftSaved', function() {
                 self._refreshStatus();
             });
             

@@ -59,8 +59,8 @@ define([
             this._bindEvents();
             this._bindGlobalEvents();
             
-            // Load publications
-            this._loadPublications();
+            // Load publications and draft metadata in parallel, render once when both complete
+            this._loadInitialData();
             
             // Restore CSS state when ready
             this._setupCssStateRestoration();
@@ -229,10 +229,11 @@ define([
             });
             
             // Draft saved → update changes count
-            $(document).on('bte:saved', function(e, data) {
-                if (data && typeof data.changesCount !== 'undefined') {
-                    self.options.changesCount = data.changesCount;
-                    self.renderer.updateBadge(self._getState());
+            $(document).on('themeEditorDraftSaved', function(e, data) {
+                if (data && typeof data.draftChangesCount !== 'undefined') {
+                    self.options.changesCount = data.draftChangesCount;
+                    self.renderer.render(self._getState());
+                    self._applyPermissions();
                 }
             });
             
@@ -349,7 +350,70 @@ define([
         },
 
         /**
-         * Load publications from GraphQL
+         * Load publications and draft metadata in parallel on init.
+         * Renders exactly once after both requests complete to avoid
+         * a race condition where two concurrent renders could briefly
+         * show stale state.
+         */
+        _loadInitialData: function() {
+            var self = this;
+            var resolved = {pub: false, meta: false, pubData: null, metaData: null};
+
+            function finalize() {
+                if (!resolved.pub || !resolved.meta) {
+                    return;
+                }
+
+                if (resolved.pubData) {
+                    self.options.publications = resolved.pubData.items;
+                    self.totalPublications = resolved.pubData.total_count;
+                    self.pageInfo = resolved.pubData.page_info;
+                }
+
+                if (resolved.metaData) {
+                    self.options.changesCount = resolved.metaData.draftChangesCount;
+                }
+
+                self.renderer.render(self._getState());
+                self._applyPermissions();
+
+                if (resolved.pubData) {
+                    self.renderer.updateLoadMoreButton({
+                        publications: self.options.publications,
+                        totalPublications: self.totalPublications
+                    });
+                }
+
+                console.log('✅ Initial data loaded:', (resolved.pubData ? self.options.publications.length : 0) + ' publications, ' + self.options.changesCount + ' changes');
+            }
+
+            this.metadataLoader.loadPublications(1, null)
+                .then(function(data) {
+                    resolved.pub = true;
+                    resolved.pubData = data;
+                    finalize();
+                })
+                .catch(function(error) {
+                    console.error('❌ Failed to load publications:', error);
+                    resolved.pub = true;
+                    finalize();
+                });
+
+            this.metadataLoader.loadMetadata()
+                .then(function(data) {
+                    resolved.meta = true;
+                    resolved.metaData = data;
+                    finalize();
+                })
+                .catch(function(error) {
+                    console.warn('⚠️ Could not load draft metadata:', error);
+                    resolved.meta = true;
+                    finalize();
+                });
+        },
+
+        /**
+         * Load publications from GraphQL (used for Load More pagination)
          */
         _loadPublications: function() {
             var self = this;

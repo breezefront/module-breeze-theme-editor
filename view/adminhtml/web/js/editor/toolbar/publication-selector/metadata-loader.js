@@ -4,8 +4,9 @@
  */
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/graphql/queries/get-publications'
-], function($, getPublications) {
+    'Swissup_BreezeThemeEditor/js/graphql/queries/get-publications',
+    'Swissup_BreezeThemeEditor/js/graphql/queries/get-config'
+], function($, getPublications, getConfig) {
     'use strict';
 
     return {
@@ -28,6 +29,38 @@ define([
             });
             
             return this;
+        },
+
+        /**
+         * Load draft metadata (draftChangesCount) from server via GraphQL.
+         * Called on init and after published event to keep the count in sync.
+         *
+         * @returns {Promise<Object>} Promise with {draftChangesCount}
+         */
+        loadMetadata: function() {
+            if (!this.storeId) {
+                console.warn('⚠️ Cannot load metadata: storeId missing');
+                return $.Deferred().reject('Store ID missing').promise();
+            }
+
+            console.log('📥 Loading draft metadata...');
+
+            return getConfig(
+                parseInt(this.storeId),
+                parseInt(this.themeId) || null,
+                'DRAFT'
+            ).then(function(data) {
+                var meta = data.breezeThemeEditorConfig.metadata;
+                var result = {
+                    draftChangesCount: meta.draftChangesCount || 0,
+                    lastPublished: meta.lastPublished || null
+                };
+                console.log('📊 Draft metadata loaded:', result);
+                return result;
+            }).catch(function(error) {
+                console.error('❌ Failed to load draft metadata:', error);
+                throw error;
+            });
         },
 
         /**

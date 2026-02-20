@@ -625,9 +625,13 @@ define([
                         console.log('💾 Changes count AFTER markAsSaved:', PanelState.getChangesCount());
 
                         self._refreshAllBadges();
+
+                        var fieldModified = PanelState.getModifiedCount();
+                        var paletteModified = PaletteManager.getModifiedCount();
                         $(document).trigger('themeEditorDraftSaved', {
                             storeId: self.storeId,
-                            themeId: self.themeId
+                            themeId: self.themeId,
+                            draftChangesCount: fieldModified + paletteModified
                         });
                         console.log('✅ Save complete, event triggered');
                     } else {
