@@ -289,9 +289,9 @@ define([
                                 self._updateStyleContent('bte-theme-css-variables-draft', css);
                                 $draftStyle = self._getOrCreateStyle('bte-theme-css-variables-draft');
                                 
-                                // Enable draft, disable published
+                                // Enable draft; published stays enabled (draft is inserted after it in DOM,
+                                // so CSS cascade gives draft priority without disabling published)
                                 self._enableStyle($draftStyle);
-                                self._disableStyle($publishedStyle);
                                 
                                 // Disable all publications using native DOM
                                 var currentDoc = self._getCurrentIframeDoc();
@@ -345,8 +345,8 @@ define([
                                 self._updateStyleContent(publicationStyleId, css);
                                 $publicationStyle = self._getOrCreateStyle(publicationStyleId);
                                 
-                                // Disable others
-                                self._disableStyle($publishedStyle);
+                                // Disable others; published stays enabled (publication style is inserted after it,
+                                // so CSS cascade gives publication priority without disabling published)
                                 self._disableStyle($draftStyle);
                                 
                                 // Disable other publications, enable current using native DOM
