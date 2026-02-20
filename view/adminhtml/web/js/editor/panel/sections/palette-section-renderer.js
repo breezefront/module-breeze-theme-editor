@@ -3,13 +3,15 @@ define([
     'jquery-ui-modules/widget',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/palette-section.html',
     'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
-    'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer'
+    'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function (
     $,
     widget,
     paletteTemplate,
     PaletteManager,
-    BadgeRenderer
+    BadgeRenderer,
+    Logger
 ) {
     'use strict';
 
@@ -30,7 +32,7 @@ define([
         },
 
         _create: function () {
-            console.log('✅ Initializing Palette Section');
+            Logger.info('palette-section', 'Initializing');
 
             // Initialize PaletteManager if not already done
             if (!PaletteManager.storeId) {
@@ -74,7 +76,7 @@ define([
             // Render palettes
             this._renderPalettes();
 
-            console.log('📋 Palette Section rendered');
+            Logger.debug('palette-section', 'Rendered');
         },
 
         /**
@@ -149,7 +151,7 @@ define([
             $groupContainer.append($swatchGrid);
             this.$grid.append($groupContainer);
             
-            console.log('✅ Rendered group:', group.label, 'with', group.colors.length, 'colors (8-column layout)');
+            Logger.debug('palette-section', 'Rendered group: ' + group.label + ' with ' + group.colors.length + ' colors');
         },
 
         /**
@@ -221,7 +223,7 @@ define([
                     self.$content.addClass('active').slideDown(200);
                 }
                 
-                console.log('🔄 Palette accordion toggled:', !isActive);
+                Logger.debug('palette-section', 'Accordion toggled', {open: !isActive});
             });
 
             // Click on swatch container → trigger hidden input
@@ -243,7 +245,7 @@ define([
                 var cssVar = $input.attr('data-css-var');
                 var hexValue = $input.val();
 
-                console.log('🎨 Color changed:', cssVar, '=', hexValue);
+                Logger.info('palette-section', 'Color changed', {cssVar: cssVar, hex: hexValue});
 
                 // Update visual
                 var $swatch = $input.closest('.bte-palette-swatch');
@@ -279,11 +281,12 @@ define([
 
                 // Ignore focus-return click from native colour picker (see _justChanged comment)
                 if (self._justChanged) {
+                    Logger.debug('palette-section', 'Reset ignored (colour-change cooldown active)');
                     return;
                 }
 
                 if (!PaletteManager.hasDirtyChanges()) {
-                    console.log('⚠️ No changes to reset');
+                    Logger.debug('palette-section', 'Reset skipped — no dirty changes');
                     return;
                 }
                 
@@ -298,7 +301,7 @@ define([
                 // Revert changes
                 var reverted = PaletteManager.revertDirtyChanges();
                 
-                console.log('↩️ Palette changes reverted:', reverted);
+                Logger.info('palette-section', 'Changes reverted', {count: reverted});
                 
                 // Show toast notification
                 require(['Swissup_BreezeThemeEditor/js/lib/toastify'], function(Toastify) {
@@ -354,10 +357,10 @@ define([
                 self._updateHeaderBadges();
                 
                 self._updateResetButton();
-                console.log('✅ Palette dirty indicators cleared after save');
+                Logger.debug('palette-section', 'Dirty indicators cleared after save');
             });
 
-            console.log('✅ Palette Section events bound');
+            Logger.debug('palette-section', 'Events bound');
         },
 
         /**
@@ -372,7 +375,7 @@ define([
             if (hasDirty && count > 0) {
                 // Show button with count
                 $resetBtn.show().find('.bte-reset-count').text('(' + count + ')');
-                console.log('🔄 Reset button shown:', count, 'dirty colors');
+                Logger.debug('palette-section', 'Reset button shown', {dirtyCount: count});
             } else {
                 // Hide button
                 $resetBtn.hide();
@@ -393,10 +396,7 @@ define([
             var badgesHtml = BadgeRenderer.renderPaletteBadges(dirtyCount, modifiedCount);
             this.$badgesContainer.html(badgesHtml);
             
-            console.log('📊 Palette badges updated:', {
-                dirty: dirtyCount,
-                modified: modifiedCount
-            });
+            Logger.debug('palette-section', 'Badges updated', {dirty: dirtyCount, modified: modifiedCount});
         },
 
         /**
@@ -446,7 +446,7 @@ define([
             // Update visual
             $swatch.find('.bte-swatch-visual').css('background-color', hexValue);
 
-            console.log('🔄 Swatch updated:', cssVar, '=', hexValue);
+            Logger.debug('palette-section', 'Swatch updated', {cssVar: cssVar, hex: hexValue});
         },
 
         /**
@@ -475,7 +475,7 @@ define([
                     }, 300);
                 }
                 
-                console.log('✨ Highlighted palette color:', cssVar);
+                Logger.debug('palette-section', 'Highlighted palette color', {cssVar: cssVar});
             }
         },
 
