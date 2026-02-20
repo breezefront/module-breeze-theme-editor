@@ -1,7 +1,43 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 18 лютого 2026 ✅ Phase 3A ЗАВЕРШЕНО  
-**Загальний прогрес:** 78% завершено (оновлено після рішення про гібридний підхід)
+**Останнє оновлення:** 20 лютого 2026 ✅ Color Formatter Implemented  
+**Загальний прогрес:** 80% завершено (баг з RGB конвертацією виправлено)
+
+---
+
+## 🚨 Поточний Фокус
+
+### ✅ Color Formatter Implementation (ЗАВЕРШЕНО)
+
+**Статус:** ✅ ВИКОНАНО (commit 1f03dde)  
+**Пріоритет:** 🔴 ВИСОКИЙ (Баг у production) - ВИПРАВЛЕНО  
+**Час виконання:** 2.5 години (завершено 20.02.2026)  
+**Документація:** [📝 Детальний План](plans/color-formatter-implementation.md)
+
+**Проблема (ВИРІШЕНА):**  
+GraphQL повертав `null` замість правильної конвертації HEX → RGB для кольорових полів з `format: "rgb"`.
+
+**Приклад:**
+- База даних: `#000000` (HEX)
+- Конфігурація: `format: "rgb"`
+- GraphQL: ~~`null` ❌~~ → **`"0, 0, 0"` ✅ ВИПРАВЛЕНО**
+
+**Що зроблено:**
+1. ✅ Створено `ColorFormatter` utility (135 рядків)
+2. ✅ Оновлено `AbstractConfigResolver` для конвертації
+3. ✅ Додано ColorFormatter до всіх resolver класів
+4. ✅ Написано 16 unit тестів (56 assertions)
+5. ✅ Всі 276 тестів проходять (876 assertions)
+
+**Файли:**
+- 2 нових файли (ColorFormatter + тести: 622 рядки)
+- 4 модифікованих файли (AbstractConfigResolver, Config, ConfigFromPublication, ConfigTest)
+- Commit: `1f03dde` - fix(graphql): convert HEX colors to RGB format
+
+**Тестування:**
+- ✅ Unit тести: 16/16 passing
+- ✅ Regression: 276/276 passing
+- ⏳ Manual GraphQL testing: Готово до виконання
 
 ---
 
@@ -108,23 +144,53 @@
 
 ## 🎯 Пріоритети на Найближчий Час
 
+### 🔴 Критичний пріоритет (БАГ-ФІКСИ)
+1. **🔧 Color Formatter Implementation** (2-3 год) - **НЕГАЙНО**  
+   📄 [plans/color-formatter-implementation.md](plans/color-formatter-implementation.md) 🚨  
+   **Баг:** GraphQL повертає `null` замість RGB конвертації для `format: "rgb"`  
+   **Вплив:** Кольори не працюють у Breeze 2.0 themes з `rgb(var())` синтаксисом  
+   **Статус:** 📋 План готовий, чекає виконання
+
 ### Високий пріоритет ⭐⭐⭐
-1. **Phase 4 - Test Migration & Validation** (8-10 год) - НАСТУПНИЙ КРОК  
-   📄 [README.md](migration/phases/phase-4/README.md) ⭐  
+2. **Phase 4 - Test Migration & Validation** (8-10 год) - НАСТУПНИЙ КРОК  
+   📄 [migration/phases/phase-4/README.md](migration/phases/phase-4/README.md) ⭐  
    **Завдання:** Міграція 36 JS тестів на PHPUnit, мердж дублікатів, валідація функціоналу
 
-2. **Phase 5 - Polish & Final Testing** (8-10 год) - після Phase 4  
-   📄 [README.md](migration/phases/phase-5/README.md)
+3. **Phase 5 - Polish & Final Testing** (8-10 год) - після Phase 4  
+   📄 [migration/phases/phase-5/README.md](migration/phases/phase-5/README.md)
 
 ### Середній пріоритет
-3. **JS Integration Tests** - опціонально, поступово  
+4. **JS Integration Tests** - опціонально, поступово  
    📄 [refactoring/js-testing/next-steps.md](refactoring/js-testing/next-steps.md)  
    ✅ Unit tests вже є (36 штук!)
 
 ### Низький пріоритет
-4. **Color Palette System** - майбутня фіча  
+5. **Color Palette System** - майбутня фіча  
    📄 [features/color-palette-system.md](features/color-palette-system.md)  
    💡 Планування двохрівневої системи управління кольорами
+
+---
+
+## 🐛 Bug Fixes & Improvements
+
+| Баг/Покращення | Статус | Пріоритет | План | Час |
+|----------------|--------|-----------|------|-----|
+| **Color Format Conversion** | 📋 Готово | 🔴 КРИТИЧНИЙ | [color-formatter-implementation.md](plans/color-formatter-implementation.md) | 2-3h |
+
+### 🔧 Color Format Conversion Bug
+
+**Проблема:** GraphQL API повертає `null` для color fields з `format: "rgb"` замість конвертації HEX → RGB
+
+**Root Cause:** `AbstractConfigResolver::mergeSectionsWithValues()` (line 50) не застосовує конвертацію формату
+
+**Вплив:**
+- ❌ Breeze 2.0 themes (використовують `rgb(var())` синтаксис) - кольори не працюють
+- ❌ GraphQL клієнти отримують `null` замість `"0, 0, 0"`
+- ✅ Breeze 3.0 themes (використовують `var()` з HEX) - не постраждали
+
+**Рішення:** Створити `ColorFormatter` utility та інтегрувати в GraphQL resolvers
+
+**План:** [📝 Детальний план виконання](plans/color-formatter-implementation.md)
 
 ---
 
@@ -135,23 +201,26 @@ docs/
 ├── DASHBOARD.md                      # Цей файл - загальний огляд
 ├── README.md                          # Індекс документації
 │
+├── plans/                             # 📋 Плани виконання
+│   └── color-formatter-implementation.md  # 🔧 Фікс HEX→RGB конвертації
+│
 ├── migration/                         # Admin Migration проект
 │   ├── README.md                      # Огляд міграції
 │   ├── master-plan.md                 # Головний план (5 фаз)
 │   ├── phases/                        # Детальні плани по фазах
 │   │   ├── phase-1/                   # ✅ Foundation
 │   │   ├── phase-2/                   # ✅ Security
-│   │   ├── phase-3a/                  # 🎯 Toolbar GraphQL (NEXT)
-│   │   ├── phase-3b/                  # 📋 Settings Editor
-│   │   ├── phase-4/                   # 📋 Polish
-│   │   └── phase-5/                   # 📋 Testing
+│   │   ├── phase-3a/                  # ✅ Toolbar GraphQL (ЗАВЕРШЕНО)
+│   │   ├── phase-3b/                  # ✅ Settings Editor (ЗАВЕРШЕНО)
+│   │   ├── phase-4/                   # 🟡 Test Migration (READY)
+│   │   └── phase-5/                   # 📋 Polish & Testing
 │   ├── progress/                      # Прогрес по сесіях
 │   ├── reference.md                   # Технічна довідка
 │   └── breaking-changes.md            # Що зміниться в v2.0
 │
 ├── refactoring/                       # Рефакторинги
-│   ├── css-manager/                   # 🟡 CSS Manager (ready)
-│   ├── js-testing/                    # 🧪 JS Test Framework
+│   ├── css-manager/                   # ✅ CSS Manager (завершено)
+│   ├── js-testing/                    # ✅ JS Test Framework (36 тестів)
 │   └── completed/                     # ✅ Завершені
 │
 ├── features/                          # Майбутні фічі
