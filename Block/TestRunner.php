@@ -176,6 +176,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/critical-fixes-test',
             // CssPreviewManager Palette Injection Tests (11 tests) - Bug 3 JS layer fix
             'Swissup_BreezeThemeEditor/js/test/tests/css-preview-manager-palette-test',
+            // Palette Reset Behavior Tests (8 tests) - focus-return click fix
+            'Swissup_BreezeThemeEditor/js/test/tests/palette-reset-behavior-test',
         ];
     }
 }
