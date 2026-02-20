@@ -149,6 +149,13 @@ define([
                 }).catch(function(error) {
                     console.error('❌ Failed to restore published state:', error);
                 });
+            } else if (this.options.currentStatus === 'DRAFT') {
+                // Restore DRAFT mode - load draft CSS via GraphQL
+                cssManager.switchTo('DRAFT').then(function() {
+                    console.log('✅ Restored DRAFT mode');
+                }).catch(function(error) {
+                    console.error('❌ Failed to restore draft state:', error);
+                });
             }
         },
 
