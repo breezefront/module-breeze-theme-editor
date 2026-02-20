@@ -792,5 +792,148 @@ class CssGeneratorTest extends TestCase
             'generateFromValuesMap: RGB palette variable must always be emitted'
         );
     }
+
+    /**
+     * Test 16: Field references a palette variable that is NOT stored in DB.
+     *
+     * This is the primary real-world bug scenario:
+     * - User sets --base-color to reference --color-brand-amber-dark
+     * - User never changed --color-brand-amber-dark in the palette panel
+     * - Therefore _palette.--color-brand-amber-dark has no DB entry
+     * - The Breeze base CSS defines --color-brand-amber-dark (HEX) but NOT
+     *   --color-brand-amber-dark-rgb
+     * - Without this fix: draft CSS contains var(--color-brand-amber-dark-rgb)
+     *   but the variable is never defined → resolves to empty → broken colors
+     *
+     * Fix: scan field values for palette references, look up config default,
+     * emit the palette CSS even without a DB entry.
+     */
+    public function testPaletteVarNotInDbIsEmittedUsingConfigDefault(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        // Only the field value is in DB — NO _palette entry for --color-brand-amber-dark
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_color',
+                'value' => '--color-brand-amber-dark'  // palette reference, not a hex
+            ]
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id' => 'base_color',
+                            'css_var' => '--base-color',
+                            'type' => 'color',
+                            'default' => 'rgb(17, 24, 39)',  // different from value → not skipped
+                        ]
+                    ]
+                ]
+            ],
+            // Config supplies the default for the palette color
+            'palettes' => [
+                [
+                    'groups' => [
+                        [
+                            'colors' => [
+                                [
+                                    'css_var' => '--color-brand-amber-dark',
+                                    'default' => '#a16207'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $this->colorFormatResolverMock
+            ->method('resolve')
+            ->willReturn('rgb');
+
+        $css = $this->cssGenerator->generate(1, 1, 'DRAFT');
+
+        // Palette variable must be emitted even though it is not in DB
+        $this->assertStringContainsString(
+            '--color-brand-amber-dark: #a16207;',
+            $css,
+            'Palette HEX must be emitted using config default when not in DB'
+        );
+        $this->assertStringContainsString(
+            '--color-brand-amber-dark-rgb: 161, 98, 7;',
+            $css,
+            'Palette RGB must be emitted using config default when not in DB'
+        );
+        // The field itself must reference the -rgb variant
+        $this->assertStringContainsString(
+            '--base-color: var(--color-brand-amber-dark-rgb);',
+            $css,
+            'Field with rgb format must reference -rgb variant'
+        );
+    }
+
+    /**
+     * Test 17: generateFromValuesMap — same scenario as Test 16.
+     *
+     * Field references a palette var that is absent from the values map.
+     * Config default must be used to emit the palette CSS.
+     */
+    public function testGenerateFromValuesMapEmitsPaletteDefaultForUnreferencedVar(): void
+    {
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id' => 'base_color',
+                            'css_var' => '--base-color',
+                            'type' => 'color',
+                            'default' => 'rgb(17, 24, 39)',
+                        ]
+                    ]
+                ]
+            ],
+            'palettes' => [
+                [
+                    'groups' => [
+                        [
+                            'colors' => [
+                                [
+                                    'css_var' => '--color-brand-amber-dark',
+                                    'default' => '#a16207'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $this->colorFormatResolverMock
+            ->method('resolve')
+            ->willReturn('rgb');
+
+        // No _palette entry — only the field value referencing the palette color
+        $css = $this->cssGenerator->generateFromValuesMap(1, [
+            'typography.base_color' => '--color-brand-amber-dark'
+        ]);
+
+        $this->assertStringContainsString(
+            '--color-brand-amber-dark: #a16207;',
+            $css,
+            'generateFromValuesMap: palette HEX must be emitted from config default'
+        );
+        $this->assertStringContainsString(
+            '--color-brand-amber-dark-rgb: 161, 98, 7;',
+            $css,
+            'generateFromValuesMap: palette RGB must be emitted from config default'
+        );
+    }
 }
 

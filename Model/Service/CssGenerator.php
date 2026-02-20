@@ -54,31 +54,26 @@ class CssGenerator
             return $css;
         }
 
-        // CRITICAL: Process _palette entries FIRST so palette variables are defined
-        // before they are referenced via var() in field values below.
-        // Both HEX and RGB variants are always emitted: the Breeze base CSS defines
-        // the HEX variable but omits the -rgb variant, so we must emit it here even
-        // when the value equals the palette default.
-        $hasPaletteChanges = false;
+        // Build a palette-vars-to-emit map.
+        //
+        // We need to emit BOTH the HEX and the -rgb variant for every palette
+        // variable that is referenced by any field value (e.g. a field stores
+        // "--color-brand-amber-dark" and formatColor() turns that into
+        // "var(--color-brand-amber-dark-rgb)").
+        //
+        // Two sources:
+        //   1. Palette entries explicitly saved in DB (section = '_palette').
+        //   2. Palette defaults from config — for any variable referenced by a
+        //      field that was never explicitly changed (i.e. not in DB).
+        //
+        // The Breeze base CSS defines the HEX variants but NOT the -rgb ones,
+        // so we must always emit them here.
+        $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config);
 
-        foreach ($values as $value) {
-            if (($value['section_code'] ?? '') !== '_palette') {
-                continue;
+        if (!empty($paletteVarsToEmit)) {
+            foreach ($paletteVarsToEmit as $cssVar => $rawValue) {
+                $css .= $this->processPaletteColor($cssVar, $rawValue);
             }
-
-            $rawValue = $value['value'] ?? null;
-            if ($rawValue === null || $rawValue === '') {
-                continue;
-            }
-
-            $paletteCss = $this->processPaletteColor($value['setting_code'], $rawValue);
-            if ($paletteCss !== '') {
-                $css .= $paletteCss;
-                $hasPaletteChanges = true;
-            }
-        }
-
-        if ($hasPaletteChanges) {
             $css .= "\n";
         }
 
@@ -177,39 +172,7 @@ class CssGenerator
             return $css;
         }
 
-        // CRITICAL: Process _palette entries FIRST so palette variables are defined
-        // before they are referenced via var() in field values below.
-        $hasPaletteChanges = false;
-
-        foreach ($valuesMap as $key => $rawValue) {
-            if ($rawValue === null || $rawValue === '') {
-                continue;
-            }
-
-            $parts = explode('.', $key, 2);
-            if (count($parts) !== 2) {
-                continue;
-            }
-
-            [$sectionCode, $settingCode] = $parts;
-
-            if ($sectionCode !== '_palette') {
-                continue;
-            }
-
-            $paletteCss = $this->processPaletteColor($settingCode, $rawValue);
-            if ($paletteCss !== '') {
-                $css .= $paletteCss;
-                $hasPaletteChanges = true;
-            }
-        }
-
-        if ($hasPaletteChanges) {
-            $css .= "\n";
-        }
-
-        // Now process all other field values (which may reference palette variables)
-        // Convert valuesMap to same format as $values array
+        // Convert valuesMap to the same row format used by generate()
         $values = [];
         foreach ($valuesMap as $key => $value) {
             $parts = explode('.', $key, 2);
@@ -220,6 +183,15 @@ class CssGenerator
                     'value' => $value
                 ];
             }
+        }
+
+        $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config);
+
+        if (!empty($paletteVarsToEmit)) {
+            foreach ($paletteVarsToEmit as $cssVar => $rawValue) {
+                $css .= $this->processPaletteColor($cssVar, $rawValue);
+            }
+            $css .= "\n";
         }
 
         $css .= $this->generateCssFromFields($values, $fieldMap);
@@ -518,6 +490,86 @@ class CssGenerator
         }
 
         return '';
+    }
+
+    /**
+     * Build the ordered map of palette CSS variables that must be emitted.
+     *
+     * Palette variables need to be emitted in two cases:
+     *   1. The variable was explicitly saved in the DB (section '_palette').
+     *   2. The variable is referenced by a field value (e.g. '--color-brand-amber-dark')
+     *      but was never changed by the user, so it has no DB entry. In this case we
+     *      fall back to the default value from the theme config.
+     *
+     * Both the HEX variant and the -rgb variant must be present in the output CSS
+     * because the Breeze base CSS only defines the HEX form; the -rgb form is absent
+     * from the base stylesheet and would otherwise be undefined.
+     *
+     * @param array  $values Rows from the DB (each has section_code / setting_code / value)
+     * @param array  $config Full theme configuration (with 'palettes' key)
+     * @return array<string, string>  Map of cssVar → rawHexValue, palette entries first
+     */
+    private function buildPaletteVarsToEmit(array $values, array $config): array
+    {
+        // Step 1: collect palette vars explicitly saved in DB
+        $paletteVarsToEmit = [];
+        foreach ($values as $value) {
+            if (($value['section_code'] ?? '') !== '_palette') {
+                continue;
+            }
+            $cssVar  = $value['setting_code'] ?? '';
+            $rawValue = $value['value'] ?? null;
+            if ($cssVar && $rawValue !== null && $rawValue !== '') {
+                $paletteVarsToEmit[$cssVar] = $rawValue;
+            }
+        }
+
+        // Step 2: for every field that stores a palette reference (e.g. '--color-brand-amber-dark')
+        // ensure the referenced palette var will be emitted.  If it is not already in the
+        // DB set, look up the config default and use that.
+        $paletteDefaults = $this->extractPaletteDefaults($config);
+        foreach ($values as $value) {
+            if (($value['section_code'] ?? '') === '_palette') {
+                continue;
+            }
+            $rawValue = $value['value'] ?? null;
+            if ($rawValue === null || !str_starts_with($rawValue, '--')) {
+                continue;
+            }
+            $cssVar = $rawValue; // the palette variable name stored as the field value
+            if (isset($paletteVarsToEmit[$cssVar])) {
+                continue; // already have a value for it
+            }
+            if (isset($paletteDefaults[$cssVar])) {
+                $paletteVarsToEmit[$cssVar] = $paletteDefaults[$cssVar];
+            }
+        }
+
+        return $paletteVarsToEmit;
+    }
+
+    /**
+     * Extract palette default values from config.
+     * Returns a map of css_var => default_hex, e.g. ['--color-brand-primary' => '#1979c3'].
+     *
+     * @param array $config Configuration array with 'palettes' key
+     * @return array<string, string>
+     */
+    private function extractPaletteDefaults(array $config): array
+    {
+        $defaults = [];
+        foreach ($config['palettes'] ?? [] as $palette) {
+            foreach ($palette['groups'] ?? [] as $group) {
+                foreach ($group['colors'] ?? [] as $color) {
+                    $cssVar  = $color['css_var'] ?? null;
+                    $default = $color['default'] ?? null;
+                    if ($cssVar && $default) {
+                        $defaults[$cssVar] = $default;
+                    }
+                }
+            }
+        }
+        return $defaults;
     }
 
     /**
