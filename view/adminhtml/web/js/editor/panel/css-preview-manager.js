@@ -10,6 +10,17 @@ define([
     var $styleElement = null;
     var iframeDocument = null;
 
+    /**
+     * Tracks which palette vars were injected for each field var.
+     * Key  : field CSS variable  (e.g. '--base-color')
+     * Value: array of injected palette vars
+     *        (e.g. ['--color-brand-amber-dark', '--color-brand-amber-dark-rgb'])
+     *
+     * Used to clean up orphaned palette vars when a field's value changes away
+     * from a palette reference (reset, overwrite with concrete value, etc.).
+     */
+    var _fieldPaletteVars = {};
+
     return {
         /** Cached PaletteManager reference — set lazily in _subscribeToPaletteChanges(). */
         _paletteManager: null,
@@ -234,10 +245,11 @@ define([
             // preview.  Without this, var(--color-brand-amber-primary-rgb) resolves to
             // nothing and produces black colors.
             //
-            // _paletteManager is set by _subscribeToPaletteChanges() which runs during
-            // init(), so it is available by the time the user can interact with the UI.
-            // We skip injection if the variable is already in `changes` (meaning it was
-            // set by a direct palette-color change, whose value takes precedence).
+            // Always clean up any palette vars that were previously injected for this
+            // field, then re-inject if the new value is still a palette reference.
+            // This covers: reset → concrete value, palette-A → palette-B, etc.
+            this._cleanupFieldPaletteVars(varName);
+
             if (typeof value === 'string' && value.startsWith('--') && this._paletteManager) {
                 var paletteColor = this._paletteManager.getColor(value);
                 if (paletteColor) {
@@ -250,6 +262,8 @@ define([
                         if (!changes[rgbVar]) {
                             changes[rgbVar] = ColorUtils.hexToRgb(hex);
                         }
+                        // Track what was injected so cleanup can remove it later
+                        _fieldPaletteVars[varName] = [value, rgbVar];
                     }
                 }
             }
@@ -273,6 +287,7 @@ define([
             }
 
             if (changes[varName]) {
+                this._cleanupFieldPaletteVars(varName);
                 delete changes[varName];
                 this._updateStyles();
                 console.log('🗑️ CSS variable removed:', varName);
@@ -579,6 +594,7 @@ define([
          */
         reset: function() {
             changes = {};
+            _fieldPaletteVars = {};
             if ($styleElement) {
                 $styleElement.text(':root {}');
             }
@@ -599,12 +615,39 @@ define([
          */
         resetVariable: function(varName) {
             if (changes[varName]) {
+                this._cleanupFieldPaletteVars(varName);
                 delete changes[varName];
                 this._updateStyles();
                 console.log('↺ CSS variable reset:', varName);
                 return true;
             }
             return false;
+        },
+
+        /**
+         * Remove palette vars that were injected for a specific field variable.
+         *
+         * A palette var is removed only when no OTHER field still references it,
+         * covering the case where two fields share the same palette color.
+         *
+         * @param {String} varName - Field CSS variable (e.g. '--base-color')
+         */
+        _cleanupFieldPaletteVars: function(varName) {
+            var injected = _fieldPaletteVars[varName];
+            if (!injected) {
+                return;
+            }
+            injected.forEach(function(paletteVar) {
+                var stillNeeded = Object.keys(_fieldPaletteVars).some(function(fv) {
+                    return fv !== varName &&
+                           _fieldPaletteVars[fv] &&
+                           _fieldPaletteVars[fv].indexOf(paletteVar) !== -1;
+                });
+                if (!stillNeeded) {
+                    delete changes[paletteVar];
+                }
+            });
+            delete _fieldPaletteVars[varName];
         },
 
         /**

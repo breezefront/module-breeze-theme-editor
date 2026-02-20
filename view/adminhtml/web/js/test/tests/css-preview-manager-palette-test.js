@@ -53,6 +53,32 @@ define([
         }
     }
 
+    /**
+     * Local copy of _cleanupFieldPaletteVars() from css-preview-manager.js.
+     * Kept in sync with production so that tests 11–12 test the real algorithm.
+     *
+     * @param {Object} changes           - mutable changes map
+     * @param {Object} fieldPaletteVars  - mutable tracking map
+     * @param {String} varName           - field CSS variable being cleaned up
+     */
+    function runCleanup(changes, fieldPaletteVars, varName) {
+        var injected = fieldPaletteVars[varName];
+        if (!injected) {
+            return;
+        }
+        injected.forEach(function(paletteVar) {
+            var stillNeeded = Object.keys(fieldPaletteVars).some(function(fv) {
+                return fv !== varName &&
+                       fieldPaletteVars[fv] &&
+                       fieldPaletteVars[fv].indexOf(paletteVar) !== -1;
+            });
+            if (!stillNeeded) {
+                delete changes[paletteVar];
+            }
+        });
+        delete fieldPaletteVars[varName];
+    }
+
     return TestFramework.suite('CssPreviewManager - Palette Injection', {
 
         // ─── Layer 1: _formatColorValue (pure) ───────────────────────────────
@@ -197,14 +223,12 @@ define([
         },
 
         /**
-         * Test 10: injection skipped for plain hex values (not palette refs)
+         * Test 10: Palette injection logic — skipped for plain hex values
          */
         'should skip injection for plain hex values': function () {
             var changes = {};
             var mockPM = {
-                getColor: function () {
-                    return { value: '#a16207', hex: '#a16207' };
-                }
+                getColor: function () { return { value: '#a16207', hex: '#a16207' }; }
             };
 
             runInjection(changes, '#a16207', mockPM);
@@ -216,10 +240,77 @@ define([
             );
         },
 
+        // ─── Layer 2b: cleanup algorithm (isolated) ──────────────────────────
+
+        /**
+         * Test 11: cleanup removes injected palette vars when field is set to
+         * a concrete value (the reset scenario).
+         */
+        'should remove injected palette vars when field switches to concrete value': function () {
+            // Simulate: field --base-color was set to palette ref → injected 2 vars
+            var fieldPaletteVars = { '--base-color': ['--color-brand-amber-dark', '--color-brand-amber-dark-rgb'] };
+            var changes = {
+                '--base-color': 'var(--color-brand-amber-dark-rgb)',
+                '--color-brand-amber-dark': '#a16207',
+                '--color-brand-amber-dark-rgb': '161, 98, 7'
+            };
+
+            // Run cleanup for --base-color (simulates reset or setVariable with concrete value)
+            runCleanup(changes, fieldPaletteVars, '--base-color');
+
+            this.assertEquals(changes['--color-brand-amber-dark'],     undefined, '--color-brand-amber-dark should be removed after cleanup');
+            this.assertEquals(changes['--color-brand-amber-dark-rgb'], undefined, '--color-brand-amber-dark-rgb should be removed after cleanup');
+            this.assertEquals(fieldPaletteVars['--base-color'],        undefined, 'Tracking entry should be removed');
+        },
+
+        /**
+         * Test 12: cleanup does NOT remove a shared palette var when another
+         * field still references it.
+         *
+         * Scenario: --base-color AND --heading-color both reference
+         * --color-brand-amber-dark.  Resetting --base-color must not remove
+         * the palette var because --heading-color still needs it.
+         */
+        'should keep shared palette var when another field still references it': function () {
+            var fieldPaletteVars = {
+                '--base-color':    ['--color-brand-amber-dark', '--color-brand-amber-dark-rgb'],
+                '--heading-color': ['--color-brand-amber-dark', '--color-brand-amber-dark-rgb']
+            };
+            var changes = {
+                '--base-color':               'var(--color-brand-amber-dark-rgb)',
+                '--heading-color':            'var(--color-brand-amber-dark-rgb)',
+                '--color-brand-amber-dark':   '#a16207',
+                '--color-brand-amber-dark-rgb': '161, 98, 7'
+            };
+
+            // Reset only --base-color
+            runCleanup(changes, fieldPaletteVars, '--base-color');
+
+            this.assertEquals(
+                changes['--color-brand-amber-dark'],
+                '#a16207',
+                '--color-brand-amber-dark must remain because --heading-color still needs it'
+            );
+            this.assertEquals(
+                changes['--color-brand-amber-dark-rgb'],
+                '161, 98, 7',
+                '--color-brand-amber-dark-rgb must remain because --heading-color still needs it'
+            );
+            this.assertEquals(
+                fieldPaletteVars['--base-color'],
+                undefined,
+                'Tracking entry for --base-color should be removed'
+            );
+            this.assertNotNull(
+                fieldPaletteVars['--heading-color'],
+                'Tracking entry for --heading-color should still exist'
+            );
+        },
+
         // ─── Layer 3: integration (live DRAFT mode) ───────────────────────────
 
         /**
-         * Test 11: end-to-end via real setVariable()
+         * Test 13: end-to-end via real setVariable()
          *
          * Calls CssPreviewManager.setVariable() with a real palette reference and
          * verifies that getChanges() contains both the HEX and RGB injected vars.
