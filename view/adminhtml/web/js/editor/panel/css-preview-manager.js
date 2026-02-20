@@ -11,6 +11,9 @@ define([
     var iframeDocument = null;
 
     return {
+        /** Cached PaletteManager reference — set lazily in _subscribeToPaletteChanges(). */
+        _paletteManager: null,
+
         /**
          * Initialize preview manager
          */
@@ -68,6 +71,9 @@ define([
             
             // Lazy require to avoid circular dependency
             require(['Swissup_BreezeThemeEditor/js/editor/panel/palette-manager'], function(PaletteManager) {
+                // Cache reference so setVariable() can inject palette vars synchronously
+                self._paletteManager = PaletteManager;
+
                 PaletteManager.subscribe(function(cssVar, hexValue) {
                     console.log('🎨 Palette cascade:', cssVar, '→', hexValue);
                     
@@ -222,6 +228,32 @@ define([
             }
             var formattedValue = this._formatValue(value, fieldType, fieldData);
             changes[varName] = formattedValue;
+
+            // When the value is a palette reference (e.g. '--color-brand-amber-primary'),
+            // ensure the palette variable and its -rgb variant are defined in the live
+            // preview.  Without this, var(--color-brand-amber-primary-rgb) resolves to
+            // nothing and produces black colors.
+            //
+            // _paletteManager is set by _subscribeToPaletteChanges() which runs during
+            // init(), so it is available by the time the user can interact with the UI.
+            // We skip injection if the variable is already in `changes` (meaning it was
+            // set by a direct palette-color change, whose value takes precedence).
+            if (typeof value === 'string' && value.startsWith('--') && this._paletteManager) {
+                var paletteColor = this._paletteManager.getColor(value);
+                if (paletteColor) {
+                    var hex = paletteColor.value || paletteColor.hex;
+                    if (hex) {
+                        if (!changes[value]) {
+                            changes[value] = hex;
+                        }
+                        var rgbVar = value + '-rgb';
+                        if (!changes[rgbVar]) {
+                            changes[rgbVar] = ColorUtils.hexToRgb(hex);
+                        }
+                    }
+                }
+            }
+
             this._updateStyles();
             console.log('🎨 CSS variable updated:', varName, '=', formattedValue, '(type:', fieldType, ')');
             return true;

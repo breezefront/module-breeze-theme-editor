@@ -174,6 +174,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/selector-alignment-test',
             // Critical Fixes Tests (5 tests) - Pickr CSS + Field Editability
             'Swissup_BreezeThemeEditor/js/test/tests/critical-fixes-test',
+            // CssPreviewManager Palette Injection Tests (11 tests) - Bug 3 JS layer fix
+            'Swissup_BreezeThemeEditor/js/test/tests/css-preview-manager-palette-test',
         ];
     }
 }
