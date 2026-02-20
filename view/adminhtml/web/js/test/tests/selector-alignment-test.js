@@ -277,8 +277,8 @@ define([
 
             // Simulate publication selector triggering event
             $(document).trigger('publicationStatusChanged', {
-                status: 'test-status',
-                publicationId: 999
+                status: 'DRAFT',
+                publicationId: null
             });
 
             this.assert(

@@ -264,8 +264,8 @@ define([
             
             // Trigger event
             $(document).trigger('publicationStatusChanged', {
-                status: 'PUBLICATION',
-                publicationId: 9
+                status: 'DRAFT',
+                publicationId: null
             });
             
             setTimeout(function() {

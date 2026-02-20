@@ -200,6 +200,11 @@ define([
 
             // ✅ Publication selector events
             $(document).on('publicationStatusChanged', function (e, data) {
+                var validStatuses = ['DRAFT', 'PUBLISHED', 'PUBLICATION'];
+                if (!data || !data.status || validStatuses.indexOf(data.status) === -1) {
+                    console.warn('⚠️ publicationStatusChanged: unknown status "' + (data && data.status) + '" — ignoring');
+                    return;
+                }
                 console.log('🔄 Publication status changed to:', data.status);
                 
                 // ✅ ALWAYS update field editability (regardless of config reload)
