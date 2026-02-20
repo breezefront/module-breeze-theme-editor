@@ -288,7 +288,7 @@ define([
             );
 
             this.assert(
-                eventData && eventData.status === 'test-status',
+                eventData && eventData.status === 'DRAFT' && eventData.publicationId === null,
                 'Event data should be correctly formatted as object. ' +
                 'Data: ' + JSON.stringify(eventData)
             );
