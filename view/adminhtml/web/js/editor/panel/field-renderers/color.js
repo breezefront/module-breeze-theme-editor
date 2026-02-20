@@ -1,7 +1,8 @@
 define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/base',
-    'text!Swissup_BreezeThemeEditor/template/editor/panel/fields/color.html'
-], function(BaseFieldRenderer, template) {
+    'text!Swissup_BreezeThemeEditor/template/editor/panel/fields/color.html',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/color-utils'
+], function(BaseFieldRenderer, template, ColorUtils) {
     'use strict';
 
     var ColorRenderer = Object.create(BaseFieldRenderer);
@@ -20,11 +21,21 @@ define([
             data.hexValue = data.value;
             console.log('🎨 Resolved palette reference:', value, '→', data.value);
         } else {
-            // Regular HEX color or fallback
+            // Regular HEX color or RGB fallback
             if (typeof value !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(value)) {
-                if (typeof data.default === 'string' && /^#[0-9A-Fa-f]{6}$/.test(data.default)) {
+                // Value is not HEX - check if it's RGB
+                if (ColorUtils.isRgbColor(value)) {
+                    data.value = ColorUtils.rgbToHex(value);
+                    console.log('🎨 Converted RGB to HEX:', value, '→', data.value);
+                } else if (typeof data.default === 'string' && /^#[0-9A-Fa-f]{6}$/.test(data.default)) {
+                    // Try default as HEX
                     data.value = data.default;
+                } else if (ColorUtils.isRgbColor(data.default)) {
+                    // Try default as RGB
+                    data.value = ColorUtils.rgbToHex(data.default);
+                    console.log('🎨 Using default RGB as HEX:', data.default, '→', data.value);
                 } else {
+                    // Ultimate fallback
                     data.value = '#000000';
                 }
             }
