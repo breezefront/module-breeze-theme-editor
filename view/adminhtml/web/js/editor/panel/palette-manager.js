@@ -1,9 +1,10 @@
 define([
+    'jquery',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/color-utils',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-palette-value',
     'Swissup_BreezeThemeEditor/js/editor/storage-helper',
     'Swissup_BreezeThemeEditor/js/lib/toastify'
-], function (ColorUtils, savePaletteValueMutation, StorageHelper, Toastify) {
+], function ($, ColorUtils, savePaletteValueMutation, StorageHelper, Toastify) {
     'use strict';
 
     /**
@@ -336,9 +337,7 @@ define([
             console.log('↩️ Reverted', revertedCount, 'palette changes');
             
             // Trigger event for UI update
-            if (typeof $ !== 'undefined') {
-                $(document).trigger('paletteChangesReverted', { count: revertedCount });
-            }
+            $(document).trigger('paletteChangesReverted', { count: revertedCount });
             
             return revertedCount;
         },
