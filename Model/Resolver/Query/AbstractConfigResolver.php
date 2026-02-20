@@ -7,6 +7,7 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
 /**
@@ -21,7 +22,8 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
         protected SerializerInterface $serializer,
         protected ConfigProvider $configProvider,
         protected PaletteProvider $paletteProvider,
-        protected ColorFormatResolver $colorFormatResolver
+        protected ColorFormatResolver $colorFormatResolver,
+        protected ColorFormatter $colorFormatter
     ) {}
 
     /**
@@ -42,12 +44,23 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
                 $currentValue = $valuesMap[$key] ?? null;
                 $defaultValue = $defaults[$key] ?? ($setting['default'] ?? null);
 
+                // Resolve format early for color fields (needed for value conversion)
+                $colorFormat = null;
+                if (strtolower($setting['type']) === 'color') {
+                    $colorFormat = $this->colorFormatResolver->resolve(
+                        $setting['format'] ?? null,
+                        $setting['default'] ?? null
+                    );
+                }
+
                 $field = [
                     'code' => $setting['id'],
                     'label' => $setting['label'],
                     'type' => strtoupper($setting['type']),
                     'description' => $setting['description'] ?? null,
-                    'value' => $currentValue,
+                    'value' => $colorFormat !== null 
+                        ? $this->colorFormatter->formatColorValue($currentValue, $colorFormat)
+                        : $currentValue,
                     'default' => $this->encodeValue($defaultValue),
                     'isModified' => $currentValue !== null && $currentValue !== $defaultValue,
                     'cssVar' => $setting['css_var'] ?? null,
@@ -60,16 +73,13 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
                 ];
 
                 // Add color-specific fields only when relevant (avoid null)
-                if (strtolower($setting['type']) === 'color') {
+                if ($colorFormat !== null) {
                     if (isset($setting['palette'])) {
                         $field['palette'] = $setting['palette'];
                     }
                     
-                    // Resolve format using centralized logic
-                    $field['format'] = $this->colorFormatResolver->resolve(
-                        $setting['format'] ?? null,
-                        $setting['default'] ?? null
-                    );
+                    // Use the already-resolved format
+                    $field['format'] = $colorFormat;
                 }
 
                 $fields[] = $field;

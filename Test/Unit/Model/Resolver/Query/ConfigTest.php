@@ -11,6 +11,7 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
@@ -32,6 +33,7 @@ class ConfigTest extends TestCase
     private ConfigProvider $configProviderMock;
     private PaletteProvider $paletteProviderMock;
     private ColorFormatResolver $colorFormatResolverMock;
+    private ColorFormatter $colorFormatterMock;
     private ValueInheritanceResolver $valueInheritanceResolverMock;
     private StatusProvider $statusProviderMock;
     private CompareProvider $compareProviderMock;
@@ -49,6 +51,7 @@ class ConfigTest extends TestCase
         $this->configProviderMock = $this->createMock(ConfigProvider::class);
         $this->paletteProviderMock = $this->createMock(PaletteProvider::class);
         $this->colorFormatResolverMock = $this->createMock(ColorFormatResolver::class);
+        $this->colorFormatterMock = $this->createMock(ColorFormatter::class);
         $this->valueInheritanceResolverMock = $this->createMock(ValueInheritanceResolver::class);
         $this->statusProviderMock = $this->createMock(StatusProvider::class);
         $this->compareProviderMock = $this->createMock(CompareProvider::class);
@@ -69,12 +72,18 @@ class ConfigTest extends TestCase
             return json_encode($value);
         });
         
+        // Setup default ColorFormatter behavior (passthrough for simplicity)
+        $this->colorFormatterMock->method('formatColorValue')->willReturnCallback(function($value, $format) {
+            return $value; // Passthrough in tests - actual conversion tested separately
+        });
+        
         // Instantiate Config resolver
         $this->config = new Config(
             $this->serializerMock,
             $this->configProviderMock,
             $this->paletteProviderMock,
             $this->colorFormatResolverMock,
+            $this->colorFormatterMock,
             $this->valueInheritanceResolverMock,
             $this->statusProviderMock,
             $this->compareProviderMock,
