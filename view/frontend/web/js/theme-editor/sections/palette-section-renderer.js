@@ -197,7 +197,11 @@ define([
             var self = this;
 
             // Toggle accordion
-            this.$header.on('click', function() {
+            this.$header.on('click', function(e) {
+                if ($(e.target).closest('.bte-palette-reset-btn').length) {
+                    return; // let the delegated reset handler on this.element deal with it
+                }
+
                 var isActive = self.$header.hasClass('active');
                 
                 if (isActive) {
