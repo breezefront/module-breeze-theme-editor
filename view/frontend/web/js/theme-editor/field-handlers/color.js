@@ -4,8 +4,9 @@ define([
     'Swissup_BreezeThemeEditor/js/theme-editor/field-handlers/base',
     'Swissup_BreezeThemeEditor/js/theme-editor/palette-manager',
     'Swissup_BreezeThemeEditor/js/theme-editor/field-renderers/color',
+    'Swissup_BreezeThemeEditor/js/theme-editor/color-utils',
     'text!Swissup_BreezeThemeEditor/template/theme-editor/partials/palette-grid.html'
-], function ($, _, BaseHandler, PaletteManager, ColorRenderer, paletteGridTemplate) {
+], function ($, _, BaseHandler, PaletteManager, ColorRenderer, ColorUtils, paletteGridTemplate) {
     'use strict';
 
     /**
@@ -609,14 +610,18 @@ define([
                 
                 console.log('↺ Color reset with palette ref:', value, '→', hexValue);
             } else {
-                // Regular HEX color
+                // Regular HEX or RGB color — normalize to HEX for display
                 hexValue = value;
-                
+                if (ColorUtils.isRgbColor(hexValue)) {
+                    hexValue = ColorUtils.rgbToHex(hexValue);
+                    console.log('↺ Color reset: converted RGB to HEX:', value, '→', hexValue);
+                }
+
                 // Update input and remove palette ref from BOTH input and trigger
                 $input.val(hexValue);
                 $input.removeAttr('data-palette-ref');
                 $trigger.removeAttr('data-palette-ref');
-                
+
                 console.log('↺ Color reset with HEX:', hexValue);
             }
             
@@ -625,8 +630,8 @@ define([
                 $(this).css('background-color', hexValue);
             });
             
-            // Update Pickr instance if exists
-            var popupInstance = $field.data('popup-instance');
+            // Update Pickr instance if popup is open (popup-instance is stored on $trigger)
+            var popupInstance = $trigger.data('popup-instance');
             if (popupInstance && popupInstance.pickr) {
                 popupInstance.pickr.setColor(hexValue, true); // silent: true
                 console.log('↺ Pickr updated:', hexValue);
