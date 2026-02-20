@@ -49,54 +49,40 @@ class CssGenerator
 
         $css = ":root {\n";
 
-        // ========================================
-        // INJECT USER-MODIFIED VALUES (including palette from DB)
-        // ========================================
-        // Note: Default palette colors are already available in Breeze base styles.
-        // Only custom/modified palette values from DB (section "_palette") are output here.
         if (empty($values)) {
             $css .= "}\n";
             return $css;
         }
 
-        // CRITICAL: Process _palette changes FIRST (before other fields)
-        // This ensures palette variables are defined before they're referenced via var()
+        // CRITICAL: Process _palette entries FIRST so palette variables are defined
+        // before they are referenced via var() in field values below.
+        // Both HEX and RGB variants are always emitted: the Breeze base CSS defines
+        // the HEX variable but omits the -rgb variant, so we must emit it here even
+        // when the value equals the palette default.
         $hasPaletteChanges = false;
-        
-        // Extract palette defaults from config (ONCE before loop)
-        $paletteDefaults = $this->extractPaletteDefaults($config);
-        
+
         foreach ($values as $value) {
-            $sectionCode = $value['section_code'];
-            
-            // Skip non-palette entries in this pass
-            if ($sectionCode !== '_palette') {
+            if (($value['section_code'] ?? '') !== '_palette') {
                 continue;
             }
-            
-            $settingCode = $value['setting_code'];
-            $rawValue = $value['value'] ?? null;
 
+            $rawValue = $value['value'] ?? null;
             if ($rawValue === null || $rawValue === '') {
                 continue;
             }
 
-            $cssVar = $settingCode; // CSS var = setting code (e.g., --color-brand-primary)
-            
-            // Process palette color and generate CSS
-            $paletteCss = $this->processPaletteColor($cssVar, $rawValue, $paletteDefaults);
+            $paletteCss = $this->processPaletteColor($value['setting_code'], $rawValue);
             if ($paletteCss !== '') {
                 $css .= $paletteCss;
                 $hasPaletteChanges = true;
             }
         }
 
-        // Add blank line separator after palette colors (if any were added)
         if ($hasPaletteChanges) {
             $css .= "\n";
         }
 
-        // Now process all OTHER field values (which may reference palette variables)
+        // Now process all other field values (which may reference palette variables)
         $css .= $this->generateCssFromFields($values, $fieldMap);
 
         $css .= "}\n";
@@ -186,57 +172,43 @@ class CssGenerator
 
         $css = ":root {\n";
 
-        // ========================================
-        // INJECT USER-MODIFIED VALUES (including palette from DB)
-        // ========================================
-        // Note: Default palette colors are already available in Breeze base styles.
-        // Only custom/modified palette values from DB (section "_palette") are output here.
         if (empty($valuesMap)) {
             $css .= "}\n";
             return $css;
         }
 
-        // CRITICAL: Process _palette changes FIRST (before other fields)
-        // This ensures palette variables are defined before they're referenced via var()
+        // CRITICAL: Process _palette entries FIRST so palette variables are defined
+        // before they are referenced via var() in field values below.
         $hasPaletteChanges = false;
-
-        // Extract palette defaults from config (ONCE before loop)
-        $paletteDefaults = $this->extractPaletteDefaults($config);
 
         foreach ($valuesMap as $key => $rawValue) {
             if ($rawValue === null || $rawValue === '') {
                 continue;
             }
 
-            // Parse section.setting format
             $parts = explode('.', $key, 2);
             if (count($parts) !== 2) {
                 continue;
             }
-            
+
             [$sectionCode, $settingCode] = $parts;
 
-            // Skip non-palette entries in this pass
             if ($sectionCode !== '_palette') {
                 continue;
             }
 
-            $cssVar = $settingCode; // e.g., --color-brand-primary
-            
-            // Process palette color and generate CSS
-            $paletteCss = $this->processPaletteColor($cssVar, $rawValue, $paletteDefaults);
+            $paletteCss = $this->processPaletteColor($settingCode, $rawValue);
             if ($paletteCss !== '') {
                 $css .= $paletteCss;
                 $hasPaletteChanges = true;
             }
         }
 
-        // Add blank line separator after palette colors (if any were added)
         if ($hasPaletteChanges) {
             $css .= "\n";
         }
 
-        // Now process all OTHER field values (which may reference palette variables)
+        // Now process all other field values (which may reference palette variables)
         // Convert valuesMap to same format as $values array
         $values = [];
         foreach ($valuesMap as $key => $value) {
@@ -249,7 +221,7 @@ class CssGenerator
                 ];
             }
         }
-        
+
         $css .= $this->generateCssFromFields($values, $fieldMap);
 
         $css .= "}\n";
@@ -549,64 +521,25 @@ class CssGenerator
     }
 
     /**
-     * Extract palette default values from config
-     * Builds a map of css_var => default_hex for comparison
-     * 
-     * @param array $config Configuration array with palettes
-     * @return array Map of css_var => default_hex (e.g., ['--color-brand-primary' => '#1979c3'])
-     */
-    private function extractPaletteDefaults(array $config): array
-    {
-        $defaults = [];
-        $palettes = $config['palettes'] ?? [];
-        
-        foreach ($palettes as $palette) {
-            $groups = $palette['groups'] ?? [];
-            foreach ($groups as $group) {
-                $colors = $group['colors'] ?? [];
-                foreach ($colors as $color) {
-                    $cssVar = $color['css_var'] ?? null;
-                    $default = $color['default'] ?? null;
-                    
-                    if ($cssVar && $default) {
-                        $defaults[$cssVar] = $default;
-                    }
-                }
-            }
-        }
-        
-        return $defaults;
-    }
-
-    /**
      * Process palette color value and generate CSS
-     * Handles conversion, default comparison, and CSS output for a single palette color
-     * 
+     * Handles conversion and CSS output for a single palette color.
+     *
+     * Always emits both HEX and RGB variants, even when the value equals the
+     * palette default. The Breeze base CSS defines the HEX variable but does
+     * NOT define the -rgb variant, so omitting it would leave any field that
+     * references var(--color-brand-*-rgb) with an undefined (empty) value.
+     *
      * @param string $cssVar CSS variable name (e.g., --color-brand-primary)
      * @param string $rawValue Raw color value from database
-     * @param array $paletteDefaults Map of css_var => default_hex values
-     * @return string Generated CSS for this palette color (both HEX and RGB formats), or empty string if skipped
+     * @return string Generated CSS for this palette color (both HEX and RGB formats)
      */
-    private function processPaletteColor(string $cssVar, string $rawValue, array $paletteDefaults): string
+    private function processPaletteColor(string $cssVar, string $rawValue): string
     {
         // Convert legacy RGB to HEX if needed
         if (preg_match('/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/', $rawValue)) {
             $rawValue = ColorConverter::rgbToHex($rawValue);
         }
-        
-        // Check if value differs from default
-        $default = $paletteDefaults[$cssVar] ?? null;
-        if ($default !== null) {
-            // Normalize both values to lowercase HEX for comparison
-            $normalizedValue = strtolower(trim($rawValue));
-            $normalizedDefault = strtolower(trim($default));
-            
-            // Skip if value equals default (use Breeze base style)
-            if ($normalizedValue === $normalizedDefault) {
-                return '';
-            }
-        }
-        
+
         // Generate BOTH HEX and RGB formats for palette colors
         $hexValue = $rawValue;  // Already in HEX format
         $rgbValue = ColorConverter::hexToRgb($hexValue);  // Convert to RGB

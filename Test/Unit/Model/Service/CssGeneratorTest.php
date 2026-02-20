@@ -706,5 +706,91 @@ class CssGeneratorTest extends TestCase
             'Should NOT output HEX when format is RGB'
         );
     }
+
+    /**
+     * Test 14: Palette color at default value still emits both HEX and RGB variants
+     *
+     * Bug: When a palette color stored in the DB equals the palette default,
+     * processPaletteColor() used to return '' (skipping it), assuming Breeze base
+     * CSS defines the variable. But Breeze base CSS does NOT define the -rgb variant,
+     * so any field referencing var(--color-brand-amber-dark-rgb) would get an
+     * undefined value → resolved as empty → broken colors.
+     *
+     * Fix: Always emit both variants, regardless of default match.
+     */
+    public function testPaletteAtDefaultValueStillEmitsBothHexAndRgbVariants(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        // Palette value equals the default (#a16207)
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-amber-dark',
+                'value' => '#a16207'  // Same as default
+            ]
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [],
+            'palettes' => [
+                [
+                    'groups' => [
+                        [
+                            'colors' => [
+                                [
+                                    'css_var' => '--color-brand-amber-dark',
+                                    'default' => '#a16207'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'DRAFT');
+
+        // Both variants must be present even though the value equals the default
+        $this->assertStringContainsString(
+            '--color-brand-amber-dark: #a16207;',
+            $css,
+            'HEX palette variable must be emitted even when value equals default'
+        );
+        $this->assertStringContainsString(
+            '--color-brand-amber-dark-rgb: 161, 98, 7;',
+            $css,
+            'RGB palette variable must be emitted even when value equals default'
+        );
+    }
+
+    /**
+     * Test 15: generateFromValuesMap emits palette RGB even when value equals default
+     *
+     * Same as Test 14 but exercises the generateFromValuesMap() code path (used
+     * during publication saves).
+     */
+    public function testGenerateFromValuesMapEmitsPaletteRgbAtDefault(): void
+    {
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [],
+            'palettes' => []
+        ]);
+
+        $css = $this->cssGenerator->generateFromValuesMap(1, [
+            '_palette.--color-brand-amber-dark' => '#a16207'
+        ]);
+
+        $this->assertStringContainsString(
+            '--color-brand-amber-dark: #a16207;',
+            $css,
+            'generateFromValuesMap: HEX palette variable must always be emitted'
+        );
+        $this->assertStringContainsString(
+            '--color-brand-amber-dark-rgb: 161, 98, 7;',
+            $css,
+            'generateFromValuesMap: RGB palette variable must always be emitted'
+        );
+    }
 }
 
