@@ -1,19 +1,19 @@
-# Phase 4 - Test Migration & Validation
+# Phase 4 - Test Audit & Validation
 
 **Статус:** 🟡 Готово до виконання  
-**Час:** 8-10 годин  
+**Час:** 5-6 годин  
 **Пріоритет:** ВИСОКИЙ ⭐⭐⭐
 
 ---
 
 ## 🎯 Цілі Фази
 
-Мігрувати JavaScript тести на PHP Unit тести, валідувати функціональність та створити test audit report.
+Провести аудит існуючих тестів, валідувати функціональність та створити test audit report.
 
 ### Чому це важливо?
 
-1. **Консолідація тестів:** Зараз маємо 36 JS тестів + 21 PHP тестів = дублювання coverage
-2. **Backend-first testing:** PHP тести краще для GraphQL/Server-side логіки
+1. **Валідація покриття:** PHP тести (23 файли / 232 методи) вже є — треба переконатись що вони проходять
+2. **Frontend JS:** 23 frontend JS spec-файли ще не запускались — невідомий стан
 3. **Виявлення broken functionality:** Тести покажуть що працює, а що ні
 4. **Quality assurance:** Before final release треба знати стан проекту
 
@@ -21,143 +21,155 @@
 
 ## 📊 Поточний Стан Тестів
 
-### JavaScript Tests (36 total)
+### JavaScript Tests (35 spec-файлів, ~282 тест-кейси)
 
-**Adminhtml (11 tests):**
-- `view/adminhtml/web/js/test/`
-  - config-test.js
-  - device-switcher-test.js
-  - error-handler-test.js
-  - fullscreen-manager-test.js
-  - loading-manager-test.js
-  - permissions-test.js
-  - preview-manager-test.js
-  - publication-selector-test.js
-  - status-indicator-test.js
-  - toolbar-toggle-test.js
-  - toolbar-test.js
+**Adminhtml (12 spec-файлів) — ✅ 95/95 passed:**
+- `view/adminhtml/web/js/test/tests/`
+  - color-utils-test.js
+  - critical-fixes-test.js
+  - selector-alignment-test.js
+  - panel-close-integration-test.js
+  - panel-integration-test.js
+  - panel-events-test.js
+  - navigation-widget-test.js
+  - panel-positioning-test.js
+  - publication-events-alignment-test.js
+  - page-selector-sync-test.js
+  - url-navigation-persistence-test.js
+  - admin-auth-manager-test.js
 
-**Frontend (25 tests):**
-- `view/frontend/web/js/test/`
+**Frontend (23 spec-файли) — статус невідомий:**
+- `view/frontend/web/js/test/tests/`
+  - color-utils-test.js
+  - color-utils-rgb-wrapper-test.js
+  - badge-renderer-test.js
+  - color-renderer-test.js
+  - color-popup-test.js
+  - palette-manager-test.js
+  - palette-section-renderer-test.js
+  - palette-integration-test.js
+  - palette-format-mapping-test.js
+  - palette-graphql-test.js
+  - color-field-palette-ref-test.js
+  - cascade-behavior-test.js
+  - field-badges-reset-test.js
+  - palette-preset-disabled-test.js
   - css-manager-test.js
-  - event-bus-test.js
-  - highlighter-test.js
-  - panel-manager-test.js
-  - settings-editor/ (тести для settings editor компонентів)
-  - інші component tests
+  - mode-switching-test.js
+  - live-preview-test.js
+  - publication-mode-test.js
+  - edit-restrictions-test.js
+  - media-attributes-test.js
+  - panel-integration-test.js
+  - auth-manager-test.js
+  - error-handling-test.js
 
-### PHP Tests (21 existing)
+### PHP Tests (23 файли, 232 методи, 2 skipped)
 
-- `Test/Unit/` - 21 PHP Unit тестів
-  - GraphQL resolvers tests
-  - Model tests
-  - Plugin tests
-  - Utility tests
+```
+Test/Unit/
+├── Model/
+│   ├── Utility/
+│   │   ├── ColorConverterTest.php
+│   │   ├── ColorFormatterTest.php
+│   │   └── ColorFormatResolverTest.php
+│   ├── Config/
+│   │   └── PaletteResolverTest.php
+│   ├── Provider/
+│   │   ├── StatusProviderTest.php
+│   │   ├── CompareProviderTest.php
+│   │   └── ConfigProviderTest.php          ← 2 skipped (file I/O)
+│   ├── Service/
+│   │   ├── AdminTokenGeneratorTest.php
+│   │   ├── CssGeneratorTest.php
+│   │   ├── ValueServiceTest.php
+│   │   ├── ValueInheritanceResolverTest.php
+│   │   ├── PresetServiceTest.php
+│   │   ├── PublishServiceTest.php
+│   │   └── ImportExportServiceTest.php
+│   └── Resolver/
+│       ├── Query/
+│       │   ├── ConfigTest.php
+│       │   ├── AbstractConfigResolverColorConversionTest.php
+│       │   ├── ValuesTest.php
+│       │   └── GetCssTest.php
+│       └── Mutation/
+│           ├── SaveValueTest.php
+│           ├── SavePaletteValueTest.php
+│           ├── PublishTest.php
+│           ├── RollbackTest.php
+│           └── ExportSettingsTest.php
+```
+
+### Класифікація JS тестів (результат аналізу)
+
+- **Category C — Keep JS (30/35):** UI/DOM/palette/color/panel тести — залишити як є
+- **Category B — Дублює PHP (5/35):** backend-логіка вже покрита PHP тестами, JS залишити
+
+| JS файл (Category B) | PHP аналог (вже існує) |
+|--|--|
+| `admin-auth-manager-test.js` | `Service/AdminTokenGeneratorTest.php` |
+| `palette-graphql-test.js` | `Query/ValuesTest.php`, `Mutation/SavePaletteValueTest.php` |
+| `auth-manager-test.js` | `Service/AdminTokenGeneratorTest.php` |
+| `error-handling-test.js` | `Service/ValueServiceTest.php` (часткове) |
+| `publication-mode-test.js` | `Mutation/PublishTest.php`, `RollbackTest.php` |
+
+> **Висновок:** Міграція JS→PHP не потрібна. PHP покриття вже є.
 
 ---
 
 ## 📋 План Виконання
 
-### Step 1: Аналіз і Категоризація (1-1.5h)
+### Step 1: Документування Аналізу (0.5h)
 
 **Завдання:**
-1. Прочитати всі 36 JS тестів
-2. Категоризувати по типу:
-   - **GraphQL/Backend** - потрібна міграція на PHP
-   - **UI/Frontend only** - залишити як JS (або видалити якщо obsolete)
-   - **Duplicate coverage** - вже є PHP тести
-3. Створити mapping table: JS test → PHP test location
+1. Створити `test-analysis.md` з фінальною класифікацією (A/B/C) всіх 35 JS файлів
+2. Створити `migration-map.md` — mapping JS→PHP для Category B файлів
 
 **Deliverable:**
-- `test-analysis.md` - категоризація всіх 36 тестів
-- `migration-map.md` - plan які тести куди мігрувати
+- `docs/migration/phases/phase-4/test-analysis.md`
+- `docs/migration/phases/phase-4/migration-map.md`
 
 ---
 
-### Step 2: Міграція GraphQL/Backend Тестів (3-4h)
-
-**Пріоритетні тести для міграції:**
-
-#### 2.1 Settings GraphQL (1h)
-- Settings editor tests → PHP
-- Field handlers tests → PHP
-- Validation tests → PHP
-
-**Файли:**
-- Create: `Test/Unit/Model/Resolver/Settings/*Test.php`
-- Update: Existing settings resolver tests
-
-#### 2.2 Publication Selector (0.5h)
-- Publication queries tests → PHP
-- Publication mutations tests → PHP
-
-**Файли:**
-- Create: `Test/Unit/Model/Resolver/Publication/*Test.php`
-
-#### 2.3 Toolbar Components (1h)
-- Status indicator (GraphQL parts) → PHP
-- Permissions system → PHP
-- Config loading → PHP
-
-**Файли:**
-- Create: `Test/Unit/Model/Resolver/Editor/*Test.php`
-
-#### 2.4 Preview & CSS Manager (0.5-1h)
-- CSS Manager backend logic → PHP
-- Preview manager server-side → PHP
-
-**Файли:**
-- Create: `Test/Unit/Model/CssManager/*Test.php`
-
-#### 2.5 ACL & Security (0.5h)
-- Verify existing PHP tests cover JS functionality
-- Add missing edge cases
-
----
-
-### Step 3: Мердж Дублікатів (1-1.5h)
+### Step 2: Cleanup Дублікатів (0.5h)
 
 **Завдання:**
-1. Знайти дублювання між JS і PHP тестами
-2. Консолідувати в один PHP тест
-3. Видалити obsolete JS тести
-4. Оновити test documentation
-
-**Очікується:**
-- Device switcher: JS test може бути obsolete (localStorage тепер)
-- Toolbar toggle: JS test може бути obsolete
-- Settings: Частково дублюється
+1. Перевірити 5 Category B JS файлів — чи є реальне дублювання з PHP
+2. Якщо JS тест дублює PHP повністю — позначити як obsolete (не видаляти без підтвердження)
+3. Оновити test-runner.js якщо потрібно
 
 ---
 
-### Step 4: Функціональна Валідація (2-2.5h)
+### Step 3: Функціональна Валідація (3-4h)
 
 **Завдання:**
 1. Запустити всі PHPUnit тести
-2. Ідентифікувати failing tests
-3. Категоризувати failures:
-   - **Test bugs** - тест неправильний
-   - **Real bugs** - код не працює
-   - **Missing features** - не реалізовано
-4. Виправити test bugs
-5. Задокументувати real bugs для Phase 5
+2. Запустити frontend JS тести (23 файли — ще не запускались)
+3. Ідентифікувати failing tests
+4. Категоризувати failures:
+   - **Test bugs** — тест неправильний
+   - **Real bugs** — код не працює
+   - **Missing features** — не реалізовано
+5. Виправити test bugs
+6. Задокументувати real bugs для Phase 5
 
 **Команди:**
 ```bash
-# Run all tests
+# Run all PHP tests
 vendor/bin/phpunit Test/Unit/
 
 # Run specific test suites
 vendor/bin/phpunit Test/Unit/Model/Resolver/
-vendor/bin/phpunit Test/Unit/Plugin/
+vendor/bin/phpunit Test/Unit/Model/Service/
 
-# With coverage report
+# With coverage report (optional)
 vendor/bin/phpunit --coverage-html coverage/
 ```
 
 ---
 
-### Step 5: Test Audit Report (1-1.5h)
+### Step 4: Test Audit Report (1h)
 
 **Створити:** `docs/migration/phases/phase-4/TEST-AUDIT-REPORT.md`
 
@@ -167,35 +179,28 @@ vendor/bin/phpunit --coverage-html coverage/
 # Test Audit Report - Phase 4
 
 ## Test Coverage Summary
-- Total PHP tests: XX
-- Total JS tests: XX (YY migrated, ZZ kept)
-- Coverage: XX%
+- PHP tests: 23 файли / 232 методи (2 skipped)
+- Admin JS: 12 spec-файлів / 95 passed ✅
+- Frontend JS: 23 spec-файлів / XX passed
 
 ## Functionality Status
 
 ### ✅ Working Features
-- Feature 1: Tests passing
-- Feature 2: Tests passing
 ...
 
 ### ⚠️ Broken Features
-- Feature X: Test fails because...
-- Feature Y: Missing implementation...
-
-### 📋 Untested Features
-- Feature Z: No tests exist
 ...
 
-## Migration Summary
-- Migrated tests: XX
-- Merged duplicates: XX
-- Removed obsolete: XX
-- Kept as JS: XX
+### 📋 Untested Features
+...
+
+## JS Test Classification
+- Category C (Keep JS): 30 файлів
+- Category B (Duplicates PHP): 5 файлів
+- Category A (Migrated): 0 файлів
 
 ## Recommendations for Phase 5
-1. Fix broken feature X
-2. Implement missing feature Y
-3. Add tests for feature Z
+...
 ```
 
 ---
@@ -205,27 +210,15 @@ vendor/bin/phpunit --coverage-html coverage/
 ### Нові файли:
 ```
 docs/migration/phases/phase-4/
-├── test-analysis.md              # Категоризація 36 тестів
-├── migration-map.md              # Mapping JS→PHP
-├── TEST-AUDIT-REPORT.md          # Фінальний звіт
-└── test-migration-plan.md        # Детальний план міграції
-
-Test/Unit/Model/
-├── Resolver/
-│   ├── Settings/*Test.php        # Settings tests (нові)
-│   ├── Publication/*Test.php     # Publication tests (нові)
-│   └── Editor/*Test.php          # Editor/Toolbar tests (нові)
-└── CssManager/*Test.php          # CSS Manager tests (нові)
+├── test-analysis.md              # Класифікація 35 JS тестів
+├── migration-map.md              # Mapping Category B JS→PHP
+└── TEST-AUDIT-REPORT.md          # Фінальний звіт
 ```
 
 ### Оновлені файли:
 ```
-Test/Unit/
-├── Model/Resolver/*              # Existing tests + new coverage
-└── Plugin/*                      # Existing tests + new coverage
-
-view/adminhtml/web/js/test/       # Cleanup obsolete tests
-view/frontend/web/js/test/        # Cleanup obsolete tests
+Test/Unit/                        # Виправлення test bugs (якщо знайдуться)
+view/frontend/web/js/test/        # Cleanup якщо потрібно
 ```
 
 ---
@@ -233,15 +226,14 @@ view/frontend/web/js/test/        # Cleanup obsolete tests
 ## 🎯 Deliverables
 
 ### Must Have ✅
-1. ✅ Test analysis document (категоризація)
-2. ✅ PHP tests для GraphQL functionality
-3. ✅ Test Audit Report
-4. ✅ Passing test suite (або documented failures)
+1. ✅ Test analysis document (класифікація 35 JS файлів)
+2. ✅ Frontend JS тести запущені та задокументовані
+3. ✅ PHPUnit suite запущений та задокументований
+4. ✅ TEST-AUDIT-REPORT.md
 
 ### Nice to Have 💡
 1. 💡 Code coverage report (HTML)
-2. 💡 Integration tests (якщо час залишиться)
-3. 💡 Test refactoring для кращої структури
+2. 💡 Виправлені test bugs (якщо знайдуться)
 
 ---
 
@@ -249,12 +241,11 @@ view/frontend/web/js/test/        # Cleanup obsolete tests
 
 Phase 4 вважається завершеним коли:
 
-- [ ] Всі 36 JS тестів проаналізовано та категоризовано
-- [ ] GraphQL/Backend тести мігровано на PHP
-- [ ] Дублікати змерджено або видалено
-- [ ] PHPUnit test suite запускається без помилок (або помилки задокументовано)
-- [ ] TEST-AUDIT-REPORT.md створено з висновками
-- [ ] Документація оновлена
+- [ ] Всі 35 JS тестів класифіковано (A/B/C)
+- [ ] Frontend JS тести запущені
+- [ ] PHPUnit test suite запущений
+- [ ] Failures задокументовані або виправлені
+- [ ] TEST-AUDIT-REPORT.md створено
 
 ---
 
@@ -262,31 +253,27 @@ Phase 4 вважається завершеним коли:
 
 | Завдання | Час | Опис |
 |----------|-----|------|
-| **Step 1** | 1-1.5h | Аналіз і категоризація тестів |
-| **Step 2** | 3-4h | Міграція GraphQL/Backend тестів |
-| **Step 3** | 1-1.5h | Мердж дублікатів |
-| **Step 4** | 2-2.5h | Функціональна валідація |
-| **Step 5** | 1-1.5h | Test Audit Report |
-| **TOTAL** | **8-10h** | |
+| **Step 1** | 0.5h | Документування аналізу |
+| **Step 2** | 0.5h | Cleanup дублікатів |
+| **Step 3** | 3-4h | Валідація PHP + frontend JS |
+| **Step 4** | 1h | Test Audit Report |
+| **TOTAL** | **5-6h** | ↓ з 8-10h (міграція не потрібна) |
 
 ---
 
 ## 🎯 Пріоритизація
 
 ### Високий пріоритет ⭐⭐⭐
-- Settings Editor tests (найбільший функціонал)
-- Publication/Status tests (критична функціональність)
-- ACL/Security tests (безпека)
+- PHP test suite (232 методи — невідомий стан)
+- Frontend JS тести (23 файли — невідомий стан)
 
 ### Середній пріоритет ⭐⭐
-- CSS Manager tests
-- Preview Manager tests
-- Toolbar components tests
+- Cleanup Category B JS дублікатів
+- Виправлення test bugs
 
 ### Низький пріоритет ⭐
-- UI-only tests (можна залишити як JS)
-- Animation/Transition tests
-- Helper/Utility tests (якщо вже є coverage)
+- Code coverage report
+- Рефакторинг тестів
 
 ---
 
@@ -296,48 +283,42 @@ Phase 4 вважається завершеним коли:
 - [Phase 3A](../phase-3a/) - GraphQL implementation
 - [Phase 3B](../phase-3b/) - Settings Editor
 - [Phase 5](../phase-5/) - Final Polish (next phase)
-- [Testing Overview](../../../testing/README.md) - Test guides
+- [test-migration-plan.md](./test-migration-plan.md) - Детальний roadmap
 
 ---
 
 ## 📝 Примітки
 
-### Поточна ситуація:
-- ✅ 36 JS тестів готово (infrastructure працює)
-- ✅ 21 PHP тестів існує
-- ⚠️ Невідомо скільки дублювання
-- ⚠️ Невідомо який % coverage
+### Поточна ситуація (станом на 20.02.2026):
+- ✅ Admin JS: 95/95 passed
+- ✅ PHP: 23 файли / 232 методи (написані)
+- ⚠️ PHP: статус запуску невідомий
+- ⚠️ Frontend JS: статус невідомий (не запускались)
+- ✅ Міграція JS→PHP: не потрібна (PHP покриття вже є)
 
-### Після Phase 4 ми матимемо:
-- ✅ Consolidated test suite (переважно PHP)
-- ✅ Clear picture: що працює, що ні
-- ✅ Documented broken features для Phase 5
-- ✅ Better test organization
+### Після Phase 4 матимемо:
+- ✅ Повний стан всіх трьох тест-сюїтів
+- ✅ Список broken features для Phase 5
+- ✅ TEST-AUDIT-REPORT.md
 
 ---
 
 ## 🚀 Як Почати
 
-### Підготовка:
 ```bash
-# 1. Check existing tests run
+# 1. Run PHP tests
 vendor/bin/phpunit Test/Unit/
 
-# 2. Review JS test files
-ls -la view/adminhtml/web/js/test/
-ls -la view/frontend/web/js/test/
+# 2. Open frontend test runner in browser
+# view/frontend/web/js/test/test-runner.js
 
-# 3. Review current PHP tests
-ls -la Test/Unit/
-
-# 4. Read this plan + create test-analysis.md
+# 3. Create test-analysis.md with JS classification
 ```
 
 ### Перший крок:
-Start with **Step 1: Аналіз і Категоризація**  
-📄 Create: `docs/migration/phases/phase-4/test-analysis.md`
+Start with **Step 3: Functional Validation** — запустити PHP тести і frontend JS тести.
 
 ---
 
 **Готово до виконання!** ✅  
-Повернутися до [Migration Overview](../../README.md) | [Dashboard](../../../DASHBOARD.md)
+Повернутися до [Migration Overview](../../README.md)
