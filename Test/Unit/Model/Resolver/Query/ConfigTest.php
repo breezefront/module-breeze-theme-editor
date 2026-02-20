@@ -413,4 +413,199 @@ class ConfigTest extends TestCase
         $this->assertFalse($result['metadata']['hasUnpublishedChanges']);
         $this->assertEquals(0, $result['metadata']['draftChangesCount']);
     }
+    
+    /**
+     * Test: Should convert HEX color values to RGB format when format="rgb"
+     * 
+     * SCENARIO: Color field with format="rgb" has HEX value in database
+     * EXPECTED: GraphQL returns converted RGB value "0, 0, 0"
+     * 
+     * NOTE: Uses REAL ColorFormatter (not mock) to test actual conversion
+     */
+    public function testConvertsColorValuesToRgbFormat(): void
+    {
+        // Create REAL ColorFormatter (not mock) for actual conversion testing
+        $realColorConverter = new \Swissup\BreezeThemeEditor\Model\Utility\ColorConverter();
+        $realColorFormatter = new \Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter($realColorConverter);
+        
+        // Recreate Config resolver with real ColorFormatter
+        $config = new Config(
+            $this->serializerMock,
+            $this->configProviderMock,
+            $this->paletteProviderMock,
+            $this->colorFormatResolverMock,
+            $realColorFormatter, // REAL formatter instead of mock
+            $this->valueInheritanceResolverMock,
+            $this->statusProviderMock,
+            $this->compareProviderMock,
+            $this->themeResolverMock,
+            $this->userResolverMock
+        );
+        
+        // Setup mocks
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        
+        // Mock config with color field (format="rgb")
+        $mockConfig = [
+            'version' => '1.0',
+            'sections' => [
+                [
+                    'id' => 'colors',
+                    'name' => 'Colors',
+                    'settings' => [
+                        [
+                            'id' => 'text_color',
+                            'label' => 'Text Color',
+                            'type' => 'color',
+                            'format' => 'rgb',
+                            'default' => '#111827'
+                        ]
+                    ]
+                ]
+            ],
+            'presets' => []
+        ];
+        
+        $this->configProviderMock->method('getConfigurationWithInheritance')
+            ->willReturn($mockConfig);
+        
+        // Mock value from DB (HEX format)
+        $mockValues = [
+            [
+                'section_code' => 'colors',
+                'setting_code' => 'text_color',
+                'value' => '#000000',
+                'updated_at' => '2026-02-20'
+            ]
+        ];
+        
+        $this->valueInheritanceResolverMock->method('resolveAllValues')
+            ->willReturn($mockValues);
+        
+        $this->configProviderMock->method('getAllDefaults')
+            ->willReturn(['colors.text_color' => '#111827']);
+        
+        // Mock ColorFormatResolver to return 'rgb'
+        $this->colorFormatResolverMock->method('resolve')
+            ->willReturn('rgb');
+        
+        $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
+        $this->compareProviderMock->method('compare')->willReturn([
+            'hasChanges' => true,
+            'changesCount' => 1
+        ]);
+        $this->paletteProviderMock->method('getPalettes')->willReturn([]);
+        
+        // Execute with REAL ColorFormatter
+        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $result = $config->resolve(
+            $this->fieldMock,
+            $this->contextMock,
+            $this->infoMock,
+            null,
+            $args
+        );
+        
+        // Assert: Value should be converted to RGB
+        $this->assertArrayHasKey('sections', $result);
+        $this->assertCount(1, $result['sections']);
+        $this->assertArrayHasKey('fields', $result['sections'][0]);
+        $this->assertCount(1, $result['sections'][0]['fields']);
+        
+        $textColorField = $result['sections'][0]['fields'][0];
+        $this->assertEquals('0, 0, 0', $textColorField['value'], 
+            'Color value should be converted from HEX (#000000) to RGB format (0, 0, 0)');
+        $this->assertEquals('rgb', $textColorField['format']);
+    }
+    
+    /**
+     * Test: Should NOT apply color conversion to non-color fields
+     * 
+     * SCENARIO: Text field with value "1400px"
+     * EXPECTED: Value returned unchanged (no color conversion)
+     */
+    public function testPreservesNonColorFields(): void
+    {
+        // Setup mocks
+        $this->userResolverMock->method('getCurrentUserId')
+            ->with($this->contextMock)
+            ->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        
+        // Mock config with text field
+        $mockConfig = [
+            'version' => '1.0',
+            'sections' => [
+                [
+                    'id' => 'layout',
+                    'name' => 'Layout',
+                    'settings' => [
+                        [
+                            'id' => 'container_width',
+                            'label' => 'Container Width',
+                            'type' => 'text',
+                            'default' => '1280px'
+                        ]
+                    ]
+                ]
+            ],
+            'presets' => []
+        ];
+        
+        $this->configProviderMock->method('getConfigurationWithInheritance')
+            ->willReturn($mockConfig);
+        
+        // Mock value from DB
+        $mockValues = [
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'container_width',
+                'value' => '1400px',
+                'updated_at' => '2026-02-20'
+            ]
+        ];
+        
+        $this->valueInheritanceResolverMock->method('resolveAllValues')
+            ->willReturn($mockValues);
+        
+        $this->configProviderMock->method('getAllDefaults')
+            ->willReturn(['layout.container_width' => '1280px']);
+        
+        // ColorFormatter should NOT be called for non-color fields
+        $this->colorFormatterMock->expects($this->never())
+            ->method('formatColorValue');
+        
+        $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
+        $this->compareProviderMock->method('compare')->willReturn([
+            'hasChanges' => true,
+            'changesCount' => 1
+        ]);
+        $this->paletteProviderMock->method('getPalettes')->willReturn([]);
+        
+        // Execute
+        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $result = $this->config->resolve(
+            $this->fieldMock,
+            $this->contextMock,
+            $this->infoMock,
+            null,
+            $args
+        );
+        
+        // Assert: Value should NOT be modified
+        $this->assertArrayHasKey('sections', $result);
+        $this->assertCount(1, $result['sections']);
+        $this->assertArrayHasKey('fields', $result['sections'][0]);
+        $this->assertCount(1, $result['sections'][0]['fields']);
+        
+        $containerWidthField = $result['sections'][0]['fields'][0];
+        $this->assertEquals('1400px', $containerWidthField['value'], 
+            'Non-color field values should not be modified');
+        $this->assertEquals('TEXT', $containerWidthField['type']);
+    }
 }
