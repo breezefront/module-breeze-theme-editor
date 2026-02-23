@@ -239,6 +239,24 @@ define([
                 $input.trigger('click');
             });
 
+            // Color input — real-time live preview while OS picker is open
+            this.$grid.on('input', '.bte-swatch-input', function(e) {
+                var $input = $(e.currentTarget);
+                var cssVar = $input.attr('data-css-var');
+                var hexValue = $input.val();
+
+                // Update swatch visual immediately
+                $input.closest('.bte-palette-swatch')
+                    .find('.bte-swatch-visual')
+                    .css('background-color', hexValue);
+
+                // Mark swatch as dirty
+                $input.closest('.bte-palette-swatch').addClass('bte-swatch-dirty');
+
+                // Notify live preview (badges/events handled by change handler below)
+                PaletteManager.updateColor(cssVar, hexValue);
+            });
+
             // Color input change
             this.$grid.on('change', '.bte-swatch-input', function(e) {
                 var $input = $(e.currentTarget);

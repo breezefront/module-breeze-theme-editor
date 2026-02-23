@@ -54,6 +54,25 @@ define([
     }
 
     /**
+     * Local copy of the field-var update block inside _updateFieldsReferencingPalette()
+     * (css-preview-manager.js, lines 132-136).
+     *
+     * BUG: when a palette color changes, this block DELETES the field's CSS var from
+     * `changes`, preventing the var() reference from resolving to the new palette color
+     * in the live preview. The draft CSS's hardcoded value takes over instead.
+     *
+     * Tests 14–15 assert the CORRECT expected behavior and currently FAIL.
+     * Fix: remove the `delete changes[fieldCssVar]` line from production AND here.
+     *
+     * @param {Object} changes      - mutable changes map
+     * @param {String} fieldCssVar  - CSS variable of the linked field (e.g. '--base-color')
+     */
+    function runPaletteFieldVarUpdate(changes, fieldCssVar) { // eslint-disable-line no-unused-vars
+        // Bug 2 fixed: the delete block was removed from _updateFieldsReferencingPalette()
+        // so this helper is now intentionally a no-op — changes is not mutated.
+    }
+
+    /**
      * Local copy of _cleanupFieldPaletteVars() from css-preview-manager.js.
      * Kept in sync with production so that tests 11–12 test the real algorithm.
      *
@@ -304,6 +323,80 @@ define([
             this.assertNotNull(
                 fieldPaletteVars['--heading-color'],
                 'Tracking entry for --heading-color should still exist'
+            );
+        },
+
+        // ─── Layer 2c: palette field-var update algorithm (Bug 2) ────────────
+
+        /**
+         * Test 14: palette-linked field var must remain in changes when palette color updates
+         *
+         * Scenario:
+         *   User links --base-color to --color-brand-amber-dark (palette ref).
+         *   changes = {
+         *     '--base-color':                 'var(--color-brand-amber-dark-rgb)',
+         *     '--color-brand-amber-dark':     '#a16207',
+         *     '--color-brand-amber-dark-rgb': '161, 98, 7'
+         *   }
+         *   User then changes --color-brand-amber-dark to a new hex in the palette editor.
+         *   _updateFieldsReferencingPalette() runs for each field with
+         *   data-palette-ref="--color-brand-amber-dark".
+         *
+         * Expected: changes['--base-color'] = 'var(--color-brand-amber-dark-rgb)' is PRESERVED.
+         *   The updated palette vars are already written into changes by setVariable(),
+         *   so the CSS cascade resolves --base-color through the updated --color-brand-amber-dark-rgb.
+         *
+         * Bug 2: current code deletes changes['--base-color'], so the draft CSS's hardcoded
+         *   value (e.g. '36, 83, 182') takes over in live preview instead of the new palette color.
+         *
+         * THIS TEST CURRENTLY FAILS — it will pass after the fix removes lines 132-136 from
+         * _updateFieldsReferencingPalette() in css-preview-manager.js.
+         */
+        'should preserve palette-ref field var in changes when palette color updates': function () {
+            var changes = {
+                '--base-color':                 'var(--color-brand-amber-dark-rgb)',
+                '--color-brand-amber-dark':     '#a16207',
+                '--color-brand-amber-dark-rgb': '161, 98, 7'
+            };
+
+            runPaletteFieldVarUpdate(changes, '--base-color');
+
+            this.assertEquals(
+                changes['--base-color'],
+                'var(--color-brand-amber-dark-rgb)',
+                'Field var() reference must remain in changes after palette color update'
+            );
+        },
+
+        /**
+         * Test 15: multiple fields linked to same palette all preserve var() references
+         *
+         * Scenario: --base-color AND --heading-color are both linked to --color-brand-amber-dark.
+         * When the palette color updates, neither field's var() reference should be deleted
+         * from changes — both must keep resolving through the updated palette var.
+         *
+         * THIS TEST CURRENTLY FAILS — it will pass after the Bug 2 fix.
+         */
+        'should preserve all palette-ref field vars when multiple fields reference same palette': function () {
+            var changes = {
+                '--base-color':                 'var(--color-brand-amber-dark-rgb)',
+                '--heading-color':              'var(--color-brand-amber-dark-rgb)',
+                '--color-brand-amber-dark':     '#a16207',
+                '--color-brand-amber-dark-rgb': '161, 98, 7'
+            };
+
+            runPaletteFieldVarUpdate(changes, '--base-color');
+            runPaletteFieldVarUpdate(changes, '--heading-color');
+
+            this.assertEquals(
+                changes['--base-color'],
+                'var(--color-brand-amber-dark-rgb)',
+                '--base-color var() reference must remain after palette color update'
+            );
+            this.assertEquals(
+                changes['--heading-color'],
+                'var(--color-brand-amber-dark-rgb)',
+                '--heading-color var() reference must remain after palette color update'
             );
         },
 

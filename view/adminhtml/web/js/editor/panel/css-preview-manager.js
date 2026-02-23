@@ -129,12 +129,6 @@ define([
                 // Get field's CSS variable
                 var fieldCssVar = $input.attr('data-css-var');
                 
-                // Remove field's CSS variable from live preview (allow cascade to work via var())
-                if (fieldCssVar && changes[fieldCssVar]) {
-                    delete changes[fieldCssVar];
-                    console.log('🗑️ Removed', fieldCssVar, 'from live preview (uses palette ref)');
-                }
-                
                 // Update input value
                 $input.val(hexValue);
                 
