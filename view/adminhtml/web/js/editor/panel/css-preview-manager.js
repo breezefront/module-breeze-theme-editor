@@ -2,9 +2,12 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/color-utils',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
-    'Swissup_BreezeThemeEditor/js/editor/panel/css-manager'
-], function ($, ColorUtils, IframeHelper, CssManager) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/css-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, ColorUtils, IframeHelper, CssManager, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/css-preview-manager');
 
     var changes = {};
     var $styleElement = null;
@@ -31,7 +34,7 @@ define([
         init: function() {
             iframeDocument = IframeHelper.getDocument();
             if (!iframeDocument) {
-                console.warn('⚠️ CSS Preview Manager: iframe not initialized');
+                log.warn('CSS Preview Manager: iframe not initialized');
                 return false;
             }
             this._createStyleElement();
@@ -42,7 +45,7 @@ define([
             // Subscribe to palette changes for cascade behavior
             this._subscribeToPaletteChanges();
             
-            console.log('✅ CSS Preview Manager initialized');
+            log.info('CSS Preview Manager initialized');
             return true;
         },
         
@@ -60,7 +63,7 @@ define([
          */
         updatePreview: function() {
             if (!this.isActive()) {
-                console.warn('⚠️ CSS Preview Manager not initialized');
+                log.warn('CSS Preview Manager not initialized');
                 return;
             }
             this._updateStyles();
@@ -85,8 +88,8 @@ define([
                 // Cache reference so setVariable() can inject palette vars synchronously
                 self._paletteManager = PaletteManager;
 
-                PaletteManager.subscribe(function(cssVar, hexValue) {
-                    console.log('🎨 Palette cascade:', cssVar, '→', hexValue);
+                    PaletteManager.subscribe(function(cssVar, hexValue) {
+                        log.debug('Palette cascade: ' + cssVar + ' -> ' + hexValue);
                     
             // Update BOTH HEX and RGB versions in live preview
             // This ensures fields with format:rgb can reference var(--palette-color-rgb)
@@ -100,7 +103,7 @@ define([
                     self._updateFieldsReferencingPalette(cssVar, hexValue);
                 });
                 
-                console.log('✅ Subscribed to palette changes');
+                log.info('Subscribed to palette changes');
             });
         },
 
@@ -119,7 +122,7 @@ define([
                 return;
             }
             
-            console.log('🔄 Updating', $inputs.length, 'field(s) referencing', cssVar);
+            log.debug('Updating ' + $inputs.length + ' field(s) referencing ' + cssVar);
             
             var self = this;
             $inputs.each(function() {
@@ -184,15 +187,15 @@ define([
             if ($publicationStyle && $publicationStyle.length) {
                 // Insert after publication (if viewing old version)
                 $publicationStyle.after($styleElement);
-                console.log('📝 Live preview <style> inserted after #bte-publication-css');
+                log.debug('Live preview <style> inserted after #bte-publication-css');
             } else if ($draftStyle && $draftStyle.length) {
                 // Insert after draft (normal case)
                 $draftStyle.after($styleElement);
-                console.log('📝 Live preview <style> inserted after #bte-theme-css-variables-draft');
+                log.debug('Live preview <style> inserted after #bte-theme-css-variables-draft');
             } else if ($publishedStyle && $publishedStyle.length) {
                 // Insert after published (fallback)
                 $publishedStyle.after($styleElement);
-                console.log('📝 Live preview <style> inserted after #bte-theme-css-variables');
+                log.debug('Live preview <style> inserted after #bte-theme-css-variables');
             } else {
                 // Last resort: append to body
                 var $body = $(iframeDocument).find('body');
@@ -202,9 +205,9 @@ define([
 
                 if ($body.length) {
                     $body.append($styleElement);
-                    console.warn('⚠️ Fallback: Live preview <style> appended to end of <body>');
+                    log.warn('Fallback: Live preview <style> appended to end of <body>');
                 } else {
-                    console.error('❌ Cannot find insertion point for live preview styles!');
+                    log.error('Cannot find insertion point for live preview styles!');
                     return;
                 }
             }
@@ -222,7 +225,7 @@ define([
         setVariable: function(varName, value, fieldType, fieldData) {
             // Check if editing is allowed
             if (!CssManager.isEditable()) {
-                console.warn('⚠️ Cannot edit in', CssManager.getCurrentStatus(), 'mode. Switch to DRAFT to edit.');
+                log.warn('Cannot edit in ' + CssManager.getCurrentStatus() + ' mode. Switch to DRAFT to edit.');
                 return false;
             }
 
@@ -263,7 +266,7 @@ define([
             }
 
             this._updateStyles();
-            console.log('🎨 CSS variable updated:', varName, '=', formattedValue, '(type:', fieldType, ')');
+            log.debug('CSS variable updated: ' + varName + ' = ' + formattedValue + ' (type: ' + fieldType + ')');
             return true;
         },
 
@@ -276,7 +279,7 @@ define([
          */
         removeVariable: function(varName) {
             if (!CssManager.isEditable()) {
-                console.warn('⚠️ Cannot edit in', CssManager.getCurrentStatus(), 'mode. Switch to DRAFT to edit.');
+                log.warn('Cannot edit in ' + CssManager.getCurrentStatus() + ' mode. Switch to DRAFT to edit.');
                 return false;
             }
 
@@ -284,7 +287,7 @@ define([
                 this._cleanupFieldPaletteVars(varName);
                 delete changes[varName];
                 this._updateStyles();
-                console.log('🗑️ CSS variable removed:', varName);
+                log.debug('CSS variable removed: ' + varName);
                 return true;
             }
             return false;
@@ -433,7 +436,7 @@ define([
          */
         _updateStyles: function() {
             if (!$styleElement) {
-                console.error('$styleElement is null!');
+                log.error('$styleElement is null!');
                 return;
             }
             var css = ':root {\n';
@@ -446,11 +449,7 @@ define([
             // Save to localStorage
             this._saveToLocalStorage();
             
-            if (console.groupCollapsed) {
-                console.groupCollapsed('📝 CSS Preview updated (' + Object.keys(changes).length + ' vars)');
-                console.log(css);
-                console.groupEnd();
-            }
+            log.debug('CSS Preview updated (' + Object.keys(changes).length + ' vars)');
         },
 
         /**
@@ -465,12 +464,12 @@ define([
                     changes = JSON.parse(stored);
                     if (Object.keys(changes).length > 0) {
                         this._updateStyles();
-                        console.log('📥 Loaded live preview from localStorage:', Object.keys(changes).length, 'variables');
+                        log.info('Loaded live preview from localStorage: ' + Object.keys(changes).length + ' variables');
                         // Note: syncFieldsFromChanges() is called by panel.js after fields are rendered
                     }
                 }
             } catch (e) {
-                console.warn('⚠️ Failed to load live preview from localStorage:', e);
+                log.warn('Failed to load live preview from localStorage: ' + e);
             }
         },
 
@@ -482,7 +481,7 @@ define([
             try {
                 localStorage.setItem('bte_live_preview_changes', JSON.stringify(changes));
             } catch (e) {
-                console.warn('⚠️ Failed to save live preview to localStorage:', e);
+                log.warn('Failed to save live preview to localStorage: ' + e);
             }
         },
 
@@ -507,7 +506,7 @@ define([
             }
             
             if (!$panelElement.length) {
-                console.warn('⚠️ Cannot sync fields: panel element not found');
+                log.warn('Cannot sync fields: panel element not found');
                 return;
             }
             
@@ -563,16 +562,16 @@ define([
                         FieldHandlers.updateBadges($panelElement, sectionCode, fieldCode);
                     });
                     
-                    console.log('🔄 Synced field value & badges:', cssVar, '→', displayValue, '(' + sectionCode + '.' + fieldCode + ')');
+                    log.debug('Synced field value & badges: ' + cssVar + ' -> ' + displayValue + ' (' + sectionCode + '.' + fieldCode + ')');
                 } else {
-                    console.log('🔄 Synced field value:', cssVar, '→', displayValue, '(no section/field code)');
+                    log.debug('Synced field value: ' + cssVar + ' -> ' + displayValue + ' (no section/field code)');
                 }
                 
                 syncedCount++;
             }.bind(this));
             
             if (syncedCount > 0) {
-                console.log('✅ Synced', syncedCount, 'field values from live preview');
+                log.info('Synced ' + syncedCount + ' field values from live preview');
             }
         },
 
@@ -597,10 +596,10 @@ define([
             try {
                 localStorage.removeItem('bte_live_preview_changes');
             } catch (e) {
-                console.warn('⚠️ Failed to clear live preview from localStorage:', e);
+                log.warn('Failed to clear live preview from localStorage: ' + e);
             }
             
-            console.log('↺ CSS Preview reset');
+            log.info('CSS Preview reset');
             return true;
         },
 
@@ -612,7 +611,7 @@ define([
                 this._cleanupFieldPaletteVars(varName);
                 delete changes[varName];
                 this._updateStyles();
-                console.log('↺ CSS variable reset:', varName);
+                log.info('CSS variable reset: ' + varName);
                 return true;
             }
             return false;
@@ -653,7 +652,7 @@ define([
             }
             changes = $.extend({}, settings);
             this._updateStyles();
-            console.log('📥 CSS Preview loaded', Object.keys(changes).length, 'variables');
+            log.info('CSS Preview loaded ' + Object.keys(changes).length + ' variables');
             return true;
         },
 
@@ -665,7 +664,7 @@ define([
             // Update iframe reference
             iframeDocument = IframeHelper.getDocument();
             if (!iframeDocument) {
-                console.warn('⚠️ Cannot recreate live preview: iframe not initialized');
+                log.warn('Cannot recreate live preview: iframe not initialized');
                 return false;
             }
 
@@ -675,7 +674,7 @@ define([
             // Re-apply existing changes
             if (Object.keys(changes).length > 0) {
                 this._updateStyles();
-                console.log('✅ Re-applied', Object.keys(changes).length, 'live preview changes after navigation');
+                log.info('Re-applied ' + Object.keys(changes).length + ' live preview changes after navigation');
             }
 
             return true;
@@ -691,7 +690,7 @@ define([
             }
             changes = {};
             iframeDocument = null;
-            console.log('🗑️ CSS Preview Manager destroyed');
+            log.info('CSS Preview Manager destroyed');
         }
     };
 });

@@ -5,9 +5,12 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/color',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/color-utils',
-    'text!Swissup_BreezeThemeEditor/template/editor/panel/partials/palette-grid.html'
-], function ($, _, BaseHandler, PaletteManager, ColorRenderer, ColorUtils, paletteGridTemplate) {
+    'text!Swissup_BreezeThemeEditor/template/editor/panel/partials/palette-grid.html',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, _, BaseHandler, PaletteManager, ColorRenderer, ColorUtils, paletteGridTemplate, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/field-handlers/color');
 
     /**
      * Color Field Handler with Pickr Integration
@@ -31,13 +34,7 @@ define([
                 var $textInput = $(e.currentTarget);
                 var value = $textInput.val();
                 
-                console.log('🎨 ColorHandler input event:', {
-                    value: value,
-                    isValid: self.isValidHex(value),
-                    section: $textInput.data('section'),
-                    field: $textInput.data('field'),
-                    hasCallback: typeof callback === 'function'
-                });
+                log.debug('ColorHandler input event: value=' + value + ' isValid=' + self.isValidHex(value) + ' section=' + $textInput.data('section') + ' field=' + $textInput.data('field') + ' hasCallback=' + (typeof callback === 'function'));
                 
                 if (self.isValidHex(value)) {
                     // Update trigger preview
@@ -49,7 +46,7 @@ define([
                     // reads the old palette-ref instead of the new typed value
                     $textInput.removeAttr('data-palette-ref');
                     $trigger.removeAttr('data-palette-ref');
-                    console.log('🔓 Palette reference removed (manual text input)');
+                    log.debug('Palette reference removed (manual text input)');
                     
                     // Update Pickr instance if popup is open
                     var popupInstance = $trigger.data('popup-instance');
@@ -64,11 +61,11 @@ define([
                     }
                     
                     // Save change
-                    console.log('🎨 Calling BaseHandler.handleChange with callback:', typeof callback);
+                    log.debug('Calling BaseHandler.handleChange with callback: ' + typeof callback);
                     self._handleColorChange($textInput, callback);
-                    console.log('🎨 BaseHandler.handleChange completed');
+                    log.debug('BaseHandler.handleChange completed');
                 } else {
-                    console.log('⏳ Waiting for valid HEX:', value);
+                    log.debug('Waiting for valid HEX: ' + value);
                 }
             });
             
@@ -101,7 +98,7 @@ define([
                 }
             });
             
-            console.log('✅ Color field handler initialized (Pickr)');
+            log.info('Color field handler initialized (Pickr)');
         },
 
         /**
@@ -145,7 +142,7 @@ define([
             // Get palette ID
             var paletteId = $trigger.data('palette');
             if (!paletteId) {
-                console.warn('⚠️ No palette configured for this field');
+                log.warn('No palette configured for this field');
                 return;
             }
             
@@ -156,7 +153,7 @@ define([
             // Get palette data with groups
             var paletteData = PaletteManager.getPaletteWithGroups(paletteId);
             if (!paletteData || !paletteData.groups) {
-                console.warn('⚠️ Palette not found:', paletteId);
+                log.warn('Palette not found: ' + paletteId);
                 return;
             }
             
@@ -186,20 +183,17 @@ define([
                 var currentColorValue = currentColor; // currentColor from line 104
                 var paletteRef = $textInput.attr('data-palette-ref') || $trigger.attr('data-palette-ref');
                 
-                console.log('🔍 Looking for matching swatch:', {
-                    currentColor: currentColorValue,
-                    paletteRef: paletteRef
-                });
+                log.debug('Looking for matching swatch: currentColor=' + currentColorValue + ' paletteRef=' + paletteRef);
                 
                 // Priority 1: Match by palette reference (exact source)
                 if (paletteRef) {
                     var $matchedSwatch = $popup.find('.bte-palette-swatch[data-css-var="' + paletteRef + '"]');
                     if ($matchedSwatch.length) {
                         $matchedSwatch.addClass('selected');
-                        console.log('✨ Pre-selected palette swatch by ref:', paletteRef);
+                        log.debug('Pre-selected palette swatch by ref: ' + paletteRef);
                         return; // Done
                     } else {
-                        console.warn('⚠️ Palette ref not found in current palette:', paletteRef);
+                        log.warn('Palette ref not found in current palette: ' + paletteRef);
                         // Fallback to hex matching below
                     }
                 }
@@ -213,7 +207,7 @@ define([
                         
                         if (swatchHex && swatchHex.toLowerCase() === currentColorLower) {
                             $swatch.addClass('selected');
-                            console.log('✨ Pre-selected palette swatch by hex:', swatchHex);
+                            log.debug('Pre-selected palette swatch by hex: ' + swatchHex);
                             return false; // Stop loop
                         }
                     });
@@ -221,15 +215,15 @@ define([
             })();
             
             // === CLOSE BUTTON HANDLER ===
-            $closeBtn.on('click', function() {
-                console.log('🔴 Close button clicked');
-                self._closeAllPopups();
-            });
+                $closeBtn.on('click', function() {
+                    log.debug('Close button clicked');
+                    self._closeAllPopups();
+                });
             
             // === LAZY LOAD PICKR ===
             require(['pickr'], function(Pickr) {
                 if (!Pickr) {
-                    console.error('❌ Pickr failed to load');
+                    log.error('Pickr failed to load');
                     self._closeAllPopups();
                     return;
                 }
@@ -304,7 +298,7 @@ define([
                 // Check if this is a palette cascade update (from PaletteManager)
                 var isPaletteUpdate = $textInput.data('is-palette-update');
                 if (isPaletteUpdate) {
-                    console.log('✅ Palette cascade - preserving reference (change)');
+                    log.debug('Palette cascade - preserving reference (change)');
                     return; // Don't remove palette-ref, don't trigger save
                 }
                 
@@ -319,9 +313,9 @@ define([
                     // 🆕 Remove selected class from all swatches
                     $popup.find('.bte-palette-swatch').removeClass('selected');
                     
-                    console.log('🔓 Palette reference removed (manual change)');
+                    log.debug('Palette reference removed (manual change)');
                 } else {
-                    console.log('✅ Palette reference preserved (palette selection)');
+                    log.debug('Palette reference preserved (palette selection)');
                 }
                 
                 // Trigger change event
@@ -339,7 +333,7 @@ define([
                 // Check if this is a palette cascade update (from PaletteManager)
                 var isPaletteUpdate = $textInput.data('is-palette-update');
                 if (isPaletteUpdate) {
-                    console.log('✅ Palette cascade - preserving reference (save)');
+                    log.debug('Palette cascade - preserving reference (save)');
                     // Close popup after save
                     self._closeAllPopups();
                     return; // Don't remove palette-ref, don't trigger save
@@ -360,9 +354,9 @@ define([
                     // 🆕 Remove selected class from all swatches
                     $popup.find('.bte-palette-swatch').removeClass('selected');
                     
-                    console.log('🔓 Palette reference removed (manual save)');
+                    log.debug('Palette reference removed (manual save)');
                 } else {
-                    console.log('✅ Palette reference preserved (palette selection on save)');
+                    log.debug('Palette reference preserved (palette selection on save)');
                 }
                 
                 self._handleColorChange($textInput, callback);
@@ -391,7 +385,7 @@ define([
                 var hex = $swatch.data('hex');
                 var cssVar = $swatch.data('css-var');
                 
-                console.log('🎨 Palette swatch clicked:', cssVar, '→', hex);
+                log.debug('Palette swatch clicked: ' + cssVar + ' -> ' + hex);
                 
                 // Update text input and trigger preview FIRST (before Pickr)
                 $textInput.val(hex);
@@ -400,7 +394,7 @@ define([
                 // 🆕 Store palette reference for future highlighting
                 $textInput.attr('data-palette-ref', cssVar);
                 $trigger.attr('data-palette-ref', cssVar);
-                console.log('🔗 Palette reference saved:', cssVar, '→', hex);
+                log.debug('Palette reference saved: ' + cssVar + ' -> ' + hex);
                 
                 // Set flag to prevent removal in pickr.on('change') and pickr.on('save')
                 $textInput.data('is-palette-selection', true);
@@ -410,12 +404,12 @@ define([
                 try {
                     if (pickr && pickr._root && pickr._root.interaction && pickr.setColor) {
                         pickr.setColor(hex, true); // silent=true (no events)
-                        console.log('✅ Pickr color updated (silent)');
+                        log.debug('Pickr color updated (silent)');
                     } else {
-                        console.warn('⚠️ Pickr instance not ready, skipping Pickr update');
+                        log.warn('Pickr instance not ready, skipping Pickr update');
                     }
                 } catch (err) {
-                    console.error('❌ Error setting Pickr color:', err);
+                    log.error('Error setting Pickr color: ' + err);
                 }
                 
                 // Highlight selected swatch
@@ -423,12 +417,7 @@ define([
                 $swatch.addClass('selected');
                 
                 // Debug logging for color field save
-                console.log('💾 Color field save:', {
-                    hex: hex,
-                    paletteRef: cssVar,
-                    willSaveAs: $textInput.attr('data-palette-ref') || hex,
-                    hasPaletteRef: !!$textInput.attr('data-palette-ref')
-                });
+                log.debug('Color field save: hex=' + hex + ' paletteRef=' + cssVar + ' willSaveAs=' + ($textInput.attr('data-palette-ref') || hex) + ' hasPaletteRef=' + !!$textInput.attr('data-palette-ref'));
                 
                 // Trigger change event to save
                 self._handleColorChange($textInput, callback);
@@ -438,13 +427,13 @@ define([
                 setTimeout(function() {
                     $textInput.removeData('is-palette-selection');
                     $trigger.removeData('is-palette-selection');
-                    console.log('🧹 Palette selection flag cleared');
+                    log.debug('Palette selection flag cleared');
                 }, 50);
                 
                 // Popup stays open (as per your preference)
             });
             
-            console.log('🎨 Color popup opened with Pickr');
+            log.info('Color popup opened with Pickr');
             
             }); // End of require(['pickr'])
         },
@@ -534,11 +523,11 @@ define([
             
             // Attach click listener to iframe document
             $(iframeDoc).off('click.bte-color-popup').on('click.bte-color-popup', function() {
-                console.log('🖱️ Click detected inside iframe - closing popup');
+                log.debug('Click detected inside iframe - closing popup');
                 self._closeAllPopups();
             });
             
-            console.log('✅ Iframe click listener attached');
+            log.debug('Iframe click listener attached');
         },
 
         /**
@@ -575,7 +564,7 @@ define([
             }
             
             if (!$field.length) {
-                console.warn('⚠️ Color field element not found');
+                log.warn('Color field element not found');
                 return;
             }
             
@@ -588,33 +577,33 @@ define([
             var isPaletteRef = typeof value === 'string' && value.startsWith('--color-');
             var hexValue;
             
-            console.log('🐛 DEBUG Reset: value =', value, 'isPaletteRef =', isPaletteRef);
+            log.debug('Reset: value=' + value + ' isPaletteRef=' + isPaletteRef);
             
             if (isPaletteRef) {
                 // Resolve palette ref to HEX using handlerRef to access ColorHandler methods
-                console.log('🐛 DEBUG Reset: Calling _resolvePaletteRef with', value);
+                log.debug('Reset: Calling _resolvePaletteRef with ' + value);
                 hexValue = (handlerRef || this)._resolvePaletteRef(value);
                 
-                console.log('🐛 DEBUG Reset: _resolvePaletteRef returned:', hexValue);
-                console.log('🐛 DEBUG Reset: hexValue type:', typeof hexValue);
-                console.log('🐛 DEBUG Reset: hexValue starts with #:', hexValue && hexValue.startsWith('#'));
+                log.debug('Reset: _resolvePaletteRef returned: ' + hexValue);
+                log.debug('Reset: hexValue type: ' + typeof hexValue);
+                log.debug('Reset: hexValue starts with #: ' + (hexValue && hexValue.startsWith('#')));
                 
                 // Update input and preserve palette ref attribute
                 $input.val(hexValue);
                 
-                console.log('🐛 DEBUG Reset: After $input.val(), $input.val() =', $input.val());
+                log.debug('Reset: After $input.val(), $input.val()=' + $input.val());
                 
                 // Set palette ref on BOTH input and trigger
                 $input.attr('data-palette-ref', value);
                 $trigger.attr('data-palette-ref', value);
                 
-                console.log('↺ Color reset with palette ref:', value, '→', hexValue);
+                log.info('Color reset with palette ref: ' + value + ' -> ' + hexValue);
             } else {
                 // Regular HEX or RGB color — normalize to HEX for display
                 hexValue = value;
                 if (ColorUtils.isRgbColor(hexValue)) {
                     hexValue = ColorUtils.rgbToHex(hexValue);
-                    console.log('↺ Color reset: converted RGB to HEX:', value, '→', hexValue);
+                    log.debug('Color reset: converted RGB to HEX: ' + value + ' -> ' + hexValue);
                 }
 
                 // Update input and remove palette ref from BOTH input and trigger
@@ -622,7 +611,7 @@ define([
                 $input.removeAttr('data-palette-ref');
                 $trigger.removeAttr('data-palette-ref');
 
-                console.log('↺ Color reset with HEX:', hexValue);
+                log.info('Color reset with HEX: ' + hexValue);
             }
             
             // Update preview boxes
@@ -634,7 +623,7 @@ define([
             var popupInstance = $trigger.data('popup-instance');
             if (popupInstance && popupInstance.pickr) {
                 popupInstance.pickr.setColor(hexValue, true); // silent: true
-                console.log('↺ Pickr updated:', hexValue);
+                log.debug('Pickr updated: ' + hexValue);
             }
             
             // Note: CSS preview is updated via 'field-reset' event in panel.js
@@ -649,14 +638,14 @@ define([
          * @returns {String} HEX color
          */
         _resolvePaletteRef: function(paletteRef) {
-            console.log('🐛 DEBUG _resolvePaletteRef: input =', paletteRef);
-            console.log('🐛 DEBUG _resolvePaletteRef: ColorRenderer =', ColorRenderer);
-            console.log('🐛 DEBUG _resolvePaletteRef: ColorRenderer._getPaletteHexFromMapping =', typeof ColorRenderer._getPaletteHexFromMapping);
+            log.debug('_resolvePaletteRef: input=' + paletteRef);
+            log.debug('_resolvePaletteRef: ColorRenderer=' + ColorRenderer);
+            log.debug('_resolvePaletteRef: ColorRenderer._getPaletteHexFromMapping=' + typeof ColorRenderer._getPaletteHexFromMapping);
             
             var result = ColorRenderer._getPaletteHexFromMapping(paletteRef);
             
-            console.log('🐛 DEBUG _resolvePaletteRef: ColorRenderer returned =', result);
-            console.log('🐛 DEBUG _resolvePaletteRef: result type =', typeof result);
+            log.debug('_resolvePaletteRef: ColorRenderer returned=' + result);
+            log.debug('_resolvePaletteRef: result type=' + typeof result);
             
             return result;
         }

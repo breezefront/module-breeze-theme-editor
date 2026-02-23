@@ -1,8 +1,11 @@
 define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/base',
-    'text!Swissup_BreezeThemeEditor/template/editor/panel/fields/social-links.html'
-], function(BaseFieldRenderer, template) {
+    'text!Swissup_BreezeThemeEditor/template/editor/panel/fields/social-links.html',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function(BaseFieldRenderer, template, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/field-renderers/social-links');
 
     var SocialLinksRenderer = Object.create(BaseFieldRenderer);
     SocialLinksRenderer.templateString = template;
@@ -26,7 +29,7 @@ define([
         try {
             values = data.value ? (typeof data.value === 'string' ? JSON.parse(data.value) : data.value) : {};
         } catch (e) {
-            console.warn('Failed to parse social links value:', e);
+            log.warn('Failed to parse social links value: ' + e);
         }
 
         data.platforms = platforms.map(function(platform) {

@@ -1,5 +1,9 @@
-define([], function() {
+define([
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function(Logger) {
     'use strict';
+
+    var log = Logger.for('panel/panel-state');
 
     /**
      * Panel state manager
@@ -71,7 +75,7 @@ define([], function() {
                 }.bind(this));
             }
 
-            console.log('📊 State initialized:', Object.keys(this.values).length, 'values');
+            log.info('State initialized: ' + Object.keys(this.values).length + ' values');
         },
 
         /**
@@ -121,11 +125,11 @@ define([], function() {
             var key = sectionCode + '.' + fieldCode;
             var state = this.values[key];
 
-            console.log('🐛 setValue called:', key, 'newValue:', newValue);
+            log.debug('setValue called: ' + key + ' newValue: ' + newValue);
             // console.trace('🐛 Call stack:');
 
             if (!state) {
-                console.warn('⚠️ Field not found:', key);
+                log.warn('Field not found: ' + key);
                 return;
             }
 
@@ -135,13 +139,7 @@ define([], function() {
             // Mark as dirty if different from saved value
             state.isDirty = (newValue !== state.savedValue);
 
-            console.log('📝 Value updated:', {
-                key: key,
-                value: newValue,
-                savedValue: state.savedValue,
-                isDirty: state.isDirty,
-                isModified: state.isModified
-            });
+            log.debug('Value updated: key=' + key + ' value=' + newValue + ' savedValue=' + state.savedValue + ' isDirty=' + state.isDirty + ' isModified=' + state.isModified);
         },
 
         /**
@@ -227,7 +225,7 @@ define([], function() {
                 }
             }.bind(this));
 
-            console.log('↺ All dirty changes reset to saved values');
+            log.info('All dirty changes reset to saved values');
         },
 
         /**
@@ -249,7 +247,7 @@ define([], function() {
                 }
             }.bind(this));
 
-            console.log('↺ Section reset:', sectionCode, '(' + resetCount + ' fields)');
+            log.info('Section reset: ' + sectionCode + ' (' + resetCount + ' fields)');
         },
 
         /**
@@ -262,7 +260,7 @@ define([], function() {
                 state.isDirty = (state.defaultValue !== state.savedValue);
             }.bind(this));
 
-            console.log('↺ All fields reset to defaults');
+            log.info('All fields reset to defaults');
         },
 
         /**
@@ -280,7 +278,7 @@ define([], function() {
                 }
             }.bind(this));
 
-            console.log('✅ All changes marked as saved');
+            log.info('All changes marked as saved');
         },
 
         /**
@@ -295,8 +293,7 @@ define([], function() {
             var state = this.values[key];
             
             if (!state) {
-                console.warn('⚠️ PanelState: Field not found:', key);
-                return undefined;
+                log.warn('PanelState: Field not found: ' + key);                return undefined;
             }
             
             // Restore saved value (draft value)
@@ -304,14 +301,8 @@ define([], function() {
             state.value = draftValue;
             state.isDirty = false;
             
-            console.log('↺ PanelState: Field reset:', key, '→', draftValue);
-            console.log('🐛 State after reset:', JSON.stringify({
-                value: state.value,
-                savedValue: state.savedValue,
-                defaultValue: state.defaultValue,
-                isDirty: state.isDirty,
-                isModified: state.isModified
-            }));
+            log.info('PanelState: Field reset: ' + key + ' -> ' + draftValue);
+            log.debug('State after reset: value=' + state.value + ' savedValue=' + state.savedValue + ' defaultValue=' + state.defaultValue + ' isDirty=' + state.isDirty + ' isModified=' + state.isModified);
             
             // Notify listeners
             this.notifyListeners('field-reset', {
@@ -345,7 +336,7 @@ define([], function() {
             this.values = {};
             this.fieldsMap = {};
             this.listeners = [];
-            console.log('🗑️ State cleared');
+            log.info('State cleared');
         },
 
         /**
@@ -354,7 +345,7 @@ define([], function() {
          * @param {Function} callback - Called with (eventType, data)
          */
         addListener: function(callback) {
-            console.log('🐛 addListener called, total listeners:', this.listeners.length + 1);
+            log.debug('addListener called, total listeners: ' + (this.listeners.length + 1));
             this.listeners.push(callback);
         },
 
@@ -377,14 +368,14 @@ define([], function() {
          * @param {Object} data - Event data
          */
         notifyListeners: function(eventType, data) {
-            console.log('🐛 notifyListeners called:', eventType, 'listeners count:', this.listeners.length);
-            console.log('🐛 Event data:', data);
+            log.debug('notifyListeners called: ' + eventType + ' listeners count: ' + this.listeners.length);
+            log.debug('Event data: ' + JSON.stringify(data));
             
             this.listeners.forEach(function(callback) {
                 try {
                     callback(eventType, data);
                 } catch (err) {
-                    console.error('❌ Listener error:', err);
+                    log.error('Listener error: ' + err);
                 }
             });
         }

@@ -1,9 +1,12 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
-    'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager'
-], function ($, PanelState, CssPreviewManager) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, PanelState, CssPreviewManager, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/field-handlers/base');
 
     /**
      * Base Field Change Handler
@@ -32,20 +35,12 @@ define([
         handleChange: function($input, callback, options) {
             options = options || {};
 
-            console.log('🔄 BaseHandler.handleChange called:', {
-                hasInput: !!$input,
-                inputClass: $input.attr('class'),
-                hasCallback: typeof callback === 'function'
-            });
+            log.debug('BaseHandler.handleChange called: hasInput=' + !!$input + ' inputClass=' + $input.attr('class') + ' hasCallback=' + (typeof callback === 'function'));
 
             var fieldData = this.extractFieldData($input);
 
             if (! fieldData.sectionCode || ! fieldData.fieldCode) {
-                console.warn('⚠️ Missing data attributes:', {
-                    element: $input[0],
-                    class: $input.attr('class'),
-                    data: fieldData
-                });
+                log.warn('Missing data attributes: class=' + $input.attr('class'));
                 return false;
             }
 
@@ -60,9 +55,9 @@ define([
             }
 
             // Update state
-            console.log('🔄 Calling PanelState.setValue:', fieldData.sectionCode + '.' + fieldData.fieldCode, '=', fieldData.value);
+            log.debug('Calling PanelState.setValue: ' + fieldData.sectionCode + '.' + fieldData.fieldCode + ' = ' + fieldData.value);
             PanelState.setValue(fieldData.sectionCode, fieldData.fieldCode, fieldData.value);
-            console.log('🔄 PanelState.setValue completed');
+            log.debug('PanelState.setValue completed');
 
             // Live preview
             if (fieldData.cssVar && ! options.skipPreview) {
@@ -72,22 +67,16 @@ define([
             }
 
             // Callback
-            console.log('🔄 About to call callback, type:', typeof callback);
+            log.debug('About to call callback, type: ' + typeof callback);
             if (callback && typeof callback === 'function') {
-                console.log('🔄 Calling callback with fieldData:', fieldData);
+                log.debug('Calling callback with fieldData: ' + JSON.stringify(fieldData));
                 callback(fieldData);
-                console.log('🔄 Callback completed');
+                log.debug('Callback completed');
             } else {
-                console.warn('⚠️ Callback not called, type:', typeof callback);
+                log.warn('Callback not called, type: ' + typeof callback);
             }
 
-            console.log('🔄 Field changed:', {
-                section: fieldData.sectionCode,
-                field: fieldData.fieldCode,
-                type: fieldData.type,
-                value: fieldData.value,
-                cssVar: fieldData.cssVar
-            });
+            log.debug('Field changed: section=' + fieldData.sectionCode + ' field=' + fieldData.fieldCode + ' type=' + fieldData.type + ' value=' + fieldData.value + ' cssVar=' + fieldData.cssVar);
 
             return true;
         },
@@ -131,7 +120,7 @@ define([
             if ($input.hasClass('bte-color-input')) {
                 var paletteRef = $input.attr('data-palette-ref');
                 if (paletteRef) {
-                    console.log('🔗 Using palette reference:', paletteRef);
+                log.debug('Using palette reference: ' + paletteRef);
                     return paletteRef; // Return --color-brand-amber-primary (without var())
                 }
             }
@@ -170,7 +159,7 @@ define([
                 }
             }
 
-            console.warn('⚠️ Unknown field type for class:', classList);
+            log.warn('Unknown field type for class: ' + classList);
             return null;
         },
 
@@ -232,11 +221,11 @@ define([
             var fieldCode = $resetBtn.data('field-code');
             var sectionCode = $resetBtn.data('section-code');
             
-            console.log('↺ Reset clicked:', sectionCode + '.' + fieldCode);
+            log.info('Reset clicked: ' + sectionCode + '.' + fieldCode);
             
             // Show confirmation dialog
             if (!window.confirm('Discard unsaved changes?')) {
-                console.log('↺ Reset cancelled by user');
+                log.info('Reset cancelled by user');
                 return;
             }
             
@@ -244,7 +233,7 @@ define([
             var draftValue = PanelState.getDraftValue(sectionCode, fieldCode);
             
             if (draftValue === undefined) {
-                console.warn('⚠️ No draft value found for', sectionCode + '.' + fieldCode);
+                log.warn('No draft value found for ' + sectionCode + '.' + fieldCode);
                 return;
             }
             
@@ -252,7 +241,7 @@ define([
             var restoredValue = PanelState.resetField(sectionCode, fieldCode);
             
             if (restoredValue === undefined) {
-                console.error('❌ Failed to reset field');
+                log.error('Failed to reset field');
                 return;
             }
             
@@ -269,17 +258,17 @@ define([
             
             // Call specialized updateFieldUIAfterReset if available, otherwise use base implementation
             if (handler && handler.updateFieldUIAfterReset && handler !== this) {
-                console.log('↺ Using specialized handler for type:', fieldType);
+                log.info('Using specialized handler for type: ' + fieldType);
                 // Pass $field and handler reference to avoid context issues
                 // This allows specialized handlers to access both BaseHandler methods (via this)
                 // and their own methods (via handler reference)
                 handler.updateFieldUIAfterReset.call(this, sectionCode, fieldCode, restoredValue, $field, handler);
             } else {
-                console.log('↺ Using base handler for type:', fieldType);
+                log.info('Using base handler for type: ' + fieldType);
                 this.updateFieldUIAfterReset(sectionCode, fieldCode, restoredValue);
             }
             
-            console.log('✅ Field reset complete:', sectionCode + '.' + fieldCode, '→', restoredValue);
+            log.info('Field reset complete: ' + sectionCode + '.' + fieldCode + ' -> ' + restoredValue);
         },
 
         /**
@@ -294,7 +283,7 @@ define([
             var $field = this._findFieldElement(sectionCode, fieldCode);
             
             if (!$field.length) {
-                console.warn('⚠️ Field element not found for UI update');
+                log.warn('Field element not found for UI update');
                 return;
             }
             
@@ -308,7 +297,7 @@ define([
                 // Don't trigger 'change' event - it would set isDirty=true again
                 // CSS preview is updated via 'field-reset' event listener in panel.js
                 
-                console.log('✅ Field UI updated:', fieldCode, '=', value);
+                log.info('Field UI updated: ' + fieldCode + ' = ' + value);
             }
         },
 
@@ -352,7 +341,7 @@ define([
             // Store registry for later use in handleFieldReset
             if (handlerRegistry) {
                 this._handlerRegistry = handlerRegistry;
-                console.log('✅ Handler registry attached with', Object.keys(handlerRegistry).length, 'types');
+                log.info('Handler registry attached with ' + Object.keys(handlerRegistry).length + ' types');
             }
             
             $container.on('click', '.bte-field-reset-btn', function(e) {

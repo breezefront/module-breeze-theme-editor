@@ -1,5 +1,7 @@
-define([], function () {
+define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logger) {
     'use strict';
+
+    var log = Logger.for('utils/core/color-utils');
 
     /**
      * Color Utilities for Admin Area
@@ -33,7 +35,7 @@ define([], function () {
             // Extract numbers using regex (handles any whitespace/format)
             var parts = normalized.match(/-?\d+/g);
             if (!parts || parts.length < 3) {
-                console.warn('⚠️ ColorUtils.rgbToHex: Invalid RGB format:', rgb);
+                log.warn('ColorUtils.rgbToHex: Invalid RGB format: ' + rgb);
                 return '#000000';
             }
 

@@ -6,8 +6,10 @@
  * 
  * @module Swissup_BreezeThemeEditor/js/editor/utils/ui/loading
  */
-define(['jquery'], function($) {
+define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function($, Logger) {
     'use strict';
+    
+    var log = Logger.for('utils/ui/loading');
     
     return {
         /**
@@ -21,7 +23,7 @@ define(['jquery'], function($) {
             var $el = $(element);
             
             if (!$el.length) {
-                console.warn('[Loading] Element not found:', element);
+                log.warn('[Loading] Element not found: ' + element);
                 return;
             }
             
@@ -48,7 +50,7 @@ define(['jquery'], function($) {
             var $el = $(element);
             
             if (!$el.length) {
-                console.warn('[Loading] Element not found:', element);
+                log.warn('[Loading] Element not found: ' + element);
                 return;
             }
             

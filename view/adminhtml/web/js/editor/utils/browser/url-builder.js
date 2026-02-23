@@ -9,8 +9,10 @@
  * - scope-selector.js (_updateUrlStoreParam)
  * - toolbar.js (_buildUrlWithParams)
  */
-define([], function() {
+define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logger) {
     'use strict';
+    
+    var log = Logger.for('utils/browser/url-builder');
     
     return {
         /**
@@ -26,7 +28,7 @@ define([], function() {
          */
         addNavigationParams: function(url, params, baseUrl) {
             if (!url) {
-                console.error('❌ Cannot build URL: url is empty');
+                log.error('Cannot build URL: url is empty');
                 return url;
             }
             
@@ -51,7 +53,7 @@ define([], function() {
                 
                 return urlObj.toString();
             } catch (e) {
-                console.error('❌ Failed to build URL:', url, e);
+                log.error('Failed to build URL: ' + url + ' ' + e);
                 return url; // Return original on error
             }
         },
@@ -67,7 +69,7 @@ define([], function() {
          */
         updateStoreParam: function(url, storeCode, baseUrl) {
             if (!url || !storeCode) {
-                console.error('❌ Cannot update store param: url or storeCode is empty');
+                log.error('Cannot update store param: url or storeCode is empty');
                 return url;
             }
             
@@ -76,7 +78,7 @@ define([], function() {
                 urlObj.searchParams.set('___store', storeCode);
                 return urlObj.toString();
             } catch (e) {
-                console.error('❌ Failed to update store param:', url, e);
+                log.error('Failed to update store param: ' + url + ' ' + e);
                 return url;
             }
         },
@@ -92,7 +94,7 @@ define([], function() {
          */
         updateThemeParam: function(url, themeId, baseUrl) {
             if (!url || !themeId) {
-                console.error('❌ Cannot update theme param: url or themeId is empty');
+                log.error('Cannot update theme param: url or themeId is empty');
                 return url;
             }
             
@@ -101,7 +103,7 @@ define([], function() {
                 urlObj.searchParams.set('preview_theme', themeId);
                 return urlObj.toString();
             } catch (e) {
-                console.error('❌ Failed to update theme param:', url, e);
+                log.error('Failed to update theme param: ' + url + ' ' + e);
                 return url;
             }
         },
@@ -125,7 +127,7 @@ define([], function() {
                     hasTheme: urlObj.searchParams.has('preview_theme')
                 };
             } catch (e) {
-                console.error('❌ Failed to parse URL:', url, e);
+                log.error('Failed to parse URL: ' + url + ' ' + e);
                 return { hasStore: false, hasTheme: false };
             }
         },
@@ -149,7 +151,7 @@ define([], function() {
                     themeId: urlObj.searchParams.get('preview_theme')
                 };
             } catch (e) {
-                console.error('❌ Failed to get navigation params:', url, e);
+                log.error('Failed to get navigation params: ' + url + ' ' + e);
                 return { storeCode: null, themeId: null };
             }
         },
@@ -172,7 +174,7 @@ define([], function() {
                 var originObj = new URL(originUrl || window.location.origin);
                 return urlObj.origin === originObj.origin;
             } catch (e) {
-                console.error('❌ Failed to check origin:', url, e);
+                log.error('Failed to check origin: ' + url + ' ' + e);
                 return false;
             }
         },
@@ -226,7 +228,7 @@ define([], function() {
                 urlObj.searchParams.delete('preview_theme');
                 return urlObj.toString();
             } catch (e) {
-                console.error('❌ Failed to remove navigation params:', url, e);
+                log.error('Failed to remove navigation params: ' + url + ' ' + e);
                 return url;
             }
         }

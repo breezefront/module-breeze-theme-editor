@@ -2,9 +2,12 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
-    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
-], function ($, IframeHelper, getCss, StorageHelper) {
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function ($, IframeHelper, getCss, StorageHelper, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/css-manager');
 
     var $publishedStyle = null;
     var $draftStyle = null;
@@ -30,7 +33,7 @@ define([
     function resetLivePreview() {
         require(['Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager'], function(CssPreviewManager) {
             CssPreviewManager.reset();
-            console.log('↺ Live preview reset via lazy loading');
+            log.info('Live preview reset via lazy loading');
         });
     }
 
@@ -54,19 +57,19 @@ define([
             
             // Validate parameters
             if (!storeId || !themeId) {
-                console.error('❌ CSS Manager: Invalid storeId or themeId', {storeId: storeId, themeId: themeId});
+                log.error('CSS Manager: Invalid storeId or themeId storeId=' + storeId + ' themeId=' + themeId);
                 return false;
             }
             
             if (!getIframeDocument()) {
                 if (retries < 20) {
-                    console.log('⏳ CSS Manager: iframe not ready, retry', retries + 1);
+                    log.info('CSS Manager: iframe not ready, retry ' + (retries + 1));
                     setTimeout(function() {
                         self.init(store, theme, retries + 1);
                     }, 200);
                     return false;
                 }
-                console.warn('⚠️ CSS Manager: iframe not initialized after retries');
+                log.warn('CSS Manager: iframe not initialized after retries');
                 return false;
             }
 
@@ -77,19 +80,19 @@ define([
 
             if (!$publishedStyle.length) {
                 if (retries < 20) {
-                    console.log('⏳ CSS Manager: #bte-theme-css-variables not ready, retry', retries + 1);
+                    log.info('CSS Manager: #bte-theme-css-variables not ready, retry ' + (retries + 1));
                     setTimeout(function() {
                         self.init(store, theme, retries + 1);
                     }, 200);
                     return false;
                 }
-                console.error('❌ CSS Manager: #bte-theme-css-variables not found after retries!');
+                log.error('CSS Manager: #bte-theme-css-variables not found after retries!');
                 return false;
             }
             
             // Draft CSS will be created dynamically when switching to DRAFT
             if (!$draftStyle.length) {
-                console.log('ℹ️ Draft CSS not in DOM - will be created dynamically when needed');
+                log.info('Draft CSS not in DOM - will be created dynamically when needed');
             }
 
             // Check localStorage for current status
@@ -103,11 +106,11 @@ define([
             $(document).on('publicationStatusChanged', function(e, data) {
                 if (data && data.status) {
                     currentStatus = data.status;
-                    console.log('🔄 CSS Manager: currentStatus updated to:', currentStatus);
+                    log.info('CSS Manager: currentStatus updated to: ' + currentStatus);
                 }
             });
 
-            console.log('✅ CSS Manager initialized (status:', currentStatus + ')');
+            log.info('CSS Manager initialized (status: ' + currentStatus + ')');
             return true;
         },
 
@@ -117,7 +120,7 @@ define([
          */
         _getStoredStatus: function() {
             var status = StorageHelper.getCurrentStatus();
-            console.log('🔍 Getting stored status from localStorage:', status);
+            log.debug('Getting stored status from localStorage: ' + status);
             return status;
         },
 
@@ -171,7 +174,7 @@ define([
             var status = this._getStoredStatus();
             var publicationId = this._getStoredPublicationId();
 
-            console.log('📋 Applying stored CSS state:', status, publicationId);
+            log.info('Applying stored CSS state: ' + status + ' ' + publicationId);
 
             switch (status) {
                 case 'PUBLISHED':
@@ -184,7 +187,7 @@ define([
                     if (publicationId) {
                         this.showPublication(publicationId);
                     } else {
-                        console.warn('⚠️ PUBLICATION status but no ID, falling back to DRAFT');
+                        log.warn('PUBLICATION status but no ID, falling back to DRAFT');
                         this.showDraft();
                     }
                     break;
@@ -229,8 +232,7 @@ define([
             this._removePublicationStyle();
 
             currentStatus = 'PUBLISHED';
-            console.log('📘 CSS Manager: Showing PUBLISHED (read-only mode)');
-            // console.trace('📘 showPublished() call stack');
+            log.info('CSS Manager: Showing PUBLISHED (read-only mode)');
             
             // ✅ Trigger event to notify panel about status change
             $(document).trigger('publicationStatusChanged', {status: 'PUBLISHED'});
@@ -259,7 +261,7 @@ define([
 
             // Load draft CSS from GraphQL if not in DOM
             if (!$draftStyle || !$draftStyle.length) {
-                console.log('📥 Loading draft CSS from GraphQL...');
+                log.info('Loading draft CSS from GraphQL...');
                 
                 return getCss(storeId, themeId, 'DRAFT', null)
                     .then(function(response) {
@@ -276,10 +278,10 @@ define([
                             // Insert after published style
                             if ($publishedStyle && $publishedStyle.length) {
                                 $publishedStyle.after($draftStyle);
-                                console.log('✅ Draft CSS created dynamically');
+                                log.info('Draft CSS created dynamically');
                             } else {
                                 $(getIframeDocument().head).append($draftStyle);
-                                console.log('✅ Draft CSS created in head');
+                                log.info('Draft CSS created in head');
                             }
                             
                             // Enable published CSS (base)
@@ -295,7 +297,7 @@ define([
                             self._removePublicationStyle();
 
                             currentStatus = 'DRAFT';
-                            console.log('📗 CSS Manager: Showing DRAFT (editable mode, created dynamically)');
+                            log.info('CSS Manager: Showing DRAFT (editable mode, created dynamically)');
                             
                             // Trigger event to notify panel about status change
                             $(document).trigger('publicationStatusChanged', {status: 'DRAFT'});
@@ -304,7 +306,7 @@ define([
                         }
                     })
                     .catch(function(error) {
-                        console.error('❌ Failed to load draft CSS:', error);
+                        log.error('Failed to load draft CSS: ' + error);
                         return false;
                     });
             }
@@ -323,7 +325,7 @@ define([
             this._removePublicationStyle();
 
             currentStatus = 'DRAFT';
-            console.log('📗 CSS Manager: Showing DRAFT (editable mode)');
+            log.info('CSS Manager: Showing DRAFT (editable mode)');
             
             // Trigger event to notify panel about status change
             $(document).trigger('publicationStatusChanged', {status: 'DRAFT'});
@@ -342,11 +344,11 @@ define([
             var self = this;
 
             if (!publicationId) {
-                console.error('❌ CSS Manager: publicationId required');
+                log.error('CSS Manager: publicationId required');
                 return Promise.reject('publicationId required');
             }
 
-            console.log('📦 Fetching publication CSS:', publicationId);
+            log.info('Fetching publication CSS: ' + publicationId);
 
             // Refresh style references (may appear later)
             if (!$publishedStyle || !$publishedStyle.length) {
@@ -382,7 +384,7 @@ define([
                     var result = response.getThemeEditorCss;
 
                     if (!result.hasContent || !result.css) {
-                        console.warn('⚠️ Publication CSS is empty');
+                        log.warn('Publication CSS is empty');
                         return false;
                     }
 
@@ -390,7 +392,7 @@ define([
                     self._injectPublicationStyle(result.css);
 
                     currentStatus = 'PUBLICATION';
-                    console.log('📙 CSS Manager: Showing PUBLICATION', publicationId, '(read-only mode)');
+                    log.info('CSS Manager: Showing PUBLICATION ' + publicationId + ' (read-only mode)');
                     
                     // ✅ Trigger event to notify panel about status change
                     $(document).trigger('publicationStatusChanged', {
@@ -401,7 +403,7 @@ define([
                     return true;
                 })
                 .catch(function(error) {
-                    console.error('❌ Failed to load publication CSS:', error);
+                    log.error('Failed to load publication CSS: ' + error);
                     // Fallback to draft
                     self.showDraft();
                     throw error;
@@ -430,17 +432,17 @@ define([
             if ($livePreview && $livePreview.length) {
                 // Insert before live-preview (щоб live-preview мав найвищий пріоритет)
                 $livePreview.before($publicationStyle);
-                console.log('📝 Publication CSS injected before #bte-live-preview');
+                log.info('Publication CSS injected before #bte-live-preview');
             } else if ($draftStyle && $draftStyle.length) {
                 // Fallback: insert after draft
                 $draftStyle.after($publicationStyle);
-                console.log('📝 Publication CSS injected after draft (live-preview not found)');
+                log.info('Publication CSS injected after draft (live-preview not found)');
             } else if ($publishedStyle && $publishedStyle.length) {
                 // Fallback: insert after published
                 $publishedStyle.after($publicationStyle);
-                console.log('📝 Publication CSS injected after published');
+                log.info('Publication CSS injected after published');
             } else {
-                console.error('❌ Cannot find insertion point for publication CSS!');
+                log.error('Cannot find insertion point for publication CSS!');
                 return;
             }
         },
@@ -453,7 +455,7 @@ define([
             if ($publicationStyle && $publicationStyle.length) {
                 $publicationStyle.remove();
                 $publicationStyle = null;
-                console.log('🗑️ Publication CSS removed');
+                log.info('Publication CSS removed');
             }
         },
 
@@ -465,7 +467,7 @@ define([
          * @returns {Promise}
          */
         switchTo: function(status, publicationId) {
-            console.log('🔄 CSS Manager: Switching to', status, publicationId || '');
+            log.info('CSS Manager: Switching to ' + status + ' ' + (publicationId || ''));
 
             switch (status) {
                 case 'PUBLISHED':
@@ -477,7 +479,7 @@ define([
                 case 'PUBLICATION':
                     return this.showPublication(publicationId);
                 default:
-                    console.error('❌ Invalid status:', status);
+                    log.error('Invalid status: ' + status);
                     return Promise.reject('Invalid status');
             }
         },
@@ -504,7 +506,7 @@ define([
          */
         refreshIframeDocument: function() {
             if (!getIframeDocument()) {
-                console.error('❌ CSS Manager: Cannot refresh - iframe document not available');
+                log.error('CSS Manager: Cannot refresh - iframe document not available');
                 return false;
             }
             
@@ -514,7 +516,7 @@ define([
             $livePreviewStyle = $(getIframeDocument()).find('#bte-live-preview');
             $publicationStyle = null; // Reset publication style
             
-            console.log('🔄 CSS Manager: iframe document refreshed');
+            log.info('CSS Manager: iframe document refreshed');
             return true;
         },
 
@@ -544,7 +546,7 @@ define([
             $draftStyle = null;
             $livePreviewStyle = null;
             currentStatus = null;
-            console.log('🗑️ CSS Manager destroyed');
+            log.info('CSS Manager destroyed');
         }
     };
 });

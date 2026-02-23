@@ -15,7 +15,8 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values',
-    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
+    'Swissup_BreezeThemeEditor/js/editor/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function (
     $,
     widget,
@@ -33,9 +34,12 @@ define([
     getConfig,
     getConfigFromPublication,
     saveValues,
-    StorageHelper
+    StorageHelper,
+    Logger
 ) {
     'use strict';
+
+    var log = Logger.for('panel/settings-editor');
 
     $.widget('swissup.themeSettingsEditor', {
         options: {
@@ -46,7 +50,7 @@ define([
         },
 
         _create: function () {
-            console.log('✅ Initializing Settings Editor (Admin)');
+            log.info('Initializing Settings Editor (Admin)');
 
             // Admin config from ViewModel
             var config = window.breezeThemeEditorConfig || {};
@@ -80,21 +84,21 @@ define([
             var currentStatus = StorageHelper.getCurrentStatus();
             this.options.status = currentStatus;
             
-            console.log('📍 Settings Editor initializing with mode:', currentStatus);
+            log.info('Settings Editor initializing with mode: ' + currentStatus);
             
             // Load config based on current mode
             if (currentStatus === 'PUBLICATION') {
                 var publicationId = StorageHelper.getCurrentPublicationId();
                 if (publicationId && !isNaN(publicationId)) {
-                    console.log('📥 Loading config from publication #' + publicationId);
+                    log.info('Loading config from publication #' + publicationId);
                     this._loadConfigFromPublication(publicationId);
                 } else {
-                    console.warn('⚠️ PUBLICATION mode but no valid publication ID, falling back to DRAFT');
+                    log.warn('PUBLICATION mode but no valid publication ID, falling back to DRAFT');
                     this.options.status = 'DRAFT';
                     this._loadConfig();
                 }
             } else {
-                console.log('📥 Loading config with status:', currentStatus);
+                log.info('Loading config with status: ' + currentStatus);
                 this._loadConfig();
             }
         },
@@ -119,7 +123,7 @@ define([
             this.$loader = this.element.find('.bte-panel-loader');
             this.$error = this.element.find('.bte-panel-error');
 
-            console.log('📋 Theme Editor Panel rendered');
+            log.info('Theme Editor Panel rendered');
         },
 
         _bind: function () {
@@ -137,24 +141,24 @@ define([
 
             // ✅ Field changes with live badge updates
             FieldHandlers.init(this.element, function(fieldData) {
-                console.log('🔔 Panel callback triggered for:', fieldData.sectionCode + '.' + fieldData.fieldCode);
-                console.log('🔔 Panel callback fieldData:', JSON.stringify(fieldData));
+                log.debug('Panel callback triggered for: ' + fieldData.sectionCode + '.' + fieldData.fieldCode);
+                log.debug('Panel callback fieldData: ' + JSON.stringify(fieldData));
                 
                 // Update changes counter
                 self._updateChangesCount();
 
                 // ✅ Update badges in real-time
-                console.log('🔔 Calling FieldHandlers.updateBadges...');
+                log.debug('Calling FieldHandlers.updateBadges...');
                 var badgeUpdateResult = FieldHandlers.updateBadges(self.element, fieldData.sectionCode, fieldData.fieldCode);
-                console.log('🔔 FieldHandlers.updateBadges result:', badgeUpdateResult);
+                log.debug('FieldHandlers.updateBadges result: ' + badgeUpdateResult);
                 
-                console.log('✅ Badges updated');
+                log.debug('Badges updated');
             });
 
             // ✅ Listen for PanelState events (field-reset, etc.)
             PanelState.addListener(function(eventType, data) {
                 if (eventType === 'field-reset') {
-                    console.log('🔄 Panel handling field-reset event:', data);
+                    log.debug('Panel handling field-reset event: ' + JSON.stringify(data));
                     
                     // Update field badges (hide "Changed" badge and reset button)
                     FieldHandlers.updateBadges(self.element, data.sectionCode, data.fieldCode);
@@ -175,7 +179,7 @@ define([
                                 // Palette reference - remove from changes to allow cascade via var()
                                 // This allows var(--color-brand-amber-dark-rgb) to resolve correctly
                                 CssPreviewManager.removeVariable(fieldCssVar);
-                                console.log('🗑️ Removed', fieldCssVar, 'from live preview (reset to palette ref:', data.value + ')');
+                                log.debug('Removed ' + fieldCssVar + ' from live preview (reset to palette ref: ' + data.value + ')');
                             } else {
                                 // Direct value (HEX/RGB) - update changes with formatted value
                                 var fieldData = {
@@ -183,7 +187,7 @@ define([
                                     defaultValue: $field.attr('data-default-value')
                                 };
                                 CssPreviewManager.setVariable(fieldCssVar, data.value, fieldType, fieldData);
-                                console.log('🔄 Updated', fieldCssVar, 'in live preview (reset to:', data.value + ')');
+                                log.debug('Updated ' + fieldCssVar + ' in live preview (reset to: ' + data.value + ')');
                             }
                         }
                         
@@ -202,10 +206,10 @@ define([
             $(document).on('publicationStatusChanged', function (e, data) {
                 var validStatuses = ['DRAFT', 'PUBLISHED', 'PUBLICATION'];
                 if (!data || !data.status || validStatuses.indexOf(data.status) === -1) {
-                    console.warn('⚠️ publicationStatusChanged: unknown status "' + (data && data.status) + '" — ignoring');
+                    log.warn('publicationStatusChanged: unknown status "' + (data && data.status) + '" - ignoring');
                     return;
                 }
-                console.log('🔄 Publication status changed to:', data.status);
+                log.info('Publication status changed to: ' + data.status);
                 
                 // ✅ ALWAYS update field editability (regardless of config reload)
                 // This fixes the bug where fields remain disabled on first panel open
@@ -215,7 +219,7 @@ define([
                 
                 // Prevent duplicate loading if status hasn't actually changed
                 if (self.options.status === data.status && data.status !== 'PUBLICATION') {
-                    console.log('⏭️ Status unchanged, skipping config reload');
+                    log.debug('Status unchanged, skipping config reload');
                     return;  // Skip reload, but editability already updated above
                 }
                 
@@ -225,10 +229,10 @@ define([
                 if (data.status === 'PUBLICATION') {
                     // PUBLICATION mode: load from specific historical publication
                     if (data.publicationId && !isNaN(data.publicationId)) {
-                        console.log('📥 Loading config from publication #' + data.publicationId);
+                        log.info('Loading config from publication #' + data.publicationId);
                         self._loadConfigFromPublication(data.publicationId);
                     } else {
-                        console.warn('⚠️ PUBLICATION status but no valid publication ID, falling back to DRAFT');
+                        log.warn('PUBLICATION status but no valid publication ID, falling back to DRAFT');
                         self.options.status = 'DRAFT';
                         self._loadConfig();
                     }
@@ -239,17 +243,17 @@ define([
             });
 
             $(document).on('loadThemeEditorFromPublication', function (e, data) {
-                console.log('📥 Loading config from publication:', data.publicationId);
+                log.info('Loading config from publication: ' + data.publicationId);
                 self._loadConfigFromPublication(data.publicationId);
             });
 
             $(document).on('openPublicationHistoryModal', function () {
-                console.log('📜 Opening publication history modal');
+                log.info('Opening publication history modal');
                 self._showToast('notice', 'Publication history coming soon!');
             });
 
             $(document).on('themeEditorPublished', function (e, data) {
-                console.log('✅ Theme editor published:', data.publication);
+                log.info('Theme editor published: ' + JSON.stringify(data.publication));
 
                 // Оновити UI
                 PanelState.markAsSaved();
@@ -261,7 +265,7 @@ define([
                 
                 // Reload page to get fresh published CSS
                 // (Draft CSS in DOM is now outdated, published CSS needs server regeneration)
-                console.log('🔄 Reloading page to apply published CSS...');
+                log.info('Reloading page to apply published CSS...');
                 setTimeout(function() {
                     window.location.reload();
                 }, 1000);
@@ -279,10 +283,10 @@ define([
                 // CSS Manager may already be initialized early in toolbar.js
                 // Only initialize if not already done
                 if (!CssManager.getCurrentStatus()) {
-                    console.log('⏳ CSS Manager not initialized yet, initializing now...');
+                    log.debug('CSS Manager not initialized yet, initializing now...');
                     CssManager.init(self.storeId, self.themeId);
                 } else {
-                    console.log('✅ CSS Manager already initialized (early init from toolbar)');
+                    log.debug('CSS Manager already initialized (early init from toolbar)');
                 }
                 
                 // Sync panel status with CssManager status (from localStorage)
@@ -290,7 +294,7 @@ define([
                 setTimeout(function() {
                     var cssManagerStatus = CssManager.getCurrentStatus();
                     if (cssManagerStatus && cssManagerStatus !== self.options.status) {
-                        console.log('🔄 Syncing panel status with CssManager:', self.options.status, '→', cssManagerStatus);
+                        log.debug('Syncing panel status with CssManager: ' + self.options.status + ' -> ' + cssManagerStatus);
                         self.options.status = cssManagerStatus;
                         
                         // Note: Publication Selector already reads from localStorage in _loadConfig()
@@ -310,11 +314,11 @@ define([
 
             this._showLoader('Loading configuration...');
             
-            console.log('📥 Loading config with status:', this.options.status);
+            log.info('Loading config with status: ' + this.options.status);
 
             getConfig(this.storeId, this.themeId, this.options.status)
                 .then(function(data) {
-                    console.log('✅ Config loaded for status "' + self.options.status + '":', data);
+                    log.info('Config loaded for status "' + self.options.status + '"');
                     var config = data.breezeThemeEditorConfig;
                     self.config = config; // Store config for palette initialization
                     
@@ -326,7 +330,7 @@ define([
                             storeId: self.storeId,
                             themeId: self.themeId
                         });
-                        console.log('✅ PaletteManager initialized with', config.palettes.length, 'palette(s)');
+                        log.info('PaletteManager initialized with ' + config.palettes.length + ' palette(s)');
                     }
                     
                     PanelState.init(config);
@@ -344,7 +348,7 @@ define([
                     }
                 })
                 .catch(function(error) {
-                    console.error('❌ Failed to load config:', error);
+                    log.error('Failed to load config: ' + error);
                     // Pass the full error object to preserve extensions
                     self._showError(error);
                 });
@@ -361,7 +365,7 @@ define([
 
             getConfigFromPublication(this.storeId, this.themeId, publicationId)
                 .then(function(config) {
-                    console.log('✅ Config loaded from publication:', config);
+                    log.info('Config loaded from publication');
                     
                     self.config = config; // Store config for palette initialization
                     
@@ -372,7 +376,7 @@ define([
                             storeId: self.storeId,
                             themeId: self.themeId
                         });
-                        console.log('✅ PaletteManager initialized with', config.palettes.length, 'palette(s)');
+                        log.info('PaletteManager initialized with ' + config.palettes.length + ' palette(s)');
                     }
                     
                     // Clear live preview changes (publication mode is read-only)
@@ -385,7 +389,7 @@ define([
                     self._showToast('success', 'Loaded publication:  ' + (config.metadata.lastPublished || 'Unknown date'));
                 })
                 .catch(function(error) {
-                    console.error('❌ Failed to load config from publication:', error);
+                    log.error('Failed to load config from publication: ' + error);
                     self._showError(error);
                 });
         },
@@ -413,7 +417,7 @@ define([
             this.$sectionsContainer.find('.bte-accordion-header').first().addClass('active');
             this.$sectionsContainer.find('.bte-accordion-content').first().addClass('active').show();
 
-            console.log('📋 Rendered', sections.length, 'sections');
+            log.info('Rendered ' + sections.length + ' sections');
             
             // Disable fields if in read-only mode (PUBLISHED or PUBLICATION)
             this._updateFieldsEditability();
@@ -435,7 +439,7 @@ define([
             // CSS Manager may not be initialized yet on first load
             var isEditable = (status === 'DRAFT');
             
-            console.log('🔒 Updating fields editability:', {status: status, isEditable: isEditable});
+            log.debug('Updating fields editability: status=' + status + ' isEditable=' + isEditable);
             
             if (isEditable) {
                 // Enable all fields (DRAFT mode)
@@ -450,7 +454,7 @@ define([
                 
                 // Show info message
                 var mode = status === 'PUBLICATION' ? 'PUBLICATION' : 'PUBLISHED';
-                console.log('🔒 Fields disabled in ' + mode + ' mode');
+                log.debug('Fields disabled in ' + mode + ' mode');
             }
         },
         
@@ -472,7 +476,7 @@ define([
             this.$presetContainer.removeClass('bte-field-disabled');
             this.$presetContainer.find('input, select, button').prop('disabled', false);
             
-            console.log('✅ All fields enabled (including palette and preset)');
+            log.info('All fields enabled (including palette and preset)');
         },
         
         /**
@@ -493,7 +497,7 @@ define([
             this.$presetContainer.addClass('bte-field-disabled');
             this.$presetContainer.find('input, select, button').prop('disabled', true);
             
-            console.log('🔒 All fields disabled (including palette and preset)');
+            log.info('All fields disabled (including palette and preset)');
         },
 
         /**
@@ -513,7 +517,7 @@ define([
                 $content.addClass('active').slideDown(200);
             }
 
-            console.log('🔄 Accordion toggled:', section, '→', !isActive);
+            log.debug('Accordion toggled: ' + section + ' -> ' + !isActive);
         },
 
         /**
@@ -549,14 +553,14 @@ define([
             // Enable/disable reset button based on changes
             this.$resetButton.prop('disabled', totalChanges === 0);
             
-            console.log('📊 Changes count updated:', fieldChanges, 'fields +', paletteChanges, 'palette =', totalChanges);
+            log.debug('Changes count updated: ' + fieldChanges + ' fields + ' + paletteChanges + ' palette = ' + totalChanges);
         },
 
         /**
          * Close panel using navigation widget API
          */
         _close: function () {
-            console.log('❌ Closing panel');
+            log.info('Closing panel');
             
             // Get navigation widget instance
             var navigationWidget = this.$navigation.data('swissupBreezeNavigation');
@@ -564,10 +568,10 @@ define([
             if (navigationWidget) {
                 // Use widget API to deactivate (proper architecture)
                 navigationWidget.deactivate('theme-editor');
-                console.log('✅ Panel closed via navigation.deactivate()');
+                log.info('Panel closed via navigation.deactivate()');
             } else {
-                console.error('❌ Navigation widget not found - cannot close panel');
-                console.error('   Expected widget on:', this.$navigation.selector);
+                log.error('Navigation widget not found - cannot close panel');
+                log.error('Expected widget on: ' + this.$navigation.selector);
             }
         },
 
@@ -584,7 +588,7 @@ define([
                 PanelState.reset();
                 CssPreviewManager.reset();
                 this._loadConfig();
-                console.log('✅ Reset complete');
+                log.info('Reset complete');
             }
         },
 
@@ -604,30 +608,30 @@ define([
             
             if (paletteChanges.length > 0) {
                 values = values.concat(paletteChanges);
-                console.log('💾 Including', paletteChanges.length, 'palette changes in save');
+                log.debug('Including ' + paletteChanges.length + ' palette changes in save');
             }
             
             var self = this;
 
-            console.log('💾 Saving values:', values);
-            console.log('💾 Changes count BEFORE save:', PanelState.getChangesCount());
+            log.debug('Saving values: ' + JSON.stringify(values));
+            log.debug('Changes count BEFORE save: ' + PanelState.getChangesCount());
 
             this.$saveButton.prop('disabled', true).text('Saving...');
 
             saveValues(this.storeId, this.themeId, this.options.status, values)
                 .then(function(data) {
-                    console.log('✅ Saved:', data);
+                    log.info('Saved successfully');
 
                     if (data.saveBreezeThemeEditorValues.success) {
                         self._showToast('success', 'Settings saved successfully!');
 
-                        console.log('💾 Changes count BEFORE markAsSaved:', PanelState.getChangesCount());
+                        log.debug('Changes count BEFORE markAsSaved: ' + PanelState.getChangesCount());
                         PanelState.markAsSaved();
                         
                         // Mark palette as saved
                         PaletteManager.markAsSaved();
                         
-                        console.log('💾 Changes count AFTER markAsSaved:', PanelState.getChangesCount());
+                        log.debug('Changes count AFTER markAsSaved: ' + PanelState.getChangesCount());
 
                         self._refreshAllBadges();
 
@@ -638,13 +642,13 @@ define([
                             themeId: self.themeId,
                             draftChangesCount: fieldModified + paletteModified
                         });
-                        console.log('✅ Save complete, event triggered');
+                        log.info('Save complete, event triggered');
                     } else {
                         self._showToast('error', 'Failed to save: ' + data.saveBreezeThemeEditorValues.message);
                     }
                 })
                 .catch(function(error) {
-                    console.error('❌ Save failed:', error);
+                    log.error('Save failed: ' + error);
                     self._showToast('error', 'Failed to save settings: ' + error.message);
                 })
                 .always(function() {
@@ -666,7 +670,7 @@ define([
                 }
             });
 
-            console.log('🔄 All badges refreshed after save');
+            log.debug('All badges refreshed after save');
         },
 
         /**
@@ -681,7 +685,7 @@ define([
             this.$saveButton.prop('disabled', true);
             this.$resetButton.prop('disabled', true);
 
-            console.log('⏳', message);
+            log.debug('Loading: ' + (message || 'Loading...'));
         },
 
         /**
@@ -700,16 +704,16 @@ define([
          * Show error message
          */
         _showError: function(errorData) {
-            console.log('🔥 _showError called with:', errorData);
+            log.debug('_showError called with: ' + JSON.stringify(errorData));
 
             this.$loader.hide();
             this.$sectionsContainer.hide();
 
             var errorInfo = this._parseErrorData(errorData);
-            console.log('🔥 Parsed error info:', errorInfo);
+            log.debug('Parsed error info: ' + JSON.stringify(errorInfo));
 
             var displayMessage = this._getFriendlyMessage(errorInfo.message, errorInfo.debugMessage);
-            console.log('🔥 Display message:', displayMessage.message, 'Friendly:', displayMessage.isFriendly);
+            log.debug('Display message: ' + displayMessage.message + ' Friendly: ' + displayMessage.isFriendly);
 
             this._updateErrorUI(displayMessage.message, errorInfo.debugMessage, displayMessage.isFriendly);
 
@@ -721,7 +725,7 @@ define([
             // Show toast notification for errors
             this._showErrorToast(errorInfo.message, errorInfo.debugMessage);
 
-            console.error('❌ Panel error:', errorData);
+            log.error('Panel error: ' + JSON.stringify(errorData));
         },
 
         _showToast: function(type, message) {
@@ -749,7 +753,7 @@ define([
                     position: 'center'
                 });
                 
-                console.log('📢 Toast shown for unsupported theme');
+                log.info('Toast shown for unsupported theme');
             }
             
             if (isInvalidToken) {
@@ -763,7 +767,7 @@ define([
                     position: 'center'
                 });
                 
-                console.log('📢 Toast shown for invalid token with admin link');
+                log.info('Toast shown for invalid token with admin link');
             }
         },
 
@@ -773,7 +777,7 @@ define([
 
             if (typeof errorData === 'string') {
                 message = errorData;
-                console.log('📝 String error:', message);
+                log.debug('String error: ' + message);
                 return { message: message, debugMessage: null };
             }
 
@@ -782,29 +786,29 @@ define([
 
                 if (message.indexOf('GraphQL Error: ') === 0) {
                     message = message.substring(15);
-                    console.log('📝 Removed GraphQL prefix:', message);
+                    log.debug('Removed GraphQL prefix: ' + message);
                 }
 
                 if (errorData.extensions && errorData.extensions.debugMessage) {
                     debugMessage = errorData.extensions.debugMessage;
-                    console.log('✅ Found debugMessage in extensions:', debugMessage);
+                    log.debug('Found debugMessage in extensions: ' + debugMessage);
                 }
 
                 if (!debugMessage && errorData.graphqlErrors && errorData.graphqlErrors.length > 0) {
                     var firstError = errorData.graphqlErrors[0];
                     if (firstError.extensions && firstError.extensions.debugMessage) {
                         debugMessage = firstError.extensions.debugMessage;
-                        console.log('✅ Found debugMessage in graphqlErrors:', debugMessage);
+                        log.debug('Found debugMessage in graphqlErrors: ' + debugMessage);
                     }
                 }
 
                 if (!debugMessage && errorData.stack && errorData.stack.indexOf('Error: ') !== -1) {
                     debugMessage = errorData.stack;
-                    console.log('✅ Using stack trace:', debugMessage);
+                    log.debug('Using stack trace: ' + debugMessage);
                 }
             }
 
-            console.log('📊 Final parsed:', { message: message, debugMessage: debugMessage });
+            log.debug('Final parsed: message=' + message + ' debugMessage=' + debugMessage);
             return { message: message, debugMessage: debugMessage };
         },
 
@@ -830,7 +834,7 @@ define([
             
             for (var key in friendlyMessages) {
                 if (searchText.indexOf(key) !== -1) {
-                    console.log('✅ Found friendly message for:', key, 'in', debugMessage ? 'debugMessage' : 'message');
+                    log.debug('Found friendly message for: ' + key + ' in ' + (debugMessage ? 'debugMessage' : 'message'));
                     return {
                         message: friendlyMessages[key],
                         isFriendly: true
@@ -838,7 +842,7 @@ define([
                 }
             }
 
-            console.log('⚠️ No friendly message found, using original message');
+            log.debug('No friendly message found, using original message');
             return {
                 message: message,
                 isFriendly: false
@@ -851,28 +855,28 @@ define([
             var $toggle = this.$error.find('.bte-error-toggle');
 
             this.$error.find('.bte-error-message').text(message);
-            console.log('📝 Set error message:', message);
+            log.debug('Set error message: ' + message);
 
             if (debugMessage) {
                 $details.show();
                 $stack.text(debugMessage);
-                console.log('📝 Set debug message:', debugMessage);
+                log.debug('Set debug message: ' + debugMessage);
 
                 if (!hasFriendlyMessage) {
                     $stack.show();
                     $toggle.text('Hide technical details');
-                    console.log('✅ Auto-expanded (generic error)');
+                    log.debug('Auto-expanded (generic error)');
                 } else {
                     $stack.hide();
                     $toggle.text('Show technical details');
-                    console.log('✅ Collapsed (friendly message)');
+                    log.debug('Collapsed (friendly message)');
                 }
             } else {
                 $details.show();
                 $stack.text('No additional technical information available. Check browser console for more details.');
                 $stack.hide();
                 $toggle.text('Show technical details');
-                console.log('⚠️ No debugMessage, showing fallback');
+                log.debug('No debugMessage, showing fallback');
             }
         },
 
@@ -883,18 +887,18 @@ define([
             var self = this;
             
             if (!this.$paletteContainer || this.$paletteContainer.length === 0) {
-                console.log('⚠️ Palette container not found');
+                log.warn('Palette container not found');
                 return;
             }
             
             // Check if config has palettes
             if (!this.config || !this.config.palettes || this.config.palettes.length === 0) {
-                console.log('ℹ️ No palettes in config, hiding palette section');
+                log.debug('No palettes in config, hiding palette section');
                 this.$paletteContainer.hide();
                 return;
             }
             
-            console.log('🎨 Initializing Palette Section with', this.config.palettes.length, 'palettes');
+            log.info('Initializing Palette Section with ' + this.config.palettes.length + ' palettes');
             
             this.$paletteContainer.paletteSection({
                 palettes: this.config.palettes,
@@ -902,7 +906,7 @@ define([
                 themeId: this.themeId
             });
             
-            console.log('✅ Palette section initialized');
+            log.info('Palette section initialized');
         },
 
         /**
@@ -912,7 +916,7 @@ define([
             var self = this;
             
             if (!this.$presetContainer || this.$presetContainer.length === 0) {
-                console.log('⚠️ Preset container not found');
+                log.warn('Preset container not found');
                 return;
             }
             
@@ -922,14 +926,14 @@ define([
                 onApply: $.proxy(this._onPresetApplied, this)
             });
             
-            console.log('✅ Preset selector initialized');
+            log.info('Preset selector initialized');
         },
 
         /**
          * Handle preset applied event
          */
         _onPresetApplied: function(result) {
-            console.log('✅ Preset applied:', result.appliedCount, 'values');
+            log.info('Preset applied: ' + result.appliedCount + ' values');
             
             // Update changes counter
             this._updateChangesCount();
@@ -940,7 +944,7 @@ define([
             // Refresh CSS preview
             CssPreviewManager.refresh();
             
-            console.log('✅ Panel updated after preset apply');
+            log.info('Panel updated after preset apply');
         },
 
         _destroy: function() {

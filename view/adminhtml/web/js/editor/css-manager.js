@@ -9,9 +9,12 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
-    'Swissup_BreezeThemeEditor/js/editor/preview-manager'
-], function($, getCss, previewManager) {
+    'Swissup_BreezeThemeEditor/js/editor/preview-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function($, getCss, previewManager, Logger) {
     'use strict';
+
+    var log = Logger.for('css-manager');
     
     var currentStatus = 'DRAFT';
     var currentPublicationId = null;
@@ -40,17 +43,14 @@ define([
             
             // Validate parameters
             if (!storeId || !themeId) {
-                console.error('❌ CSS Manager: Invalid storeId or themeId', {
-                    storeId: storeId, 
-                    themeId: themeId
-                });
+                log.error('CSS Manager: Invalid storeId or themeId storeId=' + storeId + ' themeId=' + themeId);
                 return false;
             }
             
             // Get iframe element
             var $iframe = $('#' + iframeId);
             if (!$iframe.length) {
-                console.error('❌ CSS Manager: iframe not found:', iframeId);
+                log.error('CSS Manager: iframe not found: ' + iframeId);
                 return false;
             }
             
@@ -60,13 +60,13 @@ define([
             
             if (!iframeDoc || !iframeDoc.body) {
                 if (retries < 20) {
-                    console.log('⏳ CSS Manager: iframe not ready, retry', retries + 1);
+                    log.info('CSS Manager: iframe not ready, retry ' + (retries + 1));
                     setTimeout(function() {
                         self.init(config, retries + 1);
                     }, 200);
                     return false;
                 }
-                console.error('❌ CSS Manager: iframe not ready after 20 retries');
+                log.error('CSS Manager: iframe not ready after 20 retries');
                 return false;
             }
             
@@ -75,25 +75,20 @@ define([
             
             if (!$publishedStyle.length) {
                 if (retries < 20) {
-                    console.log('⏳ CSS Manager: #bte-theme-css-variables not ready, retry', retries + 1);
+                    log.info('CSS Manager: #bte-theme-css-variables not ready, retry ' + (retries + 1));
                     setTimeout(function() {
                         self.init(config, retries + 1);
                     }, 200);
                     return false;
                 }
-                console.error('❌ CSS Manager: #bte-theme-css-variables not found after retries!');
+                log.error('CSS Manager: #bte-theme-css-variables not found after retries!');
                 return false;
             }
             
             // Draft CSS will be created dynamically when switching to DRAFT
             // No need to check for it in init()
             
-            console.log('✅ CSS Manager initialized', {
-                storeId: storeId,
-                themeId: themeId,
-                iframeId: iframeId,
-                publishedStyleFound: true
-            });
+            log.info('CSS Manager initialized storeId=' + storeId + ' themeId=' + themeId + ' iframeId=' + iframeId + ' publishedStyleFound=true');
             
             // Trigger ready event for other components
             $(document).trigger('bte:cssManagerReady');
@@ -132,14 +127,14 @@ define([
             var iframe = this._getIframe();
             
             if (!iframe) {
-                console.warn('⚠️ Iframe not found:', iframeId);
+                log.warn('Iframe not found: ' + iframeId);
                 return null;
             }
             
             var doc = iframe.contentDocument || iframe.contentWindow.document;
             
             if (!doc) {
-                console.warn('⚠️ Cannot access iframe document');
+                log.warn('Cannot access iframe document');
                 return null;
             }
             
@@ -168,7 +163,7 @@ define([
                 doc.body.offsetHeight; // Trigger reflow
             }
             
-            console.log('✅ Enabled style:', style.id, '| media:', style.media, '| disabled:', style.disabled);
+            log.debug('Enabled style: ' + style.id + ' | media: ' + style.media + ' | disabled: ' + style.disabled);
         },
         
         /**
@@ -193,7 +188,7 @@ define([
                 doc.body.offsetHeight; // Trigger reflow
             }
             
-            console.log('🚫 Disabled style:', style.id, '| media:', style.media, '| disabled:', style.disabled);
+            log.debug('Disabled style: ' + style.id + ' | media: ' + style.media + ' | disabled: ' + style.disabled);
         },
         
         /**
@@ -206,7 +201,7 @@ define([
             var doc = this._getCurrentIframeDoc();
             
             if (!doc) {
-                console.error('❌ CSS Manager: iframe document not available');
+                log.error('CSS Manager: iframe document not available');
                 return null;
             }
             
@@ -225,11 +220,11 @@ define([
                 var $publishedStyle = $(doc).find('#bte-theme-css-variables');
                 if ($publishedStyle.length) {
                     $publishedStyle.after($style);
-                    console.log('📝 Created style element:', styleId);
+                    log.info('Created style element: ' + styleId);
                 } else {
                     // Fallback - append to head
                     $(doc.head).append($style);
-                    console.log('📝 Created style element (in head):', styleId);
+                    log.info('Created style element (in head): ' + styleId);
                 }
             }
             
@@ -246,7 +241,7 @@ define([
             var $style = this._getOrCreateStyle(styleId);
             if ($style && $style.length) {
                 $style.text(css);
-                console.log('✅ Updated style content:', styleId, '(' + css.length + ' chars)');
+                log.info('Updated style content: ' + styleId + ' (' + css.length + ' chars)');
             }
         },
         
@@ -258,12 +253,12 @@ define([
          * @returns {Promise}
          */
         switchTo: function(status, publicationId) {
-            console.log('🔄 CSS Manager: Switching to', status, publicationId || '');
+            log.info('CSS Manager: Switching to ' + status + ' ' + (publicationId || ''));
             
             var doc = this._getCurrentIframeDoc();
             
             if (!storeId || !doc) {
-                console.error('❌ CSS Manager not initialized or iframe document not available');
+                log.error('CSS Manager not initialized or iframe document not available');
                 return Promise.reject(new Error('CSS Manager not initialized'));
             }
             
@@ -296,19 +291,19 @@ define([
                                 // Disable all publications using native DOM
                                 var currentDoc = self._getCurrentIframeDoc();
                                 var publicationStyles = currentDoc.querySelectorAll('style[id^="bte-publication-css-"]');
-                                console.log('🔍 Found', publicationStyles.length, 'publication styles to disable');
+                                log.debug('Found ' + publicationStyles.length + ' publication styles to disable');
                                 Array.prototype.forEach.call(publicationStyles, function(styleElement) {
                                     self._disableStyle($(styleElement));
                                 });
                                 
-                                console.log('📗 CSS Manager: Showing DRAFT (created dynamically)');
+                                log.info('CSS Manager: Showing DRAFT (created dynamically)');
                                 return {status: 'DRAFT', success: true};
                             } else {
                                 throw new Error('Invalid response from GraphQL');
                             }
                         })
                         .catch(function(error) {
-                            console.error('❌ Failed to load DRAFT CSS:', error);
+                            log.error('Failed to load DRAFT CSS: ' + error);
                             return Promise.reject(error);
                         });
                         
@@ -320,17 +315,17 @@ define([
                     // Disable all publications using native DOM
                     var publishedDoc = this._getCurrentIframeDoc();
                     var publicationStyles = publishedDoc.querySelectorAll('style[id^="bte-publication-css-"]');
-                    console.log('🔍 Found', publicationStyles.length, 'publication styles to disable');
+                    log.debug('Found ' + publicationStyles.length + ' publication styles to disable');
                     Array.prototype.forEach.call(publicationStyles, function(styleElement) {
                         self._disableStyle($(styleElement));
                     });
                     
-                    console.log('📕 CSS Manager: Showing PUBLISHED');
+                    log.info('CSS Manager: Showing PUBLISHED');
                     return Promise.resolve({status: 'PUBLISHED', success: true});
                     
                 case 'PUBLICATION':
                     if (!publicationId) {
-                        console.error('❌ Publication ID required');
+                        log.error('Publication ID required');
                         return Promise.reject(new Error('Publication ID required'));
                     }
                     
@@ -352,19 +347,19 @@ define([
                                 // Disable other publications, enable current using native DOM
                                 var publicationDoc = self._getCurrentIframeDoc();
                                 var publicationStyles = publicationDoc.querySelectorAll('style[id^="bte-publication-css-"]');
-                                console.log('🔍 Found', publicationStyles.length, 'publication styles');
+                                log.debug('Found ' + publicationStyles.length + ' publication styles');
                                 
                                 Array.prototype.forEach.call(publicationStyles, function(styleElement) {
                                     var $style = $(styleElement);
                                     if (styleElement.id === publicationStyleId) {
                                         self._enableStyle($style);
-                                        console.log('✅ Enabled publication:', styleElement.id);
+                                        log.debug('Enabled publication: ' + styleElement.id);
                                     } else {
                                         self._disableStyle($style);
                                     }
                                 });
                                 
-                                console.log('📙 CSS Manager: Showing PUBLICATION', publicationId);
+                                log.info('CSS Manager: Showing PUBLICATION ' + publicationId);
                                 return {
                                     status: 'PUBLICATION', 
                                     publicationId: publicationId, 
@@ -375,12 +370,12 @@ define([
                             }
                         })
                         .catch(function(error) {
-                            console.error('❌ Failed to load PUBLICATION CSS:', error);
+                            log.error('Failed to load PUBLICATION CSS: ' + error);
                             return Promise.reject(error);
                         });
                         
                 default:
-                    console.error('❌ Invalid status:', status);
+                    log.error('Invalid status: ' + status);
                     return Promise.reject(new Error('Invalid status: ' + status));
             }
         },
@@ -474,7 +469,7 @@ define([
          * @returns {Promise}
          */
         refresh: function() {
-            console.log('🔄 CSS Manager: Refreshing current status');
+            log.info('CSS Manager: Refreshing current status');
             return this.switchTo(currentStatus, currentPublicationId);
         },
         
@@ -513,7 +508,7 @@ define([
          */
         setIframeId: function(newIframeId) {
             iframeId = newIframeId;
-            console.log('🔄 CSS Manager: iframe ID updated to', iframeId);
+            log.info('CSS Manager: iframe ID updated to ' + iframeId);
         }
     };
 });

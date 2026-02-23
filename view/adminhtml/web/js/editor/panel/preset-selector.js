@@ -6,7 +6,8 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-presets',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/apply-preset',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
-    'Swissup_BreezeThemeEditor/js/lib/toastify'
+    'Swissup_BreezeThemeEditor/js/lib/toastify',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function (
     $,
     widget,
@@ -15,9 +16,12 @@ define([
     getPresets,
     applyPreset,
     PanelState,
-    Toastify
+    Toastify,
+    Logger
 ) {
     'use strict';
+
+    var log = Logger.for('panel/preset-selector');
 
     $.widget('swissup.presetSelector', {
         options: {
@@ -29,7 +33,7 @@ define([
         },
 
         _create: function () {
-            console.log('✅ Initializing Preset Selector');
+            log.info('Initializing Preset Selector');
 
             this.template = mageTemplate(presetTemplate);
             this._render();
@@ -68,7 +72,7 @@ define([
             this.$header.removeClass('active');
             this.$content.removeClass('active').hide();
 
-            console.log('📋 Preset Selector rendered');
+            log.info('Preset Selector rendered');
         },
 
         /**
@@ -89,7 +93,7 @@ define([
                     self.$content.addClass('active').slideDown(200);
                 }
                 
-                console.log('🔄 Preset accordion toggled:', !isActive);
+                log.debug('Preset accordion toggled: ' + !isActive);
             });
             
             this.$select.on('change', $.proxy(this._onPresetSelected, this));
@@ -106,15 +110,15 @@ define([
         _loadPresets: function () {
             var self = this;
 
-            console.log('⏳ Loading presets...');
+            log.info('Loading presets...');
 
             getPresets(this.options.storeId, this.options.themeId)
                 .then(function (data) {
                     self.options.presets = data.breezeThemeEditorPresets || [];
-                    console.log('✅ Loaded', self.options.presets.length, 'presets');
+                    log.info('Loaded ' + self.options.presets.length + ' presets');
 
                     if (self.options.presets.length === 0) {
-                        console.log('ℹ️ No presets available, hiding selector');
+                        log.info('No presets available, hiding selector');
                         self.element.hide();
                         return;
                     }
@@ -122,7 +126,7 @@ define([
                     self._renderOptions();
                 })
                 .catch(function (error) {
-                    console.error('❌ Failed to load presets:', error);
+                    log.error('Failed to load presets: ' + error);
                     self.element.hide();
                 });
         },
@@ -138,7 +142,7 @@ define([
             });
 
             this.$select.html(options);
-            console.log('📋 Rendered', this.options.presets.length, 'preset options');
+            log.info('Rendered ' + this.options.presets.length + ' preset options');
         },
 
         /**
@@ -156,11 +160,11 @@ define([
             var preset = this._getPreset(presetId);
 
             if (!preset) {
-                console.error('❌ Preset not found:', presetId);
+                log.error('Preset not found: ' + presetId);
                 return;
             }
 
-            console.log('🔍 Selected preset:', preset.name);
+            log.info('Selected preset: ' + preset.name);
             this._showPreview(preset);
         },
 
@@ -224,7 +228,7 @@ define([
          */
         _onApplyClick: function () {
             if (!this.options.selectedPresetId) {
-                console.warn('⚠️ No preset selected');
+                log.warn('No preset selected');
                 return;
             }
 
@@ -280,7 +284,7 @@ define([
             var overwriteMode = this.$dialog.find('input[name="overwrite"]:checked').val();
             var overwrite = (overwriteMode === 'overwrite');
 
-            console.log('📋 Dialog confirmed, overwrite:', overwrite);
+            log.info('Dialog confirmed, overwrite: ' + overwrite);
 
             this._hideOverwriteDialog();
             this._applyPreset(overwrite);
@@ -290,7 +294,7 @@ define([
          * Handle dialog cancel
          */
         _onDialogCancel: function () {
-            console.log('❌ Dialog cancelled');
+            log.info('Dialog cancelled');
             this._hideOverwriteDialog();
         },
 
@@ -303,11 +307,11 @@ define([
             var preset = this._getPreset(presetId);
 
             if (!preset) {
-                console.error('❌ Preset not found');
+                log.error('Preset not found');
                 return;
             }
 
-            console.log('💾 Applying preset:', preset.name, 'overwrite:', overwrite);
+            log.info('Applying preset: ' + preset.name + ' overwrite: ' + overwrite);
 
             // Disable buttons
             this.$applyBtn.prop('disabled', true).text('Applying...');
@@ -323,12 +327,12 @@ define([
                     var result = data.applyBreezeThemeEditorPreset;
 
                     if (!result.success) {
-                        console.error('❌ Apply failed:', result.message);
+                        log.error('Apply failed: ' + result.message);
                         Toastify.show('error', 'Failed to apply preset: ' + result.message);
                         return;
                     }
 
-                    console.log('✅ Preset applied:', result.appliedCount, 'values');
+                    log.info('Preset applied: ' + result.appliedCount + ' values');
 
                     // Update panel fields
                     self._updatePanelFields(result.values);
@@ -346,7 +350,7 @@ define([
                     }
                 })
                 .catch(function (error) {
-                    console.error('❌ Apply preset failed:', error);
+                    log.error('Apply preset failed: ' + error);
                     Toastify.show('error', 'Failed to apply preset: ' + error.message);
                 })
                 .always(function () {
@@ -359,7 +363,7 @@ define([
          * Update panel fields with preset values
          */
         _updatePanelFields: function (values) {
-            console.log('🔄 Updating', values.length, 'fields');
+            log.info('Updating ' + values.length + ' fields');
 
             values.forEach(function (item) {
                 var selector = '[data-section="' + item.sectionCode + '"][data-field="' + item.fieldCode + '"]';
@@ -374,14 +378,14 @@ define([
                     // Trigger change event if value changed
                     if (currentValue !== item.value) {
                         $field.trigger('change');
-                        console.log('✅ Updated:', item.sectionCode + '.' + item.fieldCode);
+                        log.info('Updated: ' + item.sectionCode + '.' + item.fieldCode);
                     }
                 } else {
-                    console.warn('⚠️ Field not found:', selector);
+                    log.warn('Field not found: ' + selector);
                 }
             });
 
-            console.log('✅ Panel fields updated');
+            log.info('Panel fields updated');
         },
 
         /**

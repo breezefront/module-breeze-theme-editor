@@ -1,8 +1,11 @@
 define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/base',
-    'text!Swissup_BreezeThemeEditor/template/editor/panel/fields/repeater.html'
-], function(BaseFieldRenderer, template) {
+    'text!Swissup_BreezeThemeEditor/template/editor/panel/fields/repeater.html',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+], function(BaseFieldRenderer, template, Logger) {
     'use strict';
+
+    var log = Logger.for('panel/field-renderers/repeater');
 
     var RepeaterRenderer = Object.create(BaseFieldRenderer);
     RepeaterRenderer.templateString = template;
@@ -45,7 +48,7 @@ define([
                 var parsed = JSON.parse(value);
                 return Array.isArray(parsed) ? parsed : [];
             } catch (e) {
-                console.error('Failed to parse repeater value:', e);
+                log.error('Failed to parse repeater value: ' + e);
                 return [];
             }
         }

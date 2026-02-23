@@ -1,5 +1,7 @@
-define([], function () {
+define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logger) {
     'use strict';
+
+    var log = Logger.for('utils/dom/color-utils');
 
     /**
      * Color Utilities - Centralized color conversion & normalization
@@ -42,7 +44,7 @@ define([], function () {
                 if (match && match.length >= 3) {
                     return match[0] + ', ' + match[1] + ', ' + match[2];
                 }
-                console.warn('⚠️ ColorUtils.hexToRgb: Invalid RGB format:', hex);
+                log.warn('ColorUtils.hexToRgb: Invalid RGB format: ' + hex);
                 return '0, 0, 0';
             }
             
@@ -56,7 +58,7 @@ define([], function () {
             
             // Validate format
             if (!hexStr.match(/^[0-9A-Fa-f]{6}$/)) {
-                console.warn('⚠️ ColorUtils.hexToRgb: Invalid HEX format:', hex);
+                log.warn('ColorUtils.hexToRgb: Invalid HEX format: ' + hex);
                 return '0, 0, 0';
             }
 
@@ -88,7 +90,7 @@ define([], function () {
             // Extract numbers using regex (handles any whitespace/format and negatives)
             var parts = rgb.toString().match(/-?\d+/g);
             if (!parts || parts.length < 3) {
-                console.warn('⚠️ ColorUtils.rgbToHex: Invalid RGB format:', rgb);
+                log.warn('ColorUtils.rgbToHex: Invalid RGB format: ' + rgb);
                 return '#000000';
             }
 
@@ -173,7 +175,7 @@ define([], function () {
             
             // Validate format
             if (!hex.match(/^#[0-9a-f]{6}$/)) {
-                console.warn('⚠️ ColorUtils.normalizeHex: Invalid HEX format:', hex);
+                log.warn('ColorUtils.normalizeHex: Invalid HEX format: ' + hex);
                 return '';
             }
             
