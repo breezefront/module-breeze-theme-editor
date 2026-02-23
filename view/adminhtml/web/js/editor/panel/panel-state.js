@@ -315,6 +315,65 @@ define([
         },
 
         /**
+         * Restore single field to its default value
+         * Sets value = defaultValue, marks dirty if different from savedValue,
+         * and fires 'field-restore' event for settings-editor to handle auto-save.
+         *
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         * @returns {*} Default value that was restored, or undefined if failed
+         */
+        restoreToDefault: function(sectionCode, fieldCode) {
+            var key = sectionCode + '.' + fieldCode;
+            var state = this.values[key];
+
+            if (!state) {
+                log.warn('PanelState.restoreToDefault: Field not found: ' + key);
+                return undefined;
+            }
+
+            var defaultValue = state.defaultValue;
+            state.value = defaultValue;
+            state.isDirty = (defaultValue !== state.savedValue);
+
+            log.info('PanelState.restoreToDefault: ' + key + ' -> ' + defaultValue);
+            log.debug('State after restore: value=' + state.value + ' savedValue=' + state.savedValue + ' defaultValue=' + state.defaultValue + ' isDirty=' + state.isDirty + ' isModified=' + state.isModified);
+
+            // Notify listeners — settings-editor will auto-save and call markFieldAsSaved()
+            this.notifyListeners('field-restore', {
+                sectionCode: sectionCode,
+                fieldCode: fieldCode,
+                value: defaultValue
+            });
+
+            return defaultValue;
+        },
+
+        /**
+         * Mark single field as saved (after auto-save completes)
+         * Moves current value to savedValue, clears dirty flag,
+         * updates isModified based on default.
+         *
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         */
+        markFieldAsSaved: function(sectionCode, fieldCode) {
+            var key = sectionCode + '.' + fieldCode;
+            var state = this.values[key];
+
+            if (!state) {
+                log.warn('PanelState.markFieldAsSaved: Field not found: ' + key);
+                return;
+            }
+
+            state.savedValue = state.value;
+            state.isDirty = false;
+            state.isModified = (state.value !== state.defaultValue);
+
+            log.info('PanelState.markFieldAsSaved: ' + key + ' savedValue=' + state.savedValue + ' isModified=' + state.isModified);
+        },
+
+        /**
          * Get draft value for field (savedValue)
          * 
          * @param {String} sectionCode

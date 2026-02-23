@@ -329,6 +329,53 @@ define([
         },
 
         /**
+         * Handle field restore button click
+         * Restores field to its default value and triggers auto-save via PanelState event.
+         * Uses specialized handlers from registry if available (same as handleFieldReset).
+         *
+         * @param {jQuery} $restoreBtn - Restore button element
+         */
+        handleFieldRestore: function($restoreBtn) {
+            var fieldCode = $restoreBtn.data('field-code');
+            var sectionCode = $restoreBtn.data('section-code');
+
+            log.info('Restore clicked: ' + sectionCode + '.' + fieldCode);
+
+            // Show confirmation dialog
+            if (!window.confirm('Your customization will be lost. Continue?')) {
+                log.info('Restore cancelled by user');
+                return;
+            }
+
+            // Restore to default in state — fires 'field-restore' event
+            // settings-editor.js listener will handle auto-save + badge refresh
+            var defaultValue = PanelState.restoreToDefault(sectionCode, fieldCode);
+
+            if (defaultValue === undefined) {
+                log.error('Failed to restore field: ' + sectionCode + '.' + fieldCode);
+                return;
+            }
+
+            // Update field UI immediately (set input value to default)
+            var $field = this._findFieldElement(sectionCode, fieldCode);
+            var $wrapper = $field.closest('.bte-field');
+            var $input = $wrapper.find('input, select, textarea').first();
+            var fieldType = ($input.attr('data-type') || $field.attr('data-type') || '').toUpperCase();
+
+            // Use specialized handler if available
+            var handler = this._getHandlerForType(fieldType);
+
+            if (handler && handler.updateFieldUIAfterReset && handler !== this) {
+                log.info('Using specialized handler for restore, type: ' + fieldType);
+                handler.updateFieldUIAfterReset.call(this, sectionCode, fieldCode, defaultValue, $field, handler);
+            } else {
+                this.updateFieldUIAfterReset(sectionCode, fieldCode, defaultValue);
+            }
+
+            log.info('Field restore complete: ' + sectionCode + '.' + fieldCode + ' -> ' + defaultValue);
+        },
+
+        /**
          * Attach event handlers for reset button
          * Call this in specific field handlers' initialization
          * 
@@ -348,6 +395,12 @@ define([
                 e.preventDefault();
                 e.stopPropagation();
                 self.handleFieldReset($(this));
+            });
+
+            $container.on('click', '.bte-field-restore-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                self.handleFieldRestore($(this));
             });
         }
     };

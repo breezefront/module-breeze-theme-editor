@@ -17,10 +17,11 @@ define([
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/dirty.html',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/modified.html',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/reset-button.html',
+    'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/restore-button.html',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/palette-changed.html',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/palette-reset-button.html',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/palette-modified.html'
-], function($, mageTemplate, dirtyTemplate, modifiedTemplate, resetButtonTemplate,
+], function($, mageTemplate, dirtyTemplate, modifiedTemplate, resetButtonTemplate, restoreButtonTemplate,
             paletteChangedTemplate, paletteResetTemplate, paletteModifiedTemplate) {
     'use strict';
 
@@ -93,14 +94,34 @@ define([
         },
 
         /**
+         * Render Restore button
+         * 
+         * Button to restore field to its default value (removes customization).
+         * Appears next to "Modified" badge when field differs from default.
+         * 
+         * @param {String} sectionCode - Section identifier (e.g., 'general')
+         * @param {String} fieldCode - Field identifier (e.g., 'primary_color')
+         * @returns {String} HTML for restore button
+         */
+        renderRestoreButton: function(sectionCode, fieldCode) {
+            var template = this._getTemplate('restore', restoreButtonTemplate);
+            return template({
+                data: {
+                    sectionCode: sectionCode,
+                    fieldCode: fieldCode
+                }
+            });
+        },
+
+        /**
          * Render all badges for a field
          * 
          * Main entry point for rendering field badges. Combines dirty badge,
-         * reset button, and modified badge based on field state.
+         * reset button, modified badge, and restore button based on field state.
          * 
          * Rendering rules:
          * - isDirty=true: Shows "Changed" badge + Reset button
-         * - isModified=true: Shows "Modified" badge
+         * - isModified=true: Shows "Modified" badge + Restore button
          * - Both can be shown simultaneously
          * - Returns empty string if neither state is active
          * 
@@ -119,9 +140,10 @@ define([
                 html += this.renderResetButton(sectionCode, fieldCode);
             }
             
-            // Modified state: Modified badge
+            // Modified state: Modified badge + Restore button
             if (isModified) {
                 html += this.renderModifiedBadge();
+                html += this.renderRestoreButton(sectionCode, fieldCode);
             }
             
             return html;

@@ -15,6 +15,7 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values',
+    'Swissup_BreezeThemeEditor/js/graphql/mutations/save-value',
     'Swissup_BreezeThemeEditor/js/editor/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function (
@@ -34,6 +35,7 @@ define([
     getConfig,
     getConfigFromPublication,
     saveValues,
+    saveValue,
     StorageHelper,
     Logger
 ) {
@@ -155,7 +157,7 @@ define([
                 log.debug('Badges updated');
             });
 
-            // ✅ Listen for PanelState events (field-reset, etc.)
+            // ✅ Listen for PanelState events (field-reset, field-restore, etc.)
             PanelState.addListener(function(eventType, data) {
                 if (eventType === 'field-reset') {
                     log.debug('Panel handling field-reset event: ' + JSON.stringify(data));
@@ -194,6 +196,69 @@ define([
                         // Refresh CSS output in iframe
                         CssPreviewManager.updatePreview();
                     }
+                } else if (eventType === 'field-restore') {
+                    log.debug('Panel handling field-restore event: ' + JSON.stringify(data));
+
+                    // Update field badges immediately (reflects isDirty change)
+                    FieldHandlers.updateBadges(self.element, data.sectionCode, data.fieldCode);
+
+                    // Update Save button counter
+                    self._updateChangesCount();
+
+                    // Update CSS preview with restored default value
+                    if (CssPreviewManager.isActive()) {
+                        var $field = self.element.find('[data-section="' + data.sectionCode + '"][data-field="' + data.fieldCode + '"]');
+                        var fieldCssVar = $field.attr('data-css-var');
+                        var fieldType = ($field.attr('data-type') || '').toLowerCase();
+
+                        if (fieldCssVar && data.value !== undefined) {
+                            if (typeof data.value === 'string' && data.value.startsWith('--color-')) {
+                                CssPreviewManager.removeVariable(fieldCssVar);
+                                log.debug('Removed ' + fieldCssVar + ' from live preview (restore to palette ref: ' + data.value + ')');
+                            } else {
+                                var fieldData = {
+                                    format: $field.attr('data-format'),
+                                    defaultValue: $field.attr('data-default-value')
+                                };
+                                CssPreviewManager.setVariable(fieldCssVar, data.value, fieldType, fieldData);
+                                log.debug('Updated ' + fieldCssVar + ' in live preview (restore to: ' + data.value + ')');
+                            }
+                        }
+
+                        CssPreviewManager.updatePreview();
+                    }
+
+                    // Auto-save: persist the restored default value to draft immediately
+                    log.info('Auto-saving restored value for ' + data.sectionCode + '.' + data.fieldCode);
+                    saveValue(self.storeId, self.themeId, 'DRAFT', data.sectionCode, data.fieldCode, data.value)
+                        .then(function(result) {
+                            if (result.saveBreezeThemeEditorValue.success) {
+                                log.info('Auto-save success: ' + data.sectionCode + '.' + data.fieldCode);
+
+                                // Commit the save in state — clears isDirty, updates isModified
+                                PanelState.markFieldAsSaved(data.sectionCode, data.fieldCode);
+
+                                // Refresh badges: Modified badge (and restore button) should now disappear
+                                FieldHandlers.updateBadges(self.element, data.sectionCode, data.fieldCode);
+
+                                // Update counter again (isModified count may change)
+                                self._updateChangesCount();
+
+                                // Notify publication selector about draft change count
+                                var fieldModified = PanelState.getModifiedCount();
+                                var paletteModified = PaletteManager.getDirtyCount();
+                                $(document).trigger('themeEditorDraftSaved', {
+                                    storeId: self.storeId,
+                                    themeId: self.themeId,
+                                    draftChangesCount: fieldModified + paletteModified
+                                });
+                            } else {
+                                log.error('Auto-save failed: ' + result.saveBreezeThemeEditorValue.message);
+                            }
+                        })
+                        .catch(function(error) {
+                            log.error('Auto-save error for ' + data.sectionCode + '.' + data.fieldCode + ': ' + error);
+                        });
                 }
             });
 
