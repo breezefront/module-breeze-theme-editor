@@ -77,8 +77,15 @@ define([
                     }, 200);
                     return false;
                 }
-                console.error('❌ CSS Manager: #bte-theme-css-variables not found after retries!');
-                return false;
+                // No published styles yet (no CSS changes saved) - create empty placeholder
+                console.log('ℹ️ CSS Manager: #bte-theme-css-variables not found - creating empty placeholder');
+                $publishedStyle = $('<style>', {
+                    id: 'bte-theme-css-variables',
+                    type: 'text/css',
+                    'data-status': 'published',
+                    media: 'all'
+                }).text(':root {}');
+                $(iframeDocument.head).append($publishedStyle);
             }
             
             // Draft CSS will be created dynamically when switching to DRAFT
