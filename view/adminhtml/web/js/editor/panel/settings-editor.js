@@ -246,7 +246,7 @@ define([
 
                                 // Notify publication selector about draft change count
                                 var fieldModified = PanelState.getModifiedCount();
-                                var paletteModified = PaletteManager.getDirtyCount();
+                                var paletteModified = PaletteManager.getModifiedCount();
                                 $(document).trigger('themeEditorDraftSaved', {
                                     storeId: self.storeId,
                                     themeId: self.themeId,

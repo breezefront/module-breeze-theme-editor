@@ -133,19 +133,23 @@ define([
          */
         renderFieldBadges: function(isDirty, isModified, sectionCode, fieldCode) {
             var html = '';
-            
-            // Dirty state: Changed badge + Reset button
+
+            // Dirty state: Changed badge + Reset button — grouped so button sticks to badge
             if (isDirty) {
+                html += '<span class="bte-badge-group">';
                 html += this.renderDirtyBadge();
                 html += this.renderResetButton(sectionCode, fieldCode);
+                html += '</span>';
             }
-            
-            // Modified state: Modified badge + Restore button
+
+            // Modified state: Modified badge + Restore button — grouped so button sticks to badge
             if (isModified) {
+                html += '<span class="bte-badge-group">';
                 html += this.renderModifiedBadge();
                 html += this.renderRestoreButton(sectionCode, fieldCode);
+                html += '</span>';
             }
-            
+
             return html;
         },
 

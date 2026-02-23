@@ -175,8 +175,8 @@ define([
                 return false;
             }
 
-            // Remove old badges and action buttons
-            $header.find('.bte-badge, .bte-field-reset-btn, .bte-field-restore-btn').remove();
+            // Remove old badges, groups and action buttons
+            $header.find('.bte-badge, .bte-badge-group, .bte-field-reset-btn, .bte-field-restore-btn').remove();
 
             // Generate and append new badges
             var badgesHtml = this.renderBadges(fieldState.isDirty, fieldState.isModified, sectionCode, fieldCode);

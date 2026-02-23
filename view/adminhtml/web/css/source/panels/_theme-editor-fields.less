@@ -32,7 +32,6 @@
 .bte-field-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 10px;
 }
 
@@ -41,6 +40,7 @@
     font-weight: 500;
     color: rgba(255, 255, 255, 0.9);
     margin: 0;
+    flex: 1; // push badges/buttons to the right edge as a group
     display: flex;
     align-items: center;
     gap: 4px;
@@ -65,38 +65,43 @@
     vertical-align: middle;
 }
 
-// Reset button (appears after "Changed" badge)
+// Groups a badge with its action button so they always stay adjacent
+.bte-badge-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+// Reset button (↺ — discard unsaved changes, appears inside .bte-badge-group after "Changed")
 .bte-field-reset-btn {
     background: transparent;
     border: none;
     color: rgba(255, 255, 255, 0.6);
     font-size: 14px;
     line-height: 1;
-    padding: 2px 6px;
-    margin-left: -7px; // bring close to "Changed" badge (gap:10px - 7px = 3px)
-    margin-right: 6px; // push away from "Modified" badge (gap:10px + 6px = 16px)
+    padding: 2px 5px;
     cursor: pointer;
     border-radius: 3px;
     transition: all 0.2s ease;
     vertical-align: middle;
-    
+
     &:hover {
         color: rgba(255, 255, 255, 0.9);
         background: rgba(255, 255, 255, 0.1);
     }
-    
+
     &:active {
         background: rgba(255, 255, 255, 0.15);
         transform: scale(0.95);
     }
-    
+
     &:focus {
         outline: 1px solid rgba(255, 255, 255, 0.3);
         outline-offset: 2px;
     }
 }
 
-// Restore button (appears after "Modified" badge — removes customization)
+// Restore button (× — remove customization, appears inside .bte-badge-group after "Modified")
 .bte-field-restore-btn {
     background: transparent;
     border: none;
@@ -104,7 +109,6 @@
     font-size: 13px;
     line-height: 1;
     padding: 2px 5px;
-    margin-left: -5px; // sit close to "Modified" badge
     cursor: pointer;
     border-radius: 3px;
     transition: all 0.2s ease;
