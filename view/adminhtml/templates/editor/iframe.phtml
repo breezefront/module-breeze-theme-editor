@@ -1,0 +1,16 @@
+<?php
+/**
+ * @var \Swissup\BreezeThemeEditor\Block\Adminhtml\Editor\Iframe $block
+ */
+$frontendUrl = $block->getFrontendUrl();
+?><!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Loading Preview...</title>
+    <script>window.location.href = <?= /* @noEscape */ json_encode($frontendUrl) ?>;</script>
+</head>
+<body style="margin:0;padding:20px;font-family:sans-serif;">
+    <p>Loading preview... <a href="<?= $block->escapeUrl($frontendUrl) ?>">Click here if not redirected</a></p>
+</body>
+</html>

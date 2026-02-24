@@ -41,7 +41,7 @@ abstract class AbstractEditor extends Action
     /**
      * @var LoggerInterface
      */
-    private $logger;
+    protected $logger;
 
     /**
      * @param Context $context

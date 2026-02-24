@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Controller\Adminhtml\Editor;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\Controller\Result\Raw;
 use Magento\Framework\Controller\Result\RawFactory;
+use Magento\Framework\UrlInterface;
 use Psr\Log\LoggerInterface;
 
 class Iframe extends AbstractEditor implements HttpGetActionInterface
@@ -15,9 +16,9 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
     private $rawResultFactory;
 
     /**
-     * @var LoggerInterface
+     * @var \Magento\Framework\View\Element\BlockFactory
      */
-    private $logger;
+    private $blockFactory;
 
     /**
      * @param \Magento\Backend\App\Action\Context $context
@@ -27,6 +28,7 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
      * @param \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession
      * @param LoggerInterface $logger
      * @param RawFactory $rawResultFactory
+     * @param \Magento\Framework\View\Element\BlockFactory $blockFactory
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
@@ -35,11 +37,12 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession,
         LoggerInterface $logger,
-        RawFactory $rawResultFactory
+        RawFactory $rawResultFactory,
+        \Magento\Framework\View\Element\BlockFactory $blockFactory
     ) {
         parent::__construct($context, $resultPageFactory, $storeManager, $scopeConfig, $backendSession, $logger);
-        $this->logger = $logger;
         $this->rawResultFactory = $rawResultFactory;
+        $this->blockFactory = $blockFactory;
     }
 
     /**
@@ -52,59 +55,58 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
         $storeId = $this->getStoreId();
         $previewUrl = $this->getRequest()->getParam('url', '/');
         $jstest = $this->isJstestMode();
-        
-        // Get frontend store URL
+
+        $frontendUrl = $this->buildFrontendUrl($storeId, $previewUrl, $jstest);
+
+        /** @var \Swissup\BreezeThemeEditor\Block\Adminhtml\Editor\Iframe $block */
+        $block = $this->blockFactory->createBlock(
+            \Swissup\BreezeThemeEditor\Block\Adminhtml\Editor\Iframe::class,
+            ['data' => ['frontend_url' => $frontendUrl]]
+        );
+
+        $result = $this->rawResultFactory->create();
+        $result->setHeader('Content-Type', 'text/html; charset=utf-8');
+        $result->setContents($block->toHtml());
+
+        return $result;
+    }
+
+    /**
+     * Build frontend URL for the preview
+     *
+     * @param int $storeId
+     * @param string $previewUrl
+     * @param bool $jstest
+     * @return string
+     */
+    private function buildFrontendUrl(int $storeId, string $previewUrl, bool $jstest): string
+    {
         try {
             $store = $this->storeManager->getStore($storeId);
-            $frontendUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
-            
-            // Append preview URL path
+            $frontendUrl = $store->getBaseUrl(UrlInterface::URL_TYPE_WEB);
+
             if ($previewUrl !== '/') {
                 $frontendUrl = rtrim($frontendUrl, '/') . '/' . ltrim($previewUrl, '/');
             }
-            
-            // Add store parameter to ensure correct store view
-            $storeCode = $store->getCode();
+
             $separator = (strpos($frontendUrl, '?') !== false) ? '&' : '?';
-            $frontendUrl .= $separator . '___store=' . $storeCode;
-            
-            // Theme preview will be set by Observer (SetThemePreviewCookie)
-            // based on store config - no need to pass it here
-            
-            // Log URL building for debugging
-            $this->logger->info(sprintf(
-                '[BTE Iframe] Building URL: store=%d (%s), url=%s',
-                $storeId,
-                $storeCode,
-                $frontendUrl
-            ));
-            
-            // Add jstest parameter
+            $frontendUrl .= $separator . '___store=' . $store->getCode();
+
             if ($jstest) {
                 $frontendUrl .= '&jstest=1';
             }
+
+            $this->logger->info(sprintf(
+                '[BTE Iframe] Building URL: store=%d (%s), url=%s',
+                $storeId,
+                $store->getCode(),
+                $frontendUrl
+            ));
         } catch (\Exception $e) {
             $this->logger->error('[BTE Iframe] Failed to build URL: ' . $e->getMessage());
             $frontendUrl = '/';
         }
-        
-        // Simple redirect HTML
-        $html = '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <script>window.location.href = ' . json_encode($frontendUrl) . ';</script>
-    <title>Loading Preview...</title>
-</head>
-<body style="margin:0;padding:20px;font-family:sans-serif;">
-    <p>Loading preview... <a href="' . htmlspecialchars($frontendUrl, ENT_QUOTES, 'UTF-8') . '">Click here if not redirected</a></p>
-</body>
-</html>';
-        
-        $result = $this->rawResultFactory->create();
-        $result->setHeader('Content-Type', 'text/html; charset=utf-8');
-        $result->setContents($html);
-        
-        return $result;
+
+        return $frontendUrl;
     }
 }
