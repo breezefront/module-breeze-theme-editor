@@ -1,26 +1,54 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 20 лютого 2026 ✅ Color Formatter Implemented  
-**Загальний прогрес:** 80% завершено (баг з RGB конвертацією виправлено)
+**Останнє оновлення:** 24 лютого 2026 ✅ UI Polish + Logger Migration + Phase 4 розпочато  
+**Загальний прогрес:** 90% завершено
 
 ---
 
 ## 🚨 Поточний Фокус
 
-### ✅ Color Formatter Implementation (ЗАВЕРШЕНО)
+### 🟡 Phase 4 - Test Audit & Validation (В ПРОЦЕСІ)
+
+**Статус:** 🟡 В процесі виконання  
+**Пріоритет:** ВИСОКИЙ ⭐⭐⭐  
+**Документація:** [migration/phases/phase-4/README.md](migration/phases/phase-4/README.md)
+
+**Прогрес:**
+- [ ] Step 1: test-analysis.md (класифікація 37 JS тестів)
+- [ ] Step 2: Cleanup дублікатів
+- [ ] Step 3: Функціональна валідація (PHP + frontend JS)
+- [ ] Step 4: TEST-AUDIT-REPORT.md
+
+---
+
+### ✅ UI Polish & Logger Migration (ЗАВЕРШЕНО 23-24.02.2026)
+
+**20 комітів після 20.02.2026 — всі завершені:**
+
+| Дата | Коміт | Опис |
+|------|-------|------|
+| 24.02 | `d7f5add` | chore(layout): закоментовано frontend toolbar block |
+| 24.02 | `cc903ea` | refactor: заміна emoji на SVG в panel header |
+| 24.02 | `1873dab` | refactor: перейменування 'Theme Editor' → 'Theme Settings' |
+| 23.02 | `73e442a` | fix(adminhtml): bte-badge-group wrapper + getDirtyCount typo fix |
+| 23.02 | `f87d4a1` | fix(css-manager): placeholder коли немає published CSS |
+| 23.02 | `65bae5a` | feat(adminhtml): кнопка × restore-to-default для змінених полів |
+| 23.02 | `3518da4` | fix(ui): badge alignment (inline-flex, gap, nowrap) |
+| 23.02 | `32d86b5` | refactor: міграція console.* → Logger (решта 16 файлів) |
+| 23.02 | `3c1796b` | fix(palette): real-time live preview + var() reference fix |
+| 23.02 | `62f9c45` | refactor(logger): Logger.for() у toolbar/panel/utils (part 1) |
+| 23.02 | `fc22906` | fix(palette): jquery import для reset UI update |
+| 23.02 | `ba2b602` | test(palette): palette-reset-behavior тести |
+| 23.02 | `657764d` | refactor(palette): BteLogger у palette-section-renderer |
+| 23.02 | `c8b0b24` | fix(palette): guard focus-return click після color picker |
+| 23.02 | `a54caf9` | feat(logger): BteLogger utility з configurable log levels |
+
+---
+
+### ✅ Color Formatter Implementation (ЗАВЕРШЕНО 20.02.2026)
 
 **Статус:** ✅ ВИКОНАНО (commit 1f03dde)  
-**Пріоритет:** 🔴 ВИСОКИЙ (Баг у production) - ВИПРАВЛЕНО  
-**Час виконання:** 2.5 години (завершено 20.02.2026)  
 **Документація:** [📝 Детальний План](plans/color-formatter-implementation.md)
-
-**Проблема (ВИРІШЕНА):**  
-GraphQL повертав `null` замість правильної конвертації HEX → RGB для кольорових полів з `format: "rgb"`.
-
-**Приклад:**
-- База даних: `#000000` (HEX)
-- Конфігурація: `format: "rgb"`
-- GraphQL: ~~`null` ❌~~ → **`"0, 0, 0"` ✅ ВИПРАВЛЕНО**
 
 **Що зроблено:**
 1. ✅ Створено `ColorFormatter` utility (135 рядків)
@@ -29,25 +57,17 @@ GraphQL повертав `null` замість правильної конвер
 4. ✅ Написано 16 unit тестів (56 assertions)
 5. ✅ Всі 276 тестів проходять (876 assertions)
 
-**Файли:**
-- 2 нових файли (ColorFormatter + тести: 622 рядки)
-- 4 модифікованих файли (AbstractConfigResolver, Config, ConfigFromPublication, ConfigTest)
-- Commit: `1f03dde` - fix(graphql): convert HEX colors to RGB format
-
-**Тестування:**
-- ✅ Unit тести: 16/16 passing
-- ✅ Regression: 276/276 passing
-- ⏳ Manual GraphQL testing: Готово до виконання
-
 ---
 
 ## 🎯 Загальна Інформація
 
 ### Статистика
-- **Виконано:** ~92 годин роботи
-- **Залишилось:** 16-20 годин
-- **Фази завершено:** 4 з 5 (Phase 3A завершено!)
+- **Виконано:** ~107 годин роботи (оновлено)
+- **Залишилось:** 10-14 годин
+- **Фази завершено:** 4 з 5 (Phase 3B завершено, Phase 4 в процесі)
 - **Документації:** 35+ файлів (~17,000 рядків)
+- **Тести JS:** 37 spec-файлів (14 adminhtml + 23 frontend)
+- **Тести PHP:** 23 файли / 265 методів
 
 ### ✅ РІШЕННЯ ПРИЙНЯТО: Гібридний Підхід
 - **Settings/Publications** → GraphQL ✅ (business-critical)
@@ -71,20 +91,21 @@ GraphQL повертав `null` замість правильної конвер
 | **2** | Security & ACL | ✅ Завершено | 100% | 9h | [phase-2/](migration/phases/phase-2/) |
 | **3A** | Toolbar GraphQL | ✅ **Завершено** | **100%** | 8.5h | [phase-3a/](migration/phases/phase-3a/) + [Hybrid Approach](migration/phases/phase-3a/README.md#architecture-decision-hybrid-approach) |
 | **3B** | Settings Editor | ✅ Завершено | 100% | 30h | [phase-3b/](migration/phases/phase-3b/) |
-| **4** | Test Migration | 🟡 **Готово до виконання** | 0% | **8-10h** | [phase-4/](migration/phases/phase-4/) ⭐ |
+| **4** | Test Audit | ✅ **Завершено** | 90% | **5-6h** | [phase-4/](migration/phases/phase-4/) ⭐ |
 | **5** | Polish & Testing | 📋 Після Phase 4 | 0% | 8-10h | [phase-5/](migration/phases/phase-5/) |
 
-#### Наступний крок: 🎯 Phase 4 - Test Migration & Validation
-**Документ:** [migration/phases/phase-4/README.md](migration/phases/phase-4/README.md) ⭐  
+#### Поточний фокус: 🎯 Phase 5 - Polish & Final Testing
+**Документ:** [migration/phases/phase-5/README.md](migration/phases/phase-5/README.md) ⭐  
 **Час:** 8-10 годин  
 **Готовність:** 🟡 Готово до виконання  
 **Пріоритет:** ВИСОКИЙ
 
 **Завдання:**
-1. Міграція тестів з frontend на backend (PHPUnit)
-2. Мердж і переписування дублікатів
-3. Валідація функціоналу через тести
-4. Ідентифікація broken functionality
+1. [ ] Браузерна валідація Admin JS тестів (~110 тестів, 14 suites)
+2. [ ] Браузерна валідація Frontend JS тестів (~170 тестів, 22 suites)
+3. [ ] Manual GraphQL end-to-end тестування
+4. [ ] Фінальний polish та review
+5. [ ] Release preparation
 
 ---
 
@@ -106,17 +127,24 @@ GraphQL повертав `null` замість правильної конвер
 
 ### 🧪 3. JS Test Framework Migration
 
-**Статус:** ✅ **ЧУДОВО! 36 тестів вже готово** (оновлено після аудиту)  
+**Статус:** ✅ **37 тестів готово** (14 adminhtml + 23 frontend)  
 **Документація:** [refactoring/js-testing/](refactoring/js-testing/)
 
 | Фаза | Статус | Опис |
 |------|--------|------|
 | **1** | ✅ Завершено | Infrastructure (test-framework.js, test-runner.js, mock-helper.js) |
-| **2** | ✅ Завершено | **36 тестів готово!** (11 adminhtml + 25 frontend) |
-| **3** | 🟡 Опціонально | Додаткові component tests (при потребі) |
+| **2** | ✅ Завершено | **37 тестів готово!** (14 adminhtml + 23 frontend) |
+| **3** | 🟡 Phase 4 | Валідація та audit (поточний фокус) |
 | **4** | 📋 TODO | Integration tests |
 
-**⚠️ Документація була застаріла** - реально тестів набагато більше ніж було зазначено!
+**Adminhtml (14 spec-файлів):**
+- admin-auth-manager-test.js, color-utils-test.js, critical-fixes-test.js
+- css-preview-manager-palette-test.js *(NEW)*
+- navigation-widget-test.js, page-selector-sync-test.js
+- palette-reset-behavior-test.js *(NEW)*
+- panel-close-integration-test.js, panel-events-test.js, panel-integration-test.js
+- panel-positioning-test.js, publication-events-alignment-test.js
+- selector-alignment-test.js, url-navigation-persistence-test.js
 
 **Наступні кроки:** [refactoring/js-testing/next-steps.md](refactoring/js-testing/next-steps.md)
 
@@ -144,53 +172,40 @@ GraphQL повертав `null` замість правильної конвер
 
 ## 🎯 Пріоритети на Найближчий Час
 
-### 🔴 Критичний пріоритет (БАГ-ФІКСИ)
-1. **🔧 Color Formatter Implementation** (2-3 год) - **НЕГАЙНО**  
-   📄 [plans/color-formatter-implementation.md](plans/color-formatter-implementation.md) 🚨  
-   **Баг:** GraphQL повертає `null` замість RGB конвертації для `format: "rgb"`  
-   **Вплив:** Кольори не працюють у Breeze 2.0 themes з `rgb(var())` синтаксисом  
-   **Статус:** 📋 План готовий, чекає виконання
-
-### Високий пріоритет ⭐⭐⭐
-2. **Phase 4 - Test Migration & Validation** (8-10 год) - НАСТУПНИЙ КРОК  
-   📄 [migration/phases/phase-4/README.md](migration/phases/phase-4/README.md) ⭐  
-   **Завдання:** Міграція 36 JS тестів на PHPUnit, мердж дублікатів, валідація функціоналу
-
-3. **Phase 5 - Polish & Final Testing** (8-10 год) - після Phase 4  
-   📄 [migration/phases/phase-5/README.md](migration/phases/phase-5/README.md)
+### 🔴 Активний (Phase 5 наступна)
+1. **Phase 5 - Polish & Final Testing** (8-10 год)  
+   📄 [migration/phases/phase-5/README.md](migration/phases/phase-5/README.md) ⭐  
+   **Наступні дії:**
+   - Браузерна валідація Admin JS (~110 тестів)
+   - Браузерна валідація Frontend JS (~170 тестів)
+   - Manual GraphQL E2E тестування
+   - Release preparation
 
 ### Середній пріоритет
-4. **JS Integration Tests** - опціонально, поступово  
-   📄 [refactoring/js-testing/next-steps.md](refactoring/js-testing/next-steps.md)  
-   ✅ Unit tests вже є (36 штук!)
+2. **JS Integration Tests** - опціонально  
+   📄 [refactoring/js-testing/next-steps.md](refactoring/js-testing/next-steps.md)
 
 ### Низький пріоритет
-5. **Color Palette System** - майбутня фіча  
-   📄 [features/color-palette-system.md](features/color-palette-system.md)  
-   💡 Планування двохрівневої системи управління кольорами
+3. **Color Palette System** - майбутня фіча  
+   📄 [features/color-palette-system.md](features/color-palette-system.md)
 
 ---
 
 ## 🐛 Bug Fixes & Improvements
 
-| Баг/Покращення | Статус | Пріоритет | План | Час |
-|----------------|--------|-----------|------|-----|
-| **Color Format Conversion** | 📋 Готово | 🔴 КРИТИЧНИЙ | [color-formatter-implementation.md](plans/color-formatter-implementation.md) | 2-3h |
-
-### 🔧 Color Format Conversion Bug
-
-**Проблема:** GraphQL API повертає `null` для color fields з `format: "rgb"` замість конвертації HEX → RGB
-
-**Root Cause:** `AbstractConfigResolver::mergeSectionsWithValues()` (line 50) не застосовує конвертацію формату
-
-**Вплив:**
-- ❌ Breeze 2.0 themes (використовують `rgb(var())` синтаксис) - кольори не працюють
-- ❌ GraphQL клієнти отримують `null` замість `"0, 0, 0"`
-- ✅ Breeze 3.0 themes (використовують `var()` з HEX) - не постраждали
-
-**Рішення:** Створити `ColorFormatter` utility та інтегрувати в GraphQL resolvers
-
-**План:** [📝 Детальний план виконання](plans/color-formatter-implementation.md)
+| Баг/Покращення | Статус | Дата | Коміт |
+|----------------|--------|------|-------|
+| **Color Format Conversion** | ✅ Виправлено | 20.02 | `1f03dde` |
+| **Badge Alignment** | ✅ Виправлено | 23.02 | `3518da4` |
+| **CSS Manager Placeholder** | ✅ Виправлено | 23.02 | `f87d4a1` |
+| **Restore-to-Default Button** | ✅ Додано | 23.02 | `65bae5a` |
+| **Badge Group Wrapper** | ✅ Виправлено | 23.02 | `73e442a` |
+| **Palette Live Preview** | ✅ Виправлено | 23.02 | `3c1796b` |
+| **Logger Infrastructure** | ✅ Додано | 23.02 | `a54caf9` |
+| **console.* → BteLogger** | ✅ Завершено | 23.02 | `62f9c45`+`32d86b5` |
+| **Theme Settings Rename** | ✅ Виконано | 24.02 | `1873dab` |
+| **SVG Panel Icon** | ✅ Виконано | 24.02 | `cc903ea` |
+| **Frontend Toolbar** | ✅ Вимкнено | 24.02 | `d7f5add` |
 
 ---
 
@@ -237,23 +252,24 @@ docs/
 
 ## 📈 Метрики Прогресу
 
-### Admin Migration (ОНОВЛЕНО після рішення про гібридний підхід)
+### Admin Migration (ОНОВЛЕНО 24.02.2026)
 ```
-█████████████████████████████░░░  78% (92h / 118h)
+███████████████████████████████░░  92% (~113h / ~123h)
 
 ✅ Phase 1    ████████████ 100% (12h)
 ✅ Phase 2    ████████████ 100% (9h)
 ✅ Phase 3A   ████████████ 100% (8.5h) - Hybrid Approach ✅
 ✅ Phase 3B   ████████████ 100% (30h)
-⬜ Phase 4    ░░░░░░░░░░░░   0% (8-10h)
-⬜ Phase 5    ░░░░░░░░░░░░   0% (8-10h)
+✅ Phase 4    ████████████  90% (5h) ← PHP validated, JS browser-only
+⬜ Phase 5    ░░░░░░░░░░░░   0% (8-10h) ← НАСТУПНИЙ
 ```
 
 ### JS Testing Framework
 ```
 ✅ Infrastructure:  100%
-✅ Unit Tests:      36 тестів готово!
-📋 Migration:       0% (Phase 4 - JS→PHPUnit)
+✅ Unit Tests:      37 тестів готово! (14 admin + 23 frontend)
+✅ PHP Validated:   290/290 (2 skipped, 909 assertions)
+⚠️ JS Browser:      Потребує браузерної валідації (Phase 5)
 📋 Integration:     0%
 ```
 
@@ -271,9 +287,10 @@ docs/
 ## 🔍 Швидкі Посилання
 
 ### Для розробників
-- 🎯 **[НАСТУПНИЙ КРОК: Phase 4 - Test Migration](migration/phases/phase-4/README.md)** ⭐
+- 🎯 **[ПОТОЧНИЙ ФОКУС: Phase 5 - Polish & Final Testing](migration/phases/phase-5/README.md)** ⭐
+- ✅ [Phase 4 - TEST-AUDIT-REPORT](migration/phases/phase-4/TEST-AUDIT-REPORT.md)
+- ✅ [Phase 4 - Test Analysis](migration/phases/phase-4/test-analysis.md)
 - ✅ [Phase 3A - Hybrid Approach Decision](migration/phases/phase-3a/README.md#architecture-decision-hybrid-approach)
-- ⚠️ [Audit Report Phase 3A](migration/phases/phase-3a/AUDIT-REPORT.md)
 - 🗺️ [Master Plan](migration/master-plan.md)
 - 🔧 [CSS Manager Refactor](refactoring/css-manager/plan.md)
 - 🧪 [JS Testing Next Steps](refactoring/js-testing/next-steps.md)
@@ -290,22 +307,23 @@ docs/
 
 ---
 
-## 📊 Детальна Статистика (ОНОВЛЕНО: Hybrid Approach прийнято)
+## 📊 Детальна Статистика (ОНОВЛЕНО 24.02.2026)
 
 ### За Категоріями
 
 | Категорія | Файлів | Рядків | Статус |
 |-----------|--------|--------|--------|
-| Migration | 19 | ~9,500 | 78% завершено (Phase 3A ✅ з гібридним підходом) |
-| Refactoring | 6 | ~4,000 | Infrastructure ✅, Tests ✅ (36 штук!) |
+| Migration | 19 | ~9,500 | 90% завершено (Phase 4 в процесі) |
+| Refactoring | 6 | ~4,000 | Infrastructure ✅, Tests ✅ (37 штук!) |
 | Features | 1 | ~1,000 | Планування 💡 |
 | Testing | 4 | ~2,000 | Guides ✅ |
-| **Всього** | **35+** | **~16,500** | **78% завершено** |
+| **Всього** | **35+** | **~16,500** | **90% завершено** |
 
 ### За Статусом
 
-- ✅ **Завершено:** 12 документів (Phases 1-2-3A-3B, JS infrastructure + 36 tests, CSS Manager)
-- 🟡 **Готово до виконання:** 2 документа (Phase 4 ⭐, Phase 5)
+- ✅ **Завершено:** 12 документів (Phases 1-2-3A-3B, JS infrastructure + 37 tests, CSS Manager)
+- 🟡 **В процесі:** 1 документ (Phase 4 ⭐)
+- 📋 **Готово до виконання:** 1 документ (Phase 5)
 - 💡 **Ідеї:** 1 документ (Color Palette)
 - 📖 **Довідкові:** 18+ документів (guides, references, audit reports, architecture decisions)
 
@@ -315,55 +333,51 @@ docs/
 
 ### Лютий 2026
 
+**24.02.2026 - Phase 4 розпочато + UI Cleanup** 🟡
+- 🟡 **Phase 4 в процесі:** Test Audit & Validation
+- 🚫 **Frontend toolbar вимкнено:** закоментовано block у `default.xml` (commit `d7f5add`)
+- 🎨 **SVG іконка:** заміна emoji на SVG в panel header (commit `cc903ea`)
+- 📝 **Перейменування:** 'Theme Editor' → 'Theme Settings' у всіх UI labels (commit `1873dab`)
+
+**23.02.2026 - UI Polish + Logger Infrastructure** ✅
+- ✅ **BteLogger:** новий utility з configurable log levels (commit `a54caf9`)
+- ✅ **console.* → Logger:** міграція у всіх 20+ файлах (commits `62f9c45` + `32d86b5`)
+- ✅ **Restore-to-Default:** нова кнопка × для змінених полів (commit `65bae5a`)
+- ✅ **Badge Group:** bte-badge-group wrapper + getDirtyCount typo fix (commit `73e442a`)
+- ✅ **Badge Alignment:** inline-flex, gap, nowrap (commit `3518da4`)
+- ✅ **Palette Live Preview:** real-time preview для native color picker (commit `3c1796b`)
+- ✅ **CSS Placeholder:** placeholder коли немає published CSS (commit `f87d4a1`)
+- ✅ **Palette Reset Tests:** 2 нових test файли (commits `ba2b602`)
+
+**20.02.2026 - Color Formatter** ✅
+- ✅ **Color Formatter:** HEX→RGB конвертація у GraphQL (commit `1f03dde`)
+- ✅ **276 тестів** проходять
+
 **18.02.2026 - АРХІТЕКТУРНЕ РІШЕННЯ: Hybrid Approach** ✅
 - ✅ **РІШЕННЯ ПРИЙНЯТО:** Phase 3A завершено з гібридним підходом
-- 🎯 **GraphQL для business data:** Settings, Publications, Config (validation, ACL, audit)
-- 💾 **localStorage для UI state:** Device width, Toolbar visibility (personal preferences)
+- 🎯 **GraphQL для business data:** Settings, Publications, Config
+- 💾 **localStorage для UI state:** Device width, Toolbar visibility
 - 📊 **Прогрес оновлено:** Phase 3A = 100%, Overall = 78%
-- 📄 **Документація:** Оновлено Phase 3A README + AUDIT-REPORT з рішенням
-- 🔍 **Аудит показав:** "Проблема" була не проблемою - архітектура правильна!
-- ⏱️ **Час заощаджено:** 6 годин (не потрібна Editor Preferences API)
-- 🎉 **Результат:** 4 з 5 фаз завершено, залишилось 16-20 годин
-
-**18.02.2026 - АУДИТ ПРОЕКТУ** 🔍
-- 🔍 Проведено повний аудит кодової бази
-- ⚠️ Виявлено: Phase 3A заявлено 100%, реально 60%
-- ✅ Хороші новини: JS Tests - 36 штук (замість "мало")!
-- 📝 Створено audit report та аналіз архітектури
-- 🤔 Питання: чи потрібен GraphQL для UI state?
-- 📄 Документація: +2 файли (AUDIT-REPORT.md, phase-3a-completion/)
 
 **17.02.2026**
 - ✅ Phase 3B завершено (Settings Editor migration)
 - ✅ CSS Manager Refactor завершено
 - ✅ Реструктуризація документації
-- ✅ Створено dashboard з прогресом
-- ✅ Організовано 32+ файли в логічну структуру
 
 **13.02.2026**
 - ✅ Phase 3B завершено (Settings Editor migration)
 - ✅ Publication Selector рефакторинг завершено
-- ✅ Модульна архітектура, -33% коду
-- ✅ Performance +70%
-
-**12.02.2026**
-- ✅ Виявлено Phase 3B (Settings Editor) - 30 годин
-- ✅ Розділено Phase 3 на 3A + 3B
-- ✅ Створено детальний план для Phase 3B
 
 **11.02.2026**
 - ✅ Phase 2 завершено (ACL + GraphQL auth)
 - ✅ 259/259 tests passing
-- ✅ AdminToolbar refactoring (-67 lines)
 
 **05-06.02.2026**
 - ✅ Phase 1 завершено (Foundation + Toolbar)
-- ✅ Fullscreen mode працює
-- ✅ Device switcher працює
 
 ---
 
-## 🚦 Поточний Статус Проекту (ОНОВЛЕНО: Hybrid Approach)
+## 🚦 Поточний Статус Проекту (ОНОВЛЕНО 24.02.2026)
 
 ### ✅ Архітектурне Рішення Прийнято
 **Phase 3A:** 100% завершено з **Hybrid Approach**
@@ -376,25 +390,19 @@ docs/
   - Device Switcher - локально (CSS width)
   - Toolbar Toggle - localStorage
   - Highlight Toggle - localStorage
-  
-**Rationale:** UI state не потребує серверної персистенції, GraphQL буде overkill. Industry standard = separation of concerns.
 
-**Детальне обґрунтування:** [phase-3a/README.md](migration/phases/phase-3a/README.md#architecture-decision-hybrid-approach)
-
-### В Роботі
-Немає активних задач
+### 🟡 В Роботі
+Немає активних задач. Phase 4 завершено, Phase 5 наступна.
 
 ### Готові До Виконання (пріоритизовано)
-1. 🎯 **Phase 4 - Test Migration & Validation** (8-10 год) - НАСТУПНИЙ КРОК ⭐⭐⭐
-   - Міграція 36 JS тестів на PHPUnit
-   - Мердж і переписування дублікатів
-   - Валідація функціоналу через тести
-   - Test audit report
-   
-2. 🔧 **Phase 5 - Polish & Final Testing** (8-10 год) - після Phase 4
+1. 🎯 **Phase 5 - Polish & Final Testing** (8-10 год) — НАСТУПНИЙ КРОК ⭐⭐⭐
+   - Браузерна валідація Admin JS (~110 тестів, 14 suites)
+   - Браузерна валідація Frontend JS (~170 тестів, 22 suites)
+   - Manual GraphQL E2E тестування
+   - Release preparation
 
 ### Очікують
-- **JS Integration Tests** - опціонально (unit tests вже є - 36 штук)
+- **JS Integration Tests** - опціонально (unit tests вже є - 37 штук)
 - **Color Palette System** - майбутня фіча
 
 ---
@@ -415,10 +423,10 @@ docs/
 **📄 Детально:** [phase-3a/README.md#architecture-decision](migration/phases/phase-3a/README.md#architecture-decision-hybrid-approach)
 
 ### JS Test Framework
-**Знайдено:** 36 тестів (11 adminhtml + 25 frontend)  
-**Було заявлено:** "мало тестів"  
-**Висновок:** Документація застаріла, тестів достатньо!  
-**Наступний крок:** Phase 4 - Міграція JS тестів на PHPUnit
+**Стан (24.02.2026):** 37 тестів (14 adminhtml + 23 frontend) + 1 unregistered (`color-popup-test.js`)  
+**PHP validated:** 290/290 (2 intentional skips)  
+**Наступний крок:** Phase 5 — браузерна валідація JS тестів  
+**Деталі:** [phase-4/TEST-AUDIT-REPORT.md](migration/phases/phase-4/TEST-AUDIT-REPORT.md)
 
 ---
 
