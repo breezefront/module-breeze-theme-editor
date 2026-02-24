@@ -87,7 +87,7 @@ class ConfigProvider
                                 $overrideSection['settings']
                             );
                         }
-                        foreach (['name', 'description', 'icon', 'order'] as $field) {
+                        foreach (['name', 'description', 'icon', 'order', 'selector'] as $field) {
                             if (isset($overrideSection[$field])) {
                                 $baseSection[$field] = $overrideSection[$field];
                             }

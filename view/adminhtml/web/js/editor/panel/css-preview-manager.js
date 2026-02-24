@@ -511,11 +511,11 @@ define([
             }
             
             // Iterate over all changes and update corresponding form fields
-            Object.keys(changes).forEach(function(cssVar) {
-                var value = changes[cssVar];
+            Object.keys(changes).forEach(function(property) {
+                var value = changes[property];
                 
-                // Find field with this CSS variable
-                var $field = $('[data-css-var="' + cssVar + '"]');
+                // Find field with this CSS property
+                var $field = $('[data-property="' + property + '"]');
                 if (!$field.length) {
                     return;
                 }
@@ -562,9 +562,9 @@ define([
                         FieldHandlers.updateBadges($panelElement, sectionCode, fieldCode);
                     });
                     
-                    log.debug('Synced field value & badges: ' + cssVar + ' -> ' + displayValue + ' (' + sectionCode + '.' + fieldCode + ')');
+                    log.debug('Synced field value & badges: ' + property + ' -> ' + displayValue + ' (' + sectionCode + '.' + fieldCode + ')');
                 } else {
-                    log.debug('Synced field value: ' + cssVar + ' -> ' + displayValue + ' (no section/field code)');
+                    log.debug('Synced field value: ' + property + ' -> ' + displayValue + ' (no section/field code)');
                 }
                 
                 syncedCount++;

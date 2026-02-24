@@ -209,7 +209,8 @@ type BreezeThemeEditorField {
     value: String @doc(description: "Current value (JSON)")
     default: String @doc(description: "Default value (JSON)")
     isModified: Boolean! @doc(description: "Is different from default")
-    cssVar: String
+    property: String @doc(description: "CSS property name (e.g., '--max-width' or 'max-width')")
+    selector: String @doc(description: "CSS selector override (e.g., '.columns-container')")
     required: Boolean
     validation: BreezeThemeEditorFieldValidation
     placeholder: String

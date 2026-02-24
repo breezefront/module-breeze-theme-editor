@@ -96,7 +96,7 @@ define([
                 helpText: field.helpText || '',
                 value: currentValue,
                 default: field.default,
-                cssVar: field.cssVar || '',
+                property: field.property || '',
                 placeholder: field.placeholder || '',
                 required: !!field.required,
                 isModified: isModified,
@@ -206,8 +206,8 @@ define([
                 'data-type="' + (field.type || 'unknown') + '"'
             ];
 
-            if (field.cssVar) {
-                attrs.push('data-css-var="' + field.cssVar + '"');
+            if (field.property) {
+                attrs.push('data-property="' + field.property + '"');
             }
 
             if (field.default !== undefined) {

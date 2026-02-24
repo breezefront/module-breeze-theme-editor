@@ -12,7 +12,7 @@
           "type": "color",
           "default": "var(--color-brand-primary)",
           "description": "Main brand color",
-          "css_var": "--button-primary-bg"
+          "property": "--button-primary-bg"
         },
         {
           "id": "secondary_color",
@@ -20,7 +20,7 @@
           "type": "color",
           "default": "var(--color-brand-secondary)",
           "description": "Secondary brand color",
-          "css_var": "--button-secondary-bg"
+          "property": "--button-secondary-bg"
         },
         {
           "id": "accent_color",
@@ -28,7 +28,7 @@
           "type": "color",
           "default": "var(--color-brand-accent)",
           "description": "Accent color for CTAs",
-          "css_var": "--link-color"
+          "property": "--link-color"
         }
       ]
     }

@@ -935,5 +935,274 @@ class CssGeneratorTest extends TestCase
             'generateFromValuesMap: palette RGB must be emitted from config default'
         );
     }
+
+    /**
+     * Test 18: Section-level selector groups settings into a non-root block.
+     *
+     * When a section has 'selector' set, all its settings should be emitted
+     * under that selector block, not under :root.
+     */
+    public function testSectionSelectorGroupsSettingsIntoCustomBlock(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'max_width',
+                'value' => '1440px'
+            ],
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'gap',
+                'value' => '32px'
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'layout',
+                    'selector' => '.columns-container',
+                    'settings' => [
+                        ['id' => 'max_width', 'property' => '--max-width', 'default' => '1260px'],
+                        ['id' => 'gap',       'property' => '--gap',       'default' => '24px'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        // Custom selector block must be present
+        $this->assertStringContainsString('.columns-container {', $css);
+        $this->assertStringContainsString('--max-width: 1440px;', $css);
+        $this->assertStringContainsString('--gap: 32px;', $css);
+
+        // Settings must NOT appear in :root
+        $rootStart = strpos($css, ':root {');
+        $rootEnd   = strpos($css, '}', $rootStart);
+        $rootBlock = substr($css, $rootStart, $rootEnd - $rootStart + 1);
+        $this->assertStringNotContainsString('--max-width', $rootBlock);
+        $this->assertStringNotContainsString('--gap', $rootBlock);
+    }
+
+    /**
+     * Test 19: Setting-level selector overrides section-level selector.
+     *
+     * When a setting has its own 'selector', it should override the section
+     * selector and be placed in a separate block.
+     */
+    public function testSettingSelectorOverridesSectionSelector(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'max_width',
+                'value' => '1440px'
+            ],
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'bg_color',
+                'value' => '#ffffff'
+            ],
+        ]);
+
+        $this->colorFormatResolverMock->method('resolve')->willReturn('hex');
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'layout',
+                    'selector' => '.columns-container',
+                    'settings' => [
+                        ['id' => 'max_width', 'property' => '--max-width', 'default' => '1260px'],
+                        [
+                            'id'       => 'bg_color',
+                            'property' => '--bg',
+                            'selector' => ':root',   // override: goes to :root, not section
+                            'type'     => 'color',
+                            'default'  => '#000000'
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        // bg_color must be in :root
+        $rootStart = strpos($css, ':root {');
+        $rootEnd   = strpos($css, '}', $rootStart);
+        $rootBlock = substr($css, $rootStart, $rootEnd - $rootStart + 1);
+        $this->assertStringContainsString('--bg: #ffffff;', $rootBlock);
+
+        // max_width must be in .columns-container, NOT in :root
+        $this->assertStringContainsString('.columns-container {', $css);
+        $sectionStart = strpos($css, '.columns-container {');
+        $sectionEnd   = strpos($css, '}', $sectionStart);
+        $sectionBlock = substr($css, $sectionStart, $sectionEnd - $sectionStart + 1);
+        $this->assertStringContainsString('--max-width: 1440px;', $sectionBlock);
+        $this->assertStringNotContainsString('--max-width', $rootBlock);
+    }
+
+    /**
+     * Test 20: Array selector on a section is joined into comma-separated string.
+     */
+    public function testArraySelectorIsJoinedWithComma(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'max_width',
+                'value' => '1440px'
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'layout',
+                    'selector' => ['.columns-container', '.page-wrapper'],
+                    'settings' => [
+                        ['id' => 'max_width', 'property' => '--max-width', 'default' => '1260px'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString('.columns-container, .page-wrapper {', $css);
+        $this->assertStringContainsString('--max-width: 1440px;', $css);
+    }
+
+    /**
+     * Test 21: 'property' field (new name) is used instead of 'css_var' when both present.
+     *
+     * 'property' has priority over 'css_var' (backward compat alias).
+     */
+    public function testPropertyFieldTakesPriorityOverCssVar(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'font_size',
+                'value' => '18px'
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'       => 'font_size',
+                            'property' => '--font-size-base',  // new field
+                            'css_var'  => '--old-var-name',    // legacy (should be ignored)
+                            'default'  => '16px'
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString('--font-size-base: 18px;', $css);
+        $this->assertStringNotContainsString('--old-var-name', $css);
+    }
+
+    /**
+     * Test 22: Backward compat — 'css_var' still works when 'property' is absent.
+     */
+    public function testCssVarBackwardCompatWhenPropertyAbsent(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'font_size',
+                'value' => '18px'
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'      => 'font_size',
+                            'css_var' => '--font-size-base',  // only legacy field
+                            'default' => '16px'
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString('--font-size-base: 18px;', $css);
+    }
+
+    /**
+     * Test 23: :root is always emitted first, even when there are other selector blocks.
+     */
+    public function testRootBlockIsAlwaysEmittedFirst(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'max_width',
+                'value' => '1440px'
+            ],
+            [
+                'section_code' => 'globals',
+                'setting_code' => 'text_color',
+                'value' => '#111111'
+            ],
+        ]);
+
+        $this->colorFormatResolverMock->method('resolve')->willReturn('hex');
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'layout',
+                    'selector' => '.columns-container',
+                    'settings' => [
+                        ['id' => 'max_width', 'property' => '--max-width', 'default' => '1260px'],
+                    ],
+                ],
+                [
+                    'id' => 'globals',
+                    'settings' => [  // no section selector → :root
+                        ['id' => 'text_color', 'property' => '--text-color', 'type' => 'color', 'default' => '#000000'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $rootPos    = strpos($css, ':root {');
+        $sectionPos = strpos($css, '.columns-container {');
+
+        $this->assertNotFalse($rootPos,    ':root block must be present');
+        $this->assertNotFalse($sectionPos, '.columns-container block must be present');
+        $this->assertLessThan($sectionPos, $rootPos, ':root block must come before .columns-container block');
+    }
 }
 

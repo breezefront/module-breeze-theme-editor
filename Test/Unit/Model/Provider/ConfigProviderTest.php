@@ -436,8 +436,73 @@ class ConfigProviderTest extends TestCase
     }
 
     /**
-     * Test 16: mergeSettings fully merges setting arrays (array_merge behavior)
+     * Test 15b: mergeSections propagates 'selector' from override to base section.
      */
+    public function testMergeSectionsPropagatesSelectorField(): void
+    {
+        $baseSections = [
+            ['id' => 'layout', 'name' => 'Layout']
+        ];
+
+        $overrideSections = [
+            ['id' => 'layout', 'selector' => '.columns-container']
+        ];
+
+        $reflection = new \ReflectionClass($this->configProvider);
+        $method = $reflection->getMethod('mergeSections');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->configProvider, $baseSections, $overrideSections);
+
+        $this->assertArrayHasKey('selector', $result[0]);
+        $this->assertEquals('.columns-container', $result[0]['selector']);
+    }
+
+    /**
+     * Test 15c: mergeSections allows array selector to be set via override.
+     */
+    public function testMergeSectionsAllowsArraySelector(): void
+    {
+        $baseSections = [
+            ['id' => 'layout', 'name' => 'Layout']
+        ];
+
+        $overrideSections = [
+            ['id' => 'layout', 'selector' => ['.columns-container', '.page-wrapper']]
+        ];
+
+        $reflection = new \ReflectionClass($this->configProvider);
+        $method = $reflection->getMethod('mergeSections');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->configProvider, $baseSections, $overrideSections);
+
+        $this->assertEquals(['.columns-container', '.page-wrapper'], $result[0]['selector']);
+    }
+
+    /**
+     * Test 15d: mergeSections does not add 'selector' key when override has none.
+     */
+    public function testMergeSectionsDoesNotAddSelectorWhenAbsent(): void
+    {
+        $baseSections = [
+            ['id' => 'layout', 'name' => 'Layout']
+        ];
+
+        $overrideSections = [
+            ['id' => 'layout', 'name' => 'New Layout']
+        ];
+
+        $reflection = new \ReflectionClass($this->configProvider);
+        $method = $reflection->getMethod('mergeSections');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->configProvider, $baseSections, $overrideSections);
+
+        $this->assertArrayNotHasKey('selector', $result[0]);
+    }
+
+
     public function testMergeSettingsFullyMergesSettingArrays(): void
     {
         $baseSettings = [

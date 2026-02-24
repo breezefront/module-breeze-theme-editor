@@ -60,10 +60,10 @@ define([
             log.debug('PanelState.setValue completed');
 
             // Live preview
-            if (fieldData.cssVar && ! options.skipPreview) {
+            if (fieldData.property && ! options.skipPreview) {
                 // Merge fieldData with options (color-specific data like format, defaultValue)
                 var previewData = Object.assign({}, fieldData, options);
-                CssPreviewManager.setVariable(fieldData.cssVar, fieldData.value, fieldData.type, previewData);
+                CssPreviewManager.setVariable(fieldData.property, fieldData.value, fieldData.type, previewData);
             }
 
             // Callback
@@ -76,7 +76,7 @@ define([
                 log.warn('Callback not called, type: ' + typeof callback);
             }
 
-            log.debug('Field changed: section=' + fieldData.sectionCode + ' field=' + fieldData.fieldCode + ' type=' + fieldData.type + ' value=' + fieldData.value + ' cssVar=' + fieldData.cssVar);
+            log.debug('Field changed: section=' + fieldData.sectionCode + ' field=' + fieldData.fieldCode + ' type=' + fieldData.type + ' value=' + fieldData.value + ' property=' + fieldData.property);
 
             return true;
         },
@@ -91,7 +91,7 @@ define([
             return {
                 sectionCode: $input.data('section'),
                 fieldCode: $input.data('field'),
-                cssVar: $input.data('css-var'),
+                property: $input.data('property'),
                 type: $input.data('type'),
                 value: this.getInputValue($input),
                 defaultValue: $input.data('default')

@@ -34,143 +34,26 @@ class CssGenerator
         $statusId = $this->statusProvider->getStatusId($status);
         $values = $this->valueService->getValuesByTheme($themeId, $storeId, $statusId, null);
 
-        // Get config WITH inheritance
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
-        $sections = $config['sections'] ?? [];
+        $fieldMap = $this->buildFieldMap($config['sections'] ?? []);
 
-        // Build field lookup map:  section.setting → field config
-        $fieldMap = [];
-        foreach ($sections as $section) {
-            foreach ($section['settings'] ??  [] as $setting) {
-                $key = $section['id'] . '.' . $setting['id'];
-                $fieldMap[$key] = $setting;
-            }
-        }
-
-        $css = ":root {\n";
-
-        if (empty($values)) {
-            $css .= "}\n";
-            return $css;
-        }
-
-        // Build a palette-vars-to-emit map.
-        //
-        // We need to emit BOTH the HEX and the -rgb variant for every palette
-        // variable that is referenced by any field value (e.g. a field stores
-        // "--color-brand-amber-dark" and formatColor() turns that into
-        // "var(--color-brand-amber-dark-rgb)").
-        //
-        // Two sources:
-        //   1. Palette entries explicitly saved in DB (section = '_palette').
-        //   2. Palette defaults from config — for any variable referenced by a
-        //      field that was never explicitly changed (i.e. not in DB).
-        //
-        // The Breeze base CSS defines the HEX variants but NOT the -rgb ones,
-        // so we must always emit them here.
         $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config);
+        $selectorBlocks = empty($values) ? [] : $this->buildSelectorBlocks($values, $fieldMap);
 
-        if (!empty($paletteVarsToEmit)) {
-            foreach ($paletteVarsToEmit as $cssVar => $rawValue) {
-                $css .= $this->processPaletteColor($cssVar, $rawValue);
-            }
-            $css .= "\n";
-        }
-
-        // Now process all other field values (which may reference palette variables)
-        $css .= $this->generateCssFromFields($values, $fieldMap);
-
-        $css .= "}\n";
-
-        return $css;
-    }
-
-    /**
-     * Generate CSS rules from field values
-     *
-     * @param array $values
-     * @param array $fieldMap
-     * @return string
-     */
-    private function generateCssFromFields(array $values, array $fieldMap): string
-    {
-        $css = '';
-        
-        foreach ($values as $value) {
-            $sectionCode = $value['section_code'];
-            $settingCode = $value['setting_code'];
-            $rawValue = $value['value'] ?? null;
-
-            if ($rawValue === null || $rawValue === '') {
-                continue;
-            }
-
-            // Skip _palette entries (already processed above)
-            if ($sectionCode === '_palette') {
-                continue;
-            }
-
-            // Lookup field in map
-            $key = $sectionCode . '.' . $settingCode;
-            $field = $fieldMap[$key] ?? null;
-
-            if (!$field) {
-                continue;
-            }
-
-            $default = $field['default'] ?? null;
-            if ($default !== null && $this->valuesAreEqual($rawValue, $default)) {
-                continue;  // Use Breeze default, don't override
-            }
-
-            $cssVar = $field['css_var'] ?? null;
-
-            if (!$cssVar) {
-                continue;
-            }
-
-            $formattedValue = $this->formatValue($rawValue, $field);
-            $comment = $this->getComment($rawValue, $field['type'] ?? null);
-            $important = $field['important'] ?? false;
-
-            $css .= "    $cssVar: $formattedValue" . ($important ? ' !important' : '') . ";";
-            if ($comment) {
-                $css .= "  /* $comment */";
-            }
-            $css .= "\n";
-        }
-        
-        return $css;
+        return $this->renderCss($paletteVarsToEmit, $selectorBlocks);
     }
 
     /**
      * Generate CSS from values map (for publications)
-     * 
+     *
      * @param int $themeId
      * @param array $valuesMap Map of 'section.setting' => 'value'
-     * @return string CSS code with :root { ... }
+     * @return string
      */
     public function generateFromValuesMap(int $themeId, array $valuesMap): string
     {
-        // Get config WITH inheritance
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
-        $sections = $config['sections'] ?? [];
-
-        // Build field lookup map: section.setting → field config
-        $fieldMap = [];
-        foreach ($sections as $section) {
-            foreach ($section['settings'] ?? [] as $setting) {
-                $key = $section['id'] . '.' . $setting['id'];
-                $fieldMap[$key] = $setting;
-            }
-        }
-
-        $css = ":root {\n";
-
-        if (empty($valuesMap)) {
-            $css .= "}\n";
-            return $css;
-        }
+        $fieldMap = $this->buildFieldMap($config['sections'] ?? []);
 
         // Convert valuesMap to the same row format used by generate()
         $values = [];
@@ -186,17 +69,128 @@ class CssGenerator
         }
 
         $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config);
+        $selectorBlocks = empty($values) ? [] : $this->buildSelectorBlocks($values, $fieldMap);
+
+        return $this->renderCss($paletteVarsToEmit, $selectorBlocks);
+    }
+
+    /**
+     * Build field lookup map: 'section.setting' => field config with resolved selector.
+     *
+     * The '_selector' key holds the resolved CSS selector for the field:
+     *   - setting-level 'selector' takes priority over section-level 'selector'
+     *   - falls back to ':root' when neither is set
+     *
+     * @param array $sections
+     * @return array
+     */
+    private function buildFieldMap(array $sections): array
+    {
+        $fieldMap = [];
+        foreach ($sections as $section) {
+            $sectionSelector = $section['selector'] ?? null;
+            foreach ($section['settings'] ?? [] as $setting) {
+                $key = $section['id'] . '.' . $setting['id'];
+                $rawSelector = $setting['selector'] ?? $sectionSelector ?? ':root';
+                $setting['_selector'] = is_array($rawSelector)
+                    ? implode(', ', $rawSelector)
+                    : $rawSelector;
+                $fieldMap[$key] = $setting;
+            }
+        }
+        return $fieldMap;
+    }
+
+    /**
+     * Group CSS lines by their target selector.
+     *
+     * Supports both 'property' (new) and legacy 'css_var' field names.
+     * Returns [ selector => [ 'line1', 'line2', ... ], ... ]
+     *
+     * @param array $values
+     * @param array $fieldMap
+     * @return array
+     */
+    private function buildSelectorBlocks(array $values, array $fieldMap): array
+    {
+        $blocks = [];
+
+        foreach ($values as $value) {
+            $sectionCode = $value['section_code'];
+            $settingCode = $value['setting_code'];
+            $rawValue    = $value['value'] ?? null;
+
+            if ($rawValue === null || $rawValue === '' || $sectionCode === '_palette') {
+                continue;
+            }
+
+            $key   = $sectionCode . '.' . $settingCode;
+            $field = $fieldMap[$key] ?? null;
+            if (!$field) {
+                continue;
+            }
+
+            $default = $field['default'] ?? null;
+            if ($default !== null && $this->valuesAreEqual($rawValue, $default)) {
+                continue;
+            }
+
+            // Support both 'property' (new) and legacy 'css_var'
+            $property = $field['property'] ?? $field['css_var'] ?? null;
+            if (!$property) {
+                continue;
+            }
+
+            $formattedValue = $this->formatValue($rawValue, $field);
+            $comment        = $this->getComment($rawValue, $field['type'] ?? null);
+            $important      = $field['important'] ?? false;
+
+            $line = "    $property: $formattedValue" . ($important ? ' !important' : '') . ";";
+            if ($comment) {
+                $line .= "  /* $comment */";
+            }
+            $line .= "\n";
+
+            $selector = $field['_selector'] ?? ':root';
+            $blocks[$selector][] = $line;
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * Render final CSS string from palette vars and per-selector blocks.
+     *
+     * :root is always emitted first (palette vars + root-scoped fields),
+     * followed by any additional selector blocks in insertion order.
+     *
+     * @param array $paletteVarsToEmit  cssVar => rawHexValue
+     * @param array $selectorBlocks     selector => [lines]
+     * @return string
+     */
+    private function renderCss(array $paletteVarsToEmit, array $selectorBlocks): string
+    {
+        $rootLines = [];
 
         if (!empty($paletteVarsToEmit)) {
             foreach ($paletteVarsToEmit as $cssVar => $rawValue) {
-                $css .= $this->processPaletteColor($cssVar, $rawValue);
+                $rootLines[] = $this->processPaletteColor($cssVar, $rawValue);
             }
-            $css .= "\n";
+            $rootLines[] = "\n";
         }
 
-        $css .= $this->generateCssFromFields($values, $fieldMap);
+        foreach ($selectorBlocks[':root'] ?? [] as $line) {
+            $rootLines[] = $line;
+        }
 
-        $css .= "}\n";
+        $css = ":root {\n" . implode('', $rootLines) . "}\n";
+
+        foreach ($selectorBlocks as $selector => $lines) {
+            if ($selector === ':root') {
+                continue;
+            }
+            $css .= "$selector {\n" . implode('', $lines) . "}\n";
+        }
 
         return $css;
     }
