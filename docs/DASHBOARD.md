@@ -101,11 +101,12 @@
 **Пріоритет:** ВИСОКИЙ
 
 **Завдання:**
-1. [ ] Браузерна валідація Admin JS тестів (~110 тестів, 14 suites)
-2. [ ] Браузерна валідація Frontend JS тестів (~170 тестів, 22 suites)
-3. [ ] Manual GraphQL end-to-end тестування
-4. [ ] Фінальний polish та review
-5. [ ] Release preparation
+1. [x] Браузерна валідація Admin JS — **126/126 ✅**
+2. [ ] Manual GraphQL end-to-end тестування
+3. [ ] Фінальний polish та review
+4. [ ] Release preparation
+
+> **Frontend JS тести:** мігруються по мірі перенесення фронтенд функціоналу (ongoing, не блокує Phase 5)
 
 ---
 
@@ -176,8 +177,7 @@
 1. **Phase 5 - Polish & Final Testing** (8-10 год)  
    📄 [migration/phases/phase-5/README.md](migration/phases/phase-5/README.md) ⭐  
    **Наступні дії:**
-   - Браузерна валідація Admin JS (~110 тестів)
-   - Браузерна валідація Frontend JS (~170 тестів)
+   - ✅ Браузерна валідація Admin JS — **126/126 DONE**
    - Manual GraphQL E2E тестування
    - Release preparation
 
@@ -269,7 +269,8 @@ docs/
 ✅ Infrastructure:  100%
 ✅ Unit Tests:      37 тестів готово! (14 admin + 23 frontend)
 ✅ PHP Validated:   290/290 (2 skipped, 909 assertions)
-⚠️ JS Browser:      Потребує браузерної валідації (Phase 5)
+✅ Admin JS:        126/126 pass (браузер, 24.02.2026)
+📋 Frontend JS:     pending migration (мігруються разом з функціоналом)
 📋 Integration:     0%
 ```
 
@@ -396,9 +397,9 @@ docs/
 
 ### Готові До Виконання (пріоритизовано)
 1. 🎯 **Phase 5 - Polish & Final Testing** (8-10 год) — НАСТУПНИЙ КРОК ⭐⭐⭐
-   - Браузерна валідація Admin JS (~110 тестів, 14 suites)
-   - Браузерна валідація Frontend JS (~170 тестів, 22 suites)
+   - ✅ Браузерна валідація Admin JS — **126/126 DONE**
    - Manual GraphQL E2E тестування
+   - Фінальний polish та review
    - Release preparation
 
 ### Очікують
@@ -425,7 +426,8 @@ docs/
 ### JS Test Framework
 **Стан (24.02.2026):** 37 тестів (14 adminhtml + 23 frontend) + 1 unregistered (`color-popup-test.js`)  
 **PHP validated:** 290/290 (2 intentional skips)  
-**Наступний крок:** Phase 5 — браузерна валідація JS тестів  
+**Admin JS validated:** 126/126 pass (браузер, 24.02.2026)  
+**Frontend JS:** мігруються разом з функціоналом по мірі перенесення  
 **Деталі:** [phase-4/TEST-AUDIT-REPORT.md](migration/phases/phase-4/TEST-AUDIT-REPORT.md)
 
 ---
