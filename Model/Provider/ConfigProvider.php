@@ -76,28 +76,33 @@ class ConfigProvider
         $merged = $baseSections;
         foreach ($overrideSections as $overrideSection) {
             $found = false;
-            foreach ($merged as &$baseSection) {
+            foreach ($merged as $idx => &$baseSection) {
                 if ($baseSection['id'] === $overrideSection['id']) {
-                    if (isset($overrideSection['settings'])) {
-                        $baseSection['settings'] = $this->mergeSettings(
-                            $baseSection['settings'] ?? [],
-                            $overrideSection['settings']
-                        );
-                    }
-                    foreach (['name', 'description', 'icon', 'order'] as $field) {
-                        if (isset($overrideSection[$field])) {
-                            $baseSection[$field] = $overrideSection[$field];
+                    if (!empty($overrideSection['disable'])) {
+                        unset($merged[$idx]);
+                    } else {
+                        if (isset($overrideSection['settings'])) {
+                            $baseSection['settings'] = $this->mergeSettings(
+                                $baseSection['settings'] ?? [],
+                                $overrideSection['settings']
+                            );
+                        }
+                        foreach (['name', 'description', 'icon', 'order'] as $field) {
+                            if (isset($overrideSection[$field])) {
+                                $baseSection[$field] = $overrideSection[$field];
+                            }
                         }
                     }
                     $found = true;
                     break;
                 }
             }
-            if (!$found) {
+            unset($baseSection);
+            if (!$found && empty($overrideSection['disable'])) {
                 $merged[] = $overrideSection;
             }
         }
-        return $merged;
+        return array_values($merged);
     }
 
     /**
@@ -108,18 +113,23 @@ class ConfigProvider
         $merged = $baseSettings;
         foreach ($overrideSettings as $overrideSetting) {
             $found = false;
-            foreach ($merged as &$baseSetting) {
+            foreach ($merged as $idx => &$baseSetting) {
                 if ($baseSetting['id'] === $overrideSetting['id']) {
-                    $baseSetting = array_merge($baseSetting, $overrideSetting);
+                    if (!empty($overrideSetting['disable'])) {
+                        unset($merged[$idx]);
+                    } else {
+                        $baseSetting = array_merge($baseSetting, $overrideSetting);
+                    }
                     $found = true;
                     break;
                 }
             }
-            if (!$found) {
+            unset($baseSetting);
+            if (!$found && empty($overrideSetting['disable'])) {
                 $merged[] = $overrideSetting;
             }
         }
-        return $merged;
+        return array_values($merged);
     }
 
     /**

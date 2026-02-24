@@ -523,6 +523,100 @@ class ConfigProviderTest extends TestCase
     }
 
     /**
+     * Test 22: mergeSections removes a section when disable is true
+     */
+    public function testMergeSectionsRemovesSectionWhenDisableIsTrue(): void
+    {
+        $baseSections = [
+            ['id' => 'layout', 'name' => 'Layout', 'settings' => []],
+            ['id' => 'typography', 'name' => 'Typography', 'settings' => []]
+        ];
+
+        $overrideSections = [
+            ['id' => 'layout', 'disable' => true]
+        ];
+
+        $reflection = new \ReflectionClass($this->configProvider);
+        $mergeSectionsMethod = $reflection->getMethod('mergeSections');
+        $mergeSectionsMethod->setAccessible(true);
+
+        $result = $mergeSectionsMethod->invoke($this->configProvider, $baseSections, $overrideSections);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('typography', $result[0]['id']);
+    }
+
+    /**
+     * Test 23: mergeSections ignores disable on non-existing section (does not add it)
+     */
+    public function testMergeSectionsIgnoresDisableOnNonExistingSection(): void
+    {
+        $baseSections = [
+            ['id' => 'typography', 'name' => 'Typography', 'settings' => []]
+        ];
+
+        $overrideSections = [
+            ['id' => 'layout', 'disable' => true]
+        ];
+
+        $reflection = new \ReflectionClass($this->configProvider);
+        $mergeSectionsMethod = $reflection->getMethod('mergeSections');
+        $mergeSectionsMethod->setAccessible(true);
+
+        $result = $mergeSectionsMethod->invoke($this->configProvider, $baseSections, $overrideSections);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('typography', $result[0]['id']);
+    }
+
+    /**
+     * Test 24: mergeSettings removes a setting when disable is true
+     */
+    public function testMergeSettingsRemovesSettingWhenDisableIsTrue(): void
+    {
+        $baseSettings = [
+            ['id' => 'max-width', 'type' => 'range', 'default' => '1260px'],
+            ['id' => 'border-radius', 'type' => 'range', 'default' => '0px']
+        ];
+
+        $overrideSettings = [
+            ['id' => 'border-radius', 'disable' => true]
+        ];
+
+        $reflection = new \ReflectionClass($this->configProvider);
+        $mergeSettingsMethod = $reflection->getMethod('mergeSettings');
+        $mergeSettingsMethod->setAccessible(true);
+
+        $result = $mergeSettingsMethod->invoke($this->configProvider, $baseSettings, $overrideSettings);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('max-width', $result[0]['id']);
+    }
+
+    /**
+     * Test 25: mergeSettings ignores disable on non-existing setting (does not add it)
+     */
+    public function testMergeSettingsIgnoresDisableOnNonExistingSetting(): void
+    {
+        $baseSettings = [
+            ['id' => 'max-width', 'type' => 'range', 'default' => '1260px']
+        ];
+
+        $overrideSettings = [
+            ['id' => 'border-radius', 'disable' => true]
+        ];
+
+        $reflection = new \ReflectionClass($this->configProvider);
+        $mergeSettingsMethod = $reflection->getMethod('mergeSettings');
+        $mergeSettingsMethod->setAccessible(true);
+
+        $result = $mergeSettingsMethod->invoke($this->configProvider, $baseSettings, $overrideSettings);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('max-width', $result[0]['id']);
+    }
+
+    /**
      * Test 20: mergeSections handles empty override sections
      */
     public function testMergeSectionsHandlesEmptyOverrideSections(): void
