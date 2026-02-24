@@ -32,7 +32,8 @@ define([
                         value
                         default
                         isModified
-                        cssVar
+                        property
+                        selector
                         required
                         placeholder
                         helpText

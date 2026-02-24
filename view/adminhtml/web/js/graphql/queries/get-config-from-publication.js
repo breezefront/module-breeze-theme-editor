@@ -25,7 +25,8 @@ define([
                         value
                         default
                         isModified
-                        cssVar
+                        property
+                        selector
                         required
                         validation {
                             minLength

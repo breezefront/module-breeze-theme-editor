@@ -109,8 +109,8 @@ define([
                 var $input = $(this);
                 var $trigger = $input.siblings('.bte-color-trigger');
                 
-                // Get field's CSS variable
-                var fieldCssVar = $input.attr('data-css-var');
+                // Get field's CSS property
+                var fieldCssVar = $input.attr('data-property') || $input.attr('data-css-var');
                 
                 // Remove field's CSS variable from live preview (allow cascade to work via var())
                 if (fieldCssVar && changes[fieldCssVar]) {
@@ -474,8 +474,8 @@ define([
             Object.keys(changes).forEach(function(cssVar) {
                 var value = changes[cssVar];
                 
-                // Find field with this CSS variable
-                var $field = $('[data-css-var="' + cssVar + '"]');
+                // Find field with this CSS property
+                var $field = $('[data-property="' + cssVar + '"], [data-css-var="' + cssVar + '"]');
                 if (!$field.length) {
                     return;
                 }
