@@ -1,7 +1,7 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 24 лютого 2026 ✅ UI Polish + Logger Migration + Phase 4 розпочато  
-**Загальний прогрес:** 90% завершено
+**Останнє оновлення:** 24 лютого 2026 ✅ feat(selector+property) + bugfix GraphQL queries  
+**Загальний прогрес:** 92% завершено
 
 ---
 
@@ -18,6 +18,23 @@
 - [ ] Step 2: Cleanup дублікатів
 - [ ] Step 3: Функціональна валідація (PHP + frontend JS)
 - [ ] Step 4: TEST-AUDIT-REPORT.md
+
+---
+
+### ✅ feat(selector+property) + GraphQL bugfix (ЗАВЕРШЕНО 24.02.2026)
+
+**2 коміти:**
+
+| Дата | Коміт | Опис |
+|------|-------|------|
+| 24.02 | `1a7279e` | feat(selector+property): CSS selector hierarchy + css_var→property rename |
+| 24.02 | `f401f6c` | fix(graphql+js): replace cssVar→property+selector in GraphQL queries and frontend renderers |
+
+**Що реалізовано:**
+- `property` як уніфіковане поле (замінює `css_var`; backward compat: `property ?? css_var`)
+- `property` підтримує CSS-змінні (`--var`) і стандартні властивості (`max-width`)
+- Ієрархія селекторів: field.selector → section.selector → `:root`
+- PHP тести: 303/303 ✅
 
 ---
 
@@ -67,7 +84,7 @@
 - **Фази завершено:** 4 з 5 (Phase 3B завершено, Phase 4 в процесі)
 - **Документації:** 35+ файлів (~17,000 рядків)
 - **Тести JS:** 37 spec-файлів (14 adminhtml + 23 frontend)
-- **Тести PHP:** 23 файли / 265 методів
+- **Тести PHP:** 23 файли / 303 методів
 
 ### ✅ РІШЕННЯ ПРИЙНЯТО: Гібридний Підхід
 - **Settings/Publications** → GraphQL ✅ (business-critical)

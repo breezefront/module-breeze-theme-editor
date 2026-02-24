@@ -4,6 +4,22 @@
 
 ---
 
+## ✅ Реалізовані Features
+
+### selector + property (24.02.2026)
+
+**Статус:** ✅ Завершено (коміти `1a7279e`, `f401f6c`)
+
+**Що зроблено:**
+- `css_var` перейменовано на `property` (backward compat: читається обидва варіанти)
+- `property` підтримує CSS custom properties (`--var`) і стандартні CSS властивості (`max-width`)
+- Додано `selector` поле: field-level та section-level з ієрархією успадкування
+- Ієрархія: `field.selector` → `section.selector` → `:root`
+- PHP тести: 303/303 ✅
+- Публічна документація оновлена: `theme-developer-guide.md` v1.2
+
+---
+
 ## 💡 Заплановані Features
 
 ### Color Palette System
