@@ -17,7 +17,7 @@ define([
                     selector: '#theme-editor-panel',
                     widget: 'themeSettingsEditor',
                     config: {
-                        title: 'Theme Editor',
+                        title: 'Theme Settings',
                         closeTitle: 'Close Panel',
                         presetsLabel: 'Presets:'
                     }

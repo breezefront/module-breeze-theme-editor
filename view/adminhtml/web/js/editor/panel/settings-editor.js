@@ -45,7 +45,7 @@ define([
 
     $.widget('swissup.themeSettingsEditor', {
         options: {
-            title: 'Theme Editor',
+            title: 'Theme Settings',
             closeTitle: 'Close Panel',
             presetsLabel: 'Presets:',
             status: 'DRAFT'
