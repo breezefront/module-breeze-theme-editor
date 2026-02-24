@@ -11,15 +11,15 @@
                 </arguments>
             </block>
         </referenceBlock>
-        <referenceContainer name="before.body.end">
-            <block class="Magento\Framework\View\Element\Template"
-                   name="breeze_theme_editor_toolbar"
-                   template="Swissup_BreezeThemeEditor::toolbar.phtml"
-                   before="-">
-                <arguments>
-                    <argument name="view_model" xsi:type="object">Swissup\BreezeThemeEditor\ViewModel\Toolbar</argument>
-                </arguments>
-            </block>
-        </referenceContainer>
+<!--        <referenceContainer name="before.body.end">-->
+<!--            <block class="Magento\Framework\View\Element\Template"-->
+<!--                   name="breeze_theme_editor_toolbar"-->
+<!--                   template="Swissup_BreezeThemeEditor::toolbar.phtml"-->
+<!--                   before="-">-->
+<!--                <arguments>-->
+<!--                    <argument name="view_model" xsi:type="object">Swissup\BreezeThemeEditor\ViewModel\Toolbar</argument>-->
+<!--                </arguments>-->
+<!--            </block>-->
+<!--        </referenceContainer>-->
     </body>
 </page>
