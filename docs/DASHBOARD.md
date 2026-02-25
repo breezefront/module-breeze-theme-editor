@@ -1,7 +1,7 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 24 лютого 2026 ✅ feat(selector+property) + bugfix GraphQL queries  
-**Загальний прогрес:** 92% завершено
+**Останнє оновлення:** 25 лютого 2026 ✅ css-manager fix + frontend overlay видалено  
+**Загальний прогрес:** 93% завершено
 
 ---
 
@@ -83,7 +83,7 @@
 - **Залишилось:** 10-14 годин
 - **Фази завершено:** 4 з 5 (Phase 3B завершено, Phase 4 в процесі)
 - **Документації:** 35+ файлів (~17,000 рядків)
-- **Тести JS:** 37 spec-файлів (14 adminhtml + 23 frontend)
+- **Тести JS:** 17 spec-файлів (adminhtml only; frontend overlay видалено)
 - **Тести PHP:** 23 файли / 303 методів
 
 ### ✅ РІШЕННЯ ПРИЙНЯТО: Гібридний Підхід
@@ -145,26 +145,28 @@
 
 ### 🧪 3. JS Test Framework Migration
 
-**Статус:** ✅ **37 тестів готово** (14 adminhtml + 23 frontend)  
+**Статус:** ✅ **17 тестів готово** (adminhtml only; frontend overlay видалено 25.02.2026)  
 **Документація:** [refactoring/js-testing/](refactoring/js-testing/)
 
 | Фаза | Статус | Опис |
 |------|--------|------|
 | **1** | ✅ Завершено | Infrastructure (test-framework.js, test-runner.js, mock-helper.js) |
-| **2** | ✅ Завершено | **37 тестів готово!** (14 adminhtml + 23 frontend) |
-| **3** | 🟡 Phase 4 | Валідація та audit (поточний фокус) |
+| **2** | ✅ Завершено | **17 тестів готово!** (adminhtml only) |
+| **3** | ✅ Phase 4 | Валідація та audit (завершено) |
 | **4** | 📋 TODO | Integration tests |
 
-**Adminhtml (14 spec-файлів):**
+**Adminhtml (17 spec-файлів):**
 - admin-auth-manager-test.js, color-utils-test.js, critical-fixes-test.js
-- css-preview-manager-palette-test.js *(NEW)*
+- css-preview-manager-palette-test.js
+- field-renderers-test.js *(NEW)*
 - navigation-widget-test.js, page-selector-sync-test.js
-- palette-reset-behavior-test.js *(NEW)*
+- palette-manager-test.js *(NEW)*, palette-reset-behavior-test.js
 - panel-close-integration-test.js, panel-events-test.js, panel-integration-test.js
 - panel-positioning-test.js, publication-events-alignment-test.js
-- selector-alignment-test.js, url-navigation-persistence-test.js
+- selector-alignment-test.js, storage-helper-test.js *(NEW)*
+- url-navigation-persistence-test.js
 
-**Наступні кроки:** [refactoring/js-testing/next-steps.md](refactoring/js-testing/next-steps.md)
+**Frontend JS тести:** видалено разом з frontend overlay (25.02.2026)
 
 ---
 
@@ -212,6 +214,10 @@
 
 | Баг/Покращення | Статус | Дата | Коміт |
 |----------------|--------|------|-------|
+| **Live Preview After Navigation** | ✅ Виправлено | 25.02 | `f2a61d5` |
+| **Badge Bullet Icon** | ✅ Видалено | 25.02 | `08bbf73` |
+| **Frontend Overlay** | ✅ Видалено (164 файли) | 25.02 | `7eedd20` |
+| **DB Test Fixtures** | ✅ Виправлено | 25.02 | SQL UPDATE |
 | **Color Format Conversion** | ✅ Виправлено | 20.02 | `1f03dde` |
 | **Badge Alignment** | ✅ Виправлено | 23.02 | `3518da4` |
 | **CSS Manager Placeholder** | ✅ Виправлено | 23.02 | `f87d4a1` |
@@ -271,7 +277,7 @@ docs/
 
 ### Admin Migration (ОНОВЛЕНО 24.02.2026)
 ```
-███████████████████████████████░░  92% (~113h / ~123h)
+███████████████████████████████░░  93% (~114h / ~123h)
 
 ✅ Phase 1    ████████████ 100% (12h)
 ✅ Phase 2    ████████████ 100% (9h)
@@ -284,10 +290,10 @@ docs/
 ### JS Testing Framework
 ```
 ✅ Infrastructure:  100%
-✅ Unit Tests:      37 тестів готово! (14 admin + 23 frontend)
+✅ Unit Tests:      17 тестів готово! (17 admin, frontend overlay видалено)
 ✅ PHP Validated:   290/290 (2 skipped, 909 assertions)
 ✅ Admin JS:        126/126 pass (браузер, 24.02.2026)
-📋 Frontend JS:     pending migration (мігруються разом з функціоналом)
+🗑️ Frontend JS:     видалено разом з frontend overlay (25.02.2026)
 📋 Integration:     0%
 ```
 
@@ -332,14 +338,14 @@ docs/
 | Категорія | Файлів | Рядків | Статус |
 |-----------|--------|--------|--------|
 | Migration | 19 | ~9,500 | 90% завершено (Phase 4 в процесі) |
-| Refactoring | 6 | ~4,000 | Infrastructure ✅, Tests ✅ (37 штук!) |
+| Refactoring | 6 | ~4,000 | Infrastructure ✅, Tests ✅ (17 adminhtml) |
 | Features | 1 | ~1,000 | Планування 💡 |
 | Testing | 4 | ~2,000 | Guides ✅ |
 | **Всього** | **35+** | **~16,500** | **90% завершено** |
 
 ### За Статусом
 
-- ✅ **Завершено:** 12 документів (Phases 1-2-3A-3B, JS infrastructure + 37 tests, CSS Manager)
+- ✅ **Завершено:** 12 документів (Phases 1-2-3A-3B, JS infrastructure + 17 tests, CSS Manager)
 - 🟡 **В процесі:** 1 документ (Phase 4 ⭐)
 - 📋 **Готово до виконання:** 1 документ (Phase 5)
 - 💡 **Ідеї:** 1 документ (Color Palette)
@@ -350,6 +356,12 @@ docs/
 ## ✨ Останні Досягнення
 
 ### Лютий 2026
+
+**25.02.2026 - CSS Manager fix + Frontend overlay видалено** ✅
+- 🐛 **css-manager.js fix:** recreate live preview style після iframe navigation (commit `f2a61d5`)
+- 🎨 **Badge cleanup:** прибрано bullet icon (●) з dirty та palette-changed badges (commit `08bbf73`)
+- 🗑️ **Frontend overlay видалено:** 164 файли (~23,400 рядків) — JS, templates, CSS, images; adminhtml має власні незалежні копії (commit `7eedd20`)
+- 🐛 **DB fix:** SQL UPDATE тестових публікацій — section/setting codes виправлено (test_visual_effects → typography/buttons)
 
 **24.02.2026 - Phase 4 розпочато + UI Cleanup** 🟡
 - 🟡 **Phase 4 в процесі:** Test Audit & Validation
