@@ -25,7 +25,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/css-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/settings-editor',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
-    'Swissup_BreezeThemeEditor/js/editor/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation, 
              publicationSelector, scopeSelector, pageSelector, highlightToggle, 

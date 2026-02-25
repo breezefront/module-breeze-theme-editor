@@ -14,7 +14,7 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/publish',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
-    'Swissup_BreezeThemeEditor/js/editor/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/renderer',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/metadata-loader',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'

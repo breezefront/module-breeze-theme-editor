@@ -11,7 +11,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/cookie-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder',
-    'Swissup_BreezeThemeEditor/js/editor/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder, StorageHelper, Logger) {
     'use strict';

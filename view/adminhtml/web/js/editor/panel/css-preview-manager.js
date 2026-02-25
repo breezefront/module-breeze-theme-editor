@@ -3,8 +3,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/color-utils',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, ColorUtils, IframeHelper, CssManager, Logger) {
+], function ($, ColorUtils, IframeHelper, CssManager, StorageHelper, Logger) {
     'use strict';
 
     var log = Logger.for('panel/css-preview-manager');
@@ -459,14 +460,12 @@ define([
          */
         _loadFromLocalStorage: function() {
             try {
-                var stored = localStorage.getItem('bte_live_preview_changes');
-                if (stored) {
-                    changes = JSON.parse(stored);
-                    if (Object.keys(changes).length > 0) {
-                        this._updateStyles();
-                        log.info('Loaded live preview from localStorage: ' + Object.keys(changes).length + ' variables');
-                        // Note: syncFieldsFromChanges() is called by panel.js after fields are rendered
-                    }
+                var stored = StorageHelper.getLivePreviewChanges();
+                if (stored && Object.keys(stored).length > 0) {
+                    changes = stored;
+                    this._updateStyles();
+                    log.info('Loaded live preview from localStorage: ' + Object.keys(changes).length + ' variables');
+                    // Note: syncFieldsFromChanges() is called by panel.js after fields are rendered
                 }
             } catch (e) {
                 log.warn('Failed to load live preview from localStorage: ' + e);
@@ -479,7 +478,7 @@ define([
          */
         _saveToLocalStorage: function() {
             try {
-                localStorage.setItem('bte_live_preview_changes', JSON.stringify(changes));
+                StorageHelper.setLivePreviewChanges(changes);
             } catch (e) {
                 log.warn('Failed to save live preview to localStorage: ' + e);
             }
@@ -594,7 +593,7 @@ define([
             
             // Clear localStorage
             try {
-                localStorage.removeItem('bte_live_preview_changes');
+                StorageHelper.clearLivePreviewChanges();
             } catch (e) {
                 log.warn('Failed to clear live preview from localStorage: ' + e);
             }

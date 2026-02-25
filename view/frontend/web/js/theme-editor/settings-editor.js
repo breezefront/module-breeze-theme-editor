@@ -411,9 +411,28 @@ define([
 
             this.$sectionsContainer.html(html);
 
-            // Open first section
-            this.$sectionsContainer.find('.bte-accordion-header').first().addClass('active');
-            this.$sectionsContainer.find('.bte-accordion-content').first().addClass('active').show();
+            // Restore previously open sections or open first by default
+            var saved = null;
+            try { saved = JSON.parse(localStorage.getItem('bte_open_sections')); } catch (e) {}
+            if (saved && saved.length) {
+                var self = this;
+                var matched = false;
+                saved.forEach(function(code) {
+                    var $h = self.$sectionsContainer.find('.bte-accordion-header[data-section="' + code + '"]');
+                    if ($h.length) {
+                        $h.addClass('active');
+                        self.$sectionsContainer.find('.bte-accordion-content[data-section="' + code + '"]').addClass('active').show();
+                        matched = true;
+                    }
+                });
+                if (!matched) {
+                    this.$sectionsContainer.find('.bte-accordion-header').first().addClass('active');
+                    this.$sectionsContainer.find('.bte-accordion-content').first().addClass('active').show();
+                }
+            } else {
+                this.$sectionsContainer.find('.bte-accordion-header').first().addClass('active');
+                this.$sectionsContainer.find('.bte-accordion-content').first().addClass('active').show();
+            }
 
             console.log('📋 Rendered', sections.length, 'sections');
             
@@ -511,6 +530,13 @@ define([
                 $header.addClass('active');
                 $content.addClass('active').slideDown(200);
             }
+
+            // Save open sections state
+            var openSections = [];
+            this.$sectionsContainer.find('.bte-accordion-header.active').each(function() {
+                openSections.push($(this).data('section'));
+            });
+            localStorage.setItem('bte_open_sections', JSON.stringify(openSections));
 
             console.log('🔄 Accordion toggled:', section, '→', !isActive);
         },

@@ -2,7 +2,7 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/color-utils',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-palette-value',
-    'Swissup_BreezeThemeEditor/js/editor/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function ($, ColorUtils, savePaletteValueMutation, StorageHelper, Toastify, Logger) {

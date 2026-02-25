@@ -13,7 +13,7 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/test/test-framework',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
-    'Swissup_BreezeThemeEditor/js/editor/storage-helper'
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper'
 ], function($, TestFramework, IframeHelper, StorageHelper) {
     'use strict';
     

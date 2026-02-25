@@ -14,7 +14,7 @@
  */
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/editor/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function ($, StorageHelper, Logger) {
     'use strict';
