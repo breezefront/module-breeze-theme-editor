@@ -23,7 +23,7 @@ use Magento\Framework\Api\SortOrder;
  * - Admin authentication (no AccessToken needed)
  * - ACL checks for edit/publish permissions
  */
-class AdminToolbar extends Toolbar
+class AdminToolbar extends AbstractToolbar
 {
     /**
      * @var PublicationRepositoryInterface
