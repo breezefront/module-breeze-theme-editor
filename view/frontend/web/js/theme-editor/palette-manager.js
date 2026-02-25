@@ -428,11 +428,18 @@ define([
             if (!color || !color.default) {
                 return false;
             }
-            
+
+            // Use the saved (DB) value for comparison, not the current unsaved in-memory value.
+            // If there are unsaved changes (color is dirty), the original saved value is stored
+            // in dirtyColors[property].original.value. Otherwise color.value is the saved value.
+            var savedValue = this.dirtyColors[property]
+                ? this.dirtyColors[property].original.value
+                : color.value;
+
             // Normalize both values to lowercase HEX for comparison
-            var currentValue = ColorUtils.normalizeHex(color.value);
+            var currentValue = ColorUtils.normalizeHex(savedValue);
             var defaultValue = ColorUtils.normalizeHex(color.default);
-            
+
             return currentValue.toLowerCase() !== defaultValue.toLowerCase();
         },
 
