@@ -302,7 +302,16 @@ define([
                                 Array.prototype.forEach.call(publicationStyles, function(styleElement) {
                                     self._disableStyle($(styleElement));
                                 });
-                                
+
+                                // Re-create live preview style after iframe navigation.
+                                // Draft styles and live preview are separate: draft comes from GraphQL
+                                // (saved values), live preview holds unsaved in-progress changes.
+                                // After navigation the new page DOM has neither — draft is re-created
+                                // above, live preview must be re-created here so pending changes remain visible.
+                                require(['Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager'], function(CssPreviewManager) {
+                                    CssPreviewManager.recreateLivePreviewStyle();
+                                });
+
                                 log.info('CSS Manager: Showing DRAFT (created dynamically)');
                                 return {status: 'DRAFT', success: true};
                             } else {
