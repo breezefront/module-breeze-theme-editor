@@ -158,6 +158,8 @@ class TestRunner extends Template
             // Admin-specific tests
             'Swissup_BreezeThemeEditor/js/test/tests/admin-auth-manager-test',
             'Swissup_BreezeThemeEditor/js/test/tests/url-navigation-persistence-test',
+            // Storage Helper JSON methods (11 tests)
+            'Swissup_BreezeThemeEditor/js/test/tests/storage-helper-test',
             // Color Utils Tests (12 tests) - Bug 0 fix verification
             'Swissup_BreezeThemeEditor/js/test/tests/color-utils-test',
             // Page Selector Sync Tests (10 tests)
