@@ -7,26 +7,7 @@
               <argument name="better_compatibility" xsi:type="array">
                     <item name="Swissup_BreezeThemeEditor" xsi:type="boolean">true</item>
               </argument>
-<!--            <argument name="bundles" xsi:type="array">-->
-<!--              <item name="dynamic" xsi:type="array">-->
-<!--                <item name="items" xsi:type="array">-->
-<!--                  <item name="Swissup_BreezeThemeEditor/js/*" xsi:type="string">Swissup_BreezeThemeEditor/js/*</item>-->
-<!--                </item>-->
-<!--              </item>-->
-<!--            </argument>-->
           </arguments>
         </referenceBlock>
-
-        <!-- Test Runner (activated with ?jstest=true URL parameter) -->
-        <!-- DISABLED: Use admin test runner instead at /admin/breeze_editor/editor/index?jstest=true -->
-        <!--
-        <referenceContainer name="after.body.start">
-            <block
-                class="Swissup\BreezeThemeEditor\Block\TestRunner"
-                name="breeze.test.runner"
-                template="Swissup_BreezeThemeEditor::test-runner.phtml"
-            />
-        </referenceContainer>
-        -->
     </body>
 </page>
