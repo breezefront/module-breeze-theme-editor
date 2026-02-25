@@ -25,7 +25,7 @@ define([
         },
         
         /**
-         * Test 2: Should index colors by cssVar after initialization
+         * Test 2: Should index colors by property after initialization
          */
         'should index colors by cssVar after initialization': function() {
             var manager = Object.create(PaletteManager);
@@ -34,7 +34,7 @@ define([
             // Check that primary color is indexed
             var color = manager.getColor('--color-brand-primary');
             
-            this.assertNotNull(color, 'Color should be found by cssVar');
+            this.assertNotNull(color, 'Color should be found by property');
             this.assertEquals(color.id, 'primary', 'Color ID should match');
             this.assertEquals(color.label, 'Primary', 'Color label should match');
             this.assertEquals(color.value, '#1979c3', 'Color value should match');
@@ -120,13 +120,13 @@ define([
             manager.updateColor('--color-brand-primary', '#00ff00');
             
             this.assertEquals(manager.getDirtyCount(), 1, 
-                'Should still have 1 dirty change (same cssVar)');
+                'Should still have 1 dirty change (same property)');
             
             // Test 4: Update different color -> count increases
             manager.updateColor('--color-brand-secondary', '#0000ff');
             
             this.assertEquals(manager.getDirtyCount(), 2, 
-                'Should have 2 dirty changes (different cssVars)');
+                'Should have 2 dirty changes (different properties)');
             
             // Test 5: getDirtyChanges should format correctly
             var changes = manager.getDirtyChanges();
@@ -136,7 +136,7 @@ define([
             this.assertEquals(changes[0].sectionCode, '_palette', 
                 'Should have sectionCode="_palette" (special backend section)');
             this.assertNotNull(changes[0].fieldCode, 
-                'Should have fieldCode (cssVar)');
+                'Should have fieldCode (property)');
             this.assertNotNull(changes[0].value, 
                 'Should have value (RGB)');
             

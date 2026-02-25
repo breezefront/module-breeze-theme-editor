@@ -172,7 +172,7 @@ define([], function() {
                         {
                             id: 'primary',
                             label: 'Primary',
-                            cssVar: '--color-brand-primary',
+                            property: '--color-brand-primary',
                             value: '25, 121, 195',
                             default: '25, 121, 195',
                             usageCount: 5
@@ -180,7 +180,7 @@ define([], function() {
                         {
                             id: 'accent',
                             label: 'Accent',
-                            cssVar: '--color-brand-accent',
+                            property: '--color-brand-accent',
                             value: '255, 165, 0',
                             default: '255, 165, 0',
                             usageCount: 3
@@ -188,7 +188,7 @@ define([], function() {
                         {
                             id: 'secondary',
                             label: 'Secondary',
-                            cssVar: '--color-brand-secondary',
+                            property: '--color-brand-secondary',
                             value: '108, 117, 125',
                             default: '108, 117, 125',
                             usageCount: 2
@@ -202,7 +202,7 @@ define([], function() {
                         {
                             id: 'success',
                             label: 'Success',
-                            cssVar: '--color-semantic-success',
+                            property: '--color-semantic-success',
                             value: '40, 167, 69',
                             default: '40, 167, 69',
                             usageCount: 1
@@ -210,7 +210,7 @@ define([], function() {
                         {
                             id: 'error',
                             label: 'Error',
-                            cssVar: '--color-semantic-error',
+                            property: '--color-semantic-error',
                             value: '220, 53, 69',
                             default: '220, 53, 69',
                             usageCount: 4
@@ -224,7 +224,7 @@ define([], function() {
                         {
                             id: 'test-red',
                             label: 'Test Red',
-                            cssVar: '--color-test-red',
+                            property: '--color-test-red',
                             value: '255, 0, 0',
                             default: '255, 0, 0',
                             usageCount: 0
@@ -253,7 +253,7 @@ define([], function() {
                                     {
                                         id: 'primary',
                                         label: 'Primary',
-                                        cssVar: '--color-brand-primary',
+                                        property: '--color-brand-primary',
                                         value: '25, 121, 195',
                                         default: '25, 121, 195',
                                         usageCount: 5
@@ -346,7 +346,7 @@ define([], function() {
                         {
                             id: 'primary',
                             label: 'Primary Blue',
-                            cssVar: '--color-brand-primary',
+                            property: '--color-brand-primary',
                             value: '25, 121, 195',
                             hex: '#1979c3',
                             default: '25, 121, 195',
@@ -355,7 +355,7 @@ define([], function() {
                         {
                             id: 'secondary',
                             label: 'Secondary Green',
-                            cssVar: '--color-brand-secondary',
+                            property: '--color-brand-secondary',
                             value: '40, 167, 69',
                             hex: '#28a745',
                             default: '40, 167, 69',
@@ -370,7 +370,7 @@ define([], function() {
                         {
                             id: 'error',
                             label: 'Error Red',
-                            cssVar: '--color-semantic-error',
+                            property: '--color-semantic-error',
                             value: '220, 53, 69',
                             hex: '#dc3545',
                             default: '220, 53, 69',
@@ -396,7 +396,7 @@ define([], function() {
                         {
                             id: 'blue-primary',
                             label: 'Blue Primary',
-                            cssVar: '--color-blue-primary',
+                            property: '--color-blue-primary',
                             value: '25, 121, 195',
                             hex: '#1979c3',
                             default: '25, 121, 195',
@@ -405,7 +405,7 @@ define([], function() {
                         {
                             id: 'blue-500',
                             label: 'Blue 500',
-                            cssVar: '--color-blue-500',
+                            property: '--color-blue-500',
                             value: '25, 121, 195',
                             hex: '#1979c3', // Same HEX!
                             default: '25, 121, 195',

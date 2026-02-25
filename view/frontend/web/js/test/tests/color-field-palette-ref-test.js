@@ -120,7 +120,7 @@ define([
                 'Primary group should have 2 colors');
             
             var firstColor = primaryGroup.colors[0];
-            this.assertEquals(firstColor.cssVar, '--color-brand-primary', 
+            this.assertEquals(firstColor.property, '--color-brand-primary', 
                 'First color should be primary blue');
             
             this.assertNotNull(firstColor.hex, 
@@ -147,8 +147,8 @@ define([
             this.assertEquals(hex1, hex2, 
                 'Both colors should have identical hex values');
             
-            var cssVar1 = colors[0].cssVar;
-            var cssVar2 = colors[1].cssVar;
+            var cssVar1 = colors[0].property;
+            var cssVar2 = colors[1].property;
             
             this.assert(cssVar1 !== cssVar2, 
                 'But different CSS variables (for testing priority)');
@@ -206,23 +206,23 @@ define([
         /**
          * Test 10: jQuery selector for palette swatches should work
          */
-        'should be able to select palette swatches by data-css-var attribute': function() {
+        'should be able to select palette swatches by data-property attribute': function() {
             // Create mock swatch elements
             var $container = $('<div class="test-container">');
-            var $swatch1 = $('<div class="bte-palette-swatch" data-css-var="--color-brand-primary" data-hex="#1979c3">');
-            var $swatch2 = $('<div class="bte-palette-swatch" data-css-var="--color-brand-secondary" data-hex="#28a745">');
+            var $swatch1 = $('<div class="bte-palette-swatch" data-property="--color-brand-primary" data-hex="#1979c3">');
+            var $swatch2 = $('<div class="bte-palette-swatch" data-property="--color-brand-secondary" data-hex="#28a745">');
             
             $container.append($swatch1).append($swatch2);
             $('body').append($container);
             
             // Test selector
-            var $found = $container.find('.bte-palette-swatch[data-css-var="--color-brand-primary"]');
+            var $found = $container.find('.bte-palette-swatch[data-property="--color-brand-primary"]');
             
             this.assertEquals($found.length, 1, 
-                'Should find exactly one swatch with matching CSS var');
+                'Should find exactly one swatch with matching property');
             
-            this.assertEquals($found.data('css-var'), '--color-brand-primary', 
-                'Found swatch should have correct CSS variable');
+            this.assertEquals($found.data('property'), '--color-brand-primary', 
+                'Found swatch should have correct property value');
             
             this.assertEquals($found.data('hex'), '#1979c3', 
                 'Found swatch should have correct hex value');

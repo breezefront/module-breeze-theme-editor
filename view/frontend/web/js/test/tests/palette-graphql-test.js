@@ -27,7 +27,7 @@ define([
          */
         'save palette mutation should accept parameters': function() {
             this.assertEquals(savePaletteValue.length, 4, 
-                'savePaletteValue should accept 4 parameters (storeId, themeId, cssVar, value)');
+                'savePaletteValue should accept 4 parameters (storeId, themeId, property, value)');
         },
         
         /**
@@ -100,7 +100,7 @@ define([
             
             var color = group.colors[0];
             this.assertEquals(color.id, 'primary', 'Color ID should match');
-            this.assertEquals(color.cssVar, '--color-brand-primary', 'Color cssVar should match');
+            this.assertEquals(color.property, '--color-brand-primary', 'Color property should match');
             this.assertEquals(color.value, '25, 121, 195', 'Color value should match');
         }
     });
