@@ -24,6 +24,9 @@ define([
         StorageHelper.init(STORE, THEME);
         localStorage.removeItem(KEY_SECTIONS);
         localStorage.removeItem(KEY_PREVIEW);
+        // Also remove old unscoped keys — getItem() falls back to these via migration logic
+        localStorage.removeItem('bte_open_sections');
+        localStorage.removeItem('bte_live_preview_changes');
     }
 
     return TestFramework.suite('Storage Helper — JSON methods', {
