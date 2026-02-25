@@ -524,8 +524,12 @@ define([
                 
                 // Convert value back to field format
                 if (fieldType === 'color') {
-                    // Convert RGB back to HEX
-                    displayValue = ColorUtils.rgbToHex(value);
+                    // Convert RGB back to HEX only if value is in RGB format.
+                    // Values from localStorage may already be in HEX or palette
+                    // reference format, so conversion must be conditional.
+                    if (ColorUtils.isRgbColor(value)) {
+                        displayValue = ColorUtils.rgbToHex(value);
+                    }
                 }
                 
                 // Update field value
