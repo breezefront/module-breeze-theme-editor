@@ -91,7 +91,7 @@ define([
             return {
                 sectionCode: $input.data('section'),
                 fieldCode: $input.data('field'),
-                property: $input.data('property'),
+                property: $input.data('property') || $input.data('css-var'),
                 type: $input.data('type'),
                 value: this.getInputValue($input),
                 defaultValue: $input.data('default')

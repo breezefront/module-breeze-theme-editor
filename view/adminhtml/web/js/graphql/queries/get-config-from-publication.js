@@ -103,7 +103,7 @@ define([
                             id
                             label
                             description
-                            cssVar
+                            property
                             default
                             value
                             usageCount

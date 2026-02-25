@@ -107,7 +107,7 @@ class PaletteResolver
             foreach ($groups as $group) {
                 $colors = $group['colors'] ?? [];
                 foreach ($colors as $color) {
-                    if (($color['css_var'] ?? '') === $cssVar) {
+                    if (($color['property'] ?? $color['css_var'] ?? '') === $cssVar) {
                         // Return HEX directly (no conversion)
                         return $color['default'] ?? '#000000';
                     }

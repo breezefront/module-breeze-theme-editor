@@ -154,12 +154,12 @@ define([
 
             // Create swatch container
             var $swatch = $('<div class="bte-palette-swatch"></div>');
-            $swatch.attr('data-css-var', color.cssVar);
+            $swatch.attr('data-property', color.property);
             $swatch.attr('data-label', color.label);
             $swatch.attr('data-usage', color.usageCount || 0);
 
             // Check if color is modified (saved value != default)
-            var isModified = PaletteManager.isColorModified(color.cssVar);
+            var isModified = PaletteManager.isColorModified(color.property);
 
             // Add modified class for orange border
             if (isModified) {
@@ -182,7 +182,7 @@ define([
             // Create hidden color input
             var $input = $('<input type="color" class="bte-swatch-input">');
             $input.val(hexValue);
-            $input.attr('data-css-var', color.cssVar);
+            $input.attr('data-property', color.property);
 
             $swatch.append($visual);
             $swatch.append($input);
@@ -231,10 +231,10 @@ define([
             // Color input change
             this.$grid.on('change', '.bte-swatch-input', function(e) {
                 var $input = $(e.currentTarget);
-                var cssVar = $input.attr('data-css-var');
+                var property = $input.attr('data-property');
                 var hexValue = $input.val();
 
-                console.log('🎨 Color changed:', cssVar, '=', hexValue);
+                console.log('🎨 Color changed:', property, '=', hexValue);
 
                 // Update visual
                 var $swatch = $input.closest('.bte-palette-swatch');
@@ -244,7 +244,7 @@ define([
                 $swatch.addClass('bte-swatch-dirty');
 
                 // Update via PaletteManager (NO auto-save now)
-                PaletteManager.updateColor(cssVar, hexValue);
+                PaletteManager.updateColor(property, hexValue);
                 
                 // Update header badges
                 self._updateHeaderBadges();
@@ -295,8 +295,8 @@ define([
                 // Update all swatch visuals to saved values
                 self.$grid.find('.bte-palette-swatch').each(function() {
                     var $swatch = $(this);
-                    var cssVar = $swatch.attr('data-css-var');
-                    var color = PaletteManager.getColor(cssVar);
+                    var property = $swatch.attr('data-property');
+                    var color = PaletteManager.getColor(property);
                     
                     if (color) {
                         $swatch.find('.bte-swatch-visual').css('background-color', color.hex);
@@ -322,8 +322,8 @@ define([
                 // Update modified state for all swatches (colors may now be modified)
                 self.$grid.find('.bte-palette-swatch').each(function() {
                     var $swatch = $(this);
-                    var cssVar = $swatch.attr('data-css-var');
-                    self._updateSwatchModifiedState(cssVar);
+                    var property = $swatch.attr('data-property');
+                    self._updateSwatchModifiedState(property);
                 });
                 
                 // Update header badges (Changed -> Modified transition)
@@ -381,19 +381,19 @@ define([
          * Updates the "modified" class on a swatch based on whether its
          * current saved value differs from the theme default.
          * 
-         * @param {String} cssVar - CSS variable name
+         * @param {String} property - CSS variable name
          */
-        _updateSwatchModifiedState: function(cssVar) {
-            var $swatch = this.$grid.find('.bte-palette-swatch[data-css-var="' + cssVar + '"]');
+        _updateSwatchModifiedState: function(property) {
+            var $swatch = this.$grid.find('.bte-palette-swatch[data-property="' + property + '"]');
             if ($swatch.length === 0) {
                 return;
             }
             
-            var isModified = PaletteManager.isColorModified(cssVar);
+            var isModified = PaletteManager.isColorModified(property);
             $swatch.toggleClass('bte-swatch-modified', isModified);
             
             // Update tooltip
-            var color = PaletteManager.getColor(cssVar);
+            var color = PaletteManager.getColor(property);
             var hexValue = color.value;  // Already HEX format (Breeze 3.0)
             var tooltip = color.label + '\n' + hexValue + '\n' + 
                          'Used in ' + (color.usageCount || 0) + ' fields';
@@ -406,11 +406,11 @@ define([
         /**
          * Update swatch color (called from external sources)
          * 
-         * @param {String} cssVar
+         * @param {String} property
          * @param {String} hexValue
          */
-        updateSwatch: function (cssVar, hexValue) {
-            var $swatch = this.$grid.find('[data-css-var="' + cssVar + '"]');
+        updateSwatch: function (property, hexValue) {
+            var $swatch = this.$grid.find('[data-property="' + property + '"]');
             
             if ($swatch.length === 0) {
                 return;
@@ -422,20 +422,20 @@ define([
             // Update visual
             $swatch.find('.bte-swatch-visual').css('background-color', hexValue);
 
-            console.log('🔄 Swatch updated:', cssVar, '=', hexValue);
+            console.log('🔄 Swatch updated:', property, '=', hexValue);
         },
 
         /**
          * Highlight a specific color swatch (called from Quick Select)
          * 
-         * @param {String} cssVar - CSS variable to highlight
+         * @param {String} property - CSS variable to highlight
          */
-        highlightColor: function(cssVar) {
+        highlightColor: function(property) {
             // Remove previous highlights
             this.$grid.find('.bte-palette-swatch').removeClass('quick-select-active');
             
             // Add highlight to matching swatch
-            var $swatch = this.$grid.find('.bte-palette-swatch[data-css-var="' + cssVar + '"]');
+            var $swatch = this.$grid.find('.bte-palette-swatch[data-property="' + property + '"]');
             if ($swatch.length) {
                 $swatch.addClass('quick-select-active');
                 
@@ -451,7 +451,7 @@ define([
                     }, 300);
                 }
                 
-                console.log('✨ Highlighted palette color:', cssVar);
+                console.log('✨ Highlighted palette color:', property);
             }
         },
 
@@ -472,11 +472,11 @@ define([
     });
 
     // Expose highlightColor as a static method for external access
-    $.swissup.paletteSection.highlightColor = function(cssVar) {
+    $.swissup.paletteSection.highlightColor = function(property) {
         // Find the active palette section widget instance
         var $paletteSection = $('.bte-palette-section');
         if ($paletteSection.length && $paletteSection.data('swissup-paletteSection')) {
-            $paletteSection.paletteSection('highlightColor', cssVar);
+            $paletteSection.paletteSection('highlightColor', property);
         }
     };
 

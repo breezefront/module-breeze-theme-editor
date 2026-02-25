@@ -555,7 +555,7 @@ class CssGenerator
         foreach ($config['palettes'] ?? [] as $palette) {
             foreach ($palette['groups'] ?? [] as $group) {
                 foreach ($group['colors'] ?? [] as $color) {
-                    $cssVar  = $color['css_var'] ?? null;
+                    $cssVar  = $color['property'] ?? $color['css_var'] ?? null;
                     $default = $color['default'] ?? null;
                     if ($cssVar && $default) {
                         $defaults[$cssVar] = $default;

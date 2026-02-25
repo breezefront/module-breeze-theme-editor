@@ -178,6 +178,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/css-preview-manager-palette-test',
             // Palette Reset Behavior Tests (8 tests) - focus-return click fix
             'Swissup_BreezeThemeEditor/js/test/tests/palette-reset-behavior-test',
+            // Field Renderers Tests (57 tests) - prepareData() coverage + property rename verification
+            'Swissup_BreezeThemeEditor/js/test/tests/field-renderers-test',
         ];
     }
 }

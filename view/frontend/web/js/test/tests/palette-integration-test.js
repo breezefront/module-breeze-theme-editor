@@ -131,7 +131,7 @@ define([
                 type: 'color',
                 format: 'hex',
                 default: '--color-brand-primary',
-                css_var: '--button-primary-bg'
+                property: '--button-primary-bg'
             };
             
             var fieldWithRgbFormat = {
@@ -139,7 +139,7 @@ define([
                 type: 'color',
                 format: 'rgb',
                 default: '--color-brand-primary',
-                css_var: '--base-color'
+                property: '--base-color'
             };
             
             // Verify format property is preserved
@@ -172,7 +172,7 @@ define([
                 type: 'color',
                 format: 'rgb',
                 default: '--color-brand-gray-dark',
-                css_var: '--overlay-color',
+                property: '--overlay-color',
                 description: 'Used with rgba() for transparency: rgba(var(--overlay-color), 0.8)'
             };
             

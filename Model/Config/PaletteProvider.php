@@ -92,7 +92,7 @@ class PaletteProvider
             $colors = $group['colors'] ?? [];
             foreach ($colors as $color) {
                 $colorId = $color['id'] ?? '';
-                $cssVar = $color['css_var'] ?? '';
+                $cssVar = $color['property'] ?? $color['css_var'] ?? '';
                 
                 // Get saved value from database (section: _palette, setting: cssVar)
                 $paletteKey = '_palette.' . $cssVar;
@@ -117,7 +117,7 @@ class PaletteProvider
                     'id' => $colorId,
                     'label' => $color['label'] ?? $colorId,
                     'description' => $color['description'] ?? null,
-                    'cssVar' => $cssVar,
+                    'property' => $cssVar,
                     'value' => $currentValue,
                     'default' => $color['default'] ?? '#000000',
                     'usageCount' => $usageCounts[$cssVar] ?? 0
@@ -149,8 +149,9 @@ class PaletteProvider
         foreach ($groups as $group) {
             $colors = $group['colors'] ?? [];
             foreach ($colors as $color) {
-                if (isset($color['css_var'])) {
-                    $paletteCssVars[$color['css_var']] = 0;
+                if (isset($color['property']) || isset($color['css_var'])) {
+                    $propKey = $color['property'] ?? $color['css_var'];
+                    $paletteCssVars[$propKey] = 0;
                 }
             }
         }

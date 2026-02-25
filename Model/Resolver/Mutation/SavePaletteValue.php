@@ -42,7 +42,7 @@ class SavePaletteValue extends AbstractMutationResolver
             ? (int)$input['themeId']
             : $this->themeResolver->getThemeIdByStoreId($storeId);
 
-        $cssVar = $input['cssVar'];
+        $cssVar = $input['property'] ?? $input['cssVar'];
         $colorValue = $input['value'];
 
         // Validate CSS variable name

@@ -20,7 +20,7 @@
             <div class="bte-color-trigger" 
                  data-section="<%= data.sectionCode %>"
                  data-field="<%= data.code %>"
-                 data-css-var="<%= data.cssVar %>"
+                 data-property="<%= data.property %>"
                  data-palette="<%= data.palette %>"
                  data-type="color"
                  data-default="<%= data.default %>"
@@ -38,7 +38,8 @@
                 pattern="<%= data.validation && data.validation.pattern || '^#[0-9A-Fa-f]{6}$' %>"
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
-                data-css-var="<%= data.cssVar %>"
+                data-property="<%= data.property %>"
+                data-default="<%= data.default %>"
                 data-type="color"
                 <% if (data.format) { %>data-format="<%= data.format %>"<% } %>
                 <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>

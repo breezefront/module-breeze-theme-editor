@@ -62,7 +62,7 @@ define([], function() {
                             fieldCode: field.code,
                             fieldLabel: field.label,
                             fieldType: field.type,
-                            cssVar: field.cssVar,
+                            property: field.property,
                             default: field.default,
                             validation: field.validation,
                             params: field.params
@@ -162,7 +162,7 @@ define([], function() {
                         fieldCode: field.fieldCode,
                         value: state.value,
                         savedValue: state.savedValue,
-                        cssVar: field.cssVar
+                        property: field.property
                     });
                 }
             }.bind(this));

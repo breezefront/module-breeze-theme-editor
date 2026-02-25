@@ -193,7 +193,7 @@ define([
                 
                 // Priority 1: Match by palette reference (exact source)
                 if (paletteRef) {
-                    var $matchedSwatch = $popup.find('.bte-palette-swatch[data-css-var="' + paletteRef + '"]');
+                    var $matchedSwatch = $popup.find('.bte-palette-swatch[data-property="' + paletteRef + '"]');
                     if ($matchedSwatch.length) {
                         $matchedSwatch.addClass('selected');
                         console.log('✨ Pre-selected palette swatch by ref:', paletteRef);
@@ -389,18 +389,18 @@ define([
                 
                 var $swatch = $(e.currentTarget);
                 var hex = $swatch.data('hex');
-                var cssVar = $swatch.data('css-var');
+                var property = $swatch.data('property');
                 
-                console.log('🎨 Palette swatch clicked:', cssVar, '→', hex);
+                console.log('🎨 Palette swatch clicked:', property, '→', hex);
                 
                 // Update text input and trigger preview FIRST (before Pickr)
                 $textInput.val(hex);
                 $trigger.find('.bte-color-preview').css('background-color', hex);
                 
                 // 🆕 Store palette reference for future highlighting
-                $textInput.attr('data-palette-ref', cssVar);
-                $trigger.attr('data-palette-ref', cssVar);
-                console.log('🔗 Palette reference saved:', cssVar, '→', hex);
+                $textInput.attr('data-palette-ref', property);
+                $trigger.attr('data-palette-ref', property);
+                console.log('🔗 Palette reference saved:', property, '→', hex);
                 
                 // Set flag to prevent removal in pickr.on('change') and pickr.on('save')
                 $textInput.data('is-palette-selection', true);
@@ -425,7 +425,7 @@ define([
                 // Debug logging for color field save
                 console.log('💾 Color field save:', {
                     hex: hex,
-                    paletteRef: cssVar,
+                    paletteRef: property,
                     willSaveAs: $textInput.attr('data-palette-ref') || hex,
                     hasPaletteRef: !!$textInput.attr('data-palette-ref')
                 });

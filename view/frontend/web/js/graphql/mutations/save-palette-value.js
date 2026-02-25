@@ -18,16 +18,16 @@ define([
      *
      * @param {Number} storeId
      * @param {Number} themeId
-     * @param {String} cssVar - CSS variable name (e.g., "--color-brand-primary")
+     * @param {String} property - CSS variable name (e.g., "--color-brand-primary")
      * @param {String} value - RGB value (e.g., "25, 121, 195")
      * @returns {Promise}
      */
-    return function savePaletteValue(storeId, themeId, cssVar, value) {
+    return function savePaletteValue(storeId, themeId, property, value) {
         return client.execute(mutation, {
             input: {
                 storeId: storeId,
                 themeId: themeId,
-                cssVar: cssVar,
+                property: property,
                 value: value
             }
         }, 'SavePaletteValue');

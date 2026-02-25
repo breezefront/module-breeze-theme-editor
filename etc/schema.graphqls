@@ -186,7 +186,7 @@ type BreezeThemeEditorPaletteColor {
     id: String!
     label: String!
     description: String
-    cssVar: String!
+    property: String!
     value: String! @doc(description: "Current HEX value (e.g., '#1979c3') - Breeze 3.0 format")
     default: String! @doc(description: "Default hex value (e.g., '#1979c3')")
     usageCount: Int! @doc(description: "Number of fields referencing this color")
@@ -410,7 +410,8 @@ input ImportBreezeThemeEditorSettingsInput {
 input SaveBreezeThemeEditorPaletteValueInput {
     storeId: Int!
     themeId: Int @doc(description: "Optional: override auto-detected theme")
-    cssVar: String! @doc(description: "CSS variable name (e.g., '--color-brand-primary')")
+    cssVar: String! @doc(description: "CSS variable name (e.g., '--color-brand-primary')") @deprecated(reason: "Use 'property' instead")
+    property: String! @doc(description: "CSS variable name (e.g., '--color-brand-primary')")
     value: String! @doc(description: "HEX value (e.g., '#1979c3') or RGB (auto-converted for backward compatibility)")
 }
 
