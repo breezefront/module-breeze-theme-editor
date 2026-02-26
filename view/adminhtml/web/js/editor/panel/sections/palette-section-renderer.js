@@ -34,14 +34,10 @@ define([
         _create: function () {
             Logger.info('palette-section', 'Initializing');
 
-            // Initialize PaletteManager if not already done
-            if (!PaletteManager.storeId) {
-                PaletteManager.init({
-                    palettes: this.options.palettes,
-                    storeId: this.options.storeId,
-                    themeId: this.options.themeId
-                });
-            }
+            // PaletteManager is always initialized by settings-editor before
+            // _initPaletteSection() is called, so no need to re-init here.
+            // The old guard "if (!PaletteManager.storeId)" was preventing
+            // re-initialization after a store switch.
 
             this._render();
 

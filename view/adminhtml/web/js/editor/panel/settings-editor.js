@@ -999,28 +999,35 @@ define([
          * Initialize palette section
          */
         _initPaletteSection: function() {
-            var self = this;
-            
             if (!this.$paletteContainer || this.$paletteContainer.length === 0) {
                 log.warn('Palette container not found');
                 return;
             }
-            
+
+            // Destroy existing widget instance so re-init works after store switch
+            if (this.$paletteContainer.data('swissup-paletteSection')) {
+                log.debug('Destroying existing paletteSection widget before re-init');
+                this.$paletteContainer.paletteSection('destroy');
+            }
+
             // Check if config has palettes
             if (!this.config || !this.config.palettes || this.config.palettes.length === 0) {
                 log.debug('No palettes in config, hiding palette section');
                 this.$paletteContainer.hide();
                 return;
             }
-            
+
+            // Ensure container is visible (may have been hidden by a previous blank-store load)
+            this.$paletteContainer.show();
+
             log.info('Initializing Palette Section with ' + this.config.palettes.length + ' palettes');
-            
+
             this.$paletteContainer.paletteSection({
                 palettes: this.config.palettes,
                 storeId: this.storeId,
                 themeId: this.themeId
             });
-            
+
             log.info('Palette section initialized');
         },
 
