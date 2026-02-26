@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
@@ -53,21 +54,29 @@ class Config extends AbstractConfigResolver
         $storeId = (int)$args['storeId'];
 
         // 3. Визначити theme ID
-        $themeId = isset($args['themeId']) && $args['themeId']
-            ? (int)$args['themeId']
-            :  $this->themeResolver->getThemeIdByStoreId($storeId);
+        try {
+            $themeId = isset($args['themeId']) && $args['themeId']
+                ? (int)$args['themeId']
+                : $this->themeResolver->getThemeIdByStoreId($storeId);
+        } catch (LocalizedException $e) {
+            throw new GraphQlInputException(__($e->getMessage()));
+        }
 
         // 4. Визначити статус
         $statusCode = $args['status'] ?? 'PUBLISHED';
-        
+
         // Validate: PUBLICATION not supported for this query
         if ($statusCode === 'PUBLICATION') {
             throw new GraphQlInputException(
                 __('PUBLICATION status is not supported. Use breezeThemeEditorConfigFromPublication query instead.')
             );
         }
-        
-        $statusId = $this->statusProvider->getStatusId($statusCode);
+
+        try {
+            $statusId = $this->statusProvider->getStatusId($statusCode);
+        } catch (\Exception $e) {
+            throw new GraphQlInputException(__($e->getMessage()));
+        }
 
         // 5. Отримати конфігурацію з inheritance
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
@@ -108,7 +117,7 @@ class Config extends AbstractConfigResolver
         }
 
         return [
-            'version' => $config['version'],
+            'version' => $config['version'] ?? '1.0',
             'sections' => $sections,
             'presets' => $this->formatPresets($config['presets'] ?? []),
             'palettes' => $this->formatPalettes($themeId, $valuesMap),

@@ -174,11 +174,24 @@ class ConfigProvider
 
     /**
      * Отримати metadata
+     *
+     * Спочатку спробувати з settings.json (підтримує кастомні поля від розробника теми),
+     * при відсутності файлу — fallback до базової metadata з об'єкта теми.
      */
     public function getMetadata(int $themeId): array
     {
-        $config = $this->getConfiguration($themeId);
-        return $config['metadata'] ?? [];
+        try {
+            $config = $this->getConfiguration($themeId);
+            return $config['metadata'] ?? [];
+        } catch (\Exception $e) {
+            // Fallback: збираємо metadata з об'єкта теми без settings.json
+            try {
+                $theme = $this->getTheme($themeId);
+                return $this->buildMetadata($theme);
+            } catch (\Exception $e) {
+                return [];
+            }
+        }
     }
 
     /**
@@ -246,16 +259,18 @@ class ConfigProvider
 
     /**
      * Отримати всі default значення
+     *
+     * Використовує getConfigurationWithInheritance() щоб коректно повернути
+     * defaults з усього ланцюга тем, навіть якщо активна тема не має settings.json.
      */
     public function getAllDefaults(int $themeId): array
     {
-        $sections = $this->getSections($themeId);
+        $config = $this->getConfigurationWithInheritance($themeId);
         $defaults = [];
-        foreach ($sections as $section) {
-            foreach ($section['settings'] as $setting) {
+        foreach ($config['sections'] ?? [] as $section) {
+            foreach ($section['settings'] ?? [] as $setting) {
                 if (isset($setting['default'])) {
-                    $key = $section['id'] . '.' . $setting['id'];
-                    $defaults[$key] = $setting['default'];
+                    $defaults[$section['id'] . '.' . $setting['id']] = $setting['default'];
                 }
             }
         }
