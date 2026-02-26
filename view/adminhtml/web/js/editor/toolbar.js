@@ -344,6 +344,29 @@ define([
                 log.info('Publication status changed: ' + data.status + ' ' + (data.publicationId || ''));
                 // No action needed - css-manager already switched CSS in publication-selector
             });
+
+            // When store scope changes: update global config so that lazy-initialized
+            // panel widgets (settings-editor) pick up the new storeId on first open.
+            // Also update the navigation panelWidgets config so re-init uses new storeId.
+            $(document).on('storeChanged', function(e, storeId, storeCode) {
+                log.info('Toolbar: store changed to ' + storeCode + ' (ID: ' + storeId + ')');
+
+                // Update global config read by settings-editor _create()
+                if (window.breezeThemeEditorConfig) {
+                    window.breezeThemeEditorConfig.storeId = storeId;
+                    window.breezeThemeEditorConfig.themeId = null; // backend will resolve from storeId
+                }
+
+                // Update navigation panelWidget config (used on first lazy init)
+                var $nav = $('#toolbar-navigation');
+                var navWidget = $nav.data('swissupBreezeNavigation');
+                if (navWidget && navWidget.options.panelWidgets['theme-editor']) {
+                    navWidget.options.panelWidgets['theme-editor'].config.storeId = storeId;
+                    navWidget.options.panelWidgets['theme-editor'].config.themeId = null;
+                }
+
+                log.info('Toolbar: global config updated for new store');
+            });
             
             // Update page-selector when iframe navigates to different page type
             // Triggered by iframe-helper.js when body class changes
