@@ -83,31 +83,52 @@ define([
             
             xhr.onload = function() {
                 if (xhr.status >= 200 && xhr.status < 300) {
+                    var response;
                     try {
-                        var response = JSON.parse(xhr.responseText);
+                        response = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        // JSON parse failed — build error and reject
+                        try {
+                            self._handleError({
+                                status: xhr.status,
+                                statusText: 'JSON Parse Error',
+                                responseText: xhr.responseText
+                            });
+                        } catch (err2) {
+                            deferred.reject(err2);
+                        }
+                        return;
+                    }
+                    // JSON parsed OK — _handleSuccess may throw on GraphQL errors
+                    try {
                         deferred.resolve(self._handleSuccess(response));
                     } catch (e) {
-                        deferred.reject(self._handleError({
-                            status: xhr.status,
-                            statusText: 'JSON Parse Error',
-                            responseText: xhr.responseText
-                        }));
+                        // e is the well-formed error from _handleSuccess (has .graphqlErrors, .extensions)
+                        deferred.reject(e);
                     }
                 } else {
-                    deferred.reject(self._handleError({
-                        status: xhr.status,
-                        statusText: xhr.statusText,
-                        responseText: xhr.responseText
-                    }));
+                    try {
+                        self._handleError({
+                            status: xhr.status,
+                            statusText: xhr.statusText,
+                            responseText: xhr.responseText
+                        });
+                    } catch (e) {
+                        deferred.reject(e);
+                    }
                 }
             };
             
             xhr.onerror = function() {
-                deferred.reject(self._handleError({
-                    status: 0,
-                    statusText: 'Network Error',
-                    responseText: ''
-                }));
+                try {
+                    self._handleError({
+                        status: 0,
+                        statusText: 'Network Error',
+                        responseText: ''
+                    });
+                } catch (e) {
+                    deferred.reject(e);
+                }
             };
             
             xhr.send(JSON.stringify(payload));
