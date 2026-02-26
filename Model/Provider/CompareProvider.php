@@ -53,7 +53,7 @@ class CompareProvider
 
         // Порівнювати ТІЛЬКИ ті ключі що є в draft
         $changes = [];
-        $config = $this->configProvider->getConfiguration($themeId);
+        $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $labels = $this->extractLabels($config);
 
         foreach ($draftMap as $key => $draftValue) {

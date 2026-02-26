@@ -54,7 +54,7 @@ class Publication extends AbstractQueryResolver
 
         // Отримати labels з config
         $themeId = $publication->getThemeId();
-        $config = $this->configProvider->getConfiguration($themeId);
+        $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $labels = $this->extractLabels($config);
 
         $changes = [];

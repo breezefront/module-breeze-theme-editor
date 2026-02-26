@@ -74,7 +74,7 @@ class CompareProviderTest extends TestCase
                 return []; // PUBLISHED empty
             });
 
-        $this->configProvider->method('getConfiguration')->with(5)->willReturn([
+        $this->configProvider->method('getConfigurationWithInheritance')->with(5)->willReturn([
             'sections' => [
                 [
                     'id' => 'header',
@@ -126,7 +126,7 @@ class CompareProviderTest extends TestCase
                 return $publishedValues; // PUBLISHED
             });
 
-        $this->configProvider->method('getConfiguration')->with(5)->willReturn([
+        $this->configProvider->method('getConfigurationWithInheritance')->with(5)->willReturn([
             'sections' => [
                 [
                     'id' => 'footer',
@@ -175,7 +175,7 @@ class CompareProviderTest extends TestCase
                 return $publishedValues;
             });
 
-        $this->configProvider->method('getConfiguration')->willReturn([
+        $this->configProvider->method('getConfigurationWithInheritance')->willReturn([
             'sections' => []
         ]);
 
@@ -216,7 +216,7 @@ class CompareProviderTest extends TestCase
                 return $publishedValues;
             });
 
-        $this->configProvider->method('getConfiguration')->willReturn([
+        $this->configProvider->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
                 [
                     'id' => 'header',
@@ -267,7 +267,7 @@ class CompareProviderTest extends TestCase
                 return [];
             });
 
-        $this->configProvider->method('getConfiguration')->with(5)->willReturn([
+        $this->configProvider->method('getConfigurationWithInheritance')->with(5)->willReturn([
             'sections' => [
                 [
                     'id' => 'typography',
@@ -309,7 +309,7 @@ class CompareProviderTest extends TestCase
                 return [];
             });
 
-        $this->configProvider->method('getConfiguration')->willReturn([
+        $this->configProvider->method('getConfigurationWithInheritance')->willReturn([
             'sections' => []
         ]);
 
@@ -353,7 +353,7 @@ class CompareProviderTest extends TestCase
                 return [];
             });
 
-        $this->configProvider->method('getConfiguration')->willReturn(['sections' => []]);
+        $this->configProvider->method('getConfigurationWithInheritance')->willReturn(['sections' => []]);
 
         // Act
         $this->compareProvider->compare(10, 3, 99);
@@ -382,7 +382,7 @@ class CompareProviderTest extends TestCase
                 return [];
             });
 
-        $this->configProvider->method('getConfiguration')->willReturn([
+        $this->configProvider->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
                 [
                     'id' => 'colors',
@@ -426,7 +426,7 @@ class CompareProviderTest extends TestCase
                 return [];
             });
 
-        $this->configProvider->method('getConfiguration')->willReturn([
+        $this->configProvider->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
                 [
                     'id' => 'layout',
@@ -467,7 +467,7 @@ class CompareProviderTest extends TestCase
                 return $statusId === 1 ? $draftValues : $publishedValues;
             });
 
-        $this->configProvider->method('getConfiguration')->willReturn([
+        $this->configProvider->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
                 [
                     'id' => 'test',
