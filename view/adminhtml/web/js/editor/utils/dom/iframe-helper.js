@@ -94,8 +94,21 @@ define([
         },
 
         /**
+         * Check if a URL path is an admin URL (should not be saved/synced)
+         * 
+         * @param {String} path - Path to check
+         * @returns {Boolean}
+         */
+        isAdminUrl: function(path) {
+            return path && path.indexOf('/admin/') === 0;
+        },
+
+        /**
          * Get current URL from iframe window
-         * Returns full path with query and hash, or null if not accessible
+         * Returns full path with query and hash, or null if not accessible.
+         * Returns null if the iframe is showing an admin URL (prevents saving
+         * admin redirect URLs like /admin/breeze_editor/editor/index/... to
+         * localStorage and avoids recursive iframe loading).
          * 
          * @returns {String|null}
          */
@@ -108,9 +121,15 @@ define([
                 
                 var url = iframeWindow.location.href;
                 var urlObj = new URL(url);
+                var path = urlObj.pathname + urlObj.search + urlObj.hash;
+
+                // Ignore admin URLs — iframe should never show admin pages
+                if (this.isAdminUrl(urlObj.pathname)) {
+                    log.warn('⚠️ Iframe Helper: Ignoring admin URL in iframe: ' + urlObj.pathname);
+                    return null;
+                }
                 
-                // Return path + query + hash
-                return urlObj.pathname + urlObj.search + urlObj.hash;
+                return path;
             } catch(e) {
                 log.warn('⚠️ Iframe Helper: Cannot get current URL (cross-origin)');
                 return null;
