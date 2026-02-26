@@ -312,6 +312,25 @@ define([
                 self._loadConfigFromPublication(data.publicationId);
             });
 
+            // ✅ Listen for store scope changes (scope-selector triggers 'storeChanged')
+            $(document).on('storeChanged', function (e, storeId, storeCode) {
+                log.info('Store changed to: ' + storeCode + ' (ID: ' + storeId + ')');
+
+                // Update storeId; clear themeId so backend resolves it from the new store
+                self.storeId = storeId;
+                self.themeId = null;
+
+                // Re-init storage helper for new scope
+                StorageHelper.init(storeId, null);
+
+                // Reset live preview (stale CSS no longer applies)
+                CssPreviewManager.reset();
+
+                // Reload config for new store
+                log.info('Reloading config for new store');
+                self._loadConfig();
+            });
+
             $(document).on('openPublicationHistoryModal', function () {
                 log.info('Opening publication history modal');
                 self._showToast('notice', 'Publication history coming soon!');
@@ -385,6 +404,12 @@ define([
                 .then(function(data) {
                     log.info('Config loaded for status "' + self.options.status + '"');
                     var config = data.breezeThemeEditorConfig;
+
+                    // Update themeId from resolved metadata (important after store switch)
+                    if (config.metadata && config.metadata.themeId) {
+                        self.themeId = config.metadata.themeId;
+                        log.info('themeId resolved from metadata: ' + self.themeId);
+                    }
                     self.config = config; // Store config for palette initialization
                     
                     // Initialize PaletteManager BEFORE rendering sections
