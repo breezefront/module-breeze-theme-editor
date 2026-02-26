@@ -228,7 +228,7 @@ class ConfigTest extends TestCase
 
         $mockConfig = [
             'version' => '1.0',
-            'sections' => [],
+            'sections' => [['id' => 'general', 'name' => 'General', 'settings' => []]],
             'presets' => []
         ];
 
@@ -282,7 +282,7 @@ class ConfigTest extends TestCase
             ->willReturn(2);
 
         $this->configProviderMock->method('getConfigurationWithInheritance')
-            ->willReturn(['version' => '1.0', 'sections' => [], 'presets' => []]);
+            ->willReturn(['version' => '1.0', 'sections' => [['id' => 'general', 'name' => 'General', 'settings' => []]], 'presets' => []]);
         $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
@@ -317,7 +317,7 @@ class ConfigTest extends TestCase
 
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         $this->configProviderMock->method('getConfigurationWithInheritance')
-            ->willReturn(['version' => '1.0', 'sections' => [], 'presets' => []]);
+            ->willReturn(['version' => '1.0', 'sections' => [['id' => 'general', 'name' => 'General', 'settings' => []]], 'presets' => []]);
         $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 5]);
@@ -348,7 +348,7 @@ class ConfigTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
         $this->configProviderMock->method('getConfigurationWithInheritance')
-            ->willReturn(['version' => '1.0', 'sections' => [], 'presets' => []]);
+            ->willReturn(['version' => '1.0', 'sections' => [['id' => 'general', 'name' => 'General', 'settings' => []]], 'presets' => []]);
         $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
@@ -391,7 +391,7 @@ class ConfigTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
 
         $this->configProviderMock->method('getConfigurationWithInheritance')
-            ->willReturn(['version' => '1.0', 'sections' => [], 'presets' => []]);
+            ->willReturn(['version' => '1.0', 'sections' => [['id' => 'general', 'name' => 'General', 'settings' => []]], 'presets' => []]);
         $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
@@ -607,5 +607,41 @@ class ConfigTest extends TestCase
         $this->assertEquals('1400px', $containerWidthField['value'], 
             'Non-color field values should not be modified');
         $this->assertEquals('TEXT', $containerWidthField['type']);
+    }
+
+    /**
+     * Test: Should throw GraphQlNoSuchEntityException when theme has no settings.json
+     *
+     * SCENARIO: Theme (and all parents) have no settings.json → sections is empty after inheritance merge
+     * EXPECTED: GraphQlNoSuchEntityException with theme name in message
+     */
+    public function testThrowsExceptionWhenThemeHasNoConfig(): void
+    {
+        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(18);
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        // Theme has no settings.json → inheritance merge yields empty sections
+        $this->configProviderMock->method('getConfigurationWithInheritance')
+            ->willReturn(['version' => '1.0', 'sections' => [], 'presets' => []]);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
+        $this->configProviderMock->method('getMetadata')->willReturn([
+            'themeId' => 18,
+            'themeName' => 'Argento Breeze Chic'
+        ]);
+        $this->paletteProviderMock->method('getPalettes')->willReturn([]);
+
+        $this->expectException(\Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException::class);
+        $this->expectExceptionMessageMatches('/configuration file not found.*Argento Breeze Chic/i');
+
+        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $this->config->resolve(
+            $this->fieldMock,
+            $this->contextMock,
+            $this->infoMock,
+            null,
+            $args
+        );
     }
 }

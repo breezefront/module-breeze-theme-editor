@@ -6,6 +6,7 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
+use Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
@@ -109,7 +110,16 @@ class Config extends AbstractConfigResolver
         $metadata['hasUnpublishedChanges'] = false;
         $metadata['draftChangesCount'] = 0;
 
-        // 10. Якщо draft - перевірити зміни
+        // 10. Якщо жодна тема в ієрархії не має settings.json — повідомити явно.
+        //     GraphQlNoSuchEntityException не маскується в production (на відміну від GraphQlInputException).
+        if (empty($config['sections'])) {
+            $themeName = $metadata['themeName'] ?? (string)$themeId;
+            throw new GraphQlNoSuchEntityException(
+                __('Theme editor configuration file not found for theme: %1', $themeName)
+            );
+        }
+
+        // 11. Якщо draft - перевірити зміни
         if ($statusCode === 'DRAFT') {
             $comparison = $this->compareProvider->compare($themeId, $storeId, $userId);
             $metadata['hasUnpublishedChanges'] = $comparison['hasChanges'];

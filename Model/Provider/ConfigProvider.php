@@ -35,7 +35,7 @@ class ConfigProvider
             'version' => '1.0',
             'sections' => [],
             'presets' => [],
-            'metadata' => []
+            'metadata' => [],
         ];
         foreach (array_reverse($hierarchy) as $themeInfo) {
             try {
