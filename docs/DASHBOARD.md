@@ -1,7 +1,7 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 25 лютого 2026 ✅ css-manager fix + frontend overlay видалено  
-**Загальний прогрес:** 93% завершено
+**Останнє оновлення:** 26 лютого 2026 ✅ AbstractToolbar merged into AdminToolbar  
+**Загальний прогрес:** 94% завершено
 
 ---
 
@@ -214,6 +214,7 @@
 
 | Баг/Покращення | Статус | Дата | Коміт |
 |----------------|--------|------|-------|
+| **AbstractToolbar → AdminToolbar merge** | ✅ Видалено | 26.02 | `1a17cae` |
 | **Live Preview After Navigation** | ✅ Виправлено | 25.02 | `f2a61d5` |
 | **Badge Bullet Icon** | ✅ Видалено | 25.02 | `08bbf73` |
 | **Frontend Overlay** | ✅ Видалено (164 файли) | 25.02 | `7eedd20` |
@@ -275,7 +276,7 @@ docs/
 
 ## 📈 Метрики Прогресу
 
-### Admin Migration (ОНОВЛЕНО 24.02.2026)
+### Admin Migration (ОНОВЛЕНО 26.02.2026)
 ```
 ███████████████████████████████░░  93% (~114h / ~123h)
 
@@ -291,7 +292,7 @@ docs/
 ```
 ✅ Infrastructure:  100%
 ✅ Unit Tests:      17 тестів готово! (17 admin, frontend overlay видалено)
-✅ PHP Validated:   290/290 (2 skipped, 909 assertions)
+✅ PHP Validated:   303/303 (2 skipped, 938 assertions)
 ✅ Admin JS:        126/126 pass (браузер, 24.02.2026)
 🗑️ Frontend JS:     видалено разом з frontend overlay (25.02.2026)
 📋 Integration:     0%
@@ -331,7 +332,7 @@ docs/
 
 ---
 
-## 📊 Детальна Статистика (ОНОВЛЕНО 24.02.2026)
+## 📊 Детальна Статистика (ОНОВЛЕНО 26.02.2026)
 
 ### За Категоріями
 
@@ -356,6 +357,12 @@ docs/
 ## ✨ Останні Досягнення
 
 ### Лютий 2026
+
+**26.02.2026 - ViewModel cleanup: AbstractToolbar merged** ✅
+- 🔀 **AbstractToolbar видалено:** `AdminToolbar` тепер standalone (implements `ArgumentInterface` напряму)
+- 🗑️ **~436 рядків мертвого коду прибрано:** 20 dead methods + 3 unused DI dependencies (`Helper\Data`, `AccessToken`, `App\State`)
+- 🧹 **Дублювання усунено:** duplicate private fields (`authSession`, `request`, `storeManager`, `urlBuilder`) об'єднані в одну копію
+- ✅ **303/303 PHP тестів** — commit `1a17cae`
 
 **25.02.2026 - CSS Manager fix + Frontend overlay видалено** ✅
 - 🐛 **css-manager.js fix:** recreate live preview style після iframe navigation (commit `f2a61d5`)
@@ -407,7 +414,7 @@ docs/
 
 ---
 
-## 🚦 Поточний Статус Проекту (ОНОВЛЕНО 24.02.2026)
+## 🚦 Поточний Статус Проекту (ОНОВЛЕНО 26.02.2026)
 
 ### ✅ Архітектурне Рішення Прийнято
 **Phase 3A:** 100% завершено з **Hybrid Approach**
