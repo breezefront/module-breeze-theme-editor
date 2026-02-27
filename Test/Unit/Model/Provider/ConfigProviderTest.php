@@ -682,6 +682,94 @@ class ConfigProviderTest extends TestCase
     }
 
     /**
+     * Test: getConfigurationWithInheritance returns only own config when inheritParent is false
+     */
+    public function testGetConfigurationWithInheritanceSkipsParentsWhenInheritParentIsFalse(): void
+    {
+        $childConfig = [
+            'version' => '1.0',
+            'inheritParent' => false,
+            'sections' => [
+                ['id' => 'header', 'name' => 'Child Only Header', 'settings' => []]
+            ],
+            'presets' => [],
+            'metadata' => ['themeId' => 20]
+        ];
+
+        $hierarchy = [
+            ['theme_id' => 20, 'theme_code' => 'child'],
+            ['theme_id' => 10, 'theme_code' => 'parent']
+        ];
+
+        // getThemeHierarchy must NOT be called — we bail out before reaching it
+        $this->themeResolverMock->expects($this->never())
+            ->method('getThemeHierarchy');
+
+        // Inject own config into cache via reflection
+        $reflection = new \ReflectionClass($this->configProvider);
+        $cacheProperty = $reflection->getProperty('configCache');
+        $cacheProperty->setAccessible(true);
+        $cacheProperty->setValue($this->configProvider, [20 => $childConfig]);
+
+        $result = $this->configProvider->getConfigurationWithInheritance(20);
+
+        $this->assertCount(1, $result['sections']);
+        $this->assertEquals('Child Only Header', $result['sections'][0]['name']);
+        $this->assertFalse($result['inheritParent']);
+    }
+
+    /**
+     * Test: getConfigurationWithInheritance still merges parents when inheritParent key is absent
+     */
+    public function testGetConfigurationWithInheritanceMergesParentsWhenInheritParentKeyIsAbsent(): void
+    {
+        $parentConfig = [
+            'version' => '1.0',
+            'sections' => [
+                ['id' => 'footer', 'name' => 'Parent Footer', 'settings' => []]
+            ],
+            'presets' => [],
+            'metadata' => []
+        ];
+
+        $childConfig = [
+            'version' => '1.0',
+            // No 'inheritParent' key — defaults to true
+            'sections' => [
+                ['id' => 'header', 'name' => 'Child Header', 'settings' => []]
+            ],
+            'presets' => [],
+            'metadata' => []
+        ];
+
+        $hierarchy = [
+            ['theme_id' => 20, 'theme_code' => 'child'],
+            ['theme_id' => 10, 'theme_code' => 'parent']
+        ];
+
+        $this->themeResolverMock->expects($this->once())
+            ->method('getThemeHierarchy')
+            ->with(20)
+            ->willReturn($hierarchy);
+
+        // Inject both configs into cache
+        $reflection = new \ReflectionClass($this->configProvider);
+        $cacheProperty = $reflection->getProperty('configCache');
+        $cacheProperty->setAccessible(true);
+        $cacheProperty->setValue($this->configProvider, [
+            20 => $childConfig,
+            10 => $parentConfig,
+        ]);
+
+        $result = $this->configProvider->getConfigurationWithInheritance(20);
+
+        // Both sections should be present (normal merge)
+        $ids = array_column($result['sections'], 'id');
+        $this->assertContains('header', $ids);
+        $this->assertContains('footer', $ids);
+    }
+
+    /**
      * Test 20: mergeSections handles empty override sections
      */
     public function testMergeSectionsHandlesEmptyOverrideSections(): void

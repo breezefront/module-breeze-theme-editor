@@ -24,6 +24,10 @@ class ValueInheritanceResolver
         int $statusId,
         ? int $userId = null
     ): array {
+        if (!$this->shouldInheritParent($themeId)) {
+            return $this->valueService->getValuesByTheme($themeId, $storeId, $statusId, $userId);
+        }
+
         $hierarchy = $this->themeResolver->getThemeHierarchy($themeId);
         $mergedValues = [];
 
@@ -56,7 +60,9 @@ class ValueInheritanceResolver
         string $fieldCode,
         ? int $userId = null
     ): array {
-        $hierarchy = $this->themeResolver->getThemeHierarchy($themeId);
+        $hierarchy = $this->shouldInheritParent($themeId)
+            ? $this->themeResolver->getThemeHierarchy($themeId)
+            : [['theme_id' => $themeId]];
 
         // Шукаємо value в кожній темі (від child до parent)
         foreach ($hierarchy as $index => $themeInfo) {
@@ -111,6 +117,21 @@ class ValueInheritanceResolver
         );
 
         return $result['isInherited'];
+    }
+
+    /**
+     * Check whether this theme should inherit config and values from parent themes.
+     * Returns false only when the theme's settings.json explicitly sets inheritParent: false.
+     * Defaults to true when the key is absent or when settings.json does not exist.
+     */
+    private function shouldInheritParent(int $themeId): bool
+    {
+        try {
+            $config = $this->configProvider->getConfiguration($themeId);
+            return ($config['inheritParent'] ?? true) !== false;
+        } catch (\Exception $e) {
+            return true;
+        }
     }
 
     /**

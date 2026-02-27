@@ -545,6 +545,108 @@ class ValueInheritanceResolverTest extends TestCase
     }
 
     /**
+     * Test: resolveAllValues only queries the child theme when inheritParent is false
+     */
+    public function testResolveAllValuesSkipsParentsWhenInheritParentIsFalse(): void
+    {
+        $themeId = 20;
+        $storeId = 1;
+        $statusId = 2;
+
+        $ownConfig = ['version' => '1.0', 'inheritParent' => false, 'sections' => []];
+        $ownValues = [
+            ['section_code' => 'header', 'setting_code' => 'logo', 'value' => 'child_logo.png']
+        ];
+
+        $this->configProviderMock->expects($this->once())
+            ->method('getConfiguration')
+            ->with($themeId)
+            ->willReturn($ownConfig);
+
+        // getThemeHierarchy must NOT be called
+        $this->themeResolverMock->expects($this->never())
+            ->method('getThemeHierarchy');
+
+        $this->valueServiceMock->expects($this->once())
+            ->method('getValuesByTheme')
+            ->with($themeId, $storeId, $statusId, null)
+            ->willReturn($ownValues);
+
+        $result = $this->resolver->resolveAllValues($themeId, $storeId, $statusId);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('child_logo.png', $result[0]['value']);
+    }
+
+    /**
+     * Test: resolveSingleValue only searches child theme when inheritParent is false
+     */
+    public function testResolveSingleValueSkipsParentsWhenInheritParentIsFalse(): void
+    {
+        $themeId = 20;
+        $storeId = 1;
+        $statusId = 2;
+
+        $ownConfig = ['version' => '1.0', 'inheritParent' => false, 'sections' => []];
+
+        $this->configProviderMock->expects($this->once())
+            ->method('getConfiguration')
+            ->with($themeId)
+            ->willReturn($ownConfig);
+
+        // getThemeHierarchy must NOT be called
+        $this->themeResolverMock->expects($this->never())
+            ->method('getThemeHierarchy');
+
+        // Only one getSingleValue call — for the child theme itself
+        $this->valueServiceMock->expects($this->once())
+            ->method('getSingleValue')
+            ->with($themeId, $storeId, $statusId, 'header', 'logo', null)
+            ->willReturn('child_logo.png');
+
+        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, 'header', 'logo');
+
+        $this->assertEquals('child_logo.png', $result['value']);
+        $this->assertFalse($result['isInherited']);
+        $this->assertEquals(0, $result['inheritanceLevel']);
+    }
+
+    /**
+     * Test: shouldInheritParent defaults to true when getConfiguration throws (no settings.json)
+     */
+    public function testResolveAllValuesDefaultsToInheritWhenConfigThrows(): void
+    {
+        $themeId = 20;
+        $storeId = 1;
+        $statusId = 2;
+
+        $hierarchy = [
+            ['theme_id' => 20, 'theme_code' => 'child', 'level' => 0],
+            ['theme_id' => 10, 'theme_code' => 'parent', 'level' => 1]
+        ];
+
+        // getConfiguration throws — no settings.json
+        $this->configProviderMock->expects($this->once())
+            ->method('getConfiguration')
+            ->with($themeId)
+            ->willThrowException(new \Exception('File not found'));
+
+        // Normal hierarchy lookup must still happen
+        $this->themeResolverMock->expects($this->once())
+            ->method('getThemeHierarchy')
+            ->with($themeId)
+            ->willReturn($hierarchy);
+
+        $this->valueServiceMock->expects($this->exactly(2))
+            ->method('getValuesByTheme')
+            ->willReturn([]);
+
+        $result = $this->resolver->resolveAllValues($themeId, $storeId, $statusId);
+
+        $this->assertIsArray($result);
+    }
+
+    /**
      * Test 20: Correct merge order (parent values applied before child)
      */
     public function testResolveAllValuesMergeOrderIsCorrect(): void

@@ -30,6 +30,18 @@ class ConfigProvider
         if (isset($this->configCache[$cacheKey])) {
             return $this->configCache[$cacheKey];
         }
+
+        // If the theme explicitly opts out of parent inheritance, return only its own config
+        try {
+            $ownConfig = $this->getConfiguration($themeId);
+            if (($ownConfig['inheritParent'] ?? true) === false) {
+                $this->configCache[$cacheKey] = $ownConfig;
+                return $ownConfig;
+            }
+        } catch (\Exception $e) {
+            // No settings.json for this theme — proceed with normal inheritance
+        }
+
         $hierarchy = $this->themeResolver->getThemeHierarchy($themeId);
         $mergedConfig = [
             'version' => '1.0',
