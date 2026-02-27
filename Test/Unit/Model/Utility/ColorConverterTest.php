@@ -366,4 +366,74 @@ class ColorConverterTest extends TestCase
             'hexToRgb should work with HEX'
         );
     }
+
+    /**
+     * Test 16: HEX8 support - isHex() should accept 8-char hex values
+     */
+    public function testIsHexAcceptsHex8(): void
+    {
+        $this->assertTrue(
+            ColorConverter::isHex('#1979c380'),
+            'isHex should accept 8-digit hex with # prefix'
+        );
+
+        $this->assertTrue(
+            ColorConverter::isHex('1979c380'),
+            'isHex should accept 8-digit hex without # prefix'
+        );
+
+        $this->assertTrue(
+            ColorConverter::isHex('#ffffffff'),
+            'isHex should accept fully opaque white hex8'
+        );
+
+        $this->assertTrue(
+            ColorConverter::isHex('#00000000'),
+            'isHex should accept fully transparent black hex8'
+        );
+
+        $this->assertFalse(
+            ColorConverter::isHex('#1979c3800'),
+            'isHex should reject 9-digit hex (invalid length)'
+        );
+
+        $this->assertFalse(
+            ColorConverter::isHex('#1979c38'),
+            'isHex should reject 7-digit hex (invalid length)'
+        );
+    }
+
+    /**
+     * Test 17: HEX8 support - hexToRgb() should strip alpha and return plain RGB
+     */
+    public function testHexToRgbStripsAlphaFromHex8(): void
+    {
+        // Semi-transparent blue: #1979c380 → strips alpha 0x80 → returns "25, 121, 195"
+        $this->assertEquals(
+            '25, 121, 195',
+            ColorConverter::hexToRgb('#1979c380'),
+            'hexToRgb should strip alpha and return RGB for hex8'
+        );
+
+        // Fully opaque white
+        $this->assertEquals(
+            '255, 255, 255',
+            ColorConverter::hexToRgb('#ffffffff'),
+            'hexToRgb should strip ff alpha from white hex8'
+        );
+
+        // Fully transparent black
+        $this->assertEquals(
+            '0, 0, 0',
+            ColorConverter::hexToRgb('#00000000'),
+            'hexToRgb should strip 00 alpha from black hex8'
+        );
+
+        // Semi-transparent red: #ff000080
+        $this->assertEquals(
+            '255, 0, 0',
+            ColorConverter::hexToRgb('#ff000080'),
+            'hexToRgb should strip alpha from semi-transparent red'
+        );
+    }
 }

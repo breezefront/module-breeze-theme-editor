@@ -56,6 +56,11 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logg
                 hexStr = hexStr[0] + hexStr[0] + hexStr[1] + hexStr[1] + hexStr[2] + hexStr[2];
             }
             
+            // Support hex8: strip alpha channel bytes (#rrggbbaa → #rrggbb)
+            if (hexStr.length === 8) {
+                hexStr = hexStr.substring(0, 6);
+            }
+            
             // Validate format
             if (!hexStr.match(/^[0-9A-Fa-f]{6}$/)) {
                 log.warn('ColorUtils.hexToRgb: Invalid HEX format: ' + hex);
@@ -174,7 +179,7 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logg
             }
             
             // Validate format
-            if (!hex.match(/^#[0-9a-f]{6}$/)) {
+            if (!hex.match(/^#[0-9a-f]{6}([0-9a-f]{2})?$/)) {
                 log.warn('ColorUtils.normalizeHex: Invalid HEX format: ' + hex);
                 return '';
             }
@@ -211,8 +216,8 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logg
                 str = str.substring(1);
             }
             
-            // Check if 3 or 6 hex digits
-            return /^[0-9a-fA-F]{3}$/.test(str) || /^[0-9a-fA-F]{6}$/.test(str);
+            // Check if 3, 6, or 8 hex digits
+            return /^[0-9a-fA-F]{3}$/.test(str) || /^[0-9a-fA-F]{6}$/.test(str) || /^[0-9a-fA-F]{8}$/.test(str);
         },
 
         /**

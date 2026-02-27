@@ -162,6 +162,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/storage-helper-test',
             // Color Utils Tests (12 tests) - Bug 0 fix verification
             'Swissup_BreezeThemeEditor/js/test/tests/color-utils-test',
+            // DOM Color Utils HEX8 Tests (9 tests) - Alpha channel support
+            'Swissup_BreezeThemeEditor/js/test/tests/dom-color-utils-test',
             // Page Selector Sync Tests (10 tests)
             'Swissup_BreezeThemeEditor/js/test/tests/page-selector-sync-test',
             // Phase 3: Navigation Panel Tests (20 tests)

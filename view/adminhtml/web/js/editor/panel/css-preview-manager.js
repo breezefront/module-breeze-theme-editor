@@ -377,7 +377,16 @@ define([
             // Apply requested format
             if (format === 'rgb') {
                 // Breeze 2.0: Output RGB format (255, 255, 255)
+                // hex8 with non-opaque alpha → rgba(r, g, b, a) to preserve alpha
                 if (ColorUtils.isHexColor(value)) {
+                    var hexBody = value.replace(/^#/, '');
+                    if (hexBody.length === 8) {
+                        var r = parseInt(hexBody.substring(0, 2), 16);
+                        var g = parseInt(hexBody.substring(2, 4), 16);
+                        var b = parseInt(hexBody.substring(4, 6), 16);
+                        var a = Math.round(parseInt(hexBody.substring(6, 8), 16) / 255 * 1000) / 1000;
+                        return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
+                    }
                     return ColorUtils.hexToRgb(value);  // #ffffff → 255, 255, 255
                 }
                 if (ColorUtils.isRgbColor(value)) {
@@ -385,9 +394,9 @@ define([
                     return ColorUtils.hexToRgb(value);  // hexToRgb handles rgb() wrapper
                 }
             } else {
-                // Breeze 3.0: Output HEX format (#ffffff)
+                // Breeze 3.0: Output HEX format (#ffffff or #rrggbbaa)
                 if (ColorUtils.isHexColor(value)) {
-                    return ColorUtils.normalizeHex(value);  // #FFFFFF → #ffffff
+                    return ColorUtils.normalizeHex(value);  // #FFFFFF → #ffffff, #RRGGBBAA → #rrggbbaa
                 }
                 if (ColorUtils.isRgbColor(value)) {
                     return ColorUtils.rgbToHex(value);  // 255, 255, 255 → #ffffff

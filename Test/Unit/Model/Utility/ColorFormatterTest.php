@@ -476,4 +476,85 @@ class ColorFormatterTest extends TestCase
             'Should handle mixed case HEX format'
         );
     }
+
+    /**
+     * Group 11: HEX8 Alpha Channel Support
+     */
+
+    /**
+     * Test 17: Should convert hex8 to rgba() when format is rgb
+     */
+    public function testConvertsHex8ToRgbaForRgbFormat(): void
+    {
+        // Semi-transparent blue: #1979c380 → rgba(25, 121, 195, 0.502)
+        $this->assertEquals(
+            'rgba(25, 121, 195, 0.502)',
+            $this->formatter->formatColorValue('#1979c380', 'rgb'),
+            'Should convert hex8 to rgba() preserving alpha'
+        );
+
+        // Semi-transparent red: #ff000080 → rgba(255, 0, 0, 0.502)
+        $this->assertEquals(
+            'rgba(255, 0, 0, 0.502)',
+            $this->formatter->formatColorValue('#ff000080', 'rgb'),
+            'Should convert semi-transparent red hex8 to rgba()'
+        );
+
+        // Fully transparent black: #00000000 → rgba(0, 0, 0, 0)
+        $this->assertEquals(
+            'rgba(0, 0, 0, 0)',
+            $this->formatter->formatColorValue('#00000000', 'rgb'),
+            'Should convert fully transparent black hex8 to rgba(0, 0, 0, 0)'
+        );
+
+        // Quarter opacity: #1979c340 → alpha = 0x40/255 = 64/255 ≈ 0.251
+        $this->assertEquals(
+            'rgba(25, 121, 195, 0.251)',
+            $this->formatter->formatColorValue('#1979c340', 'rgb'),
+            'Should convert quarter-opacity hex8 to rgba() with correct alpha'
+        );
+    }
+
+    /**
+     * Test 18: Fully opaque hex8 (#rrggbbff) should be treated as hex8→rgba with alpha=1
+     * (normalization of #rrggbbff → #rrggbb happens at the JS layer, not PHP)
+     */
+    public function testFullyOpaqueHex8ToRgbaHasAlphaOne(): void
+    {
+        $this->assertEquals(
+            'rgba(25, 121, 195, 1)',
+            $this->formatter->formatColorValue('#1979c3ff', 'rgb'),
+            'Fully opaque hex8 should produce rgba() with alpha=1'
+        );
+
+        $this->assertEquals(
+            'rgba(255, 255, 255, 1)',
+            $this->formatter->formatColorValue('#ffffffff', 'rgb'),
+            'Fully opaque white hex8 should produce rgba(255, 255, 255, 1)'
+        );
+    }
+
+    /**
+     * Test 19: Should preserve hex8 as-is when format is hex
+     */
+    public function testPreservesHex8WhenFormatIsHex(): void
+    {
+        $this->assertEquals(
+            '#1979c380',
+            $this->formatter->formatColorValue('#1979c380', 'hex'),
+            'Should return hex8 unchanged when format is hex'
+        );
+
+        $this->assertEquals(
+            '#ff000080',
+            $this->formatter->formatColorValue('#ff000080', 'hex'),
+            'Should return semi-transparent red hex8 unchanged'
+        );
+
+        $this->assertEquals(
+            '#00000000',
+            $this->formatter->formatColorValue('#00000000', 'hex'),
+            'Should return fully transparent black hex8 unchanged'
+        );
+    }
 }

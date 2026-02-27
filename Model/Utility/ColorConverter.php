@@ -56,6 +56,11 @@ class ColorConverter
             $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
         }
 
+        // Handle 8-character hex (strip alpha channel, e.g. #rrggbbaa → #rrggbb)
+        if (strlen($hex) === 8) {
+            $hex = substr($hex, 0, 6);
+        }
+
         // Validate length
         if (strlen($hex) !== 6) {
             return '0, 0, 0'; // Invalid HEX
@@ -167,7 +172,7 @@ class ColorConverter
      */
     public static function isHex(string $value): bool
     {
-        return (bool) preg_match('/^#?[0-9A-Fa-f]{3,6}$/', $value);
+        return (bool) preg_match('/^#?(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/', $value);
     }
 
     /**

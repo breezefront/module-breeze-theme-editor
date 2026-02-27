@@ -1204,5 +1204,133 @@ class CssGeneratorTest extends TestCase
         $this->assertNotFalse($sectionPos, '.columns-container block must be present');
         $this->assertLessThan($sectionPos, $rootPos, ':root block must come before .columns-container block');
     }
+
+    /**
+     * Test 24: HEX8 with format='rgb' should emit rgba(r, g, b, a) in CSS
+     */
+    public function testHex8WithRgbFormatEmitsRgbaInCss(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'globals',
+                'setting_code' => 'overlay_color',
+                'value' => '#1979c380'  // semi-transparent blue
+            ],
+        ]);
+
+        $this->colorFormatResolverMock->method('resolve')->willReturn('rgb');
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'globals',
+                    'settings' => [
+                        [
+                            'id'       => 'overlay_color',
+                            'property' => '--overlay-color',
+                            'type'     => 'color',
+                            'format'   => 'rgb',
+                            'default'  => 'rgb(25, 121, 195)'
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--overlay-color: rgba(25, 121, 195, 0.502);',
+            $css,
+            'HEX8 with format=rgb should produce rgba() with correct alpha'
+        );
+    }
+
+    /**
+     * Test 25: HEX8 with format='hex' should emit normalized hex8 in CSS
+     */
+    public function testHex8WithHexFormatEmitsHex8InCss(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'globals',
+                'setting_code' => 'overlay_color',
+                'value' => '#1979c380'
+            ],
+        ]);
+
+        $this->colorFormatResolverMock->method('resolve')->willReturn('hex');
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'globals',
+                    'settings' => [
+                        [
+                            'id'       => 'overlay_color',
+                            'property' => '--overlay-color',
+                            'type'     => 'color',
+                            'default'  => '#1979c3'
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--overlay-color: #1979c380;',
+            $css,
+            'HEX8 with format=hex should emit hex8 value as-is (normalized lowercase)'
+        );
+    }
+
+    /**
+     * Test 26: Fully opaque HEX8 (#rrggbbff) with format='rgb' emits rgba() with alpha=1
+     */
+    public function testFullyOpaqueHex8WithRgbFormatEmitsRgbaAlphaOne(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'globals',
+                'setting_code' => 'brand_color',
+                'value' => '#1979c3ff'
+            ],
+        ]);
+
+        $this->colorFormatResolverMock->method('resolve')->willReturn('rgb');
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'globals',
+                    'settings' => [
+                        [
+                            'id'       => 'brand_color',
+                            'property' => '--brand-color',
+                            'type'     => 'color',
+                            'format'   => 'rgb',
+                            'default'  => 'rgb(25, 121, 195)'
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--brand-color: rgba(25, 121, 195, 1);',
+            $css,
+            'Fully opaque HEX8 with format=rgb should emit rgba() with alpha=1'
+        );
+    }
 }
 

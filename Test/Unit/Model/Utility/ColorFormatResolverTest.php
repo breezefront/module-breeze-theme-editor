@@ -261,4 +261,43 @@ class ColorFormatResolverTest extends TestCase
         $this->assertEquals('hex', $this->resolver->resolve('HeX', null));
         $this->assertEquals('rgb', $this->resolver->resolve('AUTO', 'rgb(17, 24, 39)'));
     }
+
+    /**
+     * HEX8 Alpha Channel Support Tests
+     */
+
+    /** @test */
+    public function it_detects_hex8_as_auto_detectable()
+    {
+        $this->assertTrue($this->resolver->isAutoDetectable('#1979c380'));
+        $this->assertTrue($this->resolver->isAutoDetectable('#ffffffff'));
+        $this->assertTrue($this->resolver->isAutoDetectable('#00000000'));
+        $this->assertTrue($this->resolver->isAutoDetectable('1979c380'));
+    }
+
+    /** @test */
+    public function it_detects_hex8_format_as_hex()
+    {
+        $this->assertEquals('hex', $this->resolver->getFormatFromValue('#1979c380'));
+        $this->assertEquals('hex', $this->resolver->getFormatFromValue('#ffffffff'));
+        $this->assertEquals('hex', $this->resolver->getFormatFromValue('#00000000'));
+    }
+
+    /** @test */
+    public function it_auto_detects_hex_from_hex8_default()
+    {
+        $result = $this->resolver->resolve(null, '#1979c380');
+        $this->assertEquals('hex', $result);
+
+        $result = $this->resolver->resolve(null, '#ffffffff');
+        $this->assertEquals('hex', $result);
+    }
+
+    /** @test */
+    public function it_respects_explicit_rgb_format_for_hex8_value()
+    {
+        // Even if value is hex8, explicit format wins
+        $result = $this->resolver->resolve('rgb', '#1979c380');
+        $this->assertEquals('rgb', $result);
+    }
 }

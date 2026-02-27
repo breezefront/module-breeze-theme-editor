@@ -45,10 +45,12 @@ class ColorFormatter
      * 
      * Examples:
      * - formatColorValue("#000000", "rgb") → "0, 0, 0"
+     * - formatColorValue("#1979c380", "rgb") → "rgba(25, 121, 195, 0.502)" (hex8 with alpha)
      * - formatColorValue("107, 33, 168", "hex") → "#6b21a8"
      * - formatColorValue("--color-brand-primary", "rgb") → "--color-brand-primary" (preserved)
      * - formatColorValue("#FFF", "rgb") → "255, 255, 255" (normalized and converted)
      * - formatColorValue("#6b21a8", "hex") → "#6b21a8" (no conversion needed)
+     * - formatColorValue("#6b21a8ff", "hex") → "#6b21a8ff" (hex8 preserved as-is)
      * 
      * Edge cases handled:
      * - null/empty → returns null
@@ -112,7 +114,16 @@ class ColorFormatter
         // Convert based on desired format
         try {
             if ($format === 'rgb' && $isHex) {
-                // HEX → RGB conversion
+                // HEX8 → rgba(r, g, b, a) conversion (preserves alpha channel)
+                $hexBody = ltrim($value, '#');
+                if (strlen($hexBody) === 8) {
+                    $r = hexdec(substr($hexBody, 0, 2));
+                    $g = hexdec(substr($hexBody, 2, 2));
+                    $b = hexdec(substr($hexBody, 4, 2));
+                    $a = round(hexdec(substr($hexBody, 6, 2)) / 255, 3);
+                    return "rgba($r, $g, $b, $a)";
+                }
+                // HEX6 → RGB conversion
                 return $this->colorConverter::hexToRgb($value);
             } elseif ($format === 'hex' && $isRgb) {
                 // RGB → HEX conversion

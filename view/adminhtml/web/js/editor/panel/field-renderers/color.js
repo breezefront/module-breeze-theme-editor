@@ -25,12 +25,12 @@ define([
             log.debug('Resolved palette reference: ' + value + ' \u2192 ' + data.value);
         } else {
             // Regular HEX color or RGB fallback
-            if (typeof value !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(value)) {
+            if (typeof value !== 'string' || !/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(value)) {
                 // Value is not HEX - check if it's RGB
                 if (ColorUtils.isRgbColor(value)) {
                     data.value = ColorUtils.rgbToHex(value);
                     log.debug('Converted RGB to HEX: ' + value + ' \u2192 ' + data.value);
-                } else if (typeof data.default === 'string' && /^#[0-9A-Fa-f]{6}$/.test(data.default)) {
+                } else if (typeof data.default === 'string' && /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(data.default)) {
                     // Try default as HEX
                     data.value = data.default;
                 } else if (ColorUtils.isRgbColor(data.default)) {

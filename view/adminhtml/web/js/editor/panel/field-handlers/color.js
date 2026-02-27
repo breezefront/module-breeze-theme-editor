@@ -108,7 +108,22 @@ define([
          * @returns {Boolean}
          */
         isValidHex: function(value) {
-            return /^#[0-9A-Fa-f]{6}$/.test(value);
+            return /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(value);
+        },
+
+        /**
+         * Normalize hex8 with full opacity: #rrggbbff → #rrggbb
+         * Pickr always includes alpha bytes in toHEXA().toString(),
+         * so we strip them when alpha = ff (fully opaque) to stay compact.
+         *
+         * @param {String} hex - Hex color (e.g., "#1979c3ff" or "#1979c380")
+         * @returns {String} Normalized hex (e.g., "#1979c3" or "#1979c380")
+         */
+        _normalizeHexAlpha: function(hex) {
+            if (hex && hex.length === 9 && hex.slice(-2).toLowerCase() === 'ff') {
+                return hex.slice(0, 7);
+            }
+            return hex;
         },
 
         /**
@@ -248,13 +263,13 @@ define([
                 swatches: null,
                 
                 // Lock opacity (ви сказали можна вимкнути)
-                lockOpacity: true,
+                lockOpacity: false,
                 
                 // Components visibility
                 components: {
                     palette: true,      // Box (Saturation/Value)
                     preview: true,      // Color comparison
-                    opacity: false,     // Opacity slider (вимкнено)
+                    opacity: true,      // Opacity slider (увімкнено для alpha-каналу)
                     hue: true,          // Hue slider
                     
                     interaction: {
@@ -287,7 +302,7 @@ define([
             
             // On color change (while dragging/adjusting)
             pickr.on('change', function(color) {
-                var hex = color.toHEXA().toString();
+                var hex = self._normalizeHexAlpha(color.toHEXA().toString());
                 
                 // Update text input
                 $textInput.val(hex);
@@ -339,7 +354,7 @@ define([
                     return; // Don't remove palette-ref, don't trigger save
                 }
                 
-                var hex = color.toHEXA().toString();
+                var hex = self._normalizeHexAlpha(color.toHEXA().toString());
                 $textInput.val(hex);
                 $trigger.find('.bte-color-preview').css('background-color', hex);
                 

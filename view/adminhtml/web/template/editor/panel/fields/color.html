@@ -35,7 +35,7 @@
                 class="bte-color-input"
                 value="<%= data.hexValue || data.value %>"
                 placeholder="<%= data.placeholder || '#000000' %>"
-                pattern="<%= data.validation && data.validation.pattern || '^#[0-9A-Fa-f]{6}$' %>"
+                pattern="<%= data.validation && data.validation.pattern || '^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$' %>"
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
                 data-property="<%= data.property %>"
