@@ -349,8 +349,8 @@ define([
                 StorageHelper.setCurrentPublicationId(publicationId);
                 StorageHelper.setCurrentPublicationTitle(publication.title);
                 
-                self.renderer.updateButton(self._getState());
-                self.renderer.updateCheckmarks(self._getState());
+                self.renderer.render(self._getState());
+                self._applyPermissions();
                 self.renderer.closeDropdown();
                 
                 $(document).trigger('publicationStatusChanged', {
