@@ -352,30 +352,67 @@ class ValueServiceTest extends TestCase
         $this->assertEquals('in', $sectionCodeFilter['condition']);
     }
 
-    public function testCopyValuesCopiesOriginalValuesCorrectly(): void
+    public function testDeleteValuesWithFieldCodesFilter(): void
     {
-        // Arrange
-        $sourceValue = $this->createMock(ValueInterface::class);
-        $sourceValue->method('getSectionCode')->willReturn('header');
-        $sourceValue->method('getSettingCode')->willReturn('bg_color');
-        $sourceValue->method('getValue')->willReturn('#123456');
+        // Arrange: verify that setting_code 'in' filter is applied when fieldCodes provided
+        $filterCalls = [];
+        $this->searchCriteriaBuilder->expects($this->exactly(5))
+            ->method('addFilter')
+            ->willReturnCallback(function ($field, $value, $condition = null) use (&$filterCalls) {
+                $filterCalls[] = ['field' => $field, 'value' => $value, 'condition' => $condition];
+                return $this->searchCriteriaBuilder;
+            });
 
-        $this->searchResults->method('getItems')->willReturn([$sourceValue]);
+        $this->searchResults->method('getItems')->willReturn([]);
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
-        $newValue = $this->createMock(ValueInterface::class);
-        $newValue->method('setThemeId')->willReturnSelf();
-        $newValue->method('setStoreId')->willReturnSelf();
-        $newValue->method('setStatusId')->willReturnSelf();
-        $newValue->method('setUserId')->willReturnSelf();
-        $newValue->expects($this->once())->method('setSectionCode')->with('header')->willReturnSelf();
-        $newValue->expects($this->once())->method('setSettingCode')->with('bg_color')->willReturnSelf();
-        $newValue->expects($this->once())->method('setValue')->with('#123456')->willReturnSelf();
+        // Act
+        $this->valueService->deleteValues(5, 1, 1, null, ['colors'], ['body-bg', 'text-color']);
 
-        $this->valueRepository->method('create')->willReturn($newValue);
-        $this->valueRepository->method('saveMultiple')->willReturn(1);
+        // Assert: setting_code filter was added
+        $fieldCodeFilter = array_filter($filterCalls, fn($f) => $f['field'] === 'setting_code');
+        $this->assertCount(1, $fieldCodeFilter, 'setting_code filter must be applied once');
+
+        $fieldCodeFilter = reset($fieldCodeFilter);
+        $this->assertEquals(['body-bg', 'text-color'], $fieldCodeFilter['value']);
+        $this->assertEquals('in', $fieldCodeFilter['condition']);
+    }
+
+    public function testDeleteValuesWithoutFieldCodesDoesNotAddSettingCodeFilter(): void
+    {
+        // Arrange: without fieldCodes, setting_code filter must NOT be added
+        $filterCalls = [];
+        $this->searchCriteriaBuilder->expects($this->exactly(3))
+            ->method('addFilter')
+            ->willReturnCallback(function ($field, $value, $condition = null) use (&$filterCalls) {
+                $filterCalls[] = ['field' => $field, 'value' => $value];
+                return $this->searchCriteriaBuilder;
+            });
+
+        $this->searchResults->method('getItems')->willReturn([]);
+        $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $this->valueService->copyValues(5, 1, 1, 42, 6, 2, 2, 100);
+        $this->valueService->deleteValues(5, 1, 1);
+
+        // Assert: no setting_code filter
+        $settingFilter = array_filter($filterCalls, fn($f) => $f['field'] === 'setting_code');
+        $this->assertCount(0, $settingFilter, 'setting_code filter must NOT be applied when fieldCodes is null');
+    }
+
+    public function testDeleteValuesSingleFieldDeletesOnlyThatField(): void
+    {
+        // Arrange: only the matching value should be deleted
+        $matchingValue = $this->createMock(ValueInterface::class);
+
+        $this->searchResults->method('getItems')->willReturn([$matchingValue]);
+        $this->valueRepository->method('getList')->willReturn($this->searchResults);
+        $this->valueRepository->expects($this->once())->method('delete')->with($matchingValue);
+
+        // Act
+        $count = $this->valueService->deleteValues(21, 21, 1, null, ['colors'], ['body-bg']);
+
+        // Assert
+        $this->assertEquals(1, $count);
     }
 }

@@ -38,11 +38,35 @@ class ValueRepository implements ValueRepositoryInterface
 
     /**
      * @inheritdoc
+     *
+     * Uses INSERT ON DUPLICATE KEY UPDATE so that calling save() on an already-existing
+     * row (identified by the UNQ_ALL composite unique key) updates it instead of throwing
+     * a constraint violation.  This matches the behaviour of saveMultiple().
      */
     public function save(ValueInterface $value): ValueInterface
     {
         try {
-            $this->resource->save($value);
+            $connection = $this->resourceConnection->getConnection();
+            $table      = $this->resource->getMainTable();
+
+            $row = [
+                ValueInterface::THEME_ID     => $value->getThemeId(),
+                ValueInterface::STORE_ID     => $value->getStoreId(),
+                ValueInterface::STATUS_ID    => $value->getStatusId(),
+                ValueInterface::SECTION_CODE => $value->getSectionCode(),
+                ValueInterface::SETTING_CODE => $value->getSettingCode(),
+                ValueInterface::VALUE        => $value->getValue(),
+            ];
+
+            if ($value->getUserId() !== null) {
+                $row[ValueInterface::USER_ID] = $value->getUserId();
+            }
+
+            $connection->insertOnDuplicate(
+                $table,
+                [$row],
+                [ValueInterface::VALUE, ValueInterface::UPDATED_AT]
+            );
         } catch (\Exception $exception) {
             throw new CouldNotSaveException(
                 __('Could not save the value: %1', $exception->getMessage()),

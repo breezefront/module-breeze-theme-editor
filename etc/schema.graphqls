@@ -116,6 +116,7 @@ type Mutation {
         storeId: Int!
         themeId: Int @doc(description: "Optional: override auto-detected theme")
         sectionCodes: [String!] @doc(description: "Optional: discard only specific sections")
+        fieldCodes: [String!] @doc(description: "Optional: discard only specific fields (requires sectionCodes to be set)")
     ): DiscardBreezeThemeEditorDraftOutput @doc(description: "Discard draft changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\DiscardDraft")
 
     rollbackBreezeThemeEditor(

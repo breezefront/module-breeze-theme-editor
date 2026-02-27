@@ -97,13 +97,21 @@ class ValueService
     /**
      * Delete values by criteria
      * Replaces: ValueRepository::deleteValues()
+     *
+     * @param int         $themeId
+     * @param int         $storeId
+     * @param int         $statusId
+     * @param int|null    $userId
+     * @param array|null  $sectionCodes  Optional section filter
+     * @param array|null  $fieldCodes    Optional field filter (setting_code). Only applied when $sectionCodes is set.
      */
     public function deleteValues(
         int $themeId,
         int $storeId,
         int $statusId,
         ?int $userId = null,
-        ?array $sectionCodes = null
+        ?array $sectionCodes = null,
+        ?array $fieldCodes = null
     ): int {
         $criteria = $this->searchCriteriaBuilder
             ->addFilter('theme_id', $themeId)
@@ -116,6 +124,10 @@ class ValueService
 
         if ($sectionCodes !== null) {
             $criteria->addFilter('section_code', $sectionCodes, 'in');
+        }
+
+        if ($fieldCodes !== null) {
+            $criteria->addFilter('setting_code', $fieldCodes, 'in');
         }
 
         $searchResults = $this->valueRepository->getList($criteria->create());

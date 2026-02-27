@@ -16,6 +16,7 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-value',
+    'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-draft',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function (
@@ -36,6 +37,7 @@ define([
     getConfigFromPublication,
     saveValues,
     saveValue,
+    discardDraft,
     StorageHelper,
     Logger
 ) {
@@ -228,14 +230,14 @@ define([
                         CssPreviewManager.updatePreview();
                     }
 
-                    // Auto-save: persist the restored default value to draft immediately
-                    log.info('Auto-saving restored value for ' + data.sectionCode + '.' + data.fieldCode);
-                    saveValue(self.storeId, self.themeId, 'DRAFT', data.sectionCode, data.fieldCode, data.value)
+                    // Auto-delete: remove the overridden value from draft so the default takes effect
+                    log.info('Discarding override for ' + data.sectionCode + '.' + data.fieldCode);
+                    discardDraft(self.storeId, self.themeId, [data.sectionCode], [data.fieldCode])
                         .then(function(result) {
-                            if (result.saveBreezeThemeEditorValue.success) {
-                                log.info('Auto-save success: ' + data.sectionCode + '.' + data.fieldCode);
+                            if (result.discardBreezeThemeEditorDraft.success) {
+                                log.info('Discard success: ' + data.sectionCode + '.' + data.fieldCode);
 
-                                // Commit the save in state — clears isDirty, updates isModified
+                                // Commit the change in state — clears isDirty, updates isModified
                                 PanelState.markFieldAsSaved(data.sectionCode, data.fieldCode);
 
                                 // Refresh badges: Modified badge (and restore button) should now disappear
@@ -253,11 +255,11 @@ define([
                                     draftChangesCount: fieldModified + paletteModified
                                 });
                             } else {
-                                log.error('Auto-save failed: ' + result.saveBreezeThemeEditorValue.message);
+                                log.error('Discard failed: ' + result.discardBreezeThemeEditorDraft.message);
                             }
                         })
                         .catch(function(error) {
-                            log.error('Auto-save error for ' + data.sectionCode + '.' + data.fieldCode + ': ' + error);
+                            log.error('Discard error for ' + data.sectionCode + '.' + data.fieldCode + ': ' + error);
                         });
                 }
             });

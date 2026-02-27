@@ -38,6 +38,7 @@ class DiscardDraft extends AbstractMutationResolver
             : $this->themeResolver->getThemeIdByStoreId($storeId);
 
         $sectionCodes = $args['sectionCodes'] ??  null;
+        $fieldCodes   = $args['fieldCodes']   ?? null;
         $userId = $this->userResolver->getCurrentUserId($context);
 
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
@@ -48,7 +49,8 @@ class DiscardDraft extends AbstractMutationResolver
             $storeId,
             $draftStatusId,
             $userId,
-            $sectionCodes
+            $sectionCodes,
+            $fieldCodes
         );
 
         return [
