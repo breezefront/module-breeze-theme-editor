@@ -171,8 +171,8 @@ define([
                     // Update CSS preview with reset value
                     if (CssPreviewManager.isActive()) {
                         // Get field info to determine how to update CSS variable
-                        var $field = self.element.find('[data-section="' + data.sectionCode + '"][data-field="' + data.fieldCode + '"]');
-                        var fieldCssVar = $field.attr('data-css-var');
+                        var $field = self.element.find('[data-section="' + data.sectionCode + '"][data-field="' + data.fieldCode + '"]').first();
+                        var fieldCssVar = $field.attr('data-property') || $field.attr('data-css-var');
                         var fieldType = ($field.attr('data-type') || '').toLowerCase();
                         
                         if (fieldCssVar && data.value !== undefined) {
@@ -186,7 +186,7 @@ define([
                                 // Direct value (HEX/RGB) - update changes with formatted value
                                 var fieldData = {
                                     format: $field.attr('data-format'),
-                                    defaultValue: $field.attr('data-default-value')
+                                    defaultValue: $field.attr('data-default')
                                 };
                                 CssPreviewManager.setVariable(fieldCssVar, data.value, fieldType, fieldData);
                                 log.debug('Updated ' + fieldCssVar + ' in live preview (reset to: ' + data.value + ')');
@@ -207,8 +207,8 @@ define([
 
                     // Update CSS preview with restored default value
                     if (CssPreviewManager.isActive()) {
-                        var $field = self.element.find('[data-section="' + data.sectionCode + '"][data-field="' + data.fieldCode + '"]');
-                        var fieldCssVar = $field.attr('data-css-var');
+                        var $field = self.element.find('[data-section="' + data.sectionCode + '"][data-field="' + data.fieldCode + '"]').first();
+                        var fieldCssVar = $field.attr('data-property') || $field.attr('data-css-var');
                         var fieldType = ($field.attr('data-type') || '').toLowerCase();
 
                         if (fieldCssVar && data.value !== undefined) {
@@ -218,7 +218,7 @@ define([
                             } else {
                                 var fieldData = {
                                     format: $field.attr('data-format'),
-                                    defaultValue: $field.attr('data-default-value')
+                                    defaultValue: $field.attr('data-default')
                                 };
                                 CssPreviewManager.setVariable(fieldCssVar, data.value, fieldType, fieldData);
                                 log.debug('Updated ' + fieldCssVar + ' in live preview (restore to: ' + data.value + ')');

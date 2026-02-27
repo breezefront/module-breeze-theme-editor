@@ -188,6 +188,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/palette-manager-test',
             // Publication Selector Tests (15 tests) - canPublish logic + Bug 1 + Bug 2 regression
             'Swissup_BreezeThemeEditor/js/test/tests/publication-selector-test',
+            // Settings Editor Reset/Restore CSS Preview Tests (10 tests) - data-property vs data-css-var bug
+            'Swissup_BreezeThemeEditor/js/test/tests/settings-editor-reset-test',
         ];
     }
 }
