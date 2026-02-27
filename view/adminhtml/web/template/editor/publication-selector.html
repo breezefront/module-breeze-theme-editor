@@ -40,8 +40,8 @@
                     </div>
                 <% } %>
 
-                <!-- Discard draft button (only when there are saved draft changes) -->
-                <% if (changesCount > 0) { %>
+                <!-- Discard draft button (only when in Draft mode with saved changes) -->
+                <% if (status === 'DRAFT' && changesCount > 0) { %>
                     <div class="dropdown-discard-button-wrapper">
                         <button type="button" class="dropdown-discard-button" data-action="discard-draft">
                             <span class="discard-label">Discard <%- changesCount %> draft changes</span>

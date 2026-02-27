@@ -464,51 +464,75 @@ define([
         },
 
         // ====================================================================
-        // GROUP 9: Discard draft button visibility logic
-        //
-        // The discard button is shown when changesCount > 0, independent of
-        // canPublish (user may not have publish permission but can still discard).
-        // We test the pure visibility predicate:
-        //   shouldShowDiscard(changesCount) → boolean
-        // ====================================================================
+         // GROUP 9: Discard draft button visibility logic
+         //
+         // The discard button is shown only when status === 'DRAFT' && changesCount > 0.
+         // It is independent of canPublish (user may not have publish permission but can
+         // still discard), but it must be hidden when not in DRAFT mode even if there
+         // are pending changes.
+         // We test the pure visibility predicate:
+         //   shouldShowDiscard(status, changesCount) → boolean
+         // ====================================================================
 
-        'discard button: hidden when changesCount = 0': function () {
-            var changesCount = 0;
-            var shouldShow   = changesCount > 0;
-            this.assertFalse(shouldShow,
-                'Discard button must be hidden when there are no draft changes'
-            );
-        },
+         'discard button: hidden when changesCount = 0': function () {
+             var status       = 'DRAFT';
+             var changesCount = 0;
+             var shouldShow   = status === 'DRAFT' && changesCount > 0;
+             this.assertFalse(shouldShow,
+                 'Discard button must be hidden when there are no draft changes'
+             );
+         },
 
-        'discard button: shown when changesCount = 1 (boundary)': function () {
-            var changesCount = 1;
-            var shouldShow   = changesCount > 0;
-            this.assertTrue(shouldShow,
-                'Discard button must appear at changesCount = 1'
-            );
-        },
+         'discard button: shown when status is DRAFT and changesCount = 1 (boundary)': function () {
+             var status       = 'DRAFT';
+             var changesCount = 1;
+             var shouldShow   = status === 'DRAFT' && changesCount > 0;
+             this.assertTrue(shouldShow,
+                 'Discard button must appear at changesCount = 1 in DRAFT mode'
+             );
+         },
 
-        'discard button: shown when changesCount > 1': function () {
-            var changesCount = 5;
-            var shouldShow   = changesCount > 0;
-            this.assertTrue(shouldShow,
-                'Discard button must be shown when there are multiple draft changes'
-            );
-        },
+         'discard button: shown when status is DRAFT and changesCount > 1': function () {
+             var status       = 'DRAFT';
+             var changesCount = 5;
+             var shouldShow   = status === 'DRAFT' && changesCount > 0;
+             this.assertTrue(shouldShow,
+                 'Discard button must be shown when there are multiple draft changes'
+             );
+         },
 
-        'discard button: visible regardless of canPublish permission': function () {
-            // canPublish = false but changesCount > 0 → discard button still shows
-            var changesCount    = 3;
-            var permCanPublish  = false;
-            var showDiscard     = changesCount > 0;               // only depends on count
-            var showPublish     = permCanPublish && changesCount > 0; // requires permission too
-            this.assertTrue(showDiscard,
-                'Discard button must show even when user lacks canPublish permission'
-            );
-            this.assertFalse(showPublish,
-                'Publish button must stay hidden when canPublish is false'
-            );
-        },
+         'discard button: visible regardless of canPublish permission': function () {
+             // canPublish = false but DRAFT + changesCount > 0 → discard button still shows
+             var status          = 'DRAFT';
+             var changesCount    = 3;
+             var permCanPublish  = false;
+             var showDiscard     = status === 'DRAFT' && changesCount > 0;
+             var showPublish     = permCanPublish && changesCount > 0; // requires permission too
+             this.assertTrue(showDiscard,
+                 'Discard button must show even when user lacks canPublish permission'
+             );
+             this.assertFalse(showPublish,
+                 'Publish button must stay hidden when canPublish is false'
+             );
+         },
+
+         'discard button: hidden when status is PUBLISHED even if changesCount > 0': function () {
+             var status       = 'PUBLISHED';
+             var changesCount = 3;
+             var shouldShow   = status === 'DRAFT' && changesCount > 0;
+             this.assertFalse(shouldShow,
+                 'Discard button must be hidden in PUBLISHED mode'
+             );
+         },
+
+         'discard button: hidden when status is PUBLICATION even if changesCount > 0': function () {
+             var status       = 'PUBLICATION';
+             var changesCount = 3;
+             var shouldShow   = status === 'DRAFT' && changesCount > 0;
+             this.assertFalse(shouldShow,
+                 'Discard button must be hidden in PUBLICATION (preview) mode'
+             );
+         },
 
         // ====================================================================
         // GROUP 10: Discard draft confirm dialog logic
