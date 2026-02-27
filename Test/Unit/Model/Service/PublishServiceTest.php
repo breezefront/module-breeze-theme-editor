@@ -349,7 +349,13 @@ class PublishServiceTest extends TestCase
         $this->publicationFactoryMock->method('create')->willReturn($newPublicationMock);
         $this->publicationRepositoryMock->expects($this->once())->method('save');
 
-        $this->statusProviderMock->method('getStatusId')->with('PUBLISHED')->willReturn(2);
+        $this->statusProviderMock->method('getStatusId')
+            ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
+
+        // Draft must be cleared before old values are applied (regression: rollback used to orphan draft)
+        $this->valueServiceMock->expects($this->once())
+            ->method('deleteValues')
+            ->with(1, 1, 1, $userId);
 
         $valueMock = $this->createMock(Value::class);
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);

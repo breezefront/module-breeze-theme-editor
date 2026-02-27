@@ -351,10 +351,10 @@ _____________________________________________
 }
 
 /* ============================================================================
- * PUBLISH BUTTON IN DROPDOWN
+ * ACTION BUTTONS IN DROPDOWN (Publish / Discard / Rollback)
  * ============================================================================ */
 
-/* Dropdown item group (contains Draft item + publish button) */
+/* Dropdown item group (contains status item + action buttons) */
 .dropdown-item-group {
     position: relative;
 
@@ -371,25 +371,27 @@ _____________________________________________
     }
 }
 
-/* Publish button wrapper */
-.dropdown-publish-button-wrapper {
-    padding: 8px 12px 12px;
+/* Shared wrapper for action buttons below a dropdown item */
+.dropdown-publish-button-wrapper,
+.dropdown-discard-button-wrapper,
+.dropdown-rollback-button-wrapper {
+    padding: 0 12px 10px;
     background: transparent;
 }
 
-/* Publish button */
+/* Publish button — primary, full orange gradient */
 .dropdown-publish-button {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     width: 100%;
-    padding: 10px 16px;
+    padding: 9px 16px;
     background: linear-gradient(135deg, @bte-toolbar-icon 0%, darken(@bte-toolbar-icon, 10%) 100%);
     border: none;
     border-radius: 6px;
     color: #fff;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -417,13 +419,76 @@ _____________________________________________
     }
 
     .publish-icon {
-        font-size: 16px;
+        font-size: 15px;
         line-height: 1;
     }
 
     .publish-label {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
+    }
+}
+
+/* Discard draft button — secondary destructive, outlined red-tinted */
+.dropdown-discard-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 7px 16px;
+    background: transparent;
+    border: 1px solid fade(@status-error-color, 40%);
+    border-radius: 6px;
+    color: @status-error-color;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+        background: fade(@status-error-color, 8%);
+        border-color: @status-error-color;
+    }
+
+    &:active {
+        background: fade(@status-error-color, 15%);
+    }
+
+    .discard-label {
+        font-size: 12px;
+    }
+}
+
+/* Rollback button — secondary neutral, outlined muted */
+.dropdown-rollback-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 7px 16px;
+    background: transparent;
+    border: 1px solid fade(@dropdown-item-color, 25%);
+    border-radius: 6px;
+    color: @dropdown-item-meta-color;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+        background: fade(@toolbar-primary-color, 8%);
+        border-color: @toolbar-primary-color;
+        color: @toolbar-primary-color;
+    }
+
+    &:active {
+        background: fade(@toolbar-primary-color, 15%);
+    }
+
+    .rollback-label {
+        font-size: 12px;
     }
 }
 

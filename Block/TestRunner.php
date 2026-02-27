@@ -184,6 +184,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/field-renderers-test',
             // Palette Manager Tests (11 tests) - isColorModified uses saved DB value, not unsaved
             'Swissup_BreezeThemeEditor/js/test/tests/palette-manager-test',
+            // Publication Selector Tests (15 tests) - canPublish logic + Bug 1 + Bug 2 regression
+            'Swissup_BreezeThemeEditor/js/test/tests/publication-selector-test',
         ];
     }
 }

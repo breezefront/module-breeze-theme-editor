@@ -131,6 +131,11 @@ class PublishService
 
         $this->publicationRepository->save($publication);
 
+        // Очистити поточний draft перед застосуванням старих значень
+        // (аналогічно publish(), щоб draft не виживав тихо після rollback)
+        $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
+        $this->valueService->deleteValues($themeId, $storeId, $draftStatusId, $userId);
+
         // Застосувати старі значення → ValueInterface[]
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 

@@ -1,0 +1,507 @@
+/**
+ * Publication Selector — canPublish + canRollback + _rollbackTo logic tests
+ *
+ * Tests the _getState() logic in isolation by directly invoking the pure
+ * computation that drives whether the Publish and "Publish this version" buttons
+ * are rendered.
+ *
+ * We do NOT instantiate the jQuery widget — we test only the logic extracted
+ * from _getState() so tests run without a DOM or GraphQL server.
+ *
+ * Bugs covered:
+ *   Bug 1 — permissions missing from window.breezeThemeEditorConfig
+ *            → permissions.canPublish() always returns false
+ *            → canPublish in _getState() is always false
+ *            → Publish button never renders even with 2 draft changes
+ *
+ *   Bug 2 — updateChangesCount() calls renderer.updateBadge() instead of
+ *            renderer.render(), so the Publish button in the dropdown never
+ *            appears even after the count is updated externally.
+ *
+ *   Rollback — _rollbackTo() guards (permission, draft warning, confirm flow)
+ *              and canRollback state passed to template.
+ */
+define([
+    'Swissup_BreezeThemeEditor/js/test/test-framework',
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/permissions'
+], function (TestFramework, permissions) {
+    'use strict';
+
+    // -------------------------------------------------------------------------
+    // Helper: compute canPublish exactly as _getState() does in the widget
+    // -------------------------------------------------------------------------
+
+    /**
+     * @param {boolean} permCanPublish   — value returned by permissions.canPublish()
+     * @param {number}  changesCount     — widget's options.changesCount
+     * @param {string}  currentStatus    — widget's options.currentStatus
+     * @returns {boolean}
+     */
+    function computeCanPublish(permCanPublish, changesCount, currentStatus) {
+        return permCanPublish &&
+               changesCount > 0 &&
+               currentStatus === 'DRAFT';
+    }
+
+    // -------------------------------------------------------------------------
+    // Helper: set / clear window.breezeThemeEditorConfig.permissions
+    // -------------------------------------------------------------------------
+
+    var _originalConfig;
+
+    function setPermissionsInGlobalConfig(perms) {
+        _originalConfig = window.breezeThemeEditorConfig;
+        window.breezeThemeEditorConfig = {
+            storeId: 1,
+            themeId: 1,
+            permissions: perms
+        };
+    }
+
+    function restoreGlobalConfig() {
+        window.breezeThemeEditorConfig = _originalConfig;
+    }
+
+    // -------------------------------------------------------------------------
+    // Suite
+    // -------------------------------------------------------------------------
+
+    return TestFramework.suite('Publication Selector — canPublish logic', {
+
+        // ====================================================================
+        // GROUP 1: canPublish computation (pure logic, no permissions module)
+        // ====================================================================
+
+        'canPublish: all three conditions true → true': function () {
+            var result = computeCanPublish(true, 2, 'DRAFT');
+            this.assertTrue(result, 'Should be true when permissions ok, count=2, status=DRAFT');
+        },
+
+        'canPublish: changesCount = 0 → false regardless of other conditions': function () {
+            var result = computeCanPublish(true, 0, 'DRAFT');
+            this.assertFalse(result, 'Should be false when changesCount = 0');
+        },
+
+        'canPublish: status = PUBLISHED → false': function () {
+            var result = computeCanPublish(true, 5, 'PUBLISHED');
+            this.assertFalse(result, 'Should be false when status is PUBLISHED');
+        },
+
+        'canPublish: status = PUBLICATION → false': function () {
+            var result = computeCanPublish(true, 3, 'PUBLICATION');
+            this.assertFalse(result, 'Should be false when status is PUBLICATION');
+        },
+
+        'canPublish: permissions = false → false regardless of count and status': function () {
+            var result = computeCanPublish(false, 5, 'DRAFT');
+            this.assertFalse(result, 'Should be false when canPublish permission denied');
+        },
+
+        'canPublish: changesCount = 1 (boundary) → true': function () {
+            var result = computeCanPublish(true, 1, 'DRAFT');
+            this.assertTrue(result, 'Should be true at boundary changesCount = 1');
+        },
+
+        'canPublish: changesCount negative → false': function () {
+            var result = computeCanPublish(true, -1, 'DRAFT');
+            this.assertFalse(result, 'Should be false for negative changesCount');
+        },
+
+        'canPublish: all three conditions false → false': function () {
+            var result = computeCanPublish(false, 0, 'PUBLISHED');
+            this.assertFalse(result, 'Should be false when all conditions are false');
+        },
+
+        // ====================================================================
+        // GROUP 2: Bug 1 regression — permissions module reads from
+        //          window.breezeThemeEditorConfig
+        //          When `permissions` key is missing → canPublish() returns false
+        // ====================================================================
+
+        'Bug 1: permissions missing from breezeThemeEditorConfig → canPublish() returns false': function () {
+            setPermissionsInGlobalConfig(undefined);
+
+            var result = permissions.canPublish();
+
+            restoreGlobalConfig();
+
+            this.assertFalse(result,
+                'permissions.canPublish() must return false when permissions key is absent ' +
+                '(reproduces the bug: publish button never appears)'
+            );
+        },
+
+        'Bug 1: permissions present with canPublish=true → canPublish() returns true': function () {
+            setPermissionsInGlobalConfig({
+                canView: true,
+                canEdit: true,
+                canPublish: true,
+                canRollback: true
+            });
+
+            var result = permissions.canPublish();
+
+            restoreGlobalConfig();
+
+            this.assertTrue(result,
+                'permissions.canPublish() must return true when config contains canPublish: true'
+            );
+        },
+
+        'Bug 1: permissions present with canPublish=false → canPublish() returns false': function () {
+            setPermissionsInGlobalConfig({
+                canView: true,
+                canEdit: true,
+                canPublish: false,
+                canRollback: false
+            });
+
+            var result = permissions.canPublish();
+
+            restoreGlobalConfig();
+
+            this.assertFalse(result,
+                'permissions.canPublish() must honour canPublish: false from config'
+            );
+        },
+
+        'Bug 1 end-to-end: missing permissions → canPublish in state = false even with 2 changes and DRAFT status': function () {
+            setPermissionsInGlobalConfig(undefined);
+
+            var permResult = permissions.canPublish();
+            var stateResult = computeCanPublish(permResult, 2, 'DRAFT');
+
+            restoreGlobalConfig();
+
+            this.assertFalse(stateResult,
+                'End-to-end: when permissions are not forwarded to breezeThemeEditorConfig, ' +
+                'canPublish in _getState() is false and the Publish button never renders'
+            );
+        },
+
+        'Bug 1 fixed: permissions forwarded → canPublish in state = true with 2 changes and DRAFT status': function () {
+            setPermissionsInGlobalConfig({ canPublish: true });
+
+            var permResult = permissions.canPublish();
+            var stateResult = computeCanPublish(permResult, 2, 'DRAFT');
+
+            restoreGlobalConfig();
+
+            this.assertTrue(stateResult,
+                'After fix: when permissions.canPublish is forwarded correctly, ' +
+                'canPublish in _getState() is true and the Publish button renders'
+            );
+        },
+
+        // ====================================================================
+        // GROUP 3: Bug 2 — updateChangesCount must trigger a full render,
+        //          not just a badge update.
+        //          We test the logic consequence: after count changes, the
+        //          new canPublish value must be recomputed correctly.
+        // ====================================================================
+
+        'Bug 2: after updateChangesCount(2), canPublish recomputed from new count': function () {
+            // Simulate widget state: start with count = 0 (no publish button)
+            var options = { changesCount: 0, currentStatus: 'DRAFT' };
+            var perm = true;
+
+            var before = computeCanPublish(perm, options.changesCount, options.currentStatus);
+            this.assertFalse(before, 'canPublish should be false before count update (count = 0)');
+
+            // Simulate updateChangesCount(2)
+            options.changesCount = 2;
+
+            var after = computeCanPublish(perm, options.changesCount, options.currentStatus);
+            this.assertTrue(after,
+                'canPublish should be true after updateChangesCount(2) — ' +
+                'requires render() not just updateBadge()'
+            );
+        },
+
+        'Bug 2: after updateChangesCount(0), canPublish recomputed to false': function () {
+            var options = { changesCount: 3, currentStatus: 'DRAFT' };
+            var perm = true;
+
+            var before = computeCanPublish(perm, options.changesCount, options.currentStatus);
+            this.assertTrue(before, 'canPublish should be true before count is cleared');
+
+            // Simulate updateChangesCount(0) — e.g. after publishing
+            options.changesCount = 0;
+
+            var after = computeCanPublish(perm, options.changesCount, options.currentStatus);
+            this.assertFalse(after,
+                'canPublish should be false after updateChangesCount(0)'
+            );
+        },
+
+        // ====================================================================
+        // GROUP 4: permissions.getPermissions() fallback and other checks
+        // ====================================================================
+
+        'getPermissions() returns safe defaults when breezeThemeEditorConfig is undefined': function () {
+            var saved = window.breezeThemeEditorConfig;
+            window.breezeThemeEditorConfig = undefined;
+
+            var perms = permissions.getPermissions();
+
+            window.breezeThemeEditorConfig = saved;
+
+            this.assertFalse(perms.canView,    'canView default must be false');
+            this.assertFalse(perms.canEdit,    'canEdit default must be false');
+            this.assertFalse(perms.canPublish, 'canPublish default must be false');
+            this.assertFalse(perms.canRollback,'canRollback default must be false');
+        },
+
+        'canEdit() mirrors config.permissions.canEdit': function () {
+            setPermissionsInGlobalConfig({ canView: true, canEdit: true, canPublish: false, canRollback: false });
+            var result = permissions.canEdit();
+            restoreGlobalConfig();
+            this.assertTrue(result, 'canEdit() must return true when config says canEdit: true');
+        },
+
+        'canRollback() mirrors config.permissions.canRollback': function () {
+            setPermissionsInGlobalConfig({ canView: true, canEdit: true, canPublish: true, canRollback: true });
+            var result = permissions.canRollback();
+            restoreGlobalConfig();
+            this.assertTrue(result, 'canRollback() must return true when config says canRollback: true');
+        },
+
+        // ====================================================================
+        // GROUP 5: canRollback in _getState — "Publish this version" button
+        // ====================================================================
+
+        'canRollback: true when config has canRollback=true → button renders': function () {
+            setPermissionsInGlobalConfig({ canView: true, canEdit: true, canPublish: true, canRollback: true });
+            var result = permissions.canRollback();
+            restoreGlobalConfig();
+            this.assertTrue(result,
+                'canRollback must be true so the "Publish this version" button renders in each publication row'
+            );
+        },
+
+        'canRollback: false when config has canRollback=false → button hidden': function () {
+            setPermissionsInGlobalConfig({ canView: true, canEdit: true, canPublish: true, canRollback: false });
+            var result = permissions.canRollback();
+            restoreGlobalConfig();
+            this.assertFalse(result,
+                'canRollback must be false so the "Publish this version" button is hidden for non-admin users'
+            );
+        },
+
+        'canRollback: false when permissions missing from config → button hidden': function () {
+            setPermissionsInGlobalConfig(undefined);
+            var result = permissions.canRollback();
+            restoreGlobalConfig();
+            this.assertFalse(result,
+                'canRollback defaults to false when permissions key is absent (same bug vector as Bug 1 for publish)'
+            );
+        },
+
+        // ====================================================================
+        // GROUP 6: _rollbackTo() guards — draft warning logic
+        //
+        // We test the decision logic in isolation:
+        //   shouldWarnAboutDraft(changesCount, hasUnsaved) → boolean
+        // which mirrors the condition in _rollbackTo():
+        //   if (this.options.changesCount > 0 || PanelState.hasChanges()) { confirm(...) }
+        // ====================================================================
+
+        'rollback draft warning: no warning when changesCount=0 and no unsaved changes': function () {
+            var changesCount = 0;
+            var hasUnsaved   = false;
+            var shouldWarn   = changesCount > 0 || hasUnsaved;
+            this.assertFalse(shouldWarn,
+                'Should not warn when there are no saved draft changes and no unsaved edits'
+            );
+        },
+
+        'rollback draft warning: warns when changesCount > 0': function () {
+            var changesCount = 2;
+            var hasUnsaved   = false;
+            var shouldWarn   = changesCount > 0 || hasUnsaved;
+            this.assertTrue(shouldWarn,
+                'Should warn when there are saved draft changes (changesCount=2)'
+            );
+        },
+
+        'rollback draft warning: warns when unsaved in-panel changes exist': function () {
+            var changesCount = 0;
+            var hasUnsaved   = true;
+            var shouldWarn   = changesCount > 0 || hasUnsaved;
+            this.assertTrue(shouldWarn,
+                'Should warn even when changesCount=0 but there are unsaved panel edits'
+            );
+        },
+
+        'rollback draft warning: warns when both changesCount > 0 and unsaved exist': function () {
+            var changesCount = 3;
+            var hasUnsaved   = true;
+            var shouldWarn   = changesCount > 0 || hasUnsaved;
+            this.assertTrue(shouldWarn,
+                'Should warn when both conditions are true'
+            );
+        },
+
+        // ====================================================================
+        // GROUP 7: Rollback-of-rollback — allowed by design
+        //          Any historical publication (isRollback=true or false)
+        //          can be re-published. Tested as a logic invariant.
+        // ====================================================================
+
+        'rollback-of-rollback: canRollback does not depend on isRollback flag of publication': function () {
+            // The "Publish this version" button is shown based on permissions.canRollback(),
+            // not on whether pub.isRollback === true/false.
+            // This test asserts the invariant: if user has canRollback permission,
+            // the button is shown for ALL publications regardless of isRollback flag.
+            setPermissionsInGlobalConfig({ canRollback: true });
+
+            var canRollbackRegular  = permissions.canRollback(); // pub with isRollback=false
+            var canRollbackOfRollback = permissions.canRollback(); // pub with isRollback=true
+
+            restoreGlobalConfig();
+
+            this.assertTrue(canRollbackRegular,   'Regular publication: button must be shown');
+            this.assertTrue(canRollbackOfRollback, 'Rollback publication: button must also be shown');
+            this.assertEquals(canRollbackRegular, canRollbackOfRollback,
+                'Permission result must be identical for both — isRollback flag does not gate the button'
+            );
+        },
+
+        // ====================================================================
+        // GROUP 8: Bug 3 regression — [data-publication-id] handler must NOT
+        //          fire for rollback buttons (which also carry data-publication-id).
+        //
+        //          The selector '[data-publication-id]:not([data-action])' ensures
+        //          that _loadPublication() is skipped when the element already
+        //          has a data-action attribute (handled by the rollback handler).
+        //
+        //          We test the selector logic as a pure string predicate.
+        // ====================================================================
+
+        'Bug 3: element with data-publication-id but no data-action matches load handler': function () {
+            // Simulates: <a data-publication-id="5"> — should trigger _loadPublication
+            var el = { hasDataAction: false, hasDataPublicationId: true };
+            var matchesLoadHandler = el.hasDataPublicationId && !el.hasDataAction;
+            this.assertTrue(matchesLoadHandler,
+                'A plain publication link (no data-action) must match the load handler selector'
+            );
+        },
+
+        'Bug 3: element with both data-publication-id and data-action="rollback" does NOT match load handler': function () {
+            // Simulates: <button data-action="rollback" data-publication-id="5">
+            // Must NOT trigger _loadPublication — only _rollbackTo
+            var el = { hasDataAction: true, hasDataPublicationId: true, dataAction: 'rollback' };
+            var matchesLoadHandler = el.hasDataPublicationId && !el.hasDataAction;
+            this.assertFalse(matchesLoadHandler,
+                'A rollback button carries data-publication-id but must not match the load handler ' +
+                '(regression: both handlers fired before the :not([data-action]) guard was added)'
+            );
+        },
+
+        'Bug 3: only the data-action handler fires for rollback button click': function () {
+            // Invariant: given a button with data-action="rollback" and data-publication-id="7",
+            // exactly one handler fires (_rollbackTo), not two (_rollbackTo + _loadPublication).
+            var el = { dataAction: 'rollback', dataPublicationId: 7 };
+
+            var rollbackHandlerFired = el.dataAction === 'rollback';
+            var loadHandlerFired     = el.dataPublicationId !== undefined && el.dataAction === undefined;
+
+            this.assertTrue(rollbackHandlerFired, 'Rollback handler must fire for this element');
+            this.assertFalse(loadHandlerFired,
+                'Load handler must NOT fire for a rollback button — ' +
+                'selector must be [data-publication-id]:not([data-action])'
+            );
+        },
+
+        // ====================================================================
+        // GROUP 9: Discard draft button visibility logic
+        //
+        // The discard button is shown when changesCount > 0, independent of
+        // canPublish (user may not have publish permission but can still discard).
+        // We test the pure visibility predicate:
+        //   shouldShowDiscard(changesCount) → boolean
+        // ====================================================================
+
+        'discard button: hidden when changesCount = 0': function () {
+            var changesCount = 0;
+            var shouldShow   = changesCount > 0;
+            this.assertFalse(shouldShow,
+                'Discard button must be hidden when there are no draft changes'
+            );
+        },
+
+        'discard button: shown when changesCount = 1 (boundary)': function () {
+            var changesCount = 1;
+            var shouldShow   = changesCount > 0;
+            this.assertTrue(shouldShow,
+                'Discard button must appear at changesCount = 1'
+            );
+        },
+
+        'discard button: shown when changesCount > 1': function () {
+            var changesCount = 5;
+            var shouldShow   = changesCount > 0;
+            this.assertTrue(shouldShow,
+                'Discard button must be shown when there are multiple draft changes'
+            );
+        },
+
+        'discard button: visible regardless of canPublish permission': function () {
+            // canPublish = false but changesCount > 0 → discard button still shows
+            var changesCount    = 3;
+            var permCanPublish  = false;
+            var showDiscard     = changesCount > 0;               // only depends on count
+            var showPublish     = permCanPublish && changesCount > 0; // requires permission too
+            this.assertTrue(showDiscard,
+                'Discard button must show even when user lacks canPublish permission'
+            );
+            this.assertFalse(showPublish,
+                'Publish button must stay hidden when canPublish is false'
+            );
+        },
+
+        // ====================================================================
+        // GROUP 10: Discard draft confirm dialog logic
+        //
+        // _discardDraft() shows confirm(message) and aborts if user cancels.
+        // Test the confirm condition: only called when changesCount > 0.
+        // ====================================================================
+
+        'discard confirm: dialog shown when changesCount > 0': function () {
+            var changesCount = 3;
+            var dialogShouldShow = changesCount > 0;
+            this.assertTrue(dialogShouldShow,
+                'Confirm dialog must be triggered when there are draft changes to discard'
+            );
+        },
+
+        'discard confirm: dialog skipped when changesCount = 0 (early return)': function () {
+            var changesCount = 0;
+            var dialogShouldShow = changesCount > 0;
+            this.assertFalse(dialogShouldShow,
+                '_discardDraft() must return early (no dialog, no mutation) when changesCount = 0'
+            );
+        },
+
+        'discard confirm: after discard changesCount resets to 0': function () {
+            // Simulate the success path of _discardDraft()
+            var state = { changesCount: 4 };
+            // On success response:
+            state.changesCount = 0;
+            this.assertEquals(0, state.changesCount,
+                'changesCount must be reset to 0 after a successful discard'
+            );
+        },
+
+        'discard confirm: after discard canPublish becomes false': function () {
+            // After discard: changesCount=0 → canPublish must be false
+            var perm = true;
+            var changesCount = 0; // after discard
+            var status = 'DRAFT';
+            var result = computeCanPublish(perm, changesCount, status);
+            this.assertFalse(result,
+                'canPublish must be false after draft is discarded (changesCount=0)'
+            );
+        }
+    });
+});

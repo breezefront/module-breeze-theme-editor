@@ -39,6 +39,15 @@
                         </button>
                     </div>
                 <% } %>
+
+                <!-- Discard draft button (only when there are saved draft changes) -->
+                <% if (changesCount > 0) { %>
+                    <div class="dropdown-discard-button-wrapper">
+                        <button type="button" class="dropdown-discard-button" data-action="discard-draft">
+                            <span class="discard-label">Discard <%- changesCount %> draft changes</span>
+                        </button>
+                    </div>
+                <% } %>
             </div>
 
             <!-- Published status -->
@@ -58,16 +67,25 @@
                 <div class="dropdown-section-title">Recent Publications</div>
                 <div class="publications-list">
                     <% publications.forEach(function(pub) { %>
-                        <a href="#" class="dropdown-item <%= status === 'PUBLICATION' && currentPublicationId == pub.id ? 'active' : '' %>" data-publication-id="<%- pub.id %>">
-                            <span class="item-icon">📦</span>
-                            <span class="item-content">
-                                <span class="item-title"><%- pub.title %></span>
-                                <span class="item-meta"><%- pub.date %></span>
-                            </span>
-                            <% if (status === 'PUBLICATION' && currentPublicationId == pub.id) { %>
-                                <span class="item-check">✓</span>
+                        <div class="dropdown-item-group">
+                            <a href="#" class="dropdown-item <%= status === 'PUBLICATION' && currentPublicationId == pub.id ? 'active' : '' %>" data-publication-id="<%- pub.id %>">
+                                <span class="item-icon"><% if (pub.isRollback) { %>↩️<% } else { %>📦<% } %></span>
+                                <span class="item-content">
+                                    <span class="item-title"><%- pub.title %></span>
+                                    <span class="item-meta"><%- pub.date %></span>
+                                </span>
+                                <% if (status === 'PUBLICATION' && currentPublicationId == pub.id) { %>
+                                    <span class="item-check">✓</span>
+                                <% } %>
+                            </a>
+                            <% if (canRollback) { %>
+                                <div class="dropdown-rollback-button-wrapper">
+                                    <button type="button" class="dropdown-rollback-button" data-action="rollback" data-publication-id="<%- pub.id %>" data-publication-title="<%- pub.title %>">
+                                        <span class="rollback-label">↩ Publish this version</span>
+                                    </button>
+                                </div>
                             <% } %>
-                        </a>
+                        </div>
                     <% }); %>
                 </div>
 

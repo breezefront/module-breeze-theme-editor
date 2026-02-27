@@ -111,7 +111,8 @@ define([
             themeId: config.themeId,
             themeName: config.themeName || 'Theme',
             adminUrl: config.adminUrl || '/admin',
-            graphqlEndpoint: config.graphqlEndpoint
+            graphqlEndpoint: config.graphqlEndpoint,
+            permissions: config.permissions || {}
         };
         
         // Initialize device switcher widget

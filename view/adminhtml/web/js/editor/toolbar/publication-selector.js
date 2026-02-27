@@ -12,13 +12,15 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/loading',
     'Swissup_BreezeThemeEditor/js/editor/css-manager',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/publish',
+    'Swissup_BreezeThemeEditor/js/graphql/mutations/rollback',
+    'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-draft',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/renderer',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/metadata-loader',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, widget, $t, template, permissions, errorHandler, loading, cssManager, publishMutation, PanelState, Toastify, StorageHelper, Renderer, MetadataLoader, Logger) {
+], function ($, widget, $t, template, permissions, errorHandler, loading, cssManager, publishMutation, rollbackMutation, discardDraftMutation, PanelState, Toastify, StorageHelper, Renderer, MetadataLoader, Logger) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector');
@@ -196,8 +198,24 @@ define([
                 self._publishChanges();
             });
 
-            // Load publication
-            this.element.on('click', '[data-publication-id]', function(e) {
+            // Discard all saved draft changes
+            this.element.on('click', '[data-action="discard-draft"]', function(e) {
+                e.preventDefault();
+                self._discardDraft();
+            });
+
+            // Publish this version (rollback to historical publication)
+            this.element.on('click', '[data-action="rollback"]', function(e) {
+                e.preventDefault();
+                var $btn = $(this);
+                self._rollbackTo(
+                    parseInt($btn.data('publication-id')),
+                    $btn.data('publication-title')
+                );
+            });
+
+            // Load publication (exclude rollback/action buttons that also carry data-publication-id)
+            this.element.on('click', '[data-publication-id]:not([data-action])', function(e) {
                 e.preventDefault();
                 self._loadPublication($(this).data('publication-id'));
             });
@@ -552,6 +570,147 @@ define([
         },
 
         /**
+         * Discard all saved draft changes after confirmation
+         */
+        _discardDraft: function() {
+            if (this.options.changesCount === 0) {
+                return;
+            }
+
+            var message = $t('Discard all %1 draft changes? This cannot be undone.')
+                .replace('%1', this.options.changesCount);
+
+            if (!confirm(message)) {
+                return;
+            }
+
+            var self = this;
+            loading.show(this.element);
+
+            discardDraftMutation(
+                parseInt(this.storeId),
+                parseInt(this.themeId),
+                null
+            ).then(function(response) {
+                if (response && response.discardBreezeThemeEditorDraft && response.discardBreezeThemeEditorDraft.success) {
+                    self.options.changesCount = 0;
+                    self.renderer.render(self._getState());
+                    self._applyPermissions();
+
+                    Toastify.show('success', $t('Draft changes discarded'));
+
+                    $(document).trigger('bte:draftDiscarded', {
+                        storeId: self.storeId,
+                        themeId: self.themeId
+                    });
+
+                    self.renderer.closeDropdown();
+                } else {
+                    var errMsg = (response && response.discardBreezeThemeEditorDraft && response.discardBreezeThemeEditorDraft.message)
+                        ? response.discardBreezeThemeEditorDraft.message
+                        : 'Discard failed';
+                    Toastify.show('error', $t('Discard failed: %1').replace('%1', errMsg));
+                    errorHandler.handle({ message: errMsg }, 'discard-draft');
+                }
+                loading.hide(self.element);
+            }).catch(function(error) {
+                var errMsg = error.message || 'Unknown error';
+                Toastify.show('error', $t('Discard failed: %1').replace('%1', errMsg));
+                errorHandler.handle({ message: errMsg }, 'discard-draft');
+                loading.hide(self.element);
+            });
+        },
+
+        /**
+         * Initiate "Publish this version" flow for a historical publication
+         *
+         * @param {Number} publicationId
+         * @param {String} publicationTitle
+         */
+        _rollbackTo: function(publicationId, publicationTitle) {
+            if (!permissions.canRollback()) {
+                errorHandler.handle({
+                    message: permissions.getPermissionMessage('rollback')
+                }, 'rollback');
+                return;
+            }
+
+            // Warn about unsaved draft changes — rollback will discard them
+            if (this.options.changesCount > 0 || PanelState.hasChanges()) {
+                var unsavedCount = PanelState.hasChanges() ? PanelState.getChangesCount() : 0;
+                var draftCount   = this.options.changesCount;
+
+                var message = $t(
+                    'Publishing this version will discard your current draft.\n\n' +
+                    '%1 saved draft change(s) and %2 unsaved change(s) will be lost.\n\n' +
+                    'Continue?'
+                ).replace('%1', draftCount).replace('%2', unsavedCount);
+
+                if (!confirm(message)) {
+                    return;
+                }
+            }
+
+            var defaultTitle = $t('Restoring: %1').replace('%1', publicationTitle);
+            var title = prompt($t('Enter a title for this restore:'), defaultTitle);
+            if (!title || !title.trim()) {
+                return;
+            }
+
+            this._executeRollback(publicationId, title.trim());
+        },
+
+        /**
+         * Execute rollback GraphQL mutation
+         *
+         * @param {Number} publicationId
+         * @param {String} title
+         */
+        _executeRollback: function(publicationId, title) {
+            var self = this;
+
+            loading.show(this.element);
+
+            rollbackMutation(publicationId, title, null)
+                .then(function(response) {
+                    if (response && response.rollbackBreezeThemeEditor && response.rollbackBreezeThemeEditor.success) {
+                        var result = response.rollbackBreezeThemeEditor;
+
+                        self.options.currentStatus = 'PUBLISHED';
+                        self.options.changesCount  = 0;
+                        self.renderer.render(self._getState());
+                        self._applyPermissions();
+
+                        Toastify.show('success', $t('Published: %1').replace('%1', title));
+
+                        $(document).trigger('bte:published', {
+                            publication: result.publication,
+                            storeId: self.storeId,
+                            themeId: self.themeId,
+                            isRollback: true
+                        });
+
+                        self.renderer.closeDropdown();
+                        self.options.publicationsPage = 1;
+                        self._loadPublications();
+                    } else {
+                        var errMsg = (response && response.rollbackBreezeThemeEditor && response.rollbackBreezeThemeEditor.message)
+                            ? response.rollbackBreezeThemeEditor.message
+                            : 'Publish failed';
+                        Toastify.show('error', $t('Publish failed: %1').replace('%1', errMsg));
+                        errorHandler.handle({ message: errMsg }, 'rollback');
+                    }
+                    loading.hide(self.element);
+                })
+                .catch(function(error) {
+                    var errMsg = error.message || 'Unknown error';
+                    Toastify.show('error', $t('Publish failed: %1').replace('%1', errMsg));
+                    errorHandler.handle({ message: errMsg }, 'rollback');
+                    loading.hide(self.element);
+                });
+        },
+
+        /**
          * Apply ACL permissions to UI
          */
         _applyPermissions: function() {
@@ -594,7 +753,8 @@ define([
          */
         updateChangesCount: function(count) {
             this.options.changesCount = count;
-            this.renderer.updateBadge(this._getState());
+            this.renderer.render(this._getState());
+            this._applyPermissions();
         },
 
         /**
