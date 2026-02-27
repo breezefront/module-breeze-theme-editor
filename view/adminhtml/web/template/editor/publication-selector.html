@@ -78,7 +78,7 @@
                                     <span class="item-check">✓</span>
                                 <% } %>
                             </a>
-                            <% if (canRollback) { %>
+                            <% if (canRollback && status === 'PUBLICATION' && currentPublicationId == pub.id) { %>
                                 <div class="dropdown-rollback-button-wrapper">
                                     <button type="button" class="dropdown-rollback-button" data-action="rollback" data-publication-id="<%- pub.id %>" data-publication-title="<%- pub.title %>">
                                         <span class="rollback-label">↩ Publish this version</span>

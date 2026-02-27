@@ -275,7 +275,7 @@ define([
             var result = permissions.canRollback();
             restoreGlobalConfig();
             this.assertTrue(result,
-                'canRollback must be true so the "Publish this version" button renders in each publication row'
+                'canRollback must be true so the "Publish this version" button can render for the active publication'
             );
         },
 
@@ -349,21 +349,71 @@ define([
         // ====================================================================
 
         'rollback-of-rollback: canRollback does not depend on isRollback flag of publication': function () {
-            // The "Publish this version" button is shown based on permissions.canRollback(),
-            // not on whether pub.isRollback === true/false.
-            // This test asserts the invariant: if user has canRollback permission,
-            // the button is shown for ALL publications regardless of isRollback flag.
+            // The "Publish this version" button visibility depends on:
+            //   canRollback (permission) AND status === 'PUBLICATION' AND currentPublicationId == pub.id
+            // The isRollback flag on the publication record does NOT affect the button —
+            // any publication (regular or itself a rollback) can be re-published when active.
             setPermissionsInGlobalConfig({ canRollback: true });
 
-            var canRollbackRegular  = permissions.canRollback(); // pub with isRollback=false
+            var canRollbackRegular    = permissions.canRollback(); // pub with isRollback=false
             var canRollbackOfRollback = permissions.canRollback(); // pub with isRollback=true
 
             restoreGlobalConfig();
 
-            this.assertTrue(canRollbackRegular,   'Regular publication: button must be shown');
-            this.assertTrue(canRollbackOfRollback, 'Rollback publication: button must also be shown');
+            this.assertTrue(canRollbackRegular,    'Regular publication: permission allows button');
+            this.assertTrue(canRollbackOfRollback, 'Rollback publication: permission also allows button');
             this.assertEquals(canRollbackRegular, canRollbackOfRollback,
-                'Permission result must be identical for both — isRollback flag does not gate the button'
+                'isRollback flag does not gate the permission — only active-selection + permission matter'
+            );
+        },
+
+        // ====================================================================
+        // GROUP 7b: rollback button visibility — only for the actively previewed
+        //           publication (status=PUBLICATION, currentPublicationId == pub.id)
+        // ====================================================================
+
+        'rollback button: hidden when status is DRAFT (not previewing any publication)': function () {
+            var state  = { status: 'DRAFT', currentPublicationId: null, canRollback: true };
+            var pubId  = 5;
+            var show   = state.canRollback && state.status === 'PUBLICATION' && state.currentPublicationId == pubId;
+            this.assertFalse(show,
+                'Button must be hidden when not in PUBLICATION mode'
+            );
+        },
+
+        'rollback button: hidden when status is PUBLISHED': function () {
+            var state  = { status: 'PUBLISHED', currentPublicationId: null, canRollback: true };
+            var pubId  = 5;
+            var show   = state.canRollback && state.status === 'PUBLICATION' && state.currentPublicationId == pubId;
+            this.assertFalse(show,
+                'Button must be hidden when viewing the live Published state'
+            );
+        },
+
+        'rollback button: hidden for a non-active publication row': function () {
+            var state  = { status: 'PUBLICATION', currentPublicationId: 3, canRollback: true };
+            var pubId  = 5; // different publication
+            var show   = state.canRollback && state.status === 'PUBLICATION' && state.currentPublicationId == pubId;
+            this.assertFalse(show,
+                'Button must be hidden for publications that are not currently being previewed'
+            );
+        },
+
+        'rollback button: shown only for the active publication row': function () {
+            var state  = { status: 'PUBLICATION', currentPublicationId: 5, canRollback: true };
+            var pubId  = 5; // same publication
+            var show   = state.canRollback && state.status === 'PUBLICATION' && state.currentPublicationId == pubId;
+            this.assertTrue(show,
+                'Button must be shown when the user is previewing this exact publication'
+            );
+        },
+
+        'rollback button: hidden even for active publication when canRollback=false': function () {
+            var state  = { status: 'PUBLICATION', currentPublicationId: 5, canRollback: false };
+            var pubId  = 5;
+            var show   = state.canRollback && state.status === 'PUBLICATION' && state.currentPublicationId == pubId;
+            this.assertFalse(show,
+                'Button must be hidden when user lacks canRollback permission, even if publication is active'
             );
         },
 
