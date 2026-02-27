@@ -26,6 +26,7 @@ enum BreezeThemeEditorFieldType {
     SOCIAL_LINKS
     SPACING
     REPEATER @doc(description: "For repeated fields like social links")
+    HEADING @doc(description: "UI-only subheading to visually separate settings groups, carries no value")
 }
 
 enum BreezeThemeEditorDependencyOperator {

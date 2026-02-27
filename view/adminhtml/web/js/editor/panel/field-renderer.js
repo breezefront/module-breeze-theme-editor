@@ -15,6 +15,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/image-upload',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/spacing',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/repeater',
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/heading',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function(
     BaseFieldRenderer,
@@ -33,6 +34,7 @@ define([
     ImageUploadRenderer,
     SpacingRenderer,
     RepeaterRenderer,
+    HeadingRenderer,
     Logger
 ) {
     'use strict';
@@ -63,7 +65,8 @@ define([
             'SOCIAL_LINKS': SocialLinksRenderer,
             'IMAGE_UPLOAD': ImageUploadRenderer,
             'SPACING': SpacingRenderer,
-            'REPEATER': RepeaterRenderer
+            'REPEATER': RepeaterRenderer,
+            'HEADING': HeadingRenderer
         },
 
         /**

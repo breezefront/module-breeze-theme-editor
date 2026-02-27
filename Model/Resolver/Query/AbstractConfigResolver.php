@@ -40,13 +40,37 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
             $fields = [];
 
             foreach (($section['settings'] ?? []) as $setting) {
+                $type = strtolower($setting['type'] ?? '');
+
+                // UI-only types (heading, etc.) carry no value — include as minimal display fields
+                if ($type === 'heading') {
+                    $fields[] = [
+                        'code' => $setting['id'] ?? null,
+                        'label' => $setting['label'] ?? null,
+                        'type' => 'HEADING',
+                        'description' => $setting['description'] ?? null,
+                        'value' => null,
+                        'default' => null,
+                        'isModified' => false,
+                        'property' => null,
+                        'selector' => null,
+                        'required' => false,
+                        'validation' => null,
+                        'placeholder' => null,
+                        'helpText' => null,
+                        'params' => null,
+                        'dependsOn' => null,
+                    ];
+                    continue;
+                }
+
                 $key = $section['id'] . '.' . $setting['id'];
                 $currentValue = $valuesMap[$key] ?? null;
                 $defaultValue = $defaults[$key] ?? ($setting['default'] ?? null);
 
                 // Resolve format early for color fields (needed for value conversion)
                 $colorFormat = null;
-                if (strtolower($setting['type']) === 'color') {
+                if ($type === 'color') {
                     $colorFormat = $this->colorFormatResolver->resolve(
                         $setting['format'] ?? null,
                         $setting['default'] ?? null

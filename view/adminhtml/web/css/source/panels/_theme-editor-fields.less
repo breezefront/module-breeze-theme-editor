@@ -470,6 +470,37 @@
 }
 
 // ============================================================================
+// HEADING (UI-only subgroup separator, no interactive control)
+// ============================================================================
+
+.bte-field-heading {
+    margin-top: 8px;
+    margin-bottom: 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+
+    .bte-field-heading-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: @bte-toolbar-icon;
+        margin: 0;
+    }
+
+    .bte-field-heading-description {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.55);
+        margin-top: 3px;
+        line-height: 1.4;
+    }
+}
+
+.bte-field-wrapper:first-child .bte-field-heading {
+    margin-top: 0;
+}
+
+// ============================================================================
 // VALIDATION & ERRORS
 // ============================================================================
 

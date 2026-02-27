@@ -19,7 +19,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/code',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/spacing',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/repeater',
-    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/social-links'
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/social-links',
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/heading',
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderer'
 ], function (
     TestFramework,
     BaseRenderer,
@@ -34,7 +36,9 @@ define([
     CodeRenderer,
     SpacingRenderer,
     RepeaterRenderer,
-    SocialLinksRenderer
+    SocialLinksRenderer,
+    HeadingRenderer,
+    FieldRenderer
 ) {
     'use strict';
 
@@ -600,6 +604,64 @@ define([
                 field({ property: '--social-links' }), 'sec'
             );
             this.assertEquals(data.property, '--social-links');
+        },
+
+        // ─────────────────────────────────────────────────────────────────────
+        // HeadingRenderer  (UI-only separator, carries no value or property)
+        // ─────────────────────────────────────────────────────────────────────
+
+        'HeadingRenderer: is registered in FieldRenderer under HEADING key': function () {
+            this.assertTrue(
+                FieldRenderer.renderers['HEADING'] === HeadingRenderer,
+                'HEADING key should map to HeadingRenderer'
+            );
+        },
+
+        'HeadingRenderer: prepareData returns label and description': function () {
+            var data = HeadingRenderer.prepareData(
+                field({ code: 'colors_heading', label: 'Colors', description: 'Color settings', property: '' }),
+                'general'
+            );
+            this.assertEquals(data.label, 'Colors', 'label');
+            this.assertEquals(data.description, 'Color settings', 'description');
+        },
+
+        'HeadingRenderer: description defaults to empty string when absent': function () {
+            var data = HeadingRenderer.prepareData(
+                field({ code: 'sec_heading', label: 'Section', description: undefined, property: '' }),
+                'general'
+            );
+            this.assertEquals(data.description, '', 'description should default to ""');
+        },
+
+        'HeadingRenderer: value and default are null (no interactive control)': function () {
+            var data = HeadingRenderer.prepareData(
+                field({ code: 'h1', label: 'H', value: null, default: null, property: '' }),
+                'general'
+            );
+            this.assertNull(data.value, 'value should be null');
+            this.assertNull(data.default, 'default should be null');
+        },
+
+        'HeadingRenderer: isModified and isDirty are false': function () {
+            var data = HeadingRenderer.prepareData(
+                field({ code: 'h1', label: 'H', isModified: false, property: '' }),
+                'general'
+            );
+            this.assertFalse(data.isModified, 'isModified should be false');
+            this.assertFalse(data.isDirty, 'isDirty should be false');
+        },
+
+        'HeadingRenderer: does not share template with BaseRenderer': function () {
+            this.assertTrue(
+                HeadingRenderer !== BaseRenderer,
+                'HeadingRenderer should be a distinct object from BaseRenderer'
+            );
+            this.assertTrue(
+                typeof HeadingRenderer.templateString === 'string' &&
+                HeadingRenderer.templateString.length > 0,
+                'HeadingRenderer should have a non-empty templateString'
+            );
         }
     });
 });
