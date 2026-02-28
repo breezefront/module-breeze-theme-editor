@@ -90,7 +90,7 @@ define([
             $('#toolbar-navigation').breezeNavigation({
                 items: config.components.navigation.items || [],
                 panelSelector: '#bte-panels-container',
-                panelWidgets: {
+                panelWidgets: Object.assign({
                     'theme-editor': {
                         selector: '#theme-editor-panel',
                         widget: 'themeSettingsEditor',
@@ -100,9 +100,23 @@ define([
                             themeName: config.themeName || 'Theme'
                         }
                     }
-                }
+                }, config.panelWidgets || {})
             });
             log.info('Navigation initialized with lazy panel loading');
+
+            // Auto-activate a panel on page load if requested (e.g. ?activate_panel=content-builder)
+            if (config.activatePanel) {
+                var _activatePanel = config.activatePanel;
+                // Defer until after the current call-stack so the widget is fully ready
+                setTimeout(function () {
+                    var $nav = $('#toolbar-navigation');
+                    var navWidget = $nav.data('swissupBreezeNavigation');
+                    if (navWidget && typeof navWidget.setActive === 'function') {
+                        log.info('Auto-activating panel: ' + _activatePanel);
+                        navWidget.setActive(_activatePanel);
+                    }
+                }, 0);
+            }
         }
         
         // Store config globally for settings-editor to access (when initialized lazily)
@@ -112,7 +126,8 @@ define([
             themeName: config.themeName || 'Theme',
             adminUrl: config.adminUrl || '/admin',
             graphqlEndpoint: config.graphqlEndpoint,
-            permissions: config.permissions || {}
+            permissions: config.permissions || {},
+            activatePanel: config.activatePanel || null
         };
         
         // Initialize device switcher widget

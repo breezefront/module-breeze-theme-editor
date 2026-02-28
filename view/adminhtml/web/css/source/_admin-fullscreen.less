@@ -40,3 +40,13 @@ body.breeze-editor-fullscreen {
         margin: 0 !important;
     }
 }
+
+// Magento appends modals as direct children of <body>, so the restore rule
+// must be a top-level selector — nesting it inside body.breeze-editor-fullscreen
+// would not match since modals are siblings of the editor, not descendants.
+body.breeze-editor-fullscreen .modal-slide,
+body.breeze-editor-fullscreen .modal-popup {
+    .page-main-actions {
+        display: block !important;
+    }
+}

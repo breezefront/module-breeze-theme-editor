@@ -153,6 +153,8 @@ define([
                 .replace(/[?&]___store=[^&]*/g, '')
                 .replace(/[?&]preview_theme=[^&]*/g, '')
                 .replace(/[?&]jstest=[^&]*/g, '')
+                .replace(/[?&]bcb_preview=[^&]*/g, '')
+                .replace(/[?&]bcb_page_id=[^&]*/g, '')
                 .replace(/^\?&/, '?')  // Fix leftover &
                 .replace(/\?$/, '')    // Remove trailing ?
                 .replace(/&$/, '');    // Remove trailing &
