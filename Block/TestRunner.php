@@ -190,6 +190,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/publication-selector-test',
             // Settings Editor Reset/Restore CSS Preview Tests (10 tests) - data-property vs data-css-var bug
             'Swissup_BreezeThemeEditor/js/test/tests/settings-editor-reset-test',
+            // Toastify Library Tests (17 tests) - DOM structure, types, options, hide/show, shortcuts
+            'Swissup_BreezeThemeEditor/js/test/tests/toastify-test',
         ];
     }
 }
