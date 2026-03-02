@@ -126,6 +126,8 @@ define([
             this.$presetContainer = this.element.find('.bte-preset-container');
             this.$loader = this.element.find('.bte-panel-loader');
             this.$error = this.element.find('.bte-panel-error');
+            this.$searchInput = this.element.find('.bte-search-input');
+            this.$searchClear = this.element.find('.bte-search-clear');
 
             log.info('Theme Editor Panel rendered');
         },
@@ -137,6 +139,9 @@ define([
             this.$closeButton.on('click', $.proxy(this._close, this));
             this.$resetButton.on('click', $.proxy(this._reset, this));
             this.$saveButton.on('click', $.proxy(this._save, this));
+
+            // Search
+            this._bindSearch();
 
             // Error handlers
             this.element.on('click', '.bte-error-retry', $.proxy(this._loadConfig, this));
@@ -509,6 +514,12 @@ define([
 
             this.$sectionsContainer.html(html);
 
+            // Clear search when sections are re-rendered
+            if (this.$searchInput) {
+                this.$searchInput.val('');
+                this.$searchClear.hide();
+            }
+
             // Restore previously open sections or open first by default
             var saved = StorageHelper.getOpenSections();
             if (saved && saved.length) {
@@ -639,6 +650,147 @@ define([
             StorageHelper.setOpenSections(openSections);
 
             log.debug('Accordion toggled: ' + section + ' -> ' + !isActive);
+        },
+
+        /**
+         * Bind search input events
+         */
+        _bindSearch: function () {
+            var self = this;
+            var debouncedFilter = this._debounce(function () {
+                var query = self.$searchInput.val().trim();
+
+                self._filterSections(query);
+                self.$searchClear.toggle(query.length > 0);
+            }, 250);
+
+            this.$searchInput.on('input', debouncedFilter);
+            this.$searchClear.on('click', $.proxy(this._clearSearch, this));
+        },
+
+        /**
+         * Filter sections and fields by search query.
+         * Searches against: section label, field label, field description.
+         * HEADING-type fields are always hidden when search is active.
+         *
+         * @param {String} query
+         */
+        _filterSections: function (query) {
+            var self = this;
+            var normalized = query.toLowerCase();
+
+            // Remove previous "no results" message
+            this.$sectionsContainer.find('.bte-search-no-results').remove();
+
+            if (!normalized) {
+                // Restore: show everything, re-apply saved accordion state
+                this.$sectionsContainer.find('.bte-accordion-section').show();
+                this.$sectionsContainer.find('.bte-field-wrapper').show();
+
+                var saved = StorageHelper.getOpenSections();
+
+                this.$sectionsContainer.find('.bte-accordion-header').each(function () {
+                    var $h = $(this);
+                    var code = $h.data('section');
+                    var $c = self.$sectionsContainer.find(
+                        '.bte-accordion-content[data-section="' + code + '"]'
+                    );
+
+                    if (saved && saved.indexOf(code) !== -1) {
+                        $h.addClass('active');
+                        $c.addClass('active').show();
+                    } else {
+                        $h.removeClass('active');
+                        $c.removeClass('active').hide();
+                    }
+                });
+
+                log.debug('Search cleared — accordion state restored');
+                return;
+            }
+
+            var totalVisible = 0;
+
+            this.$sectionsContainer.find('.bte-accordion-section').each(function () {
+                var $section = $(this);
+                var $header  = $section.find('> .bte-accordion-header');
+                var $content = $section.find('> .bte-accordion-content');
+                var sectionLabel = $header.find('.bte-section-label').text().toLowerCase();
+                var sectionMatches = sectionLabel.indexOf(normalized) !== -1;
+                var visibleCount = 0;
+
+                $content.find('.bte-field-wrapper').each(function () {
+                    var $wrapper = $(this);
+
+                    // HEADING fields are visual dividers — always hide during search
+                    if ($wrapper.find('.bte-field-heading').length) {
+                        $wrapper.hide();
+                        return;
+                    }
+
+                    var labelText = $wrapper.find('.bte-field-label').first().text().toLowerCase();
+                    var descText  = $wrapper.find('.bte-field-description').first().text().toLowerCase();
+                    var matches   = sectionMatches ||
+                                    labelText.indexOf(normalized) !== -1 ||
+                                    descText.indexOf(normalized)  !== -1;
+
+                    if (matches) {
+                        $wrapper.show();
+                        visibleCount++;
+                    } else {
+                        $wrapper.hide();
+                    }
+                });
+
+                if (visibleCount > 0) {
+                    $section.show();
+                    $header.addClass('active');
+                    $content.addClass('active').show();
+                    totalVisible += visibleCount;
+                } else {
+                    $section.hide();
+                }
+            });
+
+            if (totalVisible === 0) {
+                this.$sectionsContainer.append(
+                    '<p class="bte-search-no-results">No settings found for &ldquo;' +
+                    $('<span>').text(query).html() +
+                    '&rdquo;</p>'
+                );
+            }
+
+            log.debug('Search "' + query + '" — ' + totalVisible + ' field(s) visible');
+        },
+
+        /**
+         * Clear search input and restore accordion state
+         */
+        _clearSearch: function () {
+            this.$searchInput.val('');
+            this.$searchClear.hide();
+            this._filterSections('');
+        },
+
+        /**
+         * Returns a debounced version of the given function
+         *
+         * @param {Function} fn
+         * @param {Number}   delay  milliseconds
+         * @returns {Function}
+         */
+        _debounce: function (fn, delay) {
+            var timer;
+
+            return function () {
+                var context = this,
+                    args    = arguments;
+
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    fn.apply(context, args);
+                }, delay);
+            };
         },
 
         /**
