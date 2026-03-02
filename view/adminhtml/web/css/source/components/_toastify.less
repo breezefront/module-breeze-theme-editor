@@ -1,0 +1,152 @@
+//
+//  Breeze Theme Editor - Toast Notifications (Toastify)
+//  _____________________________________________
+//
+//  Provides visual styling for js/lib/toastify.js which is purely CSS-class-based.
+//  The JS appends .toastify-container to <body> and adds .toastify-show to reveal each toast.
+//
+
+.toastify-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: @bte-toast-z-index;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 360px;
+    width: calc(100vw - 40px);
+    pointer-events: none; // Allow clicks to fall through the container gap areas
+}
+
+// -------------------------
+//  Base toast
+// -------------------------
+.toastify-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: @bte-toolbar-border-radius;
+    border-left: 4px solid transparent;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.08);
+    font-family: @bte-toolbar-font-family;
+    font-size: @bte-toolbar-font-size-small;
+    line-height: 1.4;
+    color: #1f2937;
+    pointer-events: all; // Re-enable for the toast itself (close button, hover pause)
+
+    // Hidden state — slides in from the right
+    opacity: 0;
+    transform: translateX(110%);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+
+    &.toastify-show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+// -------------------------
+//  Type variants
+// -------------------------
+.toastify-success {
+    border-left-color: @status-published-color; // #10b981 green
+    background: #f0fdf4;
+    color: #14532d;
+
+    .toastify-close {
+        color: #6b7280;
+        &:hover { color: #14532d; }
+    }
+}
+
+.toastify-error {
+    border-left-color: @status-error-color; // #ef4444 red
+    background: #fef2f2;
+    color: #7f1d1d;
+
+    .toastify-close {
+        color: #6b7280;
+        &:hover { color: #7f1d1d; }
+    }
+}
+
+.toastify-warning {
+    border-left-color: @bte-toolbar-status-unpublished; // #ff9800 amber
+    background: #fffbeb;
+    color: #78350f;
+
+    .toastify-close {
+        color: #6b7280;
+        &:hover { color: #78350f; }
+    }
+}
+
+.toastify-notice {
+    border-left-color: @bte-badge-modified-primary; // #3b82f6 blue
+    background: #eff6ff;
+    color: #1e3a8a;
+
+    .toastify-close {
+        color: #6b7280;
+        &:hover { color: #1e3a8a; }
+    }
+}
+
+// 'info' type — alias of notice (used in palette-section-renderer)
+.toastify-info {
+    border-left-color: @bte-badge-modified-primary;
+    background: #eff6ff;
+    color: #1e3a8a;
+
+    .toastify-close {
+        color: #6b7280;
+        &:hover { color: #1e3a8a; }
+    }
+}
+
+// -------------------------
+//  Inner elements
+// -------------------------
+.toastify-icon {
+    flex-shrink: 0;
+    font-size: 16px;
+    line-height: 1.4;
+    user-select: none;
+}
+
+.toastify-message {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+
+    a {
+        color: inherit;
+        text-decoration: underline;
+    }
+}
+
+.toastify-close {
+    flex-shrink: 0;
+    margin-left: 4px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s ease, color 0.15s ease;
+
+    &:hover {
+        opacity: 1;
+    }
+
+    &:focus {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+        border-radius: 2px;
+    }
+}

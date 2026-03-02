@@ -237,6 +237,8 @@ define([
                             if (result.discardBreezeThemeEditorDraft.success) {
                                 log.info('Discard success: ' + data.sectionCode + '.' + data.fieldCode);
 
+                                self._showToast('success', 'Field restored to default');
+
                                 // Commit the change in state — clears isDirty, updates isModified
                                 PanelState.markFieldAsSaved(data.sectionCode, data.fieldCode);
 
@@ -256,10 +258,12 @@ define([
                                 });
                             } else {
                                 log.error('Discard failed: ' + result.discardBreezeThemeEditorDraft.message);
+                                self._showToast('error', 'Failed to restore: ' + result.discardBreezeThemeEditorDraft.message);
                             }
                         })
                         .catch(function(error) {
                             log.error('Discard error for ' + data.sectionCode + '.' + data.fieldCode + ': ' + error);
+                            self._showToast('error', 'Failed to restore field: ' + error.message);
                         });
                 }
             });
