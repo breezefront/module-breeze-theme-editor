@@ -25,6 +25,7 @@
             data-type="font_picker"
             data-default="<%= data.default %>"
             data-font-stylesheets="<%- JSON.stringify(data.fontStylesheetMap || {}) %>"
+            style="font-family: <%- data.value || data.default %>;"
             <%= data.required ? 'required' : '' %>
         >
             <% _.each(data.fonts, function(font) { %>

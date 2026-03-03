@@ -46,11 +46,14 @@ define([
             // Font picker — load external stylesheet if the selected font requires one
             $element.on('change', '.bte-font-picker', function(e) {
                 var $select = $(e.currentTarget);
+                var val = $select.val();
                 var map = JSON.parse($select.attr('data-font-stylesheets') || '{}');
-                var url = map[$select.val()];
+                var url = map[val];
                 if (url) {
                     CssPreviewManager.loadFont(url);
                 }
+                // Mirror selected font-family onto the <select> itself
+                $select[0].style.fontFamily = val;
                 BaseHandler.handleChange($select, callback);
             });
 

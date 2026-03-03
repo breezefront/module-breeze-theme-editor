@@ -579,6 +579,10 @@ define([
                     $field.prop('checked', value === '1' || value === true);
                 } else {
                     $field.val(displayValue);
+                    // For font pickers, mirror the selected font onto the <select> itself
+                    if (fieldType === 'font_picker') {
+                        $field[0].style.fontFamily = displayValue;
+                    }
                 }
                 
                 // Get section and field codes to update PanelState and badges
