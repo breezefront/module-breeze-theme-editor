@@ -32,9 +32,17 @@ define([
      *   4. Fires paletteColorChanged to trigger _updateChangesCount() in
      *      settings-editor.js (updates the Save button counter).
      *
-     * Section-level badges (Changed N, Modified N) and a Reset button mirror
-     * the color palette section behaviour.  Dirty/modified state is read from
-     * PanelState because role fields are saved as ordinary fields.
+     * Section-level badges (Changed N, Modified N) + Reset button and a single
+     * Restore (×) button next to the Modified badge mirror the colour palette
+     * section behaviour.  Dirty/modified state is read from PanelState because
+     * role fields are saved as ordinary fields.
+     *
+     * Restore button flow (section-level ×):
+     *   - For every modified role: updates picker UI + CSS preview + consumer
+     *     cascade immediately, then calls PanelState.restoreToDefault() which
+     *     fires the 'field-restore' event picked up by settings-editor.js →
+     *     discardDraft() mutation → markFieldAsSaved() → themeEditorDraftSaved
+     *     event → _updateHeaderBadges() here.
      */
     $.widget('swissup.fontPaletteSection', {
         options: {
@@ -85,15 +93,15 @@ define([
             this.element.show();
             this.element.html(this._buildSectionHtml());
 
-            this.$header         = this.element.find('.bte-font-palette-header');
-            this.$content        = this.element.find('.bte-font-palette-content');
+            this.$header          = this.element.find('.bte-font-palette-header');
+            this.$content         = this.element.find('.bte-font-palette-content');
             this.$badgesContainer = this.element.find('.bte-font-palette-badges');
 
             // Open by default
             this.$header.addClass('active');
             this.$content.addClass('active').show();
 
-            // Show initial modified badge if any role is already customised
+            // Show initial badges (Modified N for customised roles)
             this._updateHeaderBadges();
 
             log.debug('Font palette section rendered');
@@ -133,7 +141,7 @@ define([
         },
 
         /**
-         * Build HTML for a single role row (label + custom font picker dropdown)
+         * Build HTML for a single role row (label + custom font picker dropdown + badge slot)
          *
          * @param {Object} palette
          * @param {Object} role
@@ -197,6 +205,7 @@ define([
 
             html += '</div>'; // .bte-font-picker-dropdown
             html += '</div>'; // .bte-font-picker-widget
+
             html += '</div>'; // .bte-font-role-row
 
             return html;
@@ -210,7 +219,7 @@ define([
 
             // ── Accordion toggle ─────────────────────────────────────────────
             this.element.on('click', '.bte-font-palette-header', function (e) {
-                // Let the reset-button click bubble through to its own handler below
+                // Let reset-button clicks bubble through to their own handler below
                 if ($(e.target).closest('.bte-palette-reset-btn').length) {
                     return;
                 }
@@ -263,19 +272,10 @@ define([
                 }
 
                 dirty.forEach(function (item) {
-                    // Revert PanelState
                     PanelState.resetField(item.rf.sectionCode, item.rf.fieldCode);
-
-                    // Keep local role map in sync
                     self._roleFields[item.property].currentValue = item.savedValue;
-
-                    // Update the picker widget UI
                     self._updateRolePickerUI(item.property, item.savedValue);
-
-                    // Revert live CSS preview
                     CssPreviewManager.setVariable(item.property, item.savedValue, 'font_picker');
-
-                    // Cascade to consumer fields in the accordion
                     self._updateConsumerFields(item.property, item.savedValue);
                 });
 
@@ -283,6 +283,36 @@ define([
                 $(document).trigger('paletteColorChanged');
 
                 log.info('Font role reset: ' + count + ' role(s) reverted to saved values');
+            });
+
+            // ── Restore button (×): restore ALL modified roles to defaults ────
+            // Appears in the section header next to the "Modified (N)" badge.
+            // No confirm dialog — matches the UX of the per-field restore button.
+            this.element.on('click', '.bte-font-palette-restore-btn', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                Object.keys(self._roleFields).forEach(function (prop) {
+                    var rf    = self._roleFields[prop];
+                    var state = PanelState.getFieldState(rf.sectionCode, rf.fieldCode);
+
+                    if (!state || !state.isModified) {
+                        return;
+                    }
+
+                    var defaultValue = state.defaultValue;
+
+                    self._updateRolePickerUI(prop, defaultValue);
+                    CssPreviewManager.setVariable(prop, defaultValue, 'font_picker');
+                    self._roleFields[prop].currentValue = defaultValue;
+                    self._updateConsumerFields(prop, defaultValue);
+                    PanelState.restoreToDefault(rf.sectionCode, rf.fieldCode);
+
+                    log.info('Role restored to default: ' + prop + ' -> ' + defaultValue);
+                });
+
+                self._updateHeaderBadges();
+                $(document).trigger('paletteColorChanged');
             });
 
             // ── Trigger button: open / close dropdown ────────────────────────
@@ -396,17 +426,18 @@ define([
                 log.info('Role font changed: ' + roleProperty + ' \u2192 ' + val);
             });
 
-            // ── Listen for palette changes ────────────────────────────────────
-            // Fired after any field change (color OR font role). Refresh badges
-            // so the count stays in sync when other fields are also changed.
+            // ── Listen for palette/field changes ─────────────────────────────
+            // Refresh header badges when any field in the panel changes so the
+            // count stays in sync.
             this._onPaletteChanged = function () {
                 self._updateHeaderBadges();
             };
             $(document).on('paletteColorChanged', this._onPaletteChanged);
 
-            // ── Clear dirty badges after a successful save ────────────────────
-            // settings-editor.js calls PanelState.markAsSaved() before firing
-            // themeEditorDraftSaved, so isDirty will be false for all fields.
+            // ── After a successful save / discard ─────────────────────────────
+            // settings-editor.js calls PanelState.markAsSaved() (or
+            // markFieldAsSaved) before firing themeEditorDraftSaved, so isDirty
+            // will be false and isModified will be up-to-date for all fields.
             this._onDraftSaved = function () {
                 self._updateHeaderBadges();
                 log.debug('Font palette badges refreshed after save');
@@ -436,8 +467,21 @@ define([
                 }
             }, this);
 
-            // renderPaletteBadges returns '' when both counts are 0
-            this.$badgesContainer.html(BadgeRenderer.renderPaletteBadges(dirty, modified));
+            // renderPaletteBadges returns '' when both counts are 0.
+            // When modified > 0, append a single × restore button right after
+            // the Modified badge so the user can reset all roles to defaults.
+            var html = BadgeRenderer.renderPaletteBadges(dirty, modified);
+
+            if (modified > 0) {
+                html += '<button type="button"' +
+                    ' class="bte-font-palette-restore-btn bte-field-restore-btn"' +
+                    ' title="Restore all font roles to default values"' +
+                    ' aria-label="Remove all font customizations">' +
+                    '\u00d7' +
+                    '</button>';
+            }
+
+            this.$badgesContainer.html(html);
 
             log.debug('Font palette badges: dirty=' + dirty + ' modified=' + modified);
         },
@@ -540,6 +584,7 @@ define([
         _destroy: function () {
             this.element.off('click', '.bte-font-palette-header');
             this.element.off('click', '.bte-palette-reset-btn');
+            this.element.off('click', '.bte-font-palette-restore-btn');
             this.element.off('click', '.bte-font-picker-trigger');
             this.element.off('click', '.bte-font-picker-option');
 
