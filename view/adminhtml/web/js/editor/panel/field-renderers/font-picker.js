@@ -15,13 +15,18 @@ define([
 
         // Default font list — web-safe fonts only, no external loading required
         var fonts = data.params.options || [
-            { value: 'system-ui, -apple-system, sans-serif', label: 'System UI' },
-            { value: 'Arial, sans-serif',                    label: 'Arial' },
-            { value: 'Helvetica, sans-serif',                label: 'Helvetica' },
-            { value: "'Times New Roman', serif",             label: 'Times New Roman' },
-            { value: 'Georgia, serif',                       label: 'Georgia' },
-            { value: 'Verdana, sans-serif',                  label: 'Verdana' },
-            { value: "'Courier New', monospace",             label: 'Courier New' }
+            { value: 'system-ui, -apple-system, sans-serif',     label: 'System UI' },
+            { value: 'Arial, sans-serif',                        label: 'Arial' },
+            { value: 'Helvetica, sans-serif',                    label: 'Helvetica' },
+            { value: 'Tahoma, sans-serif',                       label: 'Tahoma' },
+            { value: "'Trebuchet MS', sans-serif",               label: 'Trebuchet MS' },
+            { value: 'Verdana, sans-serif',                      label: 'Verdana' },
+            { value: "'Times New Roman', serif",                 label: 'Times New Roman' },
+            { value: 'Georgia, serif',                           label: 'Georgia' },
+            { value: "'Palatino Linotype', 'Book Antiqua', serif", label: 'Palatino' },
+            { value: 'Garamond, serif',                          label: 'Garamond' },
+            { value: "'Courier New', monospace",                 label: 'Courier New' },
+            { value: "'Lucida Console', monospace",              label: 'Lucida Console' }
         ];
 
         data.fonts = fonts.map(function(font) {
@@ -32,6 +37,10 @@ define([
                 fontFamily: font.value
             };
         });
+
+        // Label shown in the trigger button
+        var selectedFont = data.fonts.find(function(f) { return f.selected; });
+        data.selectedLabel = selectedFont ? selectedFont.label : (data.value || data.default || '');
 
         // Build a value → URL map for options that require loading an external stylesheet
         data.fontStylesheetMap = {};

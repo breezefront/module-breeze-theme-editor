@@ -182,8 +182,10 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/css-preview-manager-palette-test',
             // Palette Reset Behavior Tests (8 tests) - focus-return click fix
             'Swissup_BreezeThemeEditor/js/test/tests/palette-reset-behavior-test',
-            // Field Renderers Tests (57 tests) - prepareData() coverage + property rename verification
+            // Field Renderers Tests (64 tests) - prepareData() coverage + property rename + selectedLabel + fontStylesheetMap
             'Swissup_BreezeThemeEditor/js/test/tests/field-renderers-test',
+            // Font Picker Dropdown Handler Tests (14 tests) - open/close/select/outside-click/Escape
+            'Swissup_BreezeThemeEditor/js/test/tests/font-picker-test',
             // Palette Manager Tests (11 tests) - isColorModified uses saved DB value, not unsaved
             'Swissup_BreezeThemeEditor/js/test/tests/palette-manager-test',
             // Publication Selector Tests (15 tests) - canPublish logic + Bug 1 + Bug 2 regression

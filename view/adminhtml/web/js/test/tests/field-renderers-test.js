@@ -336,6 +336,78 @@ define([
             this.assertEquals(data.property, '--font-family');
         },
 
+        'FontPickerRenderer: selectedLabel matches label of selected font': function () {
+            var targetFont = 'Arial, sans-serif';
+            var data = FontPickerRenderer.prepareData(
+                field({ value: targetFont }), 'sec'
+            );
+            var selected = data.fonts.filter(function (f) { return f.selected; });
+            this.assertEquals(selected.length, 1, 'exactly one selected font');
+            this.assertEquals(data.selectedLabel, selected[0].label,
+                'selectedLabel should equal the label of the selected font entry');
+        },
+
+        'FontPickerRenderer: selectedLabel falls back to value when no font matches': function () {
+            var unknownFont = 'CustomFont, sans-serif';
+            var data = FontPickerRenderer.prepareData(
+                field({ value: unknownFont }), 'sec'
+            );
+            this.assertEquals(data.selectedLabel, unknownFont,
+                'selectedLabel should fall back to data.value when no option matches');
+        },
+
+        'FontPickerRenderer: selectedLabel is a non-empty string when value is null': function () {
+            var defaultFont = 'Georgia, serif';
+            var data = FontPickerRenderer.prepareData(
+                field({ value: null, default: defaultFont }), 'sec'
+            );
+            this.assertTrue(typeof data.selectedLabel === 'string',
+                'selectedLabel should always be a string');
+            this.assertTrue(data.selectedLabel.length > 0,
+                'selectedLabel should not be empty when default is provided');
+        },
+
+        'FontPickerRenderer: fontStylesheetMap is empty object by default': function () {
+            var data = FontPickerRenderer.prepareData(field(), 'sec');
+            this.assertTrue(
+                typeof data.fontStylesheetMap === 'object' && data.fontStylesheetMap !== null,
+                'fontStylesheetMap should be an object'
+            );
+            this.assertEquals(Object.keys(data.fontStylesheetMap).length, 0,
+                'fontStylesheetMap should be empty when no fontStylesheets in params');
+        },
+
+        'FontPickerRenderer: fontStylesheetMap built from params.fontStylesheets': function () {
+            var stylesheets = [
+                { value: 'Roboto, sans-serif', url: 'https://fonts.googleapis.com/css2?family=Roboto' },
+                { value: 'Lato, sans-serif',   url: 'https://fonts.googleapis.com/css2?family=Lato' }
+            ];
+            var data = FontPickerRenderer.prepareData(
+                field({ params: { fontStylesheets: stylesheets } }), 'sec'
+            );
+            this.assertEquals(
+                data.fontStylesheetMap['Roboto, sans-serif'],
+                'https://fonts.googleapis.com/css2?family=Roboto',
+                'Roboto URL should be in fontStylesheetMap'
+            );
+            this.assertEquals(
+                data.fontStylesheetMap['Lato, sans-serif'],
+                'https://fonts.googleapis.com/css2?family=Lato',
+                'Lato URL should be in fontStylesheetMap'
+            );
+        },
+
+        'FontPickerRenderer: fontStylesheetMap entry without url maps to undefined': function () {
+            var data = FontPickerRenderer.prepareData(
+                field({ params: { fontStylesheets: [{ value: 'Arial, sans-serif' }] } }), 'sec'
+            );
+            this.assertEquals(
+                data.fontStylesheetMap['Arial, sans-serif'],
+                undefined,
+                'Entry without url property should produce undefined value, not crash'
+            );
+        },
+
         // ─────────────────────────────────────────────────────────────────────
         // ColorSchemeRenderer
         // ─────────────────────────────────────────────────────────────────────

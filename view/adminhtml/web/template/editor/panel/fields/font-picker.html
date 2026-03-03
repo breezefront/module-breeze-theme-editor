@@ -16,6 +16,7 @@
     <% } %>
 
     <div class="bte-field-control">
+        <!-- Hidden native select — source of truth; existing simple.js change handler targets this -->
         <select
             id="field-<%= data.sectionCode %>-<%= data.code %>"
             class="bte-font-picker"
@@ -25,19 +26,46 @@
             data-type="font_picker"
             data-default="<%= data.default %>"
             data-font-stylesheets="<%- JSON.stringify(data.fontStylesheetMap || {}) %>"
-            style="font-family: <%- data.value || data.default %>;"
             <%= data.required ? 'required' : '' %>
+            hidden
         >
             <% _.each(data.fonts, function(font) { %>
                 <option
                     value="<%- font.value %>"
                     <%= String(font.value) === String(data.value) ? 'selected' : '' %>
-                    style="font-family: <%- font.fontFamily || font.value %>;"
                 >
                     <%- font.label %>
                 </option>
             <% }); %>
         </select>
+
+        <!-- Custom font picker dropdown -->
+        <div class="bte-font-picker-widget"
+            data-for="field-<%= data.sectionCode %>-<%= data.code %>"
+            data-font-stylesheets="<%- JSON.stringify(data.fontStylesheetMap || {}) %>">
+
+            <!-- Trigger button -->
+            <button type="button" class="bte-font-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
+                <span class="bte-font-picker-trigger-label"
+                    style="font-family: <%- data.value || data.default %>;">
+                    <%- data.selectedLabel %>
+                </span>
+                <span class="bte-font-picker-trigger-arrow"></span>
+            </button>
+
+            <!-- Dropdown panel -->
+            <div class="bte-font-picker-dropdown" role="listbox" hidden>
+                <% _.each(data.fonts, function(font) { %>
+                    <div class="bte-font-picker-option <%= String(font.value) === String(data.value) ? 'is-selected' : '' %>"
+                        role="option"
+                        aria-selected="<%= String(font.value) === String(data.value) ? 'true' : 'false' %>"
+                        data-value="<%- font.value %>"
+                        style="font-family: <%- font.fontFamily || font.value %>;">
+                        <%- font.label %>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
     </div>
 
     <% if (data.helpText) { %>

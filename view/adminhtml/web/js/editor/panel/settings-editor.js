@@ -576,7 +576,12 @@ define([
                     var map = JSON.parse(mapJson);
                     var url = map[$select.val()];
                     if (url) {
+                        // Load into preview iframe
                         CssPreviewManager.loadFont(url);
+                        // Also load into admin document so the trigger button renders the correct font
+                        if (!$('link[href="' + url + '"]', document).length) {
+                            $('<link>', { rel: 'stylesheet', href: url }).appendTo(document.head);
+                        }
                     }
                 } catch (e) {
                     // ignore malformed JSON
