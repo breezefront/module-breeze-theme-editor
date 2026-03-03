@@ -12,6 +12,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers',
     'Swissup_BreezeThemeEditor/js/editor/panel/preset-selector',
     'Swissup_BreezeThemeEditor/js/editor/panel/sections/palette-section-renderer',
+    'Swissup_BreezeThemeEditor/js/editor/panel/sections/font-palette-section-renderer',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
@@ -34,6 +35,7 @@ define([
     FieldHandlers,
     PresetSelector,
     PaletteSection,
+    FontPaletteSection,
     Toastify,
     getConfig,
     getConfigFromPublication,
@@ -125,6 +127,7 @@ define([
             this.$saveButton = this.element.find('.bte-save-button');
             this.$sectionsContainer = this.element.find('.bte-sections-container');
             this.$paletteContainer = this.element.find('.bte-palette-container');
+            this.$fontPaletteContainer = this.element.find('.bte-font-palette-container');
             this.$presetContainer = this.element.find('.bte-preset-container');
             this.$loader = this.element.find('.bte-panel-loader');
             this.$error = this.element.find('.bte-panel-error');
@@ -561,6 +564,9 @@ define([
             
             // Initialize color palettes (always visible, before presets)
             this._initPaletteSection();
+
+            // Initialize font palettes (always visible, after color palettes)
+            this._initFontPaletteSection();
             
             // Initialize preset selector
             this._initPresetSelector();
@@ -1234,6 +1240,41 @@ define([
             });
 
             log.info('Palette section initialized');
+        },
+
+        /**
+         * Initialize font palette section
+         */
+        _initFontPaletteSection: function() {
+            if (!this.$fontPaletteContainer || this.$fontPaletteContainer.length === 0) {
+                log.warn('Font palette container not found');
+                return;
+            }
+
+            // Destroy existing widget instance so re-init works after store switch
+            if (this.$fontPaletteContainer.data('swissup-fontPaletteSection')) {
+                log.debug('Destroying existing fontPaletteSection widget before re-init');
+                this.$fontPaletteContainer.fontPaletteSection('destroy');
+            }
+
+            // Hide if no font palettes in config
+            if (!this.config || !this.config.fontPalettes || this.config.fontPalettes.length === 0) {
+                log.debug('No font palettes in config, hiding font palette section');
+                this.$fontPaletteContainer.hide();
+                return;
+            }
+
+            // Ensure container is visible (may have been hidden by a previous blank-store load)
+            this.$fontPaletteContainer.show();
+
+            log.info('Initializing Font Palette Section with ' + this.config.fontPalettes.length + ' palette(s)');
+
+            this.$fontPaletteContainer.fontPaletteSection({
+                fontPalettes: this.config.fontPalettes,
+                sections:     this.config.sections || []
+            });
+
+            log.info('Font palette section initialized');
         },
 
         /**

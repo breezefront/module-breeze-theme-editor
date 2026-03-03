@@ -158,3 +158,88 @@
     margin: 4px 8px;
     background: rgba(255, 255, 255, 0.1);
 }
+
+// ============================================================================
+// FONT PALETTE SECTION — dedicated role-picker block (outside accordion)
+// Mirrors .bte-palette-section layout from the color palette section
+// ============================================================================
+
+.bte-font-palette-section {
+    border-top: 1px solid @bte-toolbar-dropdown-border;
+}
+
+// Header (accordion toggle)
+.bte-font-palette-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    &.active .bte-font-palette-arrow {
+        transform: rotate(180deg);
+    }
+}
+
+.bte-font-palette-title {
+    font-size: @bte-toolbar-font-size;
+    font-weight: 600;
+    color: @bte-toolbar-text;
+    opacity: 0.9;
+}
+
+.bte-font-palette-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bte-font-palette-arrow {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+// Collapsible content area
+.bte-font-palette-content {
+    padding: 4px 16px 12px;
+}
+
+// Container for all role rows
+.bte-font-palette-roles {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+// Single role row: label on the left, picker on the right
+.bte-font-role-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+// Role label (e.g. "Primary", "Secondary", "Utility")
+.bte-font-role-label {
+    flex-shrink: 0;
+    width: 72px;
+    font-size: 11px;
+    color: @bte-toolbar-text;
+    opacity: 0.65;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// The font picker widget inside a role row fills the remaining width
+.bte-font-role-row .bte-font-picker-widget {
+    flex: 1;
+    min-width: 0;
+}

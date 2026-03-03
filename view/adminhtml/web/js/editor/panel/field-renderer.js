@@ -16,6 +16,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/spacing',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/repeater',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/heading',
+    'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function(
     BaseFieldRenderer,
@@ -35,6 +36,7 @@ define([
     SpacingRenderer,
     RepeaterRenderer,
     HeadingRenderer,
+    FontPaletteManager,
     Logger
 ) {
     'use strict';
@@ -128,6 +130,14 @@ define([
                 // Validate each field
                 if (!field.code) {
                     log.error('Field missing code in section: ' + section.code);
+                }
+
+                // Font palette role fields are rendered by fontPaletteSection widget,
+                // not in the accordion — skip them here.
+                if (field.fontPalette &&
+                    FontPaletteManager.isPaletteRole(field.fontPalette, field.property)) {
+                    log.debug('Skipping palette role field: ' + field.code);
+                    return;
                 }
 
                 html += '<div class="bte-field-wrapper" data-field="' + (field.code || 'unknown') + '">';
