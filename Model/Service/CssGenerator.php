@@ -39,8 +39,9 @@ class CssGenerator
 
         $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config);
         $selectorBlocks = empty($values) ? [] : $this->buildSelectorBlocks($values, $fieldMap);
+        $fontImports = $this->buildFontImports($values, $fieldMap);
 
-        return $this->renderCss($paletteVarsToEmit, $selectorBlocks);
+        return $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports);
     }
 
     /**
@@ -70,8 +71,9 @@ class CssGenerator
 
         $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config);
         $selectorBlocks = empty($values) ? [] : $this->buildSelectorBlocks($values, $fieldMap);
+        $fontImports = $this->buildFontImports($values, $fieldMap);
 
-        return $this->renderCss($paletteVarsToEmit, $selectorBlocks);
+        return $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports);
     }
 
     /**
@@ -163,12 +165,14 @@ class CssGenerator
      *
      * :root is always emitted first (palette vars + root-scoped fields),
      * followed by any additional selector blocks in insertion order.
+     * @import rules for web fonts are prepended before :root when present.
      *
      * @param array $paletteVarsToEmit  cssVar => rawHexValue
      * @param array $selectorBlocks     selector => [lines]
+     * @param array $fontImports        List of stylesheet URLs to @import
      * @return string
      */
-    private function renderCss(array $paletteVarsToEmit, array $selectorBlocks): string
+    private function renderCss(array $paletteVarsToEmit, array $selectorBlocks, array $fontImports = []): string
     {
         $rootLines = [];
 
@@ -183,7 +187,16 @@ class CssGenerator
             $rootLines[] = $line;
         }
 
-        $css = ":root {\n" . implode('', $rootLines) . "}\n";
+        $css = '';
+
+        foreach ($fontImports as $url) {
+            $css .= "@import url('" . addslashes($url) . "');\n";
+        }
+        if (!empty($fontImports)) {
+            $css .= "\n";
+        }
+
+        $css .= ":root {\n" . implode('', $rootLines) . "}\n";
 
         foreach ($selectorBlocks as $selector => $lines) {
             if ($selector === ':root') {
@@ -381,8 +394,13 @@ class CssGenerator
      */
     private function formatFont(string $font): string
     {
-        // Already has quotes - assume it's properly formatted
+        // Already quoted — assume properly formatted
         if (str_starts_with($font, '"') || str_starts_with($font, "'")) {
+            return $font;
+        }
+
+        // Already a full CSS font stack (contains a comma, e.g. "Arial, sans-serif") — pass through as-is
+        if (str_contains($font, ',')) {
             return $font;
         }
 
@@ -493,6 +511,53 @@ class CssGenerator
         }
 
         return '';
+    }
+
+    /**
+     * Collect unique stylesheet URLs for all font_picker values that require
+     * loading an external font (i.e. the matching option has a 'url' key).
+     *
+     * Only URLs for values that differ from the field's default are included —
+     * consistent with how buildSelectorBlocks() skips default values.
+     *
+     * @param array $values   Rows from the DB (each has section_code / setting_code / value)
+     * @param array $fieldMap 'section.setting' => field config (built by buildFieldMap())
+     * @return string[]  Unique stylesheet URLs, in order of first appearance
+     */
+    private function buildFontImports(array $values, array $fieldMap): array
+    {
+        $urls = [];
+
+        foreach ($values as $value) {
+            $sectionCode = $value['section_code'] ?? '';
+            $settingCode = $value['setting_code'] ?? '';
+            $rawValue    = $value['value'] ?? null;
+
+            if ($rawValue === null || $rawValue === '' || $sectionCode === '_palette') {
+                continue;
+            }
+
+            $key   = $sectionCode . '.' . $settingCode;
+            $field = $fieldMap[$key] ?? null;
+            if (!$field || strtolower($field['type'] ?? '') !== 'font_picker') {
+                continue;
+            }
+
+            // Skip if value equals the field default (same logic as buildSelectorBlocks)
+            $default = $field['default'] ?? null;
+            if ($default !== null && $this->valuesAreEqual($rawValue, $default)) {
+                continue;
+            }
+
+            foreach ($field['options'] ?? [] as $option) {
+                if (!empty($option['url']) && ($option['value'] ?? '') === $rawValue) {
+                    $urls[] = $option['url'];
+                    break;
+                }
+            }
+        }
+
+        return array_values(array_unique($urls));
     }
 
     /**

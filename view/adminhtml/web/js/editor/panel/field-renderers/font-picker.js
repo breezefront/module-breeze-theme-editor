@@ -13,20 +13,15 @@ define([
     FontPickerRenderer.prepareData = function(field, sectionCode) {
         var data = BaseFieldRenderer.prepareData.call(this, field, sectionCode);
 
-        // Default font list
+        // Default font list — web-safe fonts only, no external loading required
         var fonts = data.params.options || [
             { value: 'system-ui, -apple-system, sans-serif', label: 'System UI' },
-            { value: 'Arial, sans-serif', label:  'Arial' },
-            { value: 'Helvetica, sans-serif', label: 'Helvetica' },
-            { value: '"Times New Roman", serif', label: 'Times New Roman' },
-            { value: 'Georgia, serif', label: 'Georgia' },
-            { value: 'Verdana, sans-serif', label: 'Verdana' },
-            { value: '"Courier New", monospace', label: 'Courier New' },
-            { value: '"Open Sans", sans-serif', label:  'Open Sans' },
-            { value: 'Roboto, sans-serif', label:  'Roboto' },
-            { value: 'Lato, sans-serif', label:  'Lato' },
-            { value: 'Montserrat, sans-serif', label: 'Montserrat' },
-            { value: 'Poppins, sans-serif', label: 'Poppins' }
+            { value: 'Arial, sans-serif',                    label: 'Arial' },
+            { value: 'Helvetica, sans-serif',                label: 'Helvetica' },
+            { value: "'Times New Roman', serif",             label: 'Times New Roman' },
+            { value: 'Georgia, serif',                       label: 'Georgia' },
+            { value: 'Verdana, sans-serif',                  label: 'Verdana' },
+            { value: "'Courier New', monospace",             label: 'Courier New' }
         ];
 
         data.fonts = fonts.map(function(font) {
@@ -36,6 +31,12 @@ define([
                 selected: font.value === data.value,
                 fontFamily: font.value
             };
+        });
+
+        // Build a value → URL map for options that require loading an external stylesheet
+        data.fontStylesheetMap = {};
+        (data.params.fontStylesheets || []).forEach(function(s) {
+            data.fontStylesheetMap[s.value] = s.url;
         });
 
         return data;

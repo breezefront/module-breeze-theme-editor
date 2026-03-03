@@ -552,6 +552,36 @@ define([
             
             // Initialize preset selector
             this._initPresetSelector();
+
+            // Preload Google Font stylesheets for any font_picker that already has
+            // a non-default value referencing an external URL
+            this._preloadFontStylesheets();
+        },
+
+        /**
+         * Preload external font stylesheets for font_picker fields whose current
+         * value requires an external stylesheet (e.g. Google Fonts).
+         *
+         * Called once after sections are rendered so that the preview iframe
+         * already shows the correct font even before the user interacts.
+         */
+        _preloadFontStylesheets: function() {
+            this.$sectionsContainer.find('.bte-font-picker').each(function() {
+                var $select = $(this);
+                var mapJson = $select.attr('data-font-stylesheets');
+                if (!mapJson) {
+                    return;
+                }
+                try {
+                    var map = JSON.parse(mapJson);
+                    var url = map[$select.val()];
+                    if (url) {
+                        CssPreviewManager.loadFont(url);
+                    }
+                } catch (e) {
+                    // ignore malformed JSON
+                }
+            });
         },
 
         /**

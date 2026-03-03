@@ -24,15 +24,16 @@
             data-property="<%= data.property %>"
             data-type="font_picker"
             data-default="<%= data.default %>"
+            data-font-stylesheets="<%- JSON.stringify(data.fontStylesheetMap || {}) %>"
             <%= data.required ? 'required' : '' %>
         >
             <% _.each(data.fonts, function(font) { %>
                 <option
-                    value="<%= font.value %>"
+                    value="<%- font.value %>"
                     <%= String(font.value) === String(data.value) ? 'selected' : '' %>
-                    style="font-family: <%= font.fontFamily || font.value %>;"
+                    style="font-family: <%- font.fontFamily || font.value %>;"
                 >
-                    <%= font.label %>
+                    <%- font.label %>
                 </option>
             <% }); %>
         </select>

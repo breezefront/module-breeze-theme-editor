@@ -246,6 +246,12 @@ type BreezeThemeEditorFieldParams {
     allowedExtensions: [String!]
     maxFileSize: Int @doc(description: "In KB")
     sides: [String!]
+    fontStylesheets: [BreezeThemeEditorFontStylesheet] @doc(description: "External stylesheet URLs for font options that require loading")
+}
+
+type BreezeThemeEditorFontStylesheet {
+    value: String! @doc(description: "Font CSS value that triggers this stylesheet, e.g. \"'Roboto', sans-serif\"")
+    url: String! @doc(description: "Stylesheet URL to load, e.g. a Google Fonts URL")
 }
 
 type BreezeThemeEditorFieldOption {

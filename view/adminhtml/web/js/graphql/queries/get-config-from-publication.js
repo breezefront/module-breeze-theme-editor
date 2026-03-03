@@ -54,6 +54,10 @@ define([
                             language
                             fallback
                             fontWeights
+                            fontStylesheets {
+                                value
+                                url
+                            }
                             platforms
                             maxItems
                             allowedExtensions

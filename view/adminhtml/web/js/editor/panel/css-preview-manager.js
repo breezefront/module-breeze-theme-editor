@@ -272,6 +272,29 @@ define([
         },
 
         /**
+         * Inject an external stylesheet into the preview iframe (idempotent).
+         * Used by font picker to load Google Fonts / custom web fonts in the preview.
+         *
+         * @param {String} url - Stylesheet URL (e.g. a Google Fonts URL)
+         */
+        loadFont: function(url) {
+            if (!url || !iframeDocument) {
+                return;
+            }
+            // Derive a stable id from the URL so we never inject the same sheet twice
+            var linkId = 'bte-font-' + url.replace(/[^a-zA-Z0-9]/g, '-');
+            if (iframeDocument.getElementById(linkId)) {
+                return;
+            }
+            var link = iframeDocument.createElement('link');
+            link.id    = linkId;
+            link.rel   = 'stylesheet';
+            link.href  = url;
+            iframeDocument.head.appendChild(link);
+            log.debug('Font stylesheet injected into preview: ' + url);
+        },
+
+        /**
          * Remove CSS variable from changes
          * Used when field is reset to palette reference - allows cascade via var()
          * 
@@ -415,7 +438,8 @@ define([
                 return font;
             }
             font = String(font);
-            if (font.startsWith('"') || font.startsWith("'")) {
+            // Already quoted or already a full CSS font stack (contains comma) — pass through as-is
+            if (font.startsWith('"') || font.startsWith("'") || font.includes(',')) {
                 return font;
             }
             return '"' + font + '", sans-serif';

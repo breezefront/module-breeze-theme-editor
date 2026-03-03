@@ -2,8 +2,9 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/base',
+    'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, BaseHandler, Logger) {
+], function ($, BaseHandler, CssPreviewManager, Logger) {
     'use strict';
 
     var log = Logger.for('panel/field-handlers/simple');
@@ -42,9 +43,15 @@ define([
                 BaseHandler.handleChange($(e.currentTarget), callback);
             });
 
-            // Font picker
+            // Font picker — load external stylesheet if the selected font requires one
             $element.on('change', '.bte-font-picker', function(e) {
-                BaseHandler.handleChange($(e.currentTarget), callback);
+                var $select = $(e.currentTarget);
+                var map = JSON.parse($select.attr('data-font-stylesheets') || '{}');
+                var url = map[$select.val()];
+                if (url) {
+                    CssPreviewManager.loadFont(url);
+                }
+                BaseHandler.handleChange($select, callback);
             });
 
             // Toggle (checkbox)

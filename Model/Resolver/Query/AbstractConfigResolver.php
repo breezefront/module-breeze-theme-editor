@@ -173,6 +173,16 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
         }
         if (isset($setting['options'])) {
             $params['options'] = $this->formatOptions($setting['options']);
+
+            $stylesheets = [];
+            foreach ($setting['options'] as $option) {
+                if (!empty($option['url'])) {
+                    $stylesheets[] = ['value' => $option['value'], 'url' => $option['url']];
+                }
+            }
+            if (!empty($stylesheets)) {
+                $params['fontStylesheets'] = $stylesheets;
+            }
         }
         if (isset($setting['language'])) {
             $params['language'] = $setting['language'];
