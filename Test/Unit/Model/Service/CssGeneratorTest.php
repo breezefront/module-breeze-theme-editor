@@ -1332,5 +1332,437 @@ class CssGeneratorTest extends TestCase
             'Fully opaque HEX8 with format=rgb should emit rgba() with alpha=1'
         );
     }
+
+    // -------------------------------------------------------------------------
+    // Tests 27–34: font_picker / buildFontImports / renderCss
+    // -------------------------------------------------------------------------
+
+    /**
+     * Helper: build a minimal config array with one font_picker field
+     * that has the given options list.
+     */
+    private function makeFontPickerConfig(array $options, string $default = 'Arial'): array
+    {
+        return [
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'      => 'base_font',
+                            'css_var' => '--base-font-family',
+                            'type'    => 'font_picker',
+                            'default' => $default,
+                            'options' => $options,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Test 27: Google Font value → @import is prepended before :root
+     */
+    public function testGoogleFontValueProducesImportBeforeRoot(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value' => 'Roboto',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn(
+            $this->makeFontPickerConfig([
+                ['value' => 'Arial', 'label' => 'Arial'],
+                ['value' => 'Roboto', 'label' => 'Roboto', 'url' => 'https://fonts.googleapis.com/css2?family=Roboto'],
+            ])
+        );
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            "@import url('https://fonts.googleapis.com/css2?family=Roboto');",
+            $css,
+            'A Google Font value should generate an @import rule'
+        );
+
+        $importPos = strpos($css, '@import');
+        $rootPos   = strpos($css, ':root');
+        $this->assertNotFalse($importPos, '@import must be present');
+        $this->assertNotFalse($rootPos,   ':root block must be present');
+        $this->assertLessThan($rootPos, $importPos, '@import must come before :root');
+    }
+
+    /**
+     * Test 28: Web-safe font (no url on option) → no @import produced
+     */
+    public function testWebSafeFontProducesNoImport(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value' => 'Georgia',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn(
+            $this->makeFontPickerConfig([
+                ['value' => 'Arial',   'label' => 'Arial'],
+                ['value' => 'Georgia', 'label' => 'Georgia'],  // no url
+            ])
+        );
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringNotContainsString('@import', $css, 'Web-safe font should produce no @import');
+    }
+
+    /**
+     * Test 29: Default font value → no @import (skipped like buildSelectorBlocks)
+     */
+    public function testDefaultFontValueProducesNoImport(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        // Value equals the field default
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value' => 'Roboto',  // same as default below
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn(
+            $this->makeFontPickerConfig(
+                [
+                    ['value' => 'Roboto', 'label' => 'Roboto', 'url' => 'https://fonts.googleapis.com/css2?family=Roboto'],
+                ],
+                'Roboto'  // default = 'Roboto'
+            )
+        );
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringNotContainsString(
+            '@import',
+            $css,
+            'Default font value should not produce an @import (same skip logic as buildSelectorBlocks)'
+        );
+    }
+
+    /**
+     * Test 30: Two different Google Fonts → two distinct @import lines
+     */
+    public function testTwoGoogleFontsProduceTwoImports(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value' => 'Roboto',
+            ],
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'heading_font',
+                'value' => 'Open Sans',
+            ],
+        ]);
+
+        $options = [
+            ['value' => 'Arial',     'label' => 'Arial'],
+            ['value' => 'Roboto',    'label' => 'Roboto',    'url' => 'https://fonts.googleapis.com/css2?family=Roboto'],
+            ['value' => 'Open Sans', 'label' => 'Open Sans', 'url' => 'https://fonts.googleapis.com/css2?family=Open+Sans'],
+        ];
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'      => 'base_font',
+                            'css_var' => '--base-font-family',
+                            'type'    => 'font_picker',
+                            'default' => 'Arial',
+                            'options' => $options,
+                        ],
+                        [
+                            'id'      => 'heading_font',
+                            'css_var' => '--heading-font-family',
+                            'type'    => 'font_picker',
+                            'default' => 'Arial',
+                            'options' => $options,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            "@import url('https://fonts.googleapis.com/css2?family=Roboto');",
+            $css
+        );
+        $this->assertStringContainsString(
+            "@import url('https://fonts.googleapis.com/css2?family=Open+Sans');",
+            $css
+        );
+    }
+
+    /**
+     * Test 31: Duplicate URLs (two fields sharing the same Google Font) → deduplicated to one @import
+     */
+    public function testDuplicateFontUrlsAreDeduplicatedToOneImport(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $sharedUrl = 'https://fonts.googleapis.com/css2?family=Roboto';
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value' => 'Roboto',
+            ],
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'heading_font',
+                'value' => 'Roboto',
+            ],
+        ]);
+
+        $options = [
+            ['value' => 'Arial',  'label' => 'Arial'],
+            ['value' => 'Roboto', 'label' => 'Roboto', 'url' => $sharedUrl],
+        ];
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'      => 'base_font',
+                            'css_var' => '--base-font-family',
+                            'type'    => 'font_picker',
+                            'default' => 'Arial',
+                            'options' => $options,
+                        ],
+                        [
+                            'id'      => 'heading_font',
+                            'css_var' => '--heading-font-family',
+                            'type'    => 'font_picker',
+                            'default' => 'Arial',
+                            'options' => $options,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $importCount = substr_count($css, "@import url('$sharedUrl')");
+        $this->assertEquals(1, $importCount, 'Duplicate font URL should produce exactly one @import');
+    }
+
+    /**
+     * Test 32: generateFromValuesMap code path — Google Font → @import
+     */
+    public function testGenerateFromValuesMapGoogleFontProducesImport(): void
+    {
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn(
+            $this->makeFontPickerConfig([
+                ['value' => 'Arial',  'label' => 'Arial'],
+                ['value' => 'Roboto', 'label' => 'Roboto', 'url' => 'https://fonts.googleapis.com/css2?family=Roboto'],
+            ])
+        );
+
+        $css = $this->cssGenerator->generateFromValuesMap(1, [
+            'typography.base_font' => 'Roboto',
+        ]);
+
+        $this->assertStringContainsString(
+            "@import url('https://fonts.googleapis.com/css2?family=Roboto');",
+            $css,
+            'generateFromValuesMap: Google Font value must produce an @import rule'
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Tests 33–36: formatFont() — font stack formatting
+    // -------------------------------------------------------------------------
+
+    /**
+     * Test 33: Font stack that already contains a comma passes through unchanged
+     */
+    public function testFontStackWithCommaPassesThroughUnchanged(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value' => 'Roboto, sans-serif',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'      => 'base_font',
+                            'css_var' => '--base-font-family',
+                            'type'    => 'font_picker',
+                            'default' => 'Arial',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--base-font-family: Roboto, sans-serif;',
+            $css,
+            'A font stack already containing a comma must not be double-wrapped'
+        );
+    }
+
+    /**
+     * Test 34: Single sans-serif font name gets wrapped with "FontName", sans-serif
+     */
+    public function testSingleSansSerifFontGetsWrappedWithFallback(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value' => 'Lato',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'      => 'base_font',
+                            'css_var' => '--base-font-family',
+                            'type'    => 'font_picker',
+                            'default' => 'Arial',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--base-font-family: "Lato", sans-serif;',
+            $css,
+            'Single sans-serif font should be wrapped: "FontName", sans-serif'
+        );
+    }
+
+    /**
+     * Test 35: Serif font name gets wrapped with serif fallback
+     */
+    public function testSerifFontGetsSerifFallback(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value' => 'Georgia',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'      => 'base_font',
+                            'css_var' => '--base-font-family',
+                            'type'    => 'font_picker',
+                            'default' => 'Arial',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--base-font-family: "Georgia", serif;',
+            $css,
+            'Serif font should be wrapped: "FontName", serif'
+        );
+    }
+
+    /**
+     * Test 36: Monospace font name gets wrapped with monospace fallback
+     */
+    public function testMonospaceFontGetsMonospaceFallback(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value' => 'Courier New',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'      => 'base_font',
+                            'css_var' => '--base-font-family',
+                            'type'    => 'font_picker',
+                            'default' => 'Arial',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--base-font-family: "Courier New", monospace;',
+            $css,
+            'Monospace font should be wrapped: "FontName", monospace'
+        );
+    }
 }
 
