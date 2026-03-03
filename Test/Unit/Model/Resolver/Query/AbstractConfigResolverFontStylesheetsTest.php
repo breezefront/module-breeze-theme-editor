@@ -9,6 +9,7 @@ use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
+use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
@@ -41,6 +42,7 @@ class AbstractConfigResolverFontStylesheetsTest extends TestCase
     private SerializerInterface $serializerMock;
     private ConfigProvider $configProviderMock;
     private PaletteProvider $paletteProviderMock;
+    private FontPaletteProvider $fontPaletteProviderMock;
     private ValueInheritanceResolver $valueInheritanceResolverMock;
     private StatusProvider $statusProviderMock;
     private CompareProvider $compareProviderMock;
@@ -62,6 +64,7 @@ class AbstractConfigResolverFontStylesheetsTest extends TestCase
         $this->serializerMock                 = $this->createMock(SerializerInterface::class);
         $this->configProviderMock             = $this->createMock(ConfigProvider::class);
         $this->paletteProviderMock            = $this->createMock(PaletteProvider::class);
+        $this->fontPaletteProviderMock        = $this->createMock(FontPaletteProvider::class);
         $this->valueInheritanceResolverMock   = $this->createMock(ValueInheritanceResolver::class);
         $this->statusProviderMock             = $this->createMock(StatusProvider::class);
         $this->compareProviderMock            = $this->createMock(CompareProvider::class);
@@ -87,6 +90,7 @@ class AbstractConfigResolverFontStylesheetsTest extends TestCase
             $this->serializerMock,
             $this->configProviderMock,
             $this->paletteProviderMock,
+            $this->fontPaletteProviderMock,
             $this->colorFormatResolver,
             $this->colorFormatter,
             $this->valueInheritanceResolverMock,

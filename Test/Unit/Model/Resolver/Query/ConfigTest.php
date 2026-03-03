@@ -10,6 +10,7 @@ use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
+use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
@@ -32,6 +33,7 @@ class ConfigTest extends TestCase
     private SerializerInterface $serializerMock;
     private ConfigProvider $configProviderMock;
     private PaletteProvider $paletteProviderMock;
+    private FontPaletteProvider $fontPaletteProviderMock;
     private ColorFormatResolver $colorFormatResolverMock;
     private ColorFormatter $colorFormatterMock;
     private ValueInheritanceResolver $valueInheritanceResolverMock;
@@ -50,6 +52,7 @@ class ConfigTest extends TestCase
         $this->serializerMock = $this->createMock(SerializerInterface::class);
         $this->configProviderMock = $this->createMock(ConfigProvider::class);
         $this->paletteProviderMock = $this->createMock(PaletteProvider::class);
+        $this->fontPaletteProviderMock = $this->createMock(FontPaletteProvider::class);
         $this->colorFormatResolverMock = $this->createMock(ColorFormatResolver::class);
         $this->colorFormatterMock = $this->createMock(ColorFormatter::class);
         $this->valueInheritanceResolverMock = $this->createMock(ValueInheritanceResolver::class);
@@ -82,6 +85,7 @@ class ConfigTest extends TestCase
             $this->serializerMock,
             $this->configProviderMock,
             $this->paletteProviderMock,
+            $this->fontPaletteProviderMock,
             $this->colorFormatResolverMock,
             $this->colorFormatterMock,
             $this->valueInheritanceResolverMock,
@@ -433,6 +437,7 @@ class ConfigTest extends TestCase
             $this->serializerMock,
             $this->configProviderMock,
             $this->paletteProviderMock,
+            $this->fontPaletteProviderMock,
             $this->colorFormatResolverMock,
             $realColorFormatter, // REAL formatter instead of mock
             $this->valueInheritanceResolverMock,
