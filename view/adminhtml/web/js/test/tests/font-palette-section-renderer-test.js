@@ -19,10 +19,8 @@ define([
     'Swissup_BreezeThemeEditor/js/test/test-framework',
     'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
-    'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
-    'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
-    'Swissup_BreezeThemeEditor/js/editor/panel/sections/font-palette-section-renderer'
-], function ($, TestFramework, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager'
+], function ($, TestFramework, FontPaletteManager, PanelState, CssPreviewManager) {
     'use strict';
 
     // =========================================================================
@@ -129,7 +127,199 @@ define([
     // =========================================================================
 
     /**
-     * Temporarily patch CssPreviewManager and BadgeRenderer for the duration
+     * Inline reproduction of _buildSectionHtml + _buildRoleRowHtml.
+     * Kept in sync with font-palette-section-renderer.js.
+     *
+     * @param {Array}  palettes   - fontPalettes array (already init'd in FontPaletteManager)
+     * @param {Object} roleFields - map from buildRoleMap()
+     * @return {String}
+     */
+    function buildSectionHtml(palettes, roleFields) {
+        var html = '<div class="bte-font-palette-section">';
+        html += '<div class="bte-font-palette-header">';
+        html += '<span class="bte-font-palette-title">Font Palettes</span>';
+        html += '<div class="bte-font-palette-header-actions">';
+        html += '<div class="bte-font-palette-badges"></div>';
+        html += '<i class="bte-icon-chevron-down bte-font-palette-arrow"></i>';
+        html += '</div>';
+        html += '</div>';
+
+        html += '<div class="bte-font-palette-content">';
+        html += '<div class="bte-font-palette-roles">';
+
+        (palettes || []).forEach(function (palette) {
+            var stylesheetMap = FontPaletteManager.getStylesheetMap(palette.id);
+
+            (palette.fonts || []).forEach(function (role) {
+                var roleField    = roleFields[role.property] || {};
+                var currentValue = roleField.currentValue || role['default'];
+
+                var selectedLabel  = currentValue;
+                var selectedFamily = currentValue;
+                (palette.options || []).forEach(function (opt) {
+                    if (opt.value === currentValue) {
+                        selectedLabel  = opt.label;
+                        selectedFamily = opt.value;
+                    }
+                });
+
+                html += '<div class="bte-font-role-row">';
+                html += '<label class="bte-font-role-label">' +
+                    escapeHtml(role.label) + '</label>';
+
+                html += '<div class="bte-font-picker-widget"' +
+                    ' data-role-property="' + escapeAttr(role.property) + '"' +
+                    ' data-section="' + escapeAttr(roleField.sectionCode || '') + '"' +
+                    ' data-field="' + escapeAttr(roleField.fieldCode || '') + '"' +
+                    ' data-font-stylesheets="' +
+                        escapeAttr(JSON.stringify(stylesheetMap)) + '">';
+
+                html += '<button type="button" class="bte-font-picker-trigger"' +
+                    ' aria-haspopup="listbox" aria-expanded="false">';
+                html += '<span class="bte-font-picker-trigger-label"' +
+                    ' style="font-family: ' + escapeAttr(selectedFamily) + ';">' +
+                    escapeHtml(selectedLabel) + '</span>';
+                html += '<span class="bte-font-picker-trigger-arrow"></span>';
+                html += '</button>';
+
+                html += '<div class="bte-font-picker-dropdown" role="listbox" hidden>';
+                (palette.options || []).forEach(function (opt) {
+                    var isSel = opt.value === currentValue;
+                    html += '<div class="bte-font-picker-option' +
+                        (isSel ? ' is-selected' : '') + '"' +
+                        ' role="option"' +
+                        ' aria-selected="' + (isSel ? 'true' : 'false') + '"' +
+                        ' data-value="' + escapeAttr(opt.value) + '"' +
+                        ' style="font-family: ' + escapeAttr(opt.value) + ';">' +
+                        escapeHtml(opt.label) +
+                        '</div>';
+                });
+                html += '</div>'; // .bte-font-picker-dropdown
+                html += '</div>'; // .bte-font-picker-widget
+                html += '</div>'; // .bte-font-role-row
+            });
+        });
+
+        html += '</div>'; // .bte-font-palette-roles
+        html += '</div>'; // .bte-font-palette-content
+        html += '</div>'; // .bte-font-palette-section
+
+        return html;
+    }
+
+    /**
+     * Inline reproduction of _bind() event handlers.
+     * Attaches accordion, trigger-open/close and option-click handlers
+     * directly on the container element — no $.widget needed.
+     *
+     * @param {jQuery} $c - container element
+     */
+    function bindHandlers($c) {
+        var $header  = $c.find('.bte-font-palette-header');
+        var $content = $c.find('.bte-font-palette-content');
+
+        // ── Accordion toggle ──────────────────────────────────────────────────
+        $c.on('click', '.bte-font-palette-header', function (e) {
+            if ($(e.target).closest('.bte-palette-reset-btn').length) {
+                return;
+            }
+            e.stopPropagation();
+
+            var isOpen = $header.hasClass('active');
+            if (isOpen) {
+                $header.removeClass('active');
+                $content.removeClass('active').hide();
+            } else {
+                $header.addClass('active');
+                $content.addClass('active').show();
+            }
+        });
+
+        // ── Trigger button: open / close dropdown ─────────────────────────────
+        $c.on('click', '.bte-font-picker-trigger', function (e) {
+            e.stopPropagation();
+
+            var $trigger  = $(this);
+            var $widget   = $trigger.closest('.bte-font-picker-widget');
+            var $dropdown = $widget.find('.bte-font-picker-dropdown');
+            var isOpen    = !$dropdown.prop('hidden');
+
+            // Close any other open dropdowns first
+            $c.find('.bte-font-picker-dropdown:not([hidden])').each(function () {
+                if (this !== $dropdown[0]) {
+                    $(this).prop('hidden', true);
+                    $(this).closest('.bte-font-picker-widget')
+                        .find('.bte-font-picker-trigger')
+                        .attr('aria-expanded', 'false');
+                }
+            });
+
+            if (isOpen) {
+                $dropdown.prop('hidden', true);
+                $trigger.attr('aria-expanded', 'false');
+                return;
+            }
+
+            // Load font stylesheets into document.head
+            var map = JSON.parse($widget.attr('data-font-stylesheets') || '{}');
+            $.each(map, function (val, url) {
+                if (url && !$('link[href="' + url + '"]', document).length) {
+                    $('<link>', { rel: 'stylesheet', href: url }).appendTo(document.head);
+                }
+            });
+
+            $dropdown.prop('hidden', false);
+            $trigger.attr('aria-expanded', 'true');
+        });
+
+        // ── Option click: select a font for this role ─────────────────────────
+        $c.on('click', '.bte-font-picker-option', function (e) {
+            e.stopPropagation();
+
+            var $option      = $(this);
+            var $widget      = $option.closest('.bte-font-picker-widget');
+            var $dropdown    = $widget.find('.bte-font-picker-dropdown');
+            var $trigger     = $widget.find('.bte-font-picker-trigger');
+            var val          = String($option.data('value'));
+            var label        = $option.text().trim();
+            var roleProperty = String($widget.data('role-property'));
+            var sectionCode  = String($widget.data('section'));
+            var fieldCode    = String($widget.data('field'));
+
+            // Update selection state
+            $dropdown.find('.bte-font-picker-option')
+                .removeClass('is-selected')
+                .attr('aria-selected', 'false');
+            $option.addClass('is-selected').attr('aria-selected', 'true');
+
+            // Update trigger button label and font preview
+            $trigger.find('.bte-font-picker-trigger-label')
+                .text(label)
+                .css('font-family', val);
+
+            // Close dropdown
+            $dropdown.prop('hidden', true);
+            $trigger.attr('aria-expanded', 'false');
+
+            // Load external font stylesheet if needed
+            var map = JSON.parse($widget.attr('data-font-stylesheets') || '{}');
+            var url = map[val];
+            if (url) {
+                CssPreviewManager.loadFont(url);
+            }
+
+            // Persist value
+            if (sectionCode && fieldCode) {
+                PanelState.setValue(sectionCode, fieldCode, val);
+            }
+
+            // Reflect change in CSS preview
+            CssPreviewManager.setVariable(roleProperty, val, 'font_picker');
+        });
+    }
+
+    /**
+     * Temporarily patch CssPreviewManager and PanelState for the duration
      * of fn(), then restore originals.  Returns the call-tracking stubs.
      */
     function withPatchedDeps(fn) {
@@ -137,7 +327,7 @@ define([
 
         var origSetVariable = CssPreviewManager.setVariable;
         var origLoadFont    = CssPreviewManager.loadFont;
-        var origRPB         = BadgeRenderer.renderPaletteBadges;
+        var origSetValue    = PanelState.setValue;
 
         CssPreviewManager.setVariable = function (prop, val) {
             calls.setVariable.push({ prop: prop, val: val });
@@ -145,19 +335,20 @@ define([
         CssPreviewManager.loadFont = function (url) {
             calls.loadFont.push(url);
         };
-        BadgeRenderer.renderPaletteBadges = function () { return ''; };
+        PanelState.setValue = function () {};
 
         try {
             fn(calls);
         } finally {
-            CssPreviewManager.setVariable       = origSetVariable;
-            CssPreviewManager.loadFont          = origLoadFont;
-            BadgeRenderer.renderPaletteBadges   = origRPB;
+            CssPreviewManager.setVariable = origSetVariable;
+            CssPreviewManager.loadFont    = origLoadFont;
+            PanelState.setValue           = origSetValue;
         }
     }
 
     /**
-     * Create a widget fixture.  Must be called inside withPatchedDeps().
+     * Build a DOM fixture using the inline HTML builder and event binders.
+     * FontPaletteManager is initialised with the given palettes.
      */
     function buildFixture(paletteOverrides, sectionOverrides) {
         var palettes = paletteOverrides || TEST_PALETTES;
@@ -166,19 +357,28 @@ define([
         FontPaletteManager.init(palettes);
 
         var $container = $('<div class="bte-font-palette-container">').appendTo(document.body);
-        $container.swissupFontPaletteSection({
-            fontPalettes: palettes,
-            sections:     sections
-        });
+
+        if (!palettes || !palettes.length) {
+            $container.hide();
+            return $container;
+        }
+
+        var roleFields = buildRoleMap(sections);
+        $container.html(buildSectionHtml(palettes, roleFields));
+
+        var $header  = $container.find('.bte-font-palette-header');
+        var $content = $container.find('.bte-font-palette-content');
+        $header.addClass('active');
+        $content.addClass('active').show();
+
+        bindHandlers($container);
 
         return $container;
     }
 
-    /** Destroy the widget and remove DOM. */
+    /** Remove DOM fixture and reset FontPaletteManager. */
     function tearDown($container) {
-        try {
-            $container.swissupFontPaletteSection('destroy');
-        } catch (e) { /* ignore */ }
+        $container.off();
         $container.remove();
         FontPaletteManager.init([]);
     }
@@ -354,21 +554,14 @@ define([
         'render: hides container when fontPalettes is empty': function () {
             var self = this;
             withPatchedDeps(function () {
-                FontPaletteManager.init([]);
-                var $container = $('<div>').appendTo(document.body);
-                $container.swissupFontPaletteSection({
-                    fontPalettes: [],
-                    sections:     []
-                });
+                var $c = buildFixture([], []);
 
                 self.assertTrue(
-                    $container.css('display') === 'none' || !$container.is(':visible'),
+                    $c.css('display') === 'none' || !$c.is(':visible'),
                     'Container must be hidden when no font palettes are configured'
                 );
 
-                try { $container.swissupFontPaletteSection('destroy'); } catch (e) {}
-                $container.remove();
-                FontPaletteManager.init([]);
+                tearDown($c);
             });
         },
 

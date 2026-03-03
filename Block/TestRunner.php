@@ -188,7 +188,7 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/font-picker-test',
             // Font Palette Manager Tests (25 tests) - all public API incl. setCurrentValue/getCurrentValue
             'Swissup_BreezeThemeEditor/js/test/tests/font-palette-manager-test',
-            // Font Palette Section Renderer Tests (25 tests) - pure-logic + DOM widget integration
+            // Font Palette Section Renderer Tests (33 tests) - pure-logic + DOM inline integration
             'Swissup_BreezeThemeEditor/js/test/tests/font-palette-section-renderer-test',
             // Palette Manager Tests (11 tests) - isColorModified uses saved DB value, not unsaved
             'Swissup_BreezeThemeEditor/js/test/tests/palette-manager-test',

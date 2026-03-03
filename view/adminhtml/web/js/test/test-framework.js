@@ -53,6 +53,19 @@ define([
             },
             
             /**
+             * Assert equality (expected, actual) — mirrors PHPUnit convention
+             */
+            assertEqual: function(expected, actual, message) {
+                if (expected !== actual) {
+                    throw new Error(
+                        (message || 'Values not equal') +
+                        '\n  Expected: ' + JSON.stringify(expected) +
+                        '\n  Actual:   ' + JSON.stringify(actual)
+                    );
+                }
+            },
+
+            /**
              * Assert not null/undefined
              */
             assertNotNull: function(value, message) {
