@@ -4,8 +4,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, ColorUtils, IframeHelper, CssManager, StorageHelper, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager'
+], function ($, ColorUtils, IframeHelper, CssManager, StorageHelper, Logger, FontPaletteManager) {
     'use strict';
 
     var log = Logger.for('panel/css-preview-manager');
@@ -266,6 +267,19 @@ define([
                 }
             }
 
+            // Font-palette role reference (e.g. '--primary-font') — inject the
+            // actual font stack so var(--primary-font) resolves in the preview.
+            if (fieldType === 'font_picker' &&
+                    typeof value === 'string' && value.startsWith('--')) {
+                var fontRole = FontPaletteManager.getRole(value);
+                if (fontRole) {
+                    if (!changes[value]) {
+                        changes[value] = fontRole['default'];
+                    }
+                    _fieldPaletteVars[varName] = [value];
+                }
+            }
+
             this._updateStyles();
             log.debug('CSS variable updated: ' + varName + ' = ' + formattedValue + ' (type: ' + fieldType + ')');
             return true;
@@ -438,6 +452,10 @@ define([
                 return font;
             }
             font = String(font);
+            // CSS-var reference (e.g. '--primary-font') → wrap in var()
+            if (font.startsWith('--')) {
+                return 'var(' + font + ')';
+            }
             // Already quoted or already a full CSS font stack (contains comma) — pass through as-is
             if (font.startsWith('"') || font.startsWith("'") || font.includes(',')) {
                 return font;
@@ -563,6 +581,14 @@ define([
                     if (ColorUtils.isRgbColor(value)) {
                         displayValue = ColorUtils.rgbToHex(value);
                     }
+                }
+
+                // Font palette role reference stored as var(--primary-font) in
+                // changes, but the <select> value must be the raw ref '--primary-font'.
+                if (fieldType === 'font_picker' &&
+                        typeof displayValue === 'string' &&
+                        displayValue.startsWith('var(--')) {
+                    displayValue = displayValue.replace(/^var\((.+)\)$/, '$1');
                 }
                 
                 // Update field value

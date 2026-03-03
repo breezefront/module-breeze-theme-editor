@@ -47,7 +47,7 @@
             <!-- Trigger button -->
             <button type="button" class="bte-font-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
                 <span class="bte-font-picker-trigger-label"
-                    style="font-family: <%- data.value || data.default %>;">
+                    style="font-family: <%- data.selectedFontFamily || data.value || data.default %>;">
                     <%- data.selectedLabel %>
                 </span>
                 <span class="bte-font-picker-trigger-arrow"></span>
@@ -55,6 +55,26 @@
 
             <!-- Dropdown panel -->
             <div class="bte-font-picker-dropdown" role="listbox" hidden>
+
+                <!-- Role swatches — shown for consumer fields only (not for role-definition fields) -->
+                <% if (data.fontRoles && data.fontRoles.length) { %>
+                    <div class="bte-font-picker-roles">
+                        <% _.each(data.fontRoles, function(role) { %>
+                            <div class="bte-font-picker-role-swatch <%= role.isSelected ? 'is-selected' : '' %>"
+                                role="option"
+                                aria-selected="<%= role.isSelected ? 'true' : 'false' %>"
+                                data-value="<%- role.property %>"
+                                data-is-role="true"
+                                data-font-family="<%- role.default %>"
+                                style="font-family: <%- role.default %>;">
+                                <%- role.label %>
+                            </div>
+                        <% }); %>
+                    </div>
+                    <div class="bte-font-picker-divider"></div>
+                <% } %>
+
+                <!-- Font options list -->
                 <% _.each(data.fonts, function(font) { %>
                     <div class="bte-font-picker-option <%= String(font.value) === String(data.value) ? 'is-selected' : '' %>"
                         role="option"

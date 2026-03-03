@@ -186,6 +186,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/field-renderers-test',
             // Font Picker Dropdown Handler Tests (14 tests) - open/close/select/outside-click/Escape
             'Swissup_BreezeThemeEditor/js/test/tests/font-picker-test',
+            // Font Palette Manager Tests (20 tests) - init/getPalette/getOptions/getFonts/getRole/isPaletteRole/getStylesheetMap/resolveValue
+            'Swissup_BreezeThemeEditor/js/test/tests/font-palette-manager-test',
             // Palette Manager Tests (11 tests) - isColorModified uses saved DB value, not unsaved
             'Swissup_BreezeThemeEditor/js/test/tests/palette-manager-test',
             // Publication Selector Tests (15 tests) - canPublish logic + Bug 1 + Bug 2 regression

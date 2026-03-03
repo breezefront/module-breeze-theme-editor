@@ -38,6 +38,7 @@ define([
                         placeholder
                         helpText
                         palette
+                        fontPalette
                         format
                         validation {
                             minLength
@@ -101,6 +102,21 @@ define([
                             value
                             usageCount
                         }
+                    }
+                }
+                fontPalettes {
+                    id
+                    label
+                    options {
+                        value
+                        label
+                        url
+                    }
+                    fonts {
+                        id
+                        label
+                        property
+                        default
                     }
                 }
             }

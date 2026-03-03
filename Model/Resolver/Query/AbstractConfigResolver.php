@@ -6,6 +6,7 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
+use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
@@ -22,6 +23,7 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
         protected SerializerInterface $serializer,
         protected ConfigProvider $configProvider,
         protected PaletteProvider $paletteProvider,
+        protected FontPaletteProvider $fontPaletteProvider,
         protected ColorFormatResolver $colorFormatResolver,
         protected ColorFormatter $colorFormatter
     ) {}
@@ -105,6 +107,11 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
                     
                     // Use the already-resolved format
                     $field['format'] = $colorFormat;
+                }
+
+                // Add font_palette reference for font_picker fields
+                if ($type === 'font_picker' && isset($setting['font_palette'])) {
+                    $field['fontPalette'] = $setting['font_palette'];
                 }
 
                 $fields[] = $field;
@@ -308,5 +315,16 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
     protected function formatPalettes(int $themeId, array $valuesMap = []): array
     {
         return $this->paletteProvider->getPalettes($themeId, $valuesMap);
+    }
+
+    /**
+     * Format font palettes for GraphQL response
+     *
+     * @param int $themeId
+     * @return array
+     */
+    protected function formatFontPalettes(int $themeId): array
+    {
+        return $this->fontPaletteProvider->getFontPalettes($themeId);
     }
 }

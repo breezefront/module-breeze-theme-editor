@@ -155,6 +155,7 @@ type BreezeThemeEditorConfig {
     sections: [BreezeThemeEditorSection! ]!
     presets: [BreezeThemeEditorPreset!]!
     palettes: [BreezeThemeEditorPalette!]! @doc(description: "Color palette system")
+    fontPalettes: [BreezeThemeEditorFontPalette!]! @doc(description: "Font palette system")
     metadata: BreezeThemeEditorMetadata @doc(description: "Theme metadata")
 }
 
@@ -194,6 +195,26 @@ type BreezeThemeEditorPaletteColor {
     usageCount: Int! @doc(description: "Number of fields referencing this color")
 }
 
+type BreezeThemeEditorFontPalette {
+    id: String!
+    label: String!
+    options: [BreezeThemeEditorFontPaletteOption!]! @doc(description: "Available fonts to pick from")
+    fonts: [BreezeThemeEditorFontRole!]! @doc(description: "Named font role definitions")
+}
+
+type BreezeThemeEditorFontPaletteOption {
+    value: String! @doc(description: "CSS font stack value, e.g. \"'Roboto', sans-serif\"")
+    label: String! @doc(description: "Human-readable font name")
+    url: String @doc(description: "External stylesheet URL (e.g. Google Fonts)")
+}
+
+type BreezeThemeEditorFontRole {
+    id: String! @doc(description: "Role identifier, e.g. 'primary'")
+    label: String! @doc(description: "Human label, e.g. 'Primary'")
+    property: String! @doc(description: "CSS variable name, e.g. '--primary-font'")
+    default: String! @doc(description: "Default CSS font stack")
+}
+
 type BreezeThemeEditorSection {
     code: String!
     label: String!
@@ -218,6 +239,7 @@ type BreezeThemeEditorField {
     placeholder: String
     helpText: String
     palette: String @doc(description: "Palette ID for Quick Select (color fields only)")
+    fontPalette: String @doc(description: "Font palette ID for font_picker fields")
     format: String @doc(description: "Color format: 'hex' (Breeze 3.0) or 'rgb' (Breeze 2.0). Auto-detected from default value if not explicitly specified.")
     params: BreezeThemeEditorFieldParams @doc(description: "Type-specific parameters")
     dependsOn: BreezeThemeEditorFieldDependency @doc(description: "Show only if condition met")

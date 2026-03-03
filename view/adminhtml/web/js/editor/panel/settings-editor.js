@@ -5,6 +5,7 @@ define([
     'text!Swissup_BreezeThemeEditor/template/editor/panel/settings-editor.html',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
+    'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderer',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-manager',
@@ -26,6 +27,7 @@ define([
     panelTemplate,
     PanelState,
     PaletteManager,
+    FontPaletteManager,
     FieldRenderer,
     CssPreviewManager,
     CssManager,
@@ -433,6 +435,11 @@ define([
                         });
                         log.info('PaletteManager initialized with ' + config.palettes.length + ' palette(s)');
                     }
+
+                    if (config.fontPalettes && config.fontPalettes.length > 0) {
+                        FontPaletteManager.init(config.fontPalettes);
+                        log.info('FontPaletteManager initialized with ' + config.fontPalettes.length + ' font palette(s)');
+                    }
                     
                     PanelState.init(config);
                     self._renderSections(config.sections);
@@ -478,6 +485,11 @@ define([
                             themeId: self.themeId
                         });
                         log.info('PaletteManager initialized with ' + config.palettes.length + ' palette(s)');
+                    }
+
+                    if (config.fontPalettes && config.fontPalettes.length > 0) {
+                        FontPaletteManager.init(config.fontPalettes);
+                        log.info('FontPaletteManager initialized with ' + config.fontPalettes.length + ' font palette(s)');
                     }
                     
                     // Clear live preview changes (publication mode is read-only)

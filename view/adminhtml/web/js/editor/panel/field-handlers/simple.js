@@ -3,8 +3,9 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/base',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
+    'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, BaseHandler, CssPreviewManager, Logger) {
+], function ($, BaseHandler, CssPreviewManager, FontPaletteManager, Logger) {
     'use strict';
 
     var log = Logger.for('panel/field-handlers/simple');
@@ -105,8 +106,8 @@ define([
                 var val       = $option.data('value');
                 var fontFamily = String(val);
 
-                // Update selection state in dropdown
-                $dropdown.find('.bte-font-picker-option')
+                // Update selection state in dropdown — clear roles too
+                $dropdown.find('.bte-font-picker-option, .bte-font-picker-role-swatch')
                     .removeClass('is-selected')
                     .attr('aria-selected', 'false');
                 $option.addClass('is-selected').attr('aria-selected', 'true');
@@ -121,6 +122,37 @@ define([
                 $trigger.attr('aria-expanded', 'false');
 
                 // Drive the hidden native select → fires existing change handler
+                var selectId = $widget.attr('data-for');
+                var $select = $('#' + selectId);
+                $select.val(val).trigger('change');
+            });
+
+            // Custom font picker widget — select a role swatch (palette reference)
+            $element.on('click', '.bte-font-picker-role-swatch', function(e) {
+                var $swatch   = $(e.currentTarget);
+                var $widget   = $swatch.closest('.bte-font-picker-widget');
+                var $dropdown = $widget.find('.bte-font-picker-dropdown');
+                var $trigger  = $widget.find('.bte-font-picker-trigger');
+                // val is the CSS variable property name, e.g. '--primary-font'
+                var val        = $swatch.data('value');
+                var fontFamily = $swatch.data('font-family') || FontPaletteManager.resolveValue(val);
+
+                // Update selection state in dropdown — clear options too
+                $dropdown.find('.bte-font-picker-option, .bte-font-picker-role-swatch')
+                    .removeClass('is-selected')
+                    .attr('aria-selected', 'false');
+                $swatch.addClass('is-selected').attr('aria-selected', 'true');
+
+                // Update trigger label (swatch text) and font preview
+                $trigger.find('.bte-font-picker-trigger-label')
+                    .text($swatch.text().trim())
+                    .css('font-family', fontFamily);
+
+                // Close dropdown
+                $dropdown.prop('hidden', true);
+                $trigger.attr('aria-expanded', 'false');
+
+                // Drive the hidden native select with the CSS-var reference as value
                 var selectId = $widget.attr('data-for');
                 var $select = $('#' + selectId);
                 $select.val(val).trigger('change');
@@ -176,6 +208,7 @@ define([
             $element.off('change', '.bte-font-picker');
             $element.off('click', '.bte-font-picker-trigger');
             $element.off('click', '.bte-font-picker-option');
+            $element.off('click', '.bte-font-picker-role-swatch');
             $element.off('change', '.bte-toggle-input');
             $element.off('input', '.bte-social-link-input');
             $(document).off('click.bteFontPicker keydown.bteFontPicker');

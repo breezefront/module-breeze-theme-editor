@@ -105,3 +105,56 @@
         color: @dropdown-item-active-color;
     }
 }
+
+// ============================================================================
+// FONT PALETTE — role swatches above the options list
+// ============================================================================
+
+// Container for all role swatches
+.bte-font-picker-roles {
+    padding: 4px 0 0;
+}
+
+// Individual role swatch row
+.bte-font-picker-role-swatch {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 9px 12px;
+    color: @bte-toolbar-text;
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover {
+        background: @dropdown-item-hover-bg;
+    }
+
+    &.is-selected {
+        background: @dropdown-item-active-bg;
+        color: @dropdown-item-active-color;
+    }
+}
+
+// Role label (e.g. "Primary")
+.bte-font-picker-role-label {
+    flex-shrink: 0;
+    font-size: 11px;
+    opacity: 0.65;
+    min-width: 64px;
+}
+
+// Role preview rendered in the role's own typeface
+.bte-font-picker-role-preview {
+    flex: 1;
+    font-size: @bte-toolbar-font-size;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// Divider between role swatches and options list
+.bte-font-picker-divider {
+    height: 1px;
+    margin: 4px 8px;
+    background: rgba(255, 255, 255, 0.1);
+}

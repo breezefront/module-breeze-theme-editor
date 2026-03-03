@@ -11,6 +11,7 @@ use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
+use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
@@ -30,6 +31,7 @@ class Config extends AbstractConfigResolver
         SerializerInterface $serializer,
         ConfigProvider $configProvider,
         PaletteProvider $paletteProvider,
+        FontPaletteProvider $fontPaletteProvider,
         ColorFormatResolver $colorFormatResolver,
         ColorFormatter $colorFormatter,
         private ValueInheritanceResolver $valueInheritanceResolver,
@@ -38,7 +40,7 @@ class Config extends AbstractConfigResolver
         private ThemeResolver $themeResolver,
         private UserResolver $userResolver
     ) {
-        parent::__construct($serializer, $configProvider, $paletteProvider, $colorFormatResolver, $colorFormatter);
+        parent::__construct($serializer, $configProvider, $paletteProvider, $fontPaletteProvider, $colorFormatResolver, $colorFormatter);
     }
 
     public function resolve(
@@ -131,6 +133,7 @@ class Config extends AbstractConfigResolver
             'sections' => $sections,
             'presets' => $this->formatPresets($config['presets'] ?? []),
             'palettes' => $this->formatPalettes($themeId, $valuesMap),
+            'fontPalettes' => $this->formatFontPalettes($themeId),
             'metadata' => $metadata
         ];
     }
