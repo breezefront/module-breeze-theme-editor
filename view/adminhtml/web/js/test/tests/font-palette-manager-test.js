@@ -221,6 +221,59 @@ define([
             var resolved = FontPaletteManager.resolveValue('--primary-font');
             this.assertEqual('system-ui, -apple-system, sans-serif', resolved,
                 '--primary-font should resolve to system-ui stack');
+        },
+
+        // ─── setCurrentValue() / getCurrentValue() ───────────────────────────
+
+        'setCurrentValue: resolveValue returns live value instead of role.default': function () {
+            initFresh();
+            // Override --secondary-font (default: "'Roboto', sans-serif") with Open Sans
+            FontPaletteManager.setCurrentValue('--secondary-font', "'Open Sans', sans-serif");
+            var resolved = FontPaletteManager.resolveValue('--secondary-font');
+            this.assertEqual("'Open Sans', sans-serif", resolved,
+                'resolveValue should return the live current value, not role.default');
+        },
+
+        'setCurrentValue: getCurrentValue returns stored value': function () {
+            initFresh();
+            FontPaletteManager.setCurrentValue('--primary-font', "'Lato', sans-serif");
+            this.assertEqual(
+                "'Lato', sans-serif",
+                FontPaletteManager.getCurrentValue('--primary-font'),
+                'getCurrentValue should return the value set by setCurrentValue'
+            );
+        },
+
+        'getCurrentValue: falls back to role.default when no current value is set': function () {
+            initFresh();
+            // --utility-font default is 'system-ui, -apple-system, sans-serif'
+            this.assertEqual(
+                'system-ui, -apple-system, sans-serif',
+                FontPaletteManager.getCurrentValue('--utility-font'),
+                'getCurrentValue should fall back to role.default when no current value has been set'
+            );
+        },
+
+        'getCurrentValue: returns empty string for unknown property': function () {
+            initFresh();
+            this.assertEqual(
+                '',
+                FontPaletteManager.getCurrentValue('--unknown-font'),
+                'getCurrentValue should return empty string for a property with no role and no stored value'
+            );
+        },
+
+        'init: clears current values set before re-init': function () {
+            initFresh();
+            FontPaletteManager.setCurrentValue('--primary-font', "'Lato', sans-serif");
+            // Re-initialise with fresh palettes — _currentValues must be wiped
+            initFresh();
+            var resolved = FontPaletteManager.resolveValue('--primary-font');
+            this.assertEqual(
+                'system-ui, -apple-system, sans-serif',
+                resolved,
+                'After re-init, resolveValue should return role.default, not the previously stored live value'
+            );
         }
     });
 });
