@@ -164,8 +164,15 @@
 // Mirrors .bte-palette-section layout from the color palette section
 // ============================================================================
 
+.bte-font-palette-container {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    margin: 16px 0;
+    background: rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+}
+
 .bte-font-palette-section {
-    border-top: 1px solid @bte-toolbar-dropdown-border;
 }
 
 // Header (accordion toggle)
@@ -242,4 +249,12 @@
 .bte-font-role-row .bte-font-picker-widget {
     flex: 1;
     min-width: 0;
+}
+
+// Badge container in the font palette section header
+// Mirrors .bte-palette-header-actions flex layout so badges + reset button align
+.bte-font-palette-badges {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }

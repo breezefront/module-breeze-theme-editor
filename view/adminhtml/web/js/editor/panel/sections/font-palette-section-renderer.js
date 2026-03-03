@@ -4,8 +4,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
+    'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, widget, FontPaletteManager, PanelState, CssPreviewManager, Logger) {
+], function ($, widget, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer, Logger) {
     'use strict';
 
     var log = Logger.for('panel/font-palette-section');
@@ -30,6 +31,10 @@ define([
      *      font-family so the UI reflects the new typeface.
      *   4. Fires paletteColorChanged to trigger _updateChangesCount() in
      *      settings-editor.js (updates the Save button counter).
+     *
+     * Section-level badges (Changed N, Modified N) and a Reset button mirror
+     * the color palette section behaviour.  Dirty/modified state is read from
+     * PanelState because role fields are saved as ordinary fields.
      */
     $.widget('swissup.fontPaletteSection', {
         options: {
@@ -80,12 +85,16 @@ define([
             this.element.show();
             this.element.html(this._buildSectionHtml());
 
-            this.$header  = this.element.find('.bte-font-palette-header');
-            this.$content = this.element.find('.bte-font-palette-content');
+            this.$header         = this.element.find('.bte-font-palette-header');
+            this.$content        = this.element.find('.bte-font-palette-content');
+            this.$badgesContainer = this.element.find('.bte-font-palette-badges');
 
             // Open by default
             this.$header.addClass('active');
             this.$content.addClass('active').show();
+
+            // Show initial modified badge if any role is already customised
+            this._updateHeaderBadges();
 
             log.debug('Font palette section rendered');
         },
@@ -101,6 +110,7 @@ define([
             html += '<div class="bte-font-palette-header">';
             html += '<span class="bte-font-palette-title">Font Palettes</span>';
             html += '<div class="bte-font-palette-header-actions">';
+            html += '<div class="bte-font-palette-badges"></div>';
             html += '<i class="bte-icon-chevron-down bte-font-palette-arrow"></i>';
             html += '</div>';
             html += '</div>';
@@ -200,6 +210,10 @@ define([
 
             // ── Accordion toggle ─────────────────────────────────────────────
             this.element.on('click', '.bte-font-palette-header', function (e) {
+                // Let the reset-button click bubble through to its own handler below
+                if ($(e.target).closest('.bte-palette-reset-btn').length) {
+                    return;
+                }
                 e.stopPropagation();
 
                 var isOpen = self.$header.hasClass('active');
@@ -211,6 +225,64 @@ define([
                     self.$header.addClass('active');
                     self.$content.addClass('active').slideDown(200);
                 }
+            });
+
+            // ── Reset button: discard all dirty role changes ─────────────────
+            // Uses .bte-palette-reset-btn (same class as color palette section).
+            // No conflict because this handler is scoped to this.element
+            // (the font palette container), not the color palette container.
+            this.element.on('click', '.bte-palette-reset-btn', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                var dirty = [];
+
+                Object.keys(self._roleFields).forEach(function (prop) {
+                    var rf    = self._roleFields[prop];
+                    var state = PanelState.getFieldState(rf.sectionCode, rf.fieldCode);
+
+                    if (state && state.isDirty) {
+                        dirty.push({
+                            property:   prop,
+                            rf:         rf,
+                            savedValue: state.savedValue
+                        });
+                    }
+                });
+
+                if (!dirty.length) {
+                    return;
+                }
+
+                var count = dirty.length;
+                var msg   = 'Reset ' + count + ' font role' +
+                    (count > 1 ? 's' : '') + ' to saved values?';
+
+                if (!confirm(msg)) {
+                    return;
+                }
+
+                dirty.forEach(function (item) {
+                    // Revert PanelState
+                    PanelState.resetField(item.rf.sectionCode, item.rf.fieldCode);
+
+                    // Keep local role map in sync
+                    self._roleFields[item.property].currentValue = item.savedValue;
+
+                    // Update the picker widget UI
+                    self._updateRolePickerUI(item.property, item.savedValue);
+
+                    // Revert live CSS preview
+                    CssPreviewManager.setVariable(item.property, item.savedValue, 'font_picker');
+
+                    // Cascade to consumer fields in the accordion
+                    self._updateConsumerFields(item.property, item.savedValue);
+                });
+
+                self._updateHeaderBadges();
+                $(document).trigger('paletteColorChanged');
+
+                log.info('Font role reset: ' + count + ' role(s) reverted to saved values');
             });
 
             // ── Trigger button: open / close dropdown ────────────────────────
@@ -306,7 +378,7 @@ define([
                 // Reflect change immediately in the CSS preview iframe
                 CssPreviewManager.setVariable(roleProperty, val, 'font_picker');
 
-                // Keep local role map in sync for cascade
+                // Keep local role map in sync for cascade and reset
                 if (self._roleFields[roleProperty]) {
                     self._roleFields[roleProperty].currentValue = val;
                 }
@@ -315,11 +387,96 @@ define([
                 // accordion that currently reference this role property
                 self._updateConsumerFields(roleProperty, val);
 
+                // Update section-level badges (may show "Changed N" now)
+                self._updateHeaderBadges();
+
                 // Notify settings-editor to refresh save/reset button counts
                 $(document).trigger('paletteColorChanged');
 
                 log.info('Role font changed: ' + roleProperty + ' \u2192 ' + val);
             });
+
+            // ── Listen for palette changes ────────────────────────────────────
+            // Fired after any field change (color OR font role). Refresh badges
+            // so the count stays in sync when other fields are also changed.
+            this._onPaletteChanged = function () {
+                self._updateHeaderBadges();
+            };
+            $(document).on('paletteColorChanged', this._onPaletteChanged);
+
+            // ── Clear dirty badges after a successful save ────────────────────
+            // settings-editor.js calls PanelState.markAsSaved() before firing
+            // themeEditorDraftSaved, so isDirty will be false for all fields.
+            this._onDraftSaved = function () {
+                self._updateHeaderBadges();
+                log.debug('Font palette badges refreshed after save');
+            };
+            $(document).on('themeEditorDraftSaved', this._onDraftSaved);
+        },
+
+        /**
+         * Compute dirty/modified counts from PanelState for all role fields and
+         * render the header badge HTML via BadgeRenderer.
+         */
+        _updateHeaderBadges: function () {
+            if (!this.$badgesContainer || !this.$badgesContainer.length) {
+                return;
+            }
+
+            var dirty    = 0;
+            var modified = 0;
+
+            Object.keys(this._roleFields).forEach(function (prop) {
+                var rf    = this._roleFields[prop];
+                var state = PanelState.getFieldState(rf.sectionCode, rf.fieldCode);
+
+                if (state) {
+                    if (state.isDirty)    { dirty++;    }
+                    if (state.isModified) { modified++; }
+                }
+            }, this);
+
+            // renderPaletteBadges returns '' when both counts are 0
+            this.$badgesContainer.html(BadgeRenderer.renderPaletteBadges(dirty, modified));
+
+            log.debug('Font palette badges: dirty=' + dirty + ' modified=' + modified);
+        },
+
+        /**
+         * Update the picker widget UI for a role to reflect a new font value
+         * without re-rendering the entire section.
+         *
+         * @param {String} roleProperty  CSS var name, e.g. "--primary-font"
+         * @param {String} fontValue     Font-family string to select
+         */
+        _updateRolePickerUI: function (roleProperty, fontValue) {
+            var $widget = this.element.find(
+                '.bte-font-picker-widget[data-role-property="' +
+                roleProperty.replace(/"/g, '\\"') + '"]'
+            );
+
+            if (!$widget.length) {
+                return;
+            }
+
+            var $dropdown = $widget.find('.bte-font-picker-dropdown');
+            var $trigger  = $widget.find('.bte-font-picker-trigger');
+
+            // Update dropdown selection state
+            $dropdown.find('.bte-font-picker-option')
+                .removeClass('is-selected')
+                .attr('aria-selected', 'false');
+
+            var $opt = $dropdown.find(
+                '.bte-font-picker-option[data-value="' + fontValue.replace(/"/g, '\\"') + '"]'
+            );
+            $opt.addClass('is-selected').attr('aria-selected', 'true');
+
+            // Update trigger button label and font preview
+            var label = $opt.length ? $opt.text().trim() : fontValue;
+            $trigger.find('.bte-font-picker-trigger-label')
+                .text(label)
+                .css('font-family', fontValue);
         },
 
         /**
@@ -382,8 +539,17 @@ define([
          */
         _destroy: function () {
             this.element.off('click', '.bte-font-palette-header');
+            this.element.off('click', '.bte-palette-reset-btn');
             this.element.off('click', '.bte-font-picker-trigger');
             this.element.off('click', '.bte-font-picker-option');
+
+            if (this._onPaletteChanged) {
+                $(document).off('paletteColorChanged', this._onPaletteChanged);
+            }
+            if (this._onDraftSaved) {
+                $(document).off('themeEditorDraftSaved', this._onDraftSaved);
+            }
+
             this._super();
         }
     });

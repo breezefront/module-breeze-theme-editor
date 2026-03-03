@@ -19,7 +19,7 @@ define([
     FontPickerRenderer.prepareData = function(field, sectionCode) {
         var data = BaseFieldRenderer.prepareData.call(this, field, sectionCode);
 
-        var paletteId   = data.fontPalette || null;
+        var paletteId   = field.fontPalette || null;  // field, not data — base.prepareData does not copy fontPalette
         var palette     = paletteId ? FontPaletteManager.getPalette(paletteId) : null;
         var isRoleField = paletteId
             ? FontPaletteManager.isPaletteRole(paletteId, data.property)
