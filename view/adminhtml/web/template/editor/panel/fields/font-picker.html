@@ -37,9 +37,9 @@
                     <%- font.label %>
                 </option>
             <% }); %>
-            <%-- Hidden options for font role references (--primary-font etc.)  --%>
-            <%-- Needed so $select.val('--primary-font') resolves to a real option --%>
-            <%-- and .val() returns the role property instead of null.            --%>
+            <% /* Hidden options for font role references (--primary-font etc.)
+                 Needed so $select.val('--primary-font') resolves to a real option
+                 and .val() returns the role property instead of null. */ %>
             <% _.each(data.fontRoles, function(role) { %>
                 <option
                     value="<%- role.property %>"
