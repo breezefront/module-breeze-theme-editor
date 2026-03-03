@@ -196,6 +196,77 @@ define([
         },
 
         /**
+         * Update font picker custom widget UI after a field reset or restore.
+         *
+         * Called by base.js handleFieldReset / handleFieldRestore when the
+         * FONT_PICKER type is looked up in the handler registry.
+         *
+         * base.js's generic fallback only calls $input.val(value) which
+         * updates the hidden <select> but leaves the trigger label text and
+         * dropdown selection marks unchanged.  This override syncs the
+         * custom widget DOM with the restored/reset value.
+         *
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         * @param {*}      value      Restored value (raw font-family or CSS-var ref)
+         * @param {jQuery} $field     The hidden <select.bte-font-picker> element
+         */
+        updateFieldUIAfterReset: function (sectionCode, fieldCode, value, $field) {
+            if (!$field || !$field.hasClass('bte-font-picker')) {
+                // Not a font picker — delegate to base implementation
+                // (this === BaseHandler when called via handler registry)
+                this.updateFieldUIAfterReset(sectionCode, fieldCode, value);
+                return;
+            }
+
+            // 1. Sync the hidden native <select>
+            $field.val(value);
+
+            // 2. Locate the paired custom widget
+            var selectId  = $field.attr('id');
+            var $widget   = $('[data-for="' + selectId + '"]');
+
+            if (!$widget.length) {
+                return;
+            }
+
+            var $dropdown = $widget.find('.bte-font-picker-dropdown');
+            var $trigger  = $widget.find('.bte-font-picker-trigger');
+
+            // 3. Clear all selection marks in both roles and options lists
+            $dropdown.find('.bte-font-picker-option, .bte-font-picker-role-swatch')
+                .removeClass('is-selected')
+                .attr('aria-selected', 'false');
+
+            var label, fontFamily;
+
+            if (typeof value === 'string' && value.slice(0, 2) === '--') {
+                // Role reference (e.g. '--primary-font')
+                var $swatch = $dropdown.find('.bte-font-picker-role-swatch').filter(function () {
+                    return $(this).data('value') === value;
+                });
+                $swatch.addClass('is-selected').attr('aria-selected', 'true');
+                label      = $swatch.text().trim();
+                fontFamily = $swatch.data('font-family') || FontPaletteManager.resolveValue(value);
+            } else {
+                // Direct font-family value (e.g. "system-ui, -apple-system, sans-serif")
+                var $option = $dropdown.find('.bte-font-picker-option').filter(function () {
+                    return $(this).data('value') === value;
+                });
+                $option.addClass('is-selected').attr('aria-selected', 'true');
+                label      = $option.length ? $option.text().trim() : value;
+                fontFamily = value;
+            }
+
+            // 4. Update trigger button label text and font preview
+            $trigger.find('.bte-font-picker-trigger-label')
+                .text(label)
+                .css('font-family', fontFamily);
+
+            log.info('Font picker widget UI updated after reset: ' + fieldCode + ' = ' + value);
+        },
+
+        /**
          * Destroy handlers
          *
          * @param {jQuery} $element
