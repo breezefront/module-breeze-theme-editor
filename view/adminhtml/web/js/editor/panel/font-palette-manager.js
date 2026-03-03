@@ -36,6 +36,22 @@ define([], function() {
      */
     var _rolesByProperty = {};
 
+    /**
+     * Live current values for each role property.
+     * Separate from the schema `default` so resolveValue() returns what the
+     * user has actually selected, not just the theme-schema default.
+     *
+     * Populated by:
+     *   - font-palette-section-renderer._buildRoleMap() on init (reads saved config value)
+     *   - font-palette-section-renderer option click handler on user interaction
+     *   - reset/restore handlers in font-palette-section-renderer
+     *
+     * Key  : CSS variable name, e.g. "--primary-font"
+     * Value: font-family string, e.g. "'Roboto', sans-serif"
+     * @type {Object}
+     */
+    var _currentValues = {};
+
     var FontPaletteManager = {
 
         /**
@@ -46,6 +62,7 @@ define([], function() {
         init: function(fontPalettes) {
             _palettes = {};
             _rolesByProperty = {};
+            _currentValues = {};
 
             if (!fontPalettes || !fontPalettes.length) {
                 return;
@@ -148,10 +165,39 @@ define([], function() {
             if (typeof value === 'string' && value.startsWith('--')) {
                 var role = _rolesByProperty[value];
                 if (role) {
-                    return role.default;
+                    return _currentValues[value] !== undefined
+                        ? _currentValues[value]
+                        : role.default;
                 }
             }
             return value;
+        },
+
+        /**
+         * Store the live current value for a role property.
+         * Called by font-palette-section-renderer when the user selects a font
+         * for a role, and on initialisation once the saved config value is known.
+         *
+         * @param {String} property  CSS variable name, e.g. "--primary-font"
+         * @param {String} value     Font-family string
+         */
+        setCurrentValue: function(property, value) {
+            _currentValues[property] = value;
+        },
+
+        /**
+         * Get the live current value for a role property.
+         * Falls back to the schema default if no current value has been set.
+         *
+         * @param  {String} property  CSS variable name, e.g. "--primary-font"
+         * @return {String}
+         */
+        getCurrentValue: function(property) {
+            if (_currentValues[property] !== undefined) {
+                return _currentValues[property];
+            }
+            var role = _rolesByProperty[property];
+            return role ? role.default : '';
         }
     };
 

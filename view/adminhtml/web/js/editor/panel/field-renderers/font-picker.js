@@ -62,11 +62,15 @@ define([
         // ---------------------------------------------------------------
         if (palette && !isRoleField) {
             data.fontRoles = (palette.fonts || []).map(function(role) {
+                // Use live current value (what the user has actually selected for this
+                // role) so the swatch renders in the correct typeface on initial load.
+                // Falls back to schema default when no current value has been set yet.
+                var currentFont = FontPaletteManager.getCurrentValue(role.property);
                 return {
                     id:         role.id,
                     label:      role.label,
                     property:   role.property,
-                    default:    role.default,
+                    default:    currentFont,
                     // isSelected when the stored value is the CSS-var reference
                     isSelected: data.value === role.property
                 };

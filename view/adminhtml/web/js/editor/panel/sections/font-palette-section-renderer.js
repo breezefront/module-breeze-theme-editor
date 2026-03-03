@@ -67,13 +67,20 @@ define([
             (this.options.sections || []).forEach(function (section) {
                 (section.fields || []).forEach(function (field) {
                     if (field.property && FontPaletteManager.getRole(field.property)) {
+                        var currentValue = (field.value !== null && field.value !== undefined)
+                            ? field.value
+                            : (field.default || '');
+
                         this._roleFields[field.property] = {
                             sectionCode:  section.code,
                             fieldCode:    field.code,
-                            currentValue: (field.value !== null && field.value !== undefined)
-                                ? field.value
-                                : (field.default || '')
+                            currentValue: currentValue
                         };
+
+                        // Publish the live current value so FontPaletteManager.resolveValue()
+                        // and font-picker.js renderer both see the real saved font, not just
+                        // the static schema default.
+                        FontPaletteManager.setCurrentValue(field.property, currentValue);
                     }
                 }.bind(this));
             }.bind(this));
@@ -274,6 +281,7 @@ define([
                 dirty.forEach(function (item) {
                     PanelState.resetField(item.rf.sectionCode, item.rf.fieldCode);
                     self._roleFields[item.property].currentValue = item.savedValue;
+                    FontPaletteManager.setCurrentValue(item.property, item.savedValue);
                     self._updateRolePickerUI(item.property, item.savedValue);
                     CssPreviewManager.setVariable(item.property, item.savedValue, 'font_picker');
                     self._updateConsumerFields(item.property, item.savedValue);
@@ -305,6 +313,7 @@ define([
                     self._updateRolePickerUI(prop, defaultValue);
                     CssPreviewManager.setVariable(prop, defaultValue, 'font_picker');
                     self._roleFields[prop].currentValue = defaultValue;
+                    FontPaletteManager.setCurrentValue(prop, defaultValue);
                     self._updateConsumerFields(prop, defaultValue);
                     PanelState.restoreToDefault(rf.sectionCode, rf.fieldCode);
 
@@ -408,10 +417,12 @@ define([
                 // Reflect change immediately in the CSS preview iframe
                 CssPreviewManager.setVariable(roleProperty, val, 'font_picker');
 
-                // Keep local role map in sync for cascade and reset
+                // Keep local role map and FontPaletteManager in sync for cascade,
+                // reset, and consumer-field initial render
                 if (self._roleFields[roleProperty]) {
                     self._roleFields[roleProperty].currentValue = val;
                 }
+                FontPaletteManager.setCurrentValue(roleProperty, val);
 
                 // Cascade: update trigger buttons of consumer fields in the
                 // accordion that currently reference this role property

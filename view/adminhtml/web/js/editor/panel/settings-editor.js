@@ -441,6 +441,7 @@ define([
 
                     if (config.fontPalettes && config.fontPalettes.length > 0) {
                         FontPaletteManager.init(config.fontPalettes);
+                        self._seedFontPaletteCurrentValues(config.sections);
                         log.info('FontPaletteManager initialized with ' + config.fontPalettes.length + ' font palette(s)');
                     }
                     
@@ -492,6 +493,7 @@ define([
 
                     if (config.fontPalettes && config.fontPalettes.length > 0) {
                         FontPaletteManager.init(config.fontPalettes);
+                        self._seedFontPaletteCurrentValues(config.sections);
                         log.info('FontPaletteManager initialized with ' + config.fontPalettes.length + ' font palette(s)');
                     }
                     
@@ -1275,6 +1277,31 @@ define([
             });
 
             log.info('Font palette section initialized');
+        },
+
+        /**
+         * Seed FontPaletteManager with the current (saved) values for each
+         * font palette role field, so that FontPaletteManager.getCurrentValue()
+         * returns the correct font BEFORE the sections are rendered.
+         *
+         * Must be called immediately after FontPaletteManager.init() and before
+         * _renderSections(), because the font-picker renderer reads getCurrentValue()
+         * to set the role swatch font-family on initial render.
+         *
+         * @param {Array} sections  config.sections from GraphQL response
+         */
+        _seedFontPaletteCurrentValues: function(sections) {
+            (sections || []).forEach(function(section) {
+                (section.fields || []).forEach(function(field) {
+                    if (field.property && FontPaletteManager.getRole(field.property)) {
+                        var val = (field.value !== null && field.value !== undefined)
+                            ? field.value
+                            : (field.default || '');
+                        FontPaletteManager.setCurrentValue(field.property, val);
+                    }
+                });
+            });
+            log.debug('FontPaletteManager current values seeded from config');
         },
 
         /**
