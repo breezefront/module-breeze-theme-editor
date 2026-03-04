@@ -43,10 +43,10 @@ class PublishService
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
-        // Отримати всі draft значення через ValueService
+        // Load all draft values via ValueService
         $draftValues = $this->valueService->getValuesByTheme($themeId, $storeId, $draftStatusId, $userId);
 
-        // Створити publication запис
+        // Create publication record
         $publication = $this->publicationFactory->create();
         $publication->setThemeId($themeId);
         $publication->setStoreId($storeId);
@@ -58,10 +58,10 @@ class PublishService
 
         $this->publicationRepository->save($publication);
 
-        // Зберегти changelog
+        // Save changelog
         $this->saveChangelog($publication->getPublicationId(), $comparison['changes']);
 
-        // Сучасний підхід: draftValues → ValueInterface моделі → saveMultiple
+        // Copy draft values to published status: draftValues → ValueInterface models → saveMultiple
         $models = [];
         foreach ($draftValues as $val) {
             $model = $this->valueRepository->create();
@@ -78,7 +78,7 @@ class PublishService
             $this->valueRepository->saveMultiple($models);
         }
 
-        // Видалити draft через ValueService
+        // Delete draft values via ValueService
         $this->valueService->deleteValues(
             $themeId,
             $storeId,
@@ -111,14 +111,14 @@ class PublishService
         $themeId = $oldPublication->getThemeId();
         $storeId = $oldPublication->getStoreId();
 
-        // Новий підхід: отримати changelog через SearchCriteria + getList()
+        // Load changelog entries for the old publication via SearchCriteria
         $criteria = $this->searchCriteriaBuilder
             ->addFilter('publication_id', $publicationId)
             ->create();
         $searchResults = $this->changelogRepository->getList($criteria);
         $oldChanges = $searchResults->getItems();
 
-        // Створити нову publication (rollback)
+        // Create new publication record for rollback
         $publication = $this->publicationFactory->create();
         $publication->setThemeId($themeId);
         $publication->setStoreId($storeId);
@@ -131,12 +131,12 @@ class PublishService
 
         $this->publicationRepository->save($publication);
 
-        // Очистити поточний draft перед застосуванням старих значень
-        // (аналогічно publish(), щоб draft не виживав тихо після rollback)
+        // Clear current draft before restoring old values
+        // (mirrors publish() to prevent draft from silently surviving rollback)
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
         $this->valueService->deleteValues($themeId, $storeId, $draftStatusId, $userId);
 
-        // Застосувати старі значення → ValueInterface[]
+        // Restore old values as published: old changelog entries → ValueInterface[]
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
         $models = [];
@@ -147,7 +147,7 @@ class PublishService
             $model->setStatusId($publishedStatusId);
             $model->setSectionCode($change->getSectionCode());
             $model->setSettingCode($change->getSettingCode());
-            $model->setValue($change->getNewValue()); // Rollback = newValue зі старої публікації
+            $model->setValue($change->getNewValue()); // Rollback restores newValue from the old publication
             $model->setUserId($userId);
             $models[] = $model;
         }
@@ -155,7 +155,7 @@ class PublishService
             $this->valueRepository->saveMultiple($models);
         }
 
-        // Зберегти changelog для rollback
+        // Save changelog for rollback
         $this->saveChangelogFromOld($publication->getPublicationId(), $oldChanges);
 
         return [
