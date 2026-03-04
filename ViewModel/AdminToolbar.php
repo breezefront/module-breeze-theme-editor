@@ -302,25 +302,14 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
-     * Get current publication status
+     * Get fallback publication status for initial JS config.
+     * The real value is loaded via GraphQL immediately after page load.
      *
-     * @return string One of: DRAFT, PUBLISHED, SCHEDULED
-     * @todo Phase 2: Implement via GraphQL
+     * @return string
      */
-    public function getCurrentPublicationStatus()
+    public function getInitialPublicationStatus(): string
     {
         return 'DRAFT';
-    }
-
-    /**
-     * Get count of draft changes
-     *
-     * @return int
-     * @todo Phase 2: Implement via GraphQL
-     */
-    public function getDraftChangesCount()
-    {
-        return 0;
     }
 
     /**
@@ -453,10 +442,6 @@ class AdminToolbar implements ArgumentInterface
 
             // ===== Component configurations =====
             'components' => [
-                'statusIndicator' => [
-                    'currentStatus'     => $this->getCurrentPublicationStatus(),
-                    'draftChangesCount' => $this->getDraftChangesCount(),
-                ],
                 'deviceSwitcher' => [
                     'devices' => ['desktop', 'tablet', 'mobile'],
                     'default' => 'desktop',
@@ -506,8 +491,7 @@ class AdminToolbar implements ArgumentInterface
             // ===== Publications (loaded via GraphQL at runtime) =====
             'publications'          => $this->getPublications(),
             'currentPublicationId'  => $this->getCurrentPublicationId(),
-            'currentStatus'         => $this->getCurrentPublicationStatus(),
-            'changesCount'          => $this->getDraftChangesCount(),
+            'currentStatus'         => $this->getInitialPublicationStatus(),
         ];
     }
 }
