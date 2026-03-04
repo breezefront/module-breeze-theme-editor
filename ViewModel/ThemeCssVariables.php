@@ -8,7 +8,6 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Swissup\BreezeThemeEditor\Model\Service\CssGenerator;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
-use Swissup\BreezeThemeEditor\Model\Data\AccessToken;
 use Swissup\BreezeThemeEditor\Helper\Data as HelperData;
 
 class ThemeCssVariables implements ArgumentInterface
@@ -17,7 +16,6 @@ class ThemeCssVariables implements ArgumentInterface
         private CssGenerator $cssGenerator,
         private ThemeResolver $themeResolver,
         private StoreManagerInterface $storeManager,
-        private AccessToken $accessToken,
         private RequestInterface $request,
         private HelperData $helper
     ) {}
