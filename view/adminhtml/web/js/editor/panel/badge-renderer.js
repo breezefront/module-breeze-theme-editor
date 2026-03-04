@@ -154,21 +154,6 @@ define([
         },
 
         /**
-         * Render Modified badge for palette swatch
-         * 
-         * Future use: Indicates palette color differs from theme default.
-         * Currently reuses Modified badge template.
-         * 
-         * @param {String} colorName - Palette color identifier (e.g., 'primary')
-         * @returns {String} HTML for palette modified badge
-         */
-        renderPaletteBadge: function(colorName) {
-            // For now, reuse modified badge template
-            // TODO: Create separate palette badge template if needed
-            return this.renderModifiedBadge();
-        },
-
-        /**
          * Render "Changed" badge for palette header (with count)
          * 
          * Indicates palette section has unsaved color changes.
