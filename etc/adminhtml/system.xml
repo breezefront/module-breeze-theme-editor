@@ -12,8 +12,7 @@
                 <field id="enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enable Theme Editor</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <frontend_model>Swissup\BreezeThemeEditor\Block\Adminhtml\System\Config\Form\Field\EnabledWithLink</frontend_model>
-                    <comment>Enable or disable Breeze Theme Editor mode. When enabled, use the link below to access frontend.</comment>
+                    <comment>Enable or disable Breeze Theme Editor mode.</comment>
                 </field>
             </group>
         </section>

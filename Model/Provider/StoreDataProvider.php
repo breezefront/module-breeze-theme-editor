@@ -4,8 +4,6 @@ namespace Swissup\BreezeThemeEditor\Model\Provider;
 
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\UrlInterface;
-use Swissup\BreezeThemeEditor\Model\Data\AccessToken;
-use Magento\Framework\App\State;
 
 class StoreDataProvider
 {
@@ -20,31 +18,15 @@ class StoreDataProvider
     private $urlBuilder;
 
     /**
-     * @var AccessToken
-     */
-    private $accessToken;
-
-    /**
-     * @var State
-     */
-    private $state;
-
-    /**
      * @param StoreManagerInterface $storeManager
      * @param UrlInterface $urlBuilder
-     * @param AccessToken $accessToken
-     * @param State $state
      */
     public function __construct(
         StoreManagerInterface $storeManager,
-        UrlInterface $urlBuilder,
-        AccessToken $accessToken,
-        State $state
+        UrlInterface $urlBuilder
     ) {
         $this->storeManager = $storeManager;
         $this->urlBuilder = $urlBuilder;
-        $this->accessToken = $accessToken;
-        $this->state = $state;
     }
 
     /**
@@ -118,21 +100,10 @@ class StoreDataProvider
     private function getStoreUrl($store)
     {
         try {
-            // Get current URL on target store
-            $url = $store->getCurrentUrl(false);
+            return $store->getCurrentUrl(false);
         } catch (\Exception $e) {
-            // Fallback to base URL
-            $url = $store->getBaseUrl();
+            return $store->getBaseUrl();
         }
-        
-        // Add access token for toolbar persistence (frontend only)
-        $token = $this->accessToken->getToken();
-        if ($token && $this->shouldAddToken()) {
-            $separator = strpos($url, '?') !== false ? '&' : '?';
-            $url .= $separator . $this->accessToken->getParamName() . '=' . urlencode($token);
-        }
-        
-        return $url;
     }
 
     /**
@@ -268,21 +239,4 @@ class StoreDataProvider
         }
     }
 
-    /**
-     * Check if access token should be added to store URLs
-     * 
-     * In admin area, token is not needed because admin is already authenticated.
-     * In frontend area, token is needed to persist toolbar across store switches.
-     *
-     * @return bool
-     */
-    private function shouldAddToken()
-    {
-        try {
-            return $this->state->getAreaCode() !== \Magento\Framework\App\Area::AREA_ADMINHTML;
-        } catch (\Exception $e) {
-            // If we can't determine area, assume frontend (safer to add token)
-            return true;
-        }
-    }
 }
