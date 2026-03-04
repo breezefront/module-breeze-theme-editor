@@ -288,15 +288,12 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
-     * Get list of publications from database
+     * Get initial publications list for JS config bootstrap.
+     * Returns empty array — real data is loaded via GraphQL immediately after page load.
      *
-     * NOTE: Publications are now loaded via GraphQL in the frontend
-     * (publication-selector.js). This method is kept for backward compatibility.
-     *
-     * @deprecated Use GraphQL query 'getPublications' instead
      * @return array
      */
-    public function getPublications()
+    public function getInitialPublications(): array
     {
         return [];
     }
@@ -319,7 +316,7 @@ class AdminToolbar implements ArgumentInterface
      */
     public function getCurrentPublicationId()
     {
-        $publications = $this->getPublications();
+        $publications = $this->getInitialPublications();
         return !empty($publications) ? $publications[0]['id'] : null;
     }
 
@@ -489,7 +486,7 @@ class AdminToolbar implements ArgumentInterface
             'currentPageId' => $this->getCurrentPageId(),
 
             // ===== Publications (loaded via GraphQL at runtime) =====
-            'publications'          => $this->getPublications(),
+            'publications'          => $this->getInitialPublications(),
             'currentPublicationId'  => $this->getCurrentPublicationId(),
             'currentStatus'         => $this->getInitialPublicationStatus(),
         ];
