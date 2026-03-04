@@ -396,68 +396,6 @@ define([
             }
         },
         
-        /* 
-         * DEPRECATED: Old method using preview-manager.injectCSS()
-         * Now we work directly with iframe DOM and use correct IDs
-         * 
-         * Kept for historical reference - can be removed later
-         *
-        _loadAndInjectCSS: function(status, publicationId) {
-            var self = this;
-            
-            console.log('📥 Loading CSS:', status, publicationId || '');
-            
-            // Load CSS using getCss function (it handles GraphQL internally)
-            return getCss(
-                parseInt(storeId),
-                parseInt(themeId) || null,
-                status,
-                publicationId ? parseInt(publicationId) : null
-            )
-                .then(function(response) {
-                    if (response && response.getThemeEditorCss) {
-                        var result = response.getThemeEditorCss;
-                        var css = result.css;
-                        var css = result.css;
-                        
-                        if (css && css.trim()) {
-                            // Inject CSS into iframe
-                            var styleId = self._getStyleId(status, publicationId);
-                            previewManager.injectCSS(iframeId, css, styleId);
-                            
-                            console.log('✅ CSS loaded and injected:', status, '(' + css.length + ' chars)');
-                            
-                            return {
-                                status: status,
-                                publicationId: publicationId,
-                                css: css,
-                                success: true
-                            };
-                        } else {
-                            console.log('ℹ️ No CSS returned for status:', status);
-                            
-                            // Remove existing CSS if no CSS returned
-                            previewManager.removeCSS(iframeId, self._getStyleId(status, publicationId));
-                            
-                            return {
-                                status: status,
-                                publicationId: publicationId,
-                                css: '',
-                                success: true
-                            };
-                        }
-                    } else {
-                        console.error('❌ Invalid GraphQL response:', response);
-                        return Promise.reject(new Error('Invalid response'));
-                    }
-                })
-                .catch(function(error) {
-                    console.error('❌ Failed to load CSS:', error);
-                    return Promise.reject(error);
-                });
-        },
-        */
-        
         /**
          * Get style element ID based on status
          * 
