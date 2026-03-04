@@ -115,7 +115,7 @@ class UserResolver
      */
     public function isAdmin(ContextInterface $context): bool
     {
-        return $context->getUserType() === 2;
+        return $context->getUserType() === UserContextInterface::USER_TYPE_ADMIN;
     }
     
     /**
@@ -126,7 +126,7 @@ class UserResolver
      */
     public function isAuthorized(ContextInterface $context): bool
     {
-        return $context->getUserType() !== 0;
+        return $context->getUserType() !== UserContextInterface::USER_TYPE_GUEST;
     }
     
     /**
