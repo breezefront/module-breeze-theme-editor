@@ -385,22 +385,20 @@ class AdminToolbar implements ArgumentInterface
      * Check if user has permission to edit theme
      *
      * @return bool
-     * @todo Phase 2: Use ACL resource 'Swissup_BreezeThemeEditor::edit'
      */
-    public function canEdit()
+    public function canEdit(): bool
     {
-        return $this->authSession->isLoggedIn();
+        return $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_edit');
     }
 
     /**
      * Check if user has permission to publish theme
      *
      * @return bool
-     * @todo Phase 2: Use ACL resource 'Swissup_BreezeThemeEditor::publish'
      */
-    public function canPublish()
+    public function canPublish(): bool
     {
-        return $this->authSession->isLoggedIn();
+        return $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_publish');
     }
 
     /**
