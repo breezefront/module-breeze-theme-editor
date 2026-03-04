@@ -241,7 +241,7 @@ type BreezeThemeEditorField {
     palette: String @doc(description: "Palette ID for Quick Select (color fields only)")
     fontPalette: String @doc(description: "Font palette ID for font_picker fields")
     format: String @doc(description: "Color format: 'hex' (Breeze 3.0) or 'rgb' (Breeze 2.0). Auto-detected from default value if not explicitly specified.")
-    params: BreezeThemeEditorFieldParams @doc(description: "Type-specific parameters")
+    params: BreezeThemeEditorFieldParamsInterface @doc(description: "Type-specific parameters")
     dependsOn: BreezeThemeEditorFieldDependency @doc(description: "Show only if condition met")
 }
 
@@ -254,21 +254,48 @@ type BreezeThemeEditorFieldValidation {
     message: String @doc(description: "Error message")
 }
 
-type BreezeThemeEditorFieldParams {
+interface BreezeThemeEditorFieldParamsInterface
+    @typeResolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\FieldParamsTypeResolver")
+    @doc(description: "Polymorphic params — concrete type depends on the field type") {
+}
+
+type BreezeThemeEditorNumericParams implements BreezeThemeEditorFieldParamsInterface
+    @doc(description: "Params for RANGE, NUMBER, SPACING field types") {
     min: Float
     max: Float
     step: Float
     unit: String
+}
+
+type BreezeThemeEditorSelectParams implements BreezeThemeEditorFieldParamsInterface
+    @doc(description: "Params for SELECT, ICON_SET_PICKER field types") {
     options: [BreezeThemeEditorFieldOption!]
+    maxItems: Int
+}
+
+type BreezeThemeEditorFontPickerParams implements BreezeThemeEditorFieldParamsInterface
+    @doc(description: "Params for FONT_PICKER field type") {
+    options: [BreezeThemeEditorFieldOption!]
+    fontWeights: [String!]
+    fontStylesheets: [BreezeThemeEditorFontStylesheet]
+}
+
+type BreezeThemeEditorSocialLinksParams implements BreezeThemeEditorFieldParamsInterface
+    @doc(description: "Params for SOCIAL_LINKS field type") {
+    platforms: [String!]
+}
+
+type BreezeThemeEditorImageUploadParams implements BreezeThemeEditorFieldParamsInterface
+    @doc(description: "Params for IMAGE_UPLOAD field type") {
+    sides: [String!]
+    acceptTypes: String @doc(description: "MIME type filter, e.g. 'image/*'")
+    maxSize: Int @doc(description: "Max file size in KB")
+}
+
+type BreezeThemeEditorCodeParams implements BreezeThemeEditorFieldParamsInterface
+    @doc(description: "Params for CODE field type") {
     language: String
     fallback: String
-    fontWeights: [String!]
-    platforms: [String!]
-    maxItems: Int
-    allowedExtensions: [String!]
-    maxFileSize: Int @doc(description: "In KB")
-    sides: [String!]
-    fontStylesheets: [BreezeThemeEditorFontStylesheet] @doc(description: "External stylesheet URLs for font options that require loading")
 }
 
 type BreezeThemeEditorFontStylesheet {

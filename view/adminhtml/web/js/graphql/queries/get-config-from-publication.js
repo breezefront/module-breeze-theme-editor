@@ -41,28 +41,46 @@ define([
                         palette
                         format
                         params {
-                            min
-                            max
-                            step
-                            unit
-                            options {
-                                label
-                                value
-                                icon
-                                preview
+                            ... on BreezeThemeEditorNumericParams {
+                                min
+                                max
+                                step
+                                unit
                             }
-                            language
-                            fallback
-                            fontWeights
-                            fontStylesheets {
-                                value
-                                url
+                            ... on BreezeThemeEditorSelectParams {
+                                options {
+                                    label
+                                    value
+                                    icon
+                                    preview
+                                }
+                                maxItems
                             }
-                            platforms
-                            maxItems
-                            allowedExtensions
-                            maxFileSize
-                            sides
+                            ... on BreezeThemeEditorFontPickerParams {
+                                options {
+                                    label
+                                    value
+                                    icon
+                                    preview
+                                }
+                                fontWeights
+                                fontStylesheets {
+                                    value
+                                    url
+                                }
+                            }
+                            ... on BreezeThemeEditorSocialLinksParams {
+                                platforms
+                            }
+                            ... on BreezeThemeEditorImageUploadParams {
+                                sides
+                                acceptTypes
+                                maxSize
+                            }
+                            ... on BreezeThemeEditorCodeParams {
+                                language
+                                fallback
+                            }
                         }
                         dependsOn {
                             fieldCode

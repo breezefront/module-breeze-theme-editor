@@ -164,59 +164,92 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
      */
     protected function formatParams(array $setting): ?array
     {
-        $params = [];
+        $type = strtolower($setting['type'] ?? '');
 
-        if (isset($setting['min'])) {
-            $params['min'] = (float)$setting['min'];
-        }
-        if (isset($setting['max'])) {
-            $params['max'] = (float)$setting['max'];
-        }
-        if (isset($setting['step'])) {
-            $params['step'] = (float)$setting['step'];
-        }
-        if (isset($setting['unit'])) {
-            $params['unit'] = $setting['unit'];
-        }
-        if (isset($setting['options'])) {
-            $params['options'] = $this->formatOptions($setting['options']);
+        $params = match (true) {
+            in_array($type, ['range', 'number', 'spacing']) => $this->buildNumericParams($setting),
+            in_array($type, ['select', 'icon_set_picker'])  => $this->buildSelectParams($setting),
+            $type === 'font_picker'                         => $this->buildFontPickerParams($setting),
+            $type === 'social_links'                        => $this->buildSocialLinksParams($setting),
+            $type === 'image_upload'                        => $this->buildImageUploadParams($setting),
+            $type === 'code'                                => $this->buildCodeParams($setting),
+            default                                         => [],
+        };
 
+        if (empty($params)) {
+            return null;
+        }
+
+        // _fieldType drives FieldParamsTypeResolver::resolveType() — not a GraphQL field
+        $params['_fieldType'] = $type;
+
+        return $params;
+    }
+
+    private function buildNumericParams(array $s): array
+    {
+        $p = [];
+        if (isset($s['min']))  { $p['min']  = (float)$s['min']; }
+        if (isset($s['max']))  { $p['max']  = (float)$s['max']; }
+        if (isset($s['step'])) { $p['step'] = (float)$s['step']; }
+        if (isset($s['unit'])) { $p['unit'] = $s['unit']; }
+        return $p;
+    }
+
+    private function buildSelectParams(array $s): array
+    {
+        $p = [];
+        if (isset($s['options']))  { $p['options']  = $this->formatOptions($s['options']); }
+        if (isset($s['maxItems'])) { $p['maxItems'] = $s['maxItems']; }
+        return $p;
+    }
+
+    private function buildFontPickerParams(array $s): array
+    {
+        $p = [];
+        if (isset($s['options'])) {
+            $p['options'] = $this->formatOptions($s['options']);
             $stylesheets = [];
-            foreach ($setting['options'] as $option) {
+            foreach ($s['options'] as $option) {
                 if (!empty($option['url'])) {
                     $stylesheets[] = ['value' => $option['value'], 'url' => $option['url']];
                 }
             }
             if (!empty($stylesheets)) {
-                $params['fontStylesheets'] = $stylesheets;
+                $p['fontStylesheets'] = $stylesheets;
             }
         }
-        if (isset($setting['language'])) {
-            $params['language'] = $setting['language'];
-        }
-        if (isset($setting['fallback'])) {
-            $params['fallback'] = $setting['fallback'];
-        }
-        if (isset($setting['fontWeights'])) {
-            $params['fontWeights'] = $setting['fontWeights'];
-        }
-        if (isset($setting['platforms'])) {
-            $params['platforms'] = $setting['platforms'];
-        }
-        if (isset($setting['maxItems'])) {
-            $params['maxItems'] = $setting['maxItems'];
-        }
-        if (isset($setting['allowedExtensions'])) {
-            $params['allowedExtensions'] = $setting['allowedExtensions'];
-        }
-        if (isset($setting['maxFileSize'])) {
-            $params['maxFileSize'] = $setting['maxFileSize'];
-        }
-        if (isset($setting['sides'])) {
-            $params['sides'] = $setting['sides'];
-        }
+        if (isset($s['fontWeights'])) { $p['fontWeights'] = $s['fontWeights']; }
+        return $p;
+    }
 
-        return empty($params) ? null : $params;
+    private function buildSocialLinksParams(array $s): array
+    {
+        $p = [];
+        if (isset($s['platforms'])) { $p['platforms'] = $s['platforms']; }
+        return $p;
+    }
+
+    private function buildImageUploadParams(array $s): array
+    {
+        $p = [];
+        if (isset($s['sides'])) { $p['sides'] = $s['sides']; }
+        if (isset($s['allowedExtensions'])) {
+            $p['acceptTypes'] = implode(',', array_map(
+                fn($ext) => '.' . ltrim($ext, '.'),
+                $s['allowedExtensions']
+            ));
+        }
+        if (isset($s['maxFileSize'])) { $p['maxSize'] = $s['maxFileSize']; }
+        return $p;
+    }
+
+    private function buildCodeParams(array $s): array
+    {
+        $p = [];
+        if (isset($s['language'])) { $p['language'] = $s['language']; }
+        if (isset($s['fallback']))  { $p['fallback']  = $s['fallback']; }
+        return $p;
     }
 
     /**

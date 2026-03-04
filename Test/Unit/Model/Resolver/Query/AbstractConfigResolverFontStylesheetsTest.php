@@ -179,6 +179,11 @@ class AbstractConfigResolverFontStylesheetsTest extends TestCase
             $field['params'] ?? [],
             'When no options have a url key, fontStylesheets must not appear in params'
         );
+        $this->assertEquals(
+            'font_picker',
+            $field['params']['_fieldType'] ?? null,
+            '_fieldType must be set so FieldParamsTypeResolver can dispatch to the correct concrete type'
+        );
     }
 
     /**
@@ -285,6 +290,11 @@ class AbstractConfigResolverFontStylesheetsTest extends TestCase
             'fontStylesheets',
             $field['params'] ?? [],
             'A setting without an options key must not produce fontStylesheets'
+        );
+        $this->assertEquals(
+            'range',
+            $field['params']['_fieldType'] ?? null,
+            '_fieldType must be set for range fields'
         );
     }
 
