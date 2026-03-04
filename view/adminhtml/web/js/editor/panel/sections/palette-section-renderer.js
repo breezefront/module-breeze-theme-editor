@@ -4,14 +4,16 @@ define([
     'text!Swissup_BreezeThemeEditor/template/editor/panel/palette-section.html',
     'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper'
 ], function (
     $,
     widget,
     paletteTemplate,
     PaletteManager,
     BadgeRenderer,
-    Logger
+    Logger,
+    StorageHelper
 ) {
     'use strict';
 
@@ -65,9 +67,12 @@ define([
             this.$grid = this.element.find('.bte-palette-grid');
             this.$badgesContainer = this.element.find('.bte-palette-badges');
             
-            // Open by default
-            this.$header.addClass('active');
-            this.$content.addClass('active').show();
+            // Restore open/closed state from storage (default: open)
+            var storedOpen = StorageHelper.getItem('palette_open');
+            if (storedOpen !== 'false') {
+                this.$header.addClass('active');
+                this.$content.addClass('active').show();
+            }
 
             // Render palettes
             this._renderPalettes();
@@ -218,7 +223,8 @@ define([
                     self.$header.addClass('active');
                     self.$content.addClass('active').slideDown(200);
                 }
-                
+
+                StorageHelper.setItem('palette_open', isActive ? 'false' : 'true');
                 Logger.debug('palette-section', 'Accordion toggled', {open: !isActive});
             });
 

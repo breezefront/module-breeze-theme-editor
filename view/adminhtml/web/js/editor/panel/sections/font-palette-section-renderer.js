@@ -5,8 +5,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, widget, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper'
+], function ($, widget, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer, Logger, StorageHelper) {
     'use strict';
 
     var log = Logger.for('panel/font-palette-section');
@@ -104,9 +105,12 @@ define([
             this.$content         = this.element.find('.bte-font-palette-content');
             this.$badgesContainer = this.element.find('.bte-font-palette-badges');
 
-            // Open by default
-            this.$header.addClass('active');
-            this.$content.addClass('active').show();
+            // Restore open/closed state from storage (default: open)
+            var storedOpen = StorageHelper.getItem('font_palette_open');
+            if (storedOpen !== 'false') {
+                this.$header.addClass('active');
+                this.$content.addClass('active').show();
+            }
 
             // Show initial badges (Modified N for customised roles)
             this._updateHeaderBadges();
@@ -241,6 +245,8 @@ define([
                     self.$header.addClass('active');
                     self.$content.addClass('active').slideDown(200);
                 }
+
+                StorageHelper.setItem('font_palette_open', isOpen ? 'false' : 'true');
             });
 
             // ── Reset button: discard all dirty role changes ─────────────────

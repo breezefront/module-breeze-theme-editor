@@ -573,10 +573,10 @@ define([
             // Disable fields if in read-only mode (PUBLISHED or PUBLICATION)
             this._updateFieldsEditability();
             
-            // Initialize color palettes (always visible, before presets)
+            // Initialize color palettes (open/closed state persisted in storage)
             this._initPaletteSection();
 
-            // Initialize font palettes (always visible, after color palettes)
+            // Initialize font palettes (open/closed state persisted in storage)
             this._initFontPaletteSection();
             
             // Initialize preset selector
