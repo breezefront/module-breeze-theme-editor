@@ -18,15 +18,15 @@ resolution, and utilities have no tests at all.
 
 ### High risk (complex logic, mutations, no tests)
 
-| Class | Why risky |
-|---|---|
-| `Model/Service/PublishService.php` | Orchestrates publish/rollback — most critical mutation path |
-| `Model/Service/CssGenerator.php` | Complex CSS output logic; 17 existing tests but selector/palette combinations may be incomplete |
-| `Model/Service/ValidationService.php` | Input validation — no test means invalid inputs may silently pass |
-| `Model/Resolver/Mutation/SaveValues.php` | Bulk save — common operation, no test |
-| `Model/Resolver/Mutation/Publish.php` | Most visible user action, no test |
-| `Model/Resolver/Mutation/Rollback.php` | Destructive operation, no test |
-| `ViewModel/AdminToolbar.php` | 515 lines, complex config assembly, no test |
+| Class | Why risky | Status |
+|---|---|---|
+| `Model/Service/PublishService.php` | Orchestrates publish/rollback — most critical mutation path | ✅ Covered (`PublishServiceTest.php`, 10 tests) |
+| `Model/Service/CssGenerator.php` | Complex CSS output logic; 17 existing tests but selector/palette combinations may be incomplete | ✅ Covered (`CssGeneratorTest.php`, 36 tests) |
+| `Model/Service/ValidationService.php` | Input validation — no test means invalid inputs may silently pass | ✅ Covered (`ValidationServiceTest.php`, 16 tests) |
+| `Model/Resolver/Mutation/SaveValues.php` | Bulk save — common operation, no test | ✅ Covered (`SaveValuesTest.php`, 8 tests) |
+| `Model/Resolver/Mutation/Publish.php` | Most visible user action, no test | ✅ Covered (`PublishTest.php`, 10 tests) |
+| `Model/Resolver/Mutation/Rollback.php` | Destructive operation, no test | ✅ Covered (`RollbackTest.php`, 8 tests) |
+| `ViewModel/AdminToolbar.php` | 515 lines, complex config assembly, no test | ⚠️ Partially deferred — most methods are thin delegation; only `getCurrentPageId()`, `getScopeSelectorData()`, `getThemeId()` have real branching logic worth testing |
 
 ### Medium risk
 
