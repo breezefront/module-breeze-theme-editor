@@ -140,16 +140,6 @@ define([
             log.info('Device switcher initialized');
         }
         
-        // TODO: Status indicator removed (duplicate of publication selector)
-        // This space reserved for future Highlight Toggle button
-        // if ($('#bte-status').length && config.components && config.components.statusIndicator) {
-        //     $('#bte-status').breezeStatusIndicator({
-        //         currentStatus: config.components.statusIndicator.currentStatus || 'DRAFT',
-        //         draftChangesCount: config.components.statusIndicator.draftChangesCount || 0
-        //     });
-        //     console.log('✅ Status indicator initialized');
-        // }
-        
         // Initialize publication selector widget
         if ($('#bte-publication-selector').length) {
             $('#bte-publication-selector').breezePublicationSelector({
@@ -347,12 +337,6 @@ define([
         function _bindGlobalEvents(config) {
             var iframeSelector = config.iframeSelector || '#bte-iframe';
             var iframeId = iframeSelector.replace('#', '');
-            
-            // Note: bte:saved event disabled - no Settings Editor yet (Phase 3B)
-            // $(document).on('bte:saved', function(e, data) {
-            //     console.log('🔄 Refreshing preview after save...');
-            //     cssManager.refresh();
-            // });
             
             // Refresh CSS after status change (handled by publication-selector + css-manager)
             // This event is informational only - css-manager already switched CSS
