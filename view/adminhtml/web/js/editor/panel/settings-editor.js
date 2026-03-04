@@ -424,6 +424,15 @@ define([
                     // Update themeId from resolved metadata (important after store switch)
                     if (config.metadata && config.metadata.themeId) {
                         self.themeId = config.metadata.themeId;
+                        // Re-initialize storage with the resolved themeId so that
+                        // open-sections state is saved/restored under the correct
+                        // scoped key (bte_{storeId}_{themeId}_open_sections).
+                        // Without this, a store-switch or an initial load where PHP
+                        // returned themeId=0 would cause saves to go to the unscoped
+                        // key "bte_open_sections", while the next F5 (which gets the
+                        // real themeId from PHP) would read from the scoped key and
+                        // find nothing — losing the accordion state.
+                        StorageHelper.init(self.storeId, self.themeId);
                         log.info('themeId resolved from metadata: ' + self.themeId);
                     }
                     self.config = config; // Store config for palette initialization
