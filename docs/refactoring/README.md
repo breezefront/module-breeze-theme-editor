@@ -6,37 +6,43 @@
 
 ## 📚 Категорії
 
-### 🔧 CSS Manager
-📂 [css-manager/](css-manager/)
+### ✅ CSS Manager
+📂 ~~css-manager/~~ (видалено — завершено)
 
-**Статус:** 🟡 Готово до виконання  
-**Час:** 90-120 хвилин
+**Статус:** ✅ Завершено (17.02.2026)  
 
-**Проблема:** Admin CSS Manager використовує інші ID ніж frontend версія
-- Iframe: `preview-frame` → `bte-iframe`
-- Style tags: різні схеми іменування
-
-**Документація:**
-- [plan.md](css-manager/plan.md) - Детальний план з кодом
+**Що зроблено:**
+- ✅ Консистентні ID: `bte-iframe`, `bte-theme-css-variables`, `bte-theme-css-variables-draft`
+- ✅ Dynamic draft CSS switching з retry логікою
+- ✅ Live preview з recreate після iframe navigation
 
 ---
 
 ### 🧪 JS Testing
 📂 [js-testing/](js-testing/)
 
-**Статус:** ✅ Infrastructure готово, 📋 Component tests потрібні
+**Статус:** ✅ 24 тест-суіти готово (387/387 PHP + 126/126 JS)
 
 **Прогрес:**
 - ✅ Phase 1: Infrastructure (test-framework.js, test-runner.js, mock-helper.js)
-- ✅ Phase 2: First test (admin-auth-manager-test.js)
-- 📋 Phase 3: Component tests (~80 files)
-- 📋 Phase 4: Integration tests
+- ✅ Phase 2: First tests (admin-auth-manager-test.js + 23 інших)
+- ✅ Phase 3: Component tests (panel, navigation, palette, css-preview, field-renderers...)
+- 📋 Phase 4: Integration tests (опціонально)
 
 **Документація:**
-- [README.md](js-testing/README.md) - Огляд проекту
-- [migration-guide.md](js-testing/migration-guide.md) - Як мігрувати тести з frontend
-- [implementation-summary.md](js-testing/implementation-summary.md) - Що вже зроблено
-- [next-steps.md](js-testing/next-steps.md) - Наступні кроки
+- [README.md](js-testing/README.md) - Огляд проекту та test inventory
+
+---
+
+### ✅ Navigation Panel Integration
+📂 [navigation-panel-integration/](navigation-panel-integration/)
+
+**Статус:** ✅ Завершено (Phase 1, 2, 3 виконано)
+
+**Що зроблено:**
+- ✅ HTML розмітка панелей в DOM
+- ✅ CSS: панель зліва, GPU transform анімація, responsive
+- ✅ JS тести: panel-positioning, navigation-widget, panel-events, panel-integration
 
 ---
 
@@ -44,29 +50,18 @@
 📂 [completed/](completed/)
 
 Завершені рефакторинги (для довідки):
-
-- [admin-toolbar-refactoring.md](completed/admin-toolbar-refactoring.md) - AdminToolbar extends frontend Toolbar (-67 lines)
-
----
-
-## 🎯 Швидкі Посилання
-
-### Готові до виконання
-- 🔧 [CSS Manager Plan](css-manager/plan.md)
-- 🧪 [JS Testing Next Steps](js-testing/next-steps.md)
-
-### Довідка
-- ✅ [Completed Projects](completed/)
+- [admin-toolbar-refactoring.md](completed/admin-toolbar-refactoring.md) — AdminToolbar standalone (-436 рядків dead code)
 
 ---
 
 ## 📊 Статистика
 
-| Проект | Статус | Файлів | Час |
-|--------|--------|--------|-----|
-| CSS Manager | 🟡 Ready | 1 | 2h |
-| JS Testing | ⚙️ In Progress | 4 | ~20h залишилось |
-| Completed | ✅ Done | 1 | - |
+| Проект | Статус | Дата |
+|--------|--------|------|
+| CSS Manager | ✅ Done | 17.02.2026 |
+| Navigation Panel Integration | ✅ Done | ~17.02.2026 |
+| JS Testing Framework | ✅ Done (24 suites) | 13-24.02.2026 |
+| Admin Frontend Alignment | ✅ Done | ~17.02.2026 |
 
 ---
 

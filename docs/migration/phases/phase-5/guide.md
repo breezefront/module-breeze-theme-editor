@@ -199,7 +199,7 @@ Sections:
 
 ## ⏱️ Time: 8-10 hours
 
-[← Phase 4](./admin-migration-phase-4.md) | [↑ Plan](./admin-migration-plan.md)
+[← Phase 4](../phase-4/README.md) | [↑ Migration Overview](../../README.md)
 
 ---
 
