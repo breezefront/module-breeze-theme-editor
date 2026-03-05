@@ -605,9 +605,14 @@ define([
                     $field.prop('checked', value === '1' || value === true);
                 } else {
                     $field.val(displayValue);
-                    // For font pickers, mirror the selected font onto the <select> itself
+                    // For font pickers, mirror the selected font onto the <select> trigger.
+                    // Use setProperty() so that CSS custom property references like
+                    // '--primary-font' are correctly applied as var(--primary-font).
                     if (fieldType === 'font_picker') {
-                        $field[0].style.fontFamily = displayValue;
+                        var fontCssValue = displayValue.startsWith('--')
+                            ? 'var(' + displayValue + ')'
+                            : displayValue;
+                        $field[0].style.setProperty('font-family', fontCssValue);
                     }
                 }
                 

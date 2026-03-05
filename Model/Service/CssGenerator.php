@@ -37,7 +37,7 @@ class CssGenerator
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $fieldMap = $this->buildFieldMap($config['sections'] ?? []);
 
-        $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config);
+        $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config, $fieldMap);
         $selectorBlocks = empty($values) ? [] : $this->buildSelectorBlocks($values, $fieldMap);
         $fontImports = $this->buildFontImports($values, $fieldMap);
 
@@ -69,7 +69,7 @@ class CssGenerator
             }
         }
 
-        $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config);
+        $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config, $fieldMap);
         $selectorBlocks = empty($values) ? [] : $this->buildSelectorBlocks($values, $fieldMap);
         $fontImports = $this->buildFontImports($values, $fieldMap);
 
@@ -578,11 +578,12 @@ class CssGenerator
      * because the Breeze base CSS only defines the HEX form; the -rgb form is absent
      * from the base stylesheet and would otherwise be undefined.
      *
-     * @param array  $values Rows from the DB (each has section_code / setting_code / value)
-     * @param array  $config Full theme configuration (with 'palettes' key)
+     * @param array  $values   Rows from the DB (each has section_code / setting_code / value)
+     * @param array  $config   Full theme configuration (with 'palettes' key)
+     * @param array  $fieldMap Field lookup map built by buildFieldMap() (used to detect field type)
      * @return array<string, string>  Map of cssVar → rawHexValue, palette entries first
      */
-    private function buildPaletteVarsToEmit(array $values, array $config): array
+    private function buildPaletteVarsToEmit(array $values, array $config, array $fieldMap): array
     {
         // Step 1: collect palette vars explicitly saved in DB
         $paletteVarsToEmit = [];
@@ -597,9 +598,12 @@ class CssGenerator
             }
         }
 
-        // Step 2: for every field that stores a palette reference (e.g. '--color-brand-amber-dark')
+        // Step 2: for every color field that stores a palette reference (e.g. '--color-brand-amber-dark')
         // ensure the referenced palette var will be emitted.  If it is not already in the
         // DB set, look up the config default and use that.
+        // Note: only color-type fields are considered here.  Font-role references such as
+        // '--primary-font' also start with '--' but are not palette color vars and must not
+        // be fed to processPaletteColor().
         $paletteDefaults = $this->extractPaletteDefaults($config);
         foreach ($values as $value) {
             if (($value['section_code'] ?? '') === '_palette') {
@@ -607,6 +611,12 @@ class CssGenerator
             }
             $rawValue = $value['value'] ?? null;
             if ($rawValue === null || !str_starts_with($rawValue, '--')) {
+                continue;
+            }
+            // Only process color-type fields; skip font_picker and all other types.
+            $key       = ($value['section_code'] ?? '') . '.' . ($value['setting_code'] ?? '');
+            $fieldType = strtolower($fieldMap[$key]['type'] ?? '');
+            if ($fieldType !== 'color') {
                 continue;
             }
             $cssVar = $rawValue; // the palette variable name stored as the field value
