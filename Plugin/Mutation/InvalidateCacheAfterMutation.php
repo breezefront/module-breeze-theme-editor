@@ -4,74 +4,58 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Plugin\Mutation;
 
 use Magento\Framework\App\CacheInterface;
+use Magento\Framework\App\Cache\TypeListInterface;
 use Psr\Log\LoggerInterface;
+use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Publish;
+use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Rollback;
 
 /**
- * Invalidate theme CSS variables cache after mutations
+ * Invalidate cache after successful mutation.
  *
- * Applies to: SaveValues, PublishDraft, Rollback mutations
- * Ensures generated CSS is refreshed after theme changes
+ * - SaveValues (draft save): invalidates block cache only
+ * - Publish / Rollback:      invalidates block cache + Full Page Cache
+ *
+ * Registered in etc/graphql/di.xml (GraphQL area, not frontend).
  */
 class InvalidateCacheAfterMutation
 {
     public function __construct(
         private CacheInterface $cache,
+        private TypeListInterface $cacheTypeList,
         private LoggerInterface $logger
     ) {}
 
-    /**
-     * Invalidate cache after successful mutation
-     *
-     * @param object $subject Mutation resolver instance
-     * @param mixed $result Mutation result
-     * @return mixed
-     */
     public function afterResolve(object $subject, $result)
     {
-        if ($this->isSuccessful($result)) {
-            $this->invalidateCache();
-
-            $this->logger->debug('BTE: CSS Variables cache invalidated', [
-                'mutation' => get_class($subject),
-                'tags' => ['bte_theme_variables']
-            ]);
+        if (!$this->isSuccessful($result)) {
+            return $result;
         }
+
+        $this->invalidateBlockCache();
+
+        if ($subject instanceof Publish || $subject instanceof Rollback) {
+            $this->invalidateFpc();
+        }
+
+        $this->logger->debug('BTE: cache invalidated', [
+            'mutation' => get_class($subject),
+        ]);
 
         return $result;
     }
 
-    /**
-     * Check if mutation was successful
-     *
-     * @param mixed $result
-     * @return bool
-     */
     private function isSuccessful($result): bool
     {
-        if (!is_array($result)) {
-            return false;
-        }
-
-        // SaveValues format:   ['success' => true]
-        if (isset($result['success'])) {
-            return (bool)$result['success'];
-        }
-
-        // PublishDraft format:  ['publishBreezeThemeEditor' => ['success' => true]]
-        if (isset($result['publishBreezeThemeEditor']['success'])) {
-            return (bool)$result['publishBreezeThemeEditor']['success'];
-        }
-
-        return false;
+        return is_array($result) && isset($result['success']) && (bool)$result['success'];
     }
 
-    /**
-     * Invalidate theme CSS variables cache
-     *
-     * @return void
-     */
-    private function invalidateCache(): void
+    private function invalidateBlockCache(): void
     {
         $this->cache->clean(['bte_theme_variables']);
+    }
+
+    private function invalidateFpc(): void
+    {
+        $this->cacheTypeList->invalidate('full_page');
     }
 }

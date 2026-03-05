@@ -6,27 +6,5 @@
     <preference for="Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider"
                 type="Swissup\BreezeThemeEditor\Model\Provider\FrontendPageUrlProvider"/>
 
-    <!-- Invalidate CSS variables cache after mutations -->
-
-    <!-- Plugin:  Invalidate cache after saving draft values -->
-    <type name="Swissup\BreezeThemeEditor\Model\Resolver\Mutation\SaveValues">
-        <plugin name="swissup_bte_invalidate_cache_after_save"
-                type="Swissup\BreezeThemeEditor\Plugin\Mutation\InvalidateCacheAfterMutation"
-                sortOrder="100"/>
-    </type>
-
-    <!-- Plugin: Invalidate cache after publishing -->
-    <type name="Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Publish">
-        <plugin name="swissup_bte_invalidate_cache_after_publish"
-                type="Swissup\BreezeThemeEditor\Plugin\Mutation\InvalidateCacheAfterMutation"
-                sortOrder="100"/>
-    </type>
-
-    <!-- Plugin: Invalidate cache after rollback -->
-    <type name="Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Rollback">
-        <plugin name="swissup_bte_invalidate_cache_after_rollback"
-                type="Swissup\BreezeThemeEditor\Plugin\Mutation\InvalidateCacheAfterMutation"
-                sortOrder="100"/>
-    </type>
 
 </config>
