@@ -9,7 +9,6 @@ use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\ImportExportService;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
-use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
 /**
@@ -22,8 +21,7 @@ class ImportSettings extends AbstractMutationResolver
     public function __construct(
         private ImportExportService $importExportService,
         private UserResolver $userResolver,
-        private ThemeResolver $themeResolver,
-        private StatusProvider $statusProvider
+        private ThemeResolver $themeResolver
     ) {}
 
     public function resolve(
@@ -44,7 +42,6 @@ class ImportSettings extends AbstractMutationResolver
             : $this->themeResolver->getThemeIdByStoreId($storeId);
 
         $statusCode = $input['status'] ?? 'DRAFT';
-        $statusId = $this->statusProvider->getStatusId($statusCode);
         $jsonData = $input['jsonData'];
         $overwriteExisting = $input['overwriteExisting'] ?? true;
 
@@ -52,7 +49,7 @@ class ImportSettings extends AbstractMutationResolver
             $result = $this->importExportService->import(
                 $themeId,
                 $storeId,
-                $statusId,
+                $statusCode,
                 $userId,
                 $jsonData,
                 $overwriteExisting

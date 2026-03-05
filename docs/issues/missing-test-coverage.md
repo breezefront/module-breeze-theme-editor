@@ -30,21 +30,21 @@ resolution, and utilities have no tests at all.
 
 ### Medium risk
 
-| Class | Notes |
-|---|---|
-| `Model/Resolver/Mutation/ApplyPreset.php` | — |
-| `Model/Resolver/Mutation/CopyFromStore.php` | — |
-| `Model/Resolver/Mutation/DiscardDraft.php` | — |
-| `Model/Resolver/Mutation/ImportSettings.php` | — |
-| `Model/Resolver/Mutation/ResetToDefaults.php` | — |
-| `Model/Resolver/Query/Compare.php` | — |
-| `Model/Resolver/Query/ConfigFromPublication.php` | — |
-| `Model/Resolver/Query/Publication.php` | — |
-| `Model/Resolver/Query/Publications.php` | — |
-| `Model/Utility/ThemeResolver.php` | Called on every request |
-| `Model/Utility/UserResolver.php` | ACL/auth logic |
-| `Model/Utility/AdminUserLoader.php` | — |
-| `Plugin/GraphQL/AclAuthorization.php` | ACL enforcement plugin |
+| Class | Notes | Status |
+|---|---|---|
+| `Model/Resolver/Mutation/ApplyPreset.php` | — | ✅ Covered (`ApplyPresetTest.php`, 5 tests) |
+| `Model/Resolver/Mutation/CopyFromStore.php` | — | ✅ Covered (`CopyFromStoreTest.php`, 5 tests) |
+| `Model/Resolver/Mutation/DiscardDraft.php` | — | ✅ Covered (`DiscardDraftTest.php`, 4 tests) |
+| `Model/Resolver/Mutation/ImportSettings.php` | Bug fixed: was passing `int` statusId instead of `string` statusCode to `ImportExportService::import()` | ✅ Covered (`ImportSettingsTest.php`, 4 tests) |
+| `Model/Resolver/Mutation/ResetToDefaults.php` | — | ✅ Covered (`ResetToDefaultsTest.php`, 5 tests) |
+| `Model/Resolver/Query/Compare.php` | — | ✅ Covered (`CompareTest.php`, 3 tests) |
+| `Model/Resolver/Query/ConfigFromPublication.php` | — | ✅ Covered (`ConfigFromPublicationTest.php`, 3 tests) |
+| `Model/Resolver/Query/Publication.php` | — | ✅ Covered (`PublicationTest.php`, 4 tests) |
+| `Model/Resolver/Query/Publications.php` | — | ✅ Covered (`PublicationsTest.php`, 5 tests) |
+| `Model/Utility/ThemeResolver.php` | Called on every request | ✅ Covered (`ThemeResolverTest.php`, 7 tests) |
+| `Model/Utility/UserResolver.php` | ACL/auth logic | ✅ Covered (`UserResolverTest.php`, 6 tests) |
+| `Model/Utility/AdminUserLoader.php` | — | ✅ Covered (`AdminUserLoaderTest.php`, 7 tests) |
+| `Plugin/GraphQL/AclAuthorization.php` | ACL enforcement plugin | ✅ Covered (`AclAuthorizationTest.php`, 4 tests) |
 
 ### Low risk (thin classes / providers)
 
