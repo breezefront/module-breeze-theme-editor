@@ -279,6 +279,15 @@ define([
                 
                 self.renderer.render(self._getState());
                 self._applyPermissions();
+
+                // Refresh publishedModifiedCount — PUBLISHED config changed after publish/rollback
+                self.metadataLoader.loadMetadata().then(function(meta) {
+                    if (meta) {
+                        self.options.publishedModifiedCount = meta.modifiedCount || 0;
+                        self.renderer.render(self._getState());
+                        self._applyPermissions();
+                    }
+                }).catch(function() { /* non-critical, ignore */ });
             });
         },
 
@@ -691,6 +700,7 @@ define([
 
         /**
          * Initiate "Publish this version" flow for a historical publication
+         */
         _rollbackTo: function(publicationId, publicationTitle) {
             if (!permissions.canRollback()) {
                 errorHandler.handle({
