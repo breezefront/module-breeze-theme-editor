@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MAGENTO_ROOT="$(cd "${SCRIPT_DIR}/../../../../.." && pwd)"
+
+fix_hosts() {
+    (cd "$MAGENTO_ROOT" && bin/docker-compose exec -T --user root phpfpm bash -c \
+        "grep -q 'magento248.local' /etc/hosts || echo '172.19.0.9 magento248.local' >> /etc/hosts
+         grep -q '127.0.0.1 blackfire' /etc/hosts || echo '127.0.0.1 blackfire' >> /etc/hosts")
+}
+
+run_unit() {
+    (cd "$MAGENTO_ROOT" && bin/clinotty bash -c \
+        "cd vendor/swissup/module-breeze-theme-editor && ../../bin/phpunit -c phpunit.xml.dist")
+}
+
+run_graphql() {
+    (cd "$MAGENTO_ROOT" && bin/clinotty bash -c \
+        "cd dev/tests/api-functional && php ../../../vendor/bin/phpunit \
+         -c phpunit_graphql.xml \
+         ../../../vendor/swissup/module-breeze-theme-editor/Test/GraphQl/ThemeEditorWorkflowTest.php \
+         --no-extensions --display-skipped 2>&1")
+}
+
+case "${1:-all}" in
+    unit)    run_unit ;;
+    graphql) fix_hosts; run_graphql ;;
+    all)     fix_hosts; run_unit; run_graphql ;;
+    *)       echo "Usage: $(basename "$0") [unit|graphql|all]"; exit 1 ;;
+esac
