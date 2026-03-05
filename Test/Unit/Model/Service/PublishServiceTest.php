@@ -268,7 +268,43 @@ class PublishServiceTest extends TestCase
     }
 
     /**
-     * Test 6: Publish with empty draft values handles gracefully
+     * Test 6: Published values must be saved with user_id=0, not the admin's userId.
+     * Saving with $userId breaks the FK constraint and causes cascade-delete when admin is removed.
+     */
+    public function testPublishSavesPublishedValuesWithUserIdZero(): void
+    {
+        $userId = 5; // admin who clicked Publish
+
+        $this->compareProviderMock->method('compare')->willReturn([
+            'hasChanges'   => true,
+            'changesCount' => 1,
+            'changes'      => [['sectionCode' => 'colors', 'fieldCode' => 'base-color',
+                                'publishedValue' => null, 'draftValue' => '#4FC13C']],
+        ]);
+        $this->statusProviderMock->method('getStatusId')
+            ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
+        $this->valueServiceMock->method('getValuesByTheme')
+            ->willReturn([['section_code' => 'colors', 'setting_code' => 'base-color', 'value' => '#4FC13C']]);
+
+        $publicationMock = $this->createMock(Publication::class);
+        $publicationMock->method('getPublicationId')->willReturn(100);
+        $this->publicationFactoryMock->method('create')->willReturn($publicationMock);
+
+        $changelogMock = $this->createMock(Changelog::class);
+        $this->changelogFactoryMock->method('create')->willReturn($changelogMock);
+
+        $valueMock = $this->createMock(Value::class);
+        $valueMock->expects($this->once())
+            ->method('setUserId')
+            ->with(0); // must be 0 (global/published), NOT $userId (5)
+
+        $this->valueRepositoryMock->method('create')->willReturn($valueMock);
+
+        $this->publishService->publish(1, 1, $userId, 'Test');
+    }
+
+    /**
+     * Test 7: Publish with empty draft values handles gracefully
      */
     public function testPublishWithEmptyDraftValues(): void
     {
@@ -499,5 +535,49 @@ class PublishServiceTest extends TestCase
 
         $result = $this->publishService->rollback(50, 5, 'Rollback');
         $this->assertEquals(0, $result['changesCount']);
+    }
+
+    /**
+     * Test 10: Rollback published values must be saved with user_id=0, not the admin's userId.
+     */
+    public function testRollbackSavesPublishedValuesWithUserIdZero(): void
+    {
+        $userId = 5; // admin who clicked Rollback
+
+        $oldPub = $this->createMock(Publication::class);
+        $oldPub->method('getThemeId')->willReturn(1);
+        $oldPub->method('getStoreId')->willReturn(1);
+        $this->publicationRepositoryMock->method('getById')->willReturn($oldPub);
+
+        $searchCriteria = $this->createMock(SearchCriteria::class);
+        $this->searchCriteriaBuilderMock->method('addFilter')->willReturnSelf();
+        $this->searchCriteriaBuilderMock->method('create')->willReturn($searchCriteria);
+
+        $change = $this->createMock(Changelog::class);
+        $change->method('getSectionCode')->willReturn('colors');
+        $change->method('getSettingCode')->willReturn('base-color');
+        $change->method('getNewValue')->willReturn('#4FC13C');
+
+        $results = $this->createMock(ChangelogSearchResultsInterface::class);
+        $results->method('getItems')->willReturn([$change]);
+        $this->changelogRepositoryMock->method('getList')->willReturn($results);
+
+        $newPub = $this->createMock(Publication::class);
+        $newPub->method('getPublicationId')->willReturn(101);
+        $this->publicationFactoryMock->method('create')->willReturn($newPub);
+
+        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
+
+        $valueMock = $this->createMock(Value::class);
+        $valueMock->expects($this->once())
+            ->method('setUserId')
+            ->with(0); // must be 0 (global/published), NOT $userId (5)
+
+        $this->valueRepositoryMock->method('create')->willReturn($valueMock);
+
+        $changelogMock = $this->createMock(Changelog::class);
+        $this->changelogFactoryMock->method('create')->willReturn($changelogMock);
+
+        $this->publishService->rollback(50, $userId, 'Rollback');
     }
 }
