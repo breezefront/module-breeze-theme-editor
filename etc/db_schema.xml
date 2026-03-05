@@ -58,7 +58,7 @@
         </index>
         <constraint xsi:type="foreign" referenceId="FK_VALUE_STATUS" table="breeze_theme_editor_status" column="status_id" referenceTable="breeze_theme_editor_status" referenceColumn="status_id" onDelete="CASCADE"/>
         <constraint xsi:type="foreign" referenceId="FK_VALUE_STORE" table="store" column="store_id" referenceTable="store" referenceColumn="store_id" onDelete="CASCADE"/>
-        <constraint xsi:type="foreign" referenceId="FK_VALUE_USER" table="admin_user" column="user_id" referenceTable="admin_user" referenceColumn="user_id" onDelete="CASCADE"/>
+        <!-- user_id=0 means "published/global" — no FK to admin_user since 0 is not a valid admin user ID -->
     </table>
 
     <!-- 3. Publications Table -->

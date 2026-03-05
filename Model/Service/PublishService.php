@@ -71,7 +71,7 @@ class PublishService
             $model->setSectionCode($val['section_code']);
             $model->setSettingCode($val['setting_code']);
             $model->setValue($val['value']);
-            $model->setUserId($userId);
+            $model->setUserId(0); // 0 = published/global, not tied to a specific admin user
             $models[] = $model;
         }
         if ($models) {
@@ -148,7 +148,7 @@ class PublishService
             $model->setSectionCode($change->getSectionCode());
             $model->setSettingCode($change->getSettingCode());
             $model->setValue($change->getNewValue()); // Rollback restores newValue from the old publication
-            $model->setUserId($userId);
+            $model->setUserId(0); // 0 = published/global, not tied to a specific admin user
             $models[] = $model;
         }
         if ($models) {
