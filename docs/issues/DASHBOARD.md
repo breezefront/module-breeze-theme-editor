@@ -33,7 +33,7 @@
 | # | Task | Priority | Status |
 |---|------|----------|--------|
 | [006](006-light-design-side-columns.md) | Light design for side columns (Figma) | High | **Pending** |
-| [007](007-config-groups-closed-by-default.md) | All config groups closed by default | Medium | **Pending** |
+| [007](007-config-groups-closed-by-default.md) | All config groups closed by default | Medium | **Done** |
 | [008](008-icons-for-config-sections.md) | Add icons to config sections | Medium | **Pending** |
 | [009](009-delete-publication-versions.md) | Delete button for saved publication versions | Medium | **Pending** |
 
@@ -50,12 +50,11 @@ Figma: https://www.figma.com/design/xpUrMtVCZEMWwarMKjlO8K/Breeze-Theme-Editor?n
 
 ---
 
-### 007 · Config groups closed by default
-All accordion sections in the Theme Settings panel should be collapsed on first
-load. Subsequent visits restore the last open/closed state from localStorage.
-
-**Blockers:** none  
-**Notes:** Palette and Font Palette sections already persist state (`b500632`). Use the same pattern.
+### ~~007 · Config groups closed by default~~
+Removed two fallback blocks in `settings-editor.js` that forced the first
+section open when localStorage was empty or saved codes didn't match.
+LocalStorage persistence was already in place; all sections are now closed
+by default on first visit.
 
 ---
 

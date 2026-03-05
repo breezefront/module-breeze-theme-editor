@@ -546,26 +546,17 @@ define([
                 this.$searchClear.hide();
             }
 
-            // Restore previously open sections or open first by default
+            // Restore previously open sections; all closed by default on first visit
             var saved = StorageHelper.getOpenSections();
             if (saved && saved.length) {
                 var self = this;
-                var matched = false;
                 saved.forEach(function(code) {
                     var $h = self.$sectionsContainer.find('.bte-accordion-header[data-section="' + code + '"]');
                     if ($h.length) {
                         $h.addClass('active');
                         self.$sectionsContainer.find('.bte-accordion-content[data-section="' + code + '"]').addClass('active').show();
-                        matched = true;
                     }
                 });
-                if (!matched) {
-                    this.$sectionsContainer.find('.bte-accordion-header').first().addClass('active');
-                    this.$sectionsContainer.find('.bte-accordion-content').first().addClass('active').show();
-                }
-            } else {
-                this.$sectionsContainer.find('.bte-accordion-header').first().addClass('active');
-                this.$sectionsContainer.find('.bte-accordion-content').first().addClass('active').show();
             }
 
             log.info('Rendered ' + sections.length + ' sections');

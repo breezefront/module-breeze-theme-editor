@@ -3,7 +3,7 @@
 **Priority:** Medium  
 **Area:** `view/adminhtml/web/js/editor/panel/`  
 **Type:** UI Task  
-**Status:** Pending
+**Status:** Done
 
 ---
 
@@ -30,8 +30,9 @@ in the main settings panel — these should default to closed on first visit.
 
 ## Current Behaviour
 
-Config groups in the settings panel always render expanded (`addClass('active').show()`
-called unconditionally on render).
+LocalStorage persistence was already implemented. The only remaining issue was
+the fallback that forced the first section open when localStorage was empty or
+no saved codes matched any rendered section.
 
 ---
 
@@ -69,10 +70,10 @@ $section.on('click', '.section-title', function () {
 
 ## Acceptance Criteria
 
-- [ ] All config groups are collapsed when editor is opened for the first time
-- [ ] Expanding a group persists its state to localStorage
-- [ ] Returning to the editor restores the last open/closed state per group
-- [ ] Palette and Font Palette sections are not affected (already handled)
+- [x] All config groups are collapsed when editor is opened for the first time
+- [x] Expanding a group persists its state to localStorage
+- [x] Returning to the editor restores the last open/closed state per group
+- [x] Palette and Font Palette sections are not affected (already handled)
 
 ---
 
@@ -80,7 +81,7 @@ $section.on('click', '.section-title', function () {
 
 | Step | Status |
 |------|--------|
-| Identify which renderer handles config group accordions | pending |
-| Implement closed-by-default with localStorage persistence | pending |
+| Identify which renderer handles config group accordions | done |
+| Implement closed-by-default with localStorage persistence | done |
 | Test first-visit behaviour | pending |
 | Test state persistence across page reloads | pending |
