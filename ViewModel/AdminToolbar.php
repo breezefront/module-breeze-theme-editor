@@ -406,10 +406,11 @@ class AdminToolbar implements ArgumentInterface
     public function getPermissions()
     {
         return [
-            'canView'     => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_view'),
-            'canEdit'     => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_edit'),
-            'canPublish'  => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_publish'),
-            'canRollback' => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_rollback'),
+            'canView'             => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_view'),
+            'canEdit'             => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_edit'),
+            'canPublish'          => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_publish'),
+            'canRollback'         => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_rollback'),
+            'canResetPublished'   => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_reset_published'),
         ];
     }
 

@@ -19,6 +19,7 @@
                         <resource id="Swissup_BreezeThemeEditor::editor_edit" title="Edit Themes" sortOrder="20" />
                         <resource id="Swissup_BreezeThemeEditor::editor_publish" title="Publish Changes" sortOrder="30" />
                         <resource id="Swissup_BreezeThemeEditor::editor_rollback" title="Rollback Changes" sortOrder="40" />
+                        <resource id="Swissup_BreezeThemeEditor::editor_reset_published" title="Reset Published to Defaults" sortOrder="50" />
                     </resource>
                 </resource>
             </resource>

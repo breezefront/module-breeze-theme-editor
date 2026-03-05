@@ -35,11 +35,13 @@ define([
             var html = this.template({
                 status: data.status,
                 changesCount: data.changesCount,
+                publishedModifiedCount: data.publishedModifiedCount || 0,
                 publications: data.publications,
                 currentPublicationId: data.currentPublicationId,
                 currentPublicationTitle: data.currentPublicationTitle,
                 canPublish: data.canPublish,
                 canRollback: data.canRollback,
+                canResetPublished: data.canResetPublished,
                 // Computed values
                 displayLabel: this._getDisplayLabel(data),
                 badgeText: this._getBadgeText(data),

@@ -111,6 +111,7 @@ class Config extends AbstractConfigResolver
         $metadata['lastPublished'] = null;
         $metadata['hasUnpublishedChanges'] = false;
         $metadata['draftChangesCount'] = 0;
+        $metadata['modifiedCount'] = 0;
 
         // 10. Якщо жодна тема в ієрархії не має settings.json — повідомити явно.
         //     GraphQlNoSuchEntityException не маскується в production (на відміну від GraphQlInputException).
@@ -127,6 +128,19 @@ class Config extends AbstractConfigResolver
             $metadata['hasUnpublishedChanges'] = $comparison['hasChanges'];
             $metadata['draftChangesCount'] = $comparison['changesCount'];
         }
+
+        // 12. Порахувати modifiedCount — кількість опублікованих полів що відрізняються від defaults
+        //     Обчислюється з поточних $sections (вже змержених з saved values).
+        //     Для DRAFT-запиту metadata-loader робить окремий PUBLISHED запит.
+        $modifiedCount = 0;
+        foreach ($sections as $section) {
+            foreach (($section['fields'] ?? []) as $f) {
+                if (!empty($f['isModified'])) {
+                    $modifiedCount++;
+                }
+            }
+        }
+        $metadata['modifiedCount'] = $modifiedCount;
 
         return [
             'version' => $config['version'] ?? '1.0',

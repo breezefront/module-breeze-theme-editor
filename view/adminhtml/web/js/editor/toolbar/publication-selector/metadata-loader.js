@@ -31,10 +31,11 @@ define([
         },
 
         /**
-         * Load draft metadata (draftChangesCount) from server via GraphQL.
-         * Called on init and after published event to keep the count in sync.
+         * Load draft metadata (draftChangesCount) and published metadata (modifiedCount)
+         * in parallel via two GraphQL requests.
+         * Called on init and after published event to keep the counts in sync.
          *
-         * @returns {Promise<Object>} Promise with {draftChangesCount}
+         * @returns {Promise<Object>} Promise with {draftChangesCount, modifiedCount, lastPublished}
          */
         loadMetadata: function() {
             if (!this.storeId) {
@@ -42,22 +43,32 @@ define([
                 return $.Deferred().reject('Store ID missing').promise();
             }
 
-            log.info('Loading draft metadata...');
+            log.info('Loading draft + published metadata...');
 
-            return getConfig(
-                parseInt(this.storeId),
-                parseInt(this.themeId) || null,
-                'DRAFT'
-            ).then(function(data) {
-                var meta = data.breezeThemeEditorConfig.metadata;
+            var storeId = parseInt(this.storeId);
+            var themeId = parseInt(this.themeId) || null;
+
+            var draftRequest = getConfig(storeId, themeId, 'DRAFT');
+            var publishedRequest = getConfig(storeId, themeId, 'PUBLISHED');
+
+            return $.when(draftRequest, publishedRequest).then(function(draftData, publishedData) {
+                var draftMeta     = draftData.breezeThemeEditorConfig.metadata;
+                var publishedMeta = publishedData.breezeThemeEditorConfig.metadata;
+
                 var result = {
-                    draftChangesCount: meta.draftChangesCount || 0,
-                    lastPublished: meta.lastPublished || null
+                    draftChangesCount: draftMeta.draftChangesCount || 0,
+                    modifiedCount:     publishedMeta.modifiedCount  || 0,
+                    lastPublished:     draftMeta.lastPublished       || null
                 };
-                log.debug('Draft metadata loaded: draftChangesCount=' + result.draftChangesCount);
+
+                log.debug(
+                    'Metadata loaded: draftChangesCount=' + result.draftChangesCount +
+                    ' modifiedCount=' + result.modifiedCount
+                );
+
                 return result;
             }).catch(function(error) {
-                log.error('Failed to load draft metadata: ' + error);
+                log.error('Failed to load metadata: ' + error);
                 throw error;
             });
         },

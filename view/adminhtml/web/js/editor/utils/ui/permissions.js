@@ -21,7 +21,8 @@ define(['jquery'], function($) {
                 canView: false,
                 canEdit: false,
                 canPublish: false,
-                canRollback: false
+                canRollback: false,
+                canResetPublished: false
             };
         },
         
@@ -60,6 +61,15 @@ define(['jquery'], function($) {
         canRollback: function() {
             return this.getPermissions().canRollback;
         },
+
+        /**
+         * Check if user can reset published customizations to theme defaults
+         * 
+         * @returns {boolean}
+         */
+        canResetPublished: function() {
+            return this.getPermissions().canResetPublished;
+        },
         
         /**
          * Get permission message for tooltip
@@ -72,7 +82,8 @@ define(['jquery'], function($) {
                 'edit': 'You need "Edit Themes" permission to perform this action.',
                 'publish': 'You need "Publish Changes" permission to perform this action.',
                 'rollback': 'You need "Rollback Changes" permission to perform this action.',
-                'view': 'You need "View Theme Editor" permission to access this.'
+                'view': 'You need "View Theme Editor" permission to access this.',
+                'resetPublished': 'You need "Reset Published to Defaults" permission to perform this action.'
             };
             return messages[action] || 'You do not have permission for this action.';
         },

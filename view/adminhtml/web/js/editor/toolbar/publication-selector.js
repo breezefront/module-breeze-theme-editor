@@ -14,13 +14,14 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/publish',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/rollback',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-draft',
+    'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-published',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/renderer',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/metadata-loader',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, widget, $t, template, permissions, errorHandler, loading, cssManager, publishMutation, rollbackMutation, discardDraftMutation, PanelState, Toastify, StorageHelper, Renderer, MetadataLoader, Logger) {
+], function ($, widget, $t, template, permissions, errorHandler, loading, cssManager, publishMutation, rollbackMutation, discardDraftMutation, discardPublishedMutation, PanelState, Toastify, StorageHelper, Renderer, MetadataLoader, Logger) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector');
@@ -30,6 +31,7 @@ define([
             publications: [],
             currentStatus: 'DRAFT',
             changesCount: 0,
+            publishedModifiedCount: 0,
             currentPublicationId: null,
             currentPublicationTitle: null,
             storeId: null,
@@ -202,6 +204,12 @@ define([
             this.element.on('click', '[data-action="discard-draft"]', function(e) {
                 e.preventDefault();
                 self._discardDraft();
+            });
+
+            // Reset all published customizations to theme defaults
+            this.element.on('click', '[data-action="discard-published"]', function(e) {
+                e.preventDefault();
+                self._discardPublished();
             });
 
             // Publish this version (rollback to historical publication)
@@ -390,6 +398,7 @@ define([
 
                 if (resolved.metaData) {
                     self.options.changesCount = resolved.metaData.draftChangesCount;
+                    self.options.publishedModifiedCount = resolved.metaData.modifiedCount || 0;
                 }
 
                 self.renderer.render(self._getState());
@@ -622,11 +631,66 @@ define([
         },
 
         /**
-         * Initiate "Publish this version" flow for a historical publication
-         *
-         * @param {Number} publicationId
-         * @param {String} publicationTitle
+         * Reset all published customizations to theme defaults after confirmation
          */
+        _discardPublished: function() {
+            if (this.options.publishedModifiedCount === 0) {
+                return;
+            }
+
+            var message = $t(
+                'This will reset %1 customized fields to theme defaults on the live site.\n\nThis cannot be undone.'
+            ).replace('%1', this.options.publishedModifiedCount);
+
+            if (!confirm(message)) {
+                return;
+            }
+
+            this._executeDiscardPublished();
+        },
+
+        /**
+         * Execute discardBreezeThemeEditorPublished GraphQL mutation
+         */
+        _executeDiscardPublished: function() {
+            var self = this;
+            loading.show(this.element);
+
+            discardPublishedMutation(
+                parseInt(this.storeId),
+                parseInt(this.themeId)
+            ).then(function(response) {
+                if (response && response.discardBreezeThemeEditorPublished && response.discardBreezeThemeEditorPublished.success) {
+                    self.options.publishedModifiedCount = 0;
+                    self.renderer.render(self._getState());
+                    self._applyPermissions();
+
+                    Toastify.show('success', $t('Published customizations reset to defaults'));
+
+                    $(document).trigger('bte:publishedDiscarded', {
+                        storeId: self.storeId,
+                        themeId: self.themeId
+                    });
+
+                    self.renderer.closeDropdown();
+                } else {
+                    var errMsg = (response && response.discardBreezeThemeEditorPublished && response.discardBreezeThemeEditorPublished.message)
+                        ? response.discardBreezeThemeEditorPublished.message
+                        : 'Reset failed';
+                    Toastify.show('error', $t('Reset failed: %1').replace('%1', errMsg));
+                    errorHandler.handle({ message: errMsg }, 'discard-published');
+                }
+                loading.hide(self.element);
+            }).catch(function(error) {
+                var errMsg = error.message || 'Unknown error';
+                Toastify.show('error', $t('Reset failed: %1').replace('%1', errMsg));
+                errorHandler.handle({ message: errMsg }, 'discard-published');
+                loading.hide(self.element);
+            });
+        },
+
+        /**
+         * Initiate "Publish this version" flow for a historical publication
         _rollbackTo: function(publicationId, publicationTitle) {
             if (!permissions.canRollback()) {
                 errorHandler.handle({
@@ -716,6 +780,7 @@ define([
         _applyPermissions: function() {
             var $publishBtn = this.element.find('[data-action="publish"]');
             var $rollbackBtns = this.element.find('[data-action="rollback"]');
+            var $resetPublishedBtn = this.element.find('[data-action="discard-published"]');
             
             if ($publishBtn.length && !permissions.canPublish()) {
                 permissions.applyToElement($publishBtn, 'publish');
@@ -725,6 +790,10 @@ define([
                 $rollbackBtns.each(function() {
                     permissions.applyToElement($(this), 'rollback');
                 });
+            }
+
+            if ($resetPublishedBtn.length && !permissions.canResetPublished()) {
+                permissions.applyToElement($resetPublishedBtn, 'resetPublished');
             }
         },
 
@@ -739,10 +808,12 @@ define([
                 publications: this.options.publications,
                 totalPublications: this.totalPublications || 0,
                 changesCount: this.options.changesCount,
+                publishedModifiedCount: this.options.publishedModifiedCount,
                 canPublish: permissions.canPublish() && 
                            this.options.changesCount > 0 && 
                            this.options.currentStatus === 'DRAFT',
-                canRollback: permissions.canRollback()
+                canRollback: permissions.canRollback(),
+                canResetPublished: permissions.canResetPublished && permissions.canResetPublished()
             };
         },
 

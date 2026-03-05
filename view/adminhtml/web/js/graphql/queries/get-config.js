@@ -17,6 +17,7 @@ define([
                     lastPublished
                     hasUnpublishedChanges
                     draftChangesCount
+                    modifiedCount
                 }
                 sections {
                     code

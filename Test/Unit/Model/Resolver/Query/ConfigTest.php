@@ -615,6 +615,211 @@ class ConfigTest extends TestCase
     }
 
     /**
+     * Test 8: modifiedCount is 0 when no fields differ from defaults
+     *
+     * SCENARIO: PUBLISHED status, all saved values match their defaults
+     * EXPECTED: metadata.modifiedCount = 0
+     */
+    public function testModifiedCountIsZeroWhenNoFieldsDifferFromDefaults(): void
+    {
+        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturn(2);
+
+        $mockConfig = [
+            'version' => '1.0',
+            'sections' => [
+                [
+                    'id' => 'colors',
+                    'name' => 'Colors',
+                    'settings' => [
+                        [
+                            'id' => 'primary',
+                            'label' => 'Primary Color',
+                            'type' => 'color',
+                            'default' => '#0000ff'
+                        ],
+                        [
+                            'id' => 'secondary',
+                            'label' => 'Secondary Color',
+                            'type' => 'color',
+                            'default' => '#ff0000'
+                        ]
+                    ]
+                ]
+            ],
+            'presets' => []
+        ];
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')
+            ->willReturn($mockConfig);
+
+        // No saved values — every field uses its default → isModified = false
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
+
+        $this->configProviderMock->method('getAllDefaults')->willReturn([
+            'colors.primary'   => '#0000ff',
+            'colors.secondary' => '#ff0000',
+        ]);
+        $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
+        $this->paletteProviderMock->method('getPalettes')->willReturn([]);
+
+        $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
+        $result = $this->config->resolve(
+            $this->fieldMock,
+            $this->contextMock,
+            $this->infoMock,
+            null,
+            $args
+        );
+
+        $this->assertEquals(0, $result['metadata']['modifiedCount']);
+    }
+
+    /**
+     * Test 9: modifiedCount counts only fields that differ from defaults
+     *
+     * SCENARIO: PUBLISHED status; 2 of 3 fields have non-default saved values
+     * EXPECTED: metadata.modifiedCount = 2
+     */
+    public function testModifiedCountCountsOnlyFieldsThatDifferFromDefaults(): void
+    {
+        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturn(2);
+
+        $mockConfig = [
+            'version' => '1.0',
+            'sections' => [
+                [
+                    'id' => 'colors',
+                    'name' => 'Colors',
+                    'settings' => [
+                        [
+                            'id' => 'primary',
+                            'label' => 'Primary Color',
+                            'type' => 'color',
+                            'default' => '#0000ff'
+                        ],
+                        [
+                            'id' => 'secondary',
+                            'label' => 'Secondary Color',
+                            'type' => 'color',
+                            'default' => '#ff0000'
+                        ],
+                        [
+                            'id' => 'background',
+                            'label' => 'Background Color',
+                            'type' => 'color',
+                            'default' => '#ffffff'
+                        ]
+                    ]
+                ]
+            ],
+            'presets' => []
+        ];
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')
+            ->willReturn($mockConfig);
+
+        // 2 fields saved with non-default values; 1 matches default
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            ['section_code' => 'colors', 'setting_code' => 'primary',    'value' => '#111111', 'updated_at' => '2026-01-01'],
+            ['section_code' => 'colors', 'setting_code' => 'secondary',  'value' => '#222222', 'updated_at' => '2026-01-01'],
+            ['section_code' => 'colors', 'setting_code' => 'background', 'value' => '#ffffff', 'updated_at' => '2026-01-01'],
+        ]);
+
+        $this->configProviderMock->method('getAllDefaults')->willReturn([
+            'colors.primary'    => '#0000ff',
+            'colors.secondary'  => '#ff0000',
+            'colors.background' => '#ffffff',
+        ]);
+        $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
+        $this->paletteProviderMock->method('getPalettes')->willReturn([]);
+
+        $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
+        $result = $this->config->resolve(
+            $this->fieldMock,
+            $this->contextMock,
+            $this->infoMock,
+            null,
+            $args
+        );
+
+        $this->assertEquals(2, $result['metadata']['modifiedCount']);
+    }
+
+    /**
+     * Test 10: modifiedCount is also computed for DRAFT status
+     *
+     * SCENARIO: DRAFT status; 1 field has a non-default saved value
+     * EXPECTED: metadata.modifiedCount = 1 (regardless of draftChangesCount)
+     */
+    public function testModifiedCountIsAlsoComputedForDraftStatus(): void
+    {
+        $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $mockConfig = [
+            'version' => '1.0',
+            'sections' => [
+                [
+                    'id' => 'layout',
+                    'name' => 'Layout',
+                    'settings' => [
+                        [
+                            'id' => 'container_width',
+                            'label' => 'Container Width',
+                            'type' => 'text',
+                            'default' => '1280px'
+                        ],
+                        [
+                            'id' => 'sidebar_width',
+                            'label' => 'Sidebar Width',
+                            'type' => 'text',
+                            'default' => '300px'
+                        ]
+                    ]
+                ]
+            ],
+            'presets' => []
+        ];
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')
+            ->willReturn($mockConfig);
+
+        // 1 field saved with non-default value
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            ['section_code' => 'layout', 'setting_code' => 'container_width', 'value' => '1400px', 'updated_at' => '2026-01-01'],
+        ]);
+
+        $this->configProviderMock->method('getAllDefaults')->willReturn([
+            'layout.container_width' => '1280px',
+            'layout.sidebar_width'   => '300px',
+        ]);
+        $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
+        $this->paletteProviderMock->method('getPalettes')->willReturn([]);
+        $this->compareProviderMock->method('compare')->willReturn([
+            'hasChanges' => true,
+            'changesCount' => 2
+        ]);
+
+        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $result = $this->config->resolve(
+            $this->fieldMock,
+            $this->contextMock,
+            $this->infoMock,
+            null,
+            $args
+        );
+
+        $this->assertEquals(1, $result['metadata']['modifiedCount']);
+        // draftChangesCount comes from CompareProvider, not from modifiedCount
+        $this->assertEquals(2, $result['metadata']['draftChangesCount']);
+    }
+
+    /**
      * Test: Should throw GraphQlNoSuchEntityException when theme has no settings.json
      *
      * SCENARIO: Theme (and all parents) have no settings.json → sections is empty after inheritance merge
