@@ -1764,5 +1764,97 @@ class CssGeneratorTest extends TestCase
             'Monospace font should be wrapped: "FontName", monospace'
         );
     }
+
+    /**
+     * Test 37: Font role reference (--primary-font) is wrapped in var(), not quoted as a string
+     *
+     * Regression test: previously produced "--primary-font", sans-serif instead of var(--primary-font)
+     */
+    public function testFontRoleReferenceIsWrappedInVar(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value' => '--primary-font',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'      => 'base_font',
+                            'css_var' => '--base-font-family',
+                            'type'    => 'font_picker',
+                            'default' => 'Arial',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--base-font-family: var(--primary-font);',
+            $css,
+            'Font role reference must be wrapped in var(), not quoted as a string literal'
+        );
+        $this->assertStringNotContainsString(
+            '"--primary-font"',
+            $css,
+            'Font role reference must not be treated as a font name string'
+        );
+    }
+
+    /**
+     * Test 38: Font role reference (--secondary-font) for headings field is also wrapped in var()
+     */
+    public function testSecondaryFontRoleReferenceIsWrappedInVar(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'heading_font',
+                'value' => '--secondary-font',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'      => 'heading_font',
+                            'css_var' => '--headings-font-family',
+                            'type'    => 'font_picker',
+                            'default' => 'Arial',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--headings-font-family: var(--secondary-font);',
+            $css,
+            'Secondary font role reference must be wrapped in var()'
+        );
+        $this->assertStringNotContainsString(
+            '"--secondary-font"',
+            $css,
+            'Secondary font role reference must not be treated as a font name string'
+        );
+    }
 }
 

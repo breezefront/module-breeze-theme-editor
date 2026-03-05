@@ -394,6 +394,11 @@ class CssGenerator
      */
     private function formatFont(string $font): string
     {
+        // CSS-var role reference (e.g. '--primary-font') → wrap in var()
+        if (str_starts_with($font, '--')) {
+            return 'var(' . $font . ')';
+        }
+
         // Already quoted — assume properly formatted
         if (str_starts_with($font, '"') || str_starts_with($font, "'")) {
             return $font;
