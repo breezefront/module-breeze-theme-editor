@@ -77,6 +77,8 @@ define([
             if (storedOpen !== 'false') {
                 this.$header.addClass('active');
                 this.$content.addClass('active').show();
+            } else {
+                this.$content.hide();
             }
 
             // Render palettes

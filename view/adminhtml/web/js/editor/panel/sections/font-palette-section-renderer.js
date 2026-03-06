@@ -111,6 +111,8 @@ define([
             if (storedOpen !== 'false') {
                 this.$header.addClass('active');
                 this.$content.addClass('active').show();
+            } else {
+                this.$content.hide();
             }
 
             // Show initial badges (Modified N for customised roles)
