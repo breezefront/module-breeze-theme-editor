@@ -6,8 +6,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper'
-], function ($, widget, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer, Logger, StorageHelper) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry'
+], function ($, widget, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer, Logger, StorageHelper, IconRegistry) {
     'use strict';
 
     var log = Logger.for('panel/font-palette-section');
@@ -127,7 +128,7 @@ define([
             var html = '<div class="bte-font-palette-section">';
 
             html += '<div class="bte-font-palette-header">';
-            html += '<span class="bte-font-palette-title">Font Palettes</span>';
+            html += '<span class="bte-font-palette-title">' + IconRegistry.render('text-t') + 'Font Palettes</span>';
             html += '<div class="bte-font-palette-header-actions">';
             html += '<div class="bte-font-palette-badges"></div>';
             html += '<i class="bte-icon-chevron-down bte-font-palette-arrow"></i>';

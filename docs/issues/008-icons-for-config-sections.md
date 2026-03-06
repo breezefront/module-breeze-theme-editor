@@ -3,7 +3,7 @@
 **Priority:** Medium  
 **Area:** `view/adminhtml/web/js/editor/panel/`, CSS  
 **Type:** UI Task  
-**Status:** Pending
+**Status:** Done
 
 ---
 
@@ -22,60 +22,54 @@ From the chat:
 
 ## Expected Behaviour
 
-- Each section header in the settings panel shows a small SVG icon to the left
+- Each section header in the settings panel shows a small icon to the left
   of the section title
-- Icons are defined per section, either in `settings.json` or as a static map
-  by section code
-- Font Palette section in particular needs an icon (currently has none)
+- Icons are defined per section via the `icon` field in `settings.json`
+- Font Palette and Color Palette sections have default icons
 
 ---
 
-## Options
+## Implementation
 
-### Option A — Icon defined in `settings.json`
+### Approach chosen: Option A — Icon defined in `settings.json`
 
-Each section in `settings.json` can carry an optional `icon` field (SVG path
-or icon name):
+The `icon` field on a section is optional. When present, it is rendered by
+`IconRegistry.render()`. When absent, no icon is shown (no fallback).
 
-```json
-{
-  "sections": [
-    {
-      "code": "typography",
-      "label": "Typography",
-      "icon": "font",
-      ...
-    }
-  ]
-}
-```
+Icons are rendered via **Phosphor Icons** webfont
+(`@phosphor-icons/web@2.1.1`, regular weight), loaded from CDN on first use.
 
-The renderer reads `section.icon` and injects an `<svg>` or `<img>` element
-into the section header template.
+### Supported `icon` field formats
 
-### Option B — Static icon map by section code
+| Format | Example | Renders as |
+|--------|---------|------------|
+| Named Phosphor icon | `"text-t"` | `<i class="ph ph-text-t">` |
+| Raw inline SVG | `"<svg>…</svg>"` | inline SVG in `<span>` |
+| Base64 data URI | `"data:image/svg+xml;base64,…"` | decoded inline SVG |
+| Plain data URI | `"data:image/svg+xml,…"` | `<img src="…">` |
 
-A JS/CSS map from `sectionCode` to icon class or inline SVG. Simpler to
-implement but less flexible for theme developers.
+### Files changed
 
----
-
-## Files Likely Affected
-
-| File | Expected change |
-|------|----------------|
-| `view/adminhtml/web/js/editor/panel/sections/` | Update section renderer to render icon |
-| `view/adminhtml/web/css/` | Icon styles (size, alignment, colour) |
-| `settings.json` (theme config file) | Add `icon` field to sections (if Option A) |
+| File | Change |
+|------|--------|
+| `js/editor/panel/icon-registry.js` | **New** — CSS loader + render logic |
+| `js/editor/panel/settings-editor.js` | Use `IconRegistry.render(section.icon)` |
+| `js/editor/panel/sections/palette-section-renderer.js` | Prepend `palette` icon |
+| `js/editor/panel/sections/font-palette-section-renderer.js` | Prepend `text-t` icon |
+| `template/editor/panel/palette-section.html` | Remove 🎨 emoji |
+| `css/source/panels/_theme-editor-panel.less` | `.bte-section-icon` SVG/img sizing |
+| `css/source/panels/_palette-section.less` | `.bte-palette-title` flex layout |
+| `css/source/panels/_font-picker.less` | `.bte-font-palette-title` flex layout |
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] Each settings section header shows an icon
-- [ ] Font Palette section has an icon
-- [ ] Icons are aligned and sized consistently across all sections
-- [ ] Icons follow the light design (see Issue 006) colour scheme
+- [x] Each settings section header shows an icon (when `icon` is set in `settings.json`)
+- [x] Font Palette section has an icon (`ph-text-t`)
+- [x] Color Palette section has an icon (`ph-palette`)
+- [x] Icons are aligned and sized consistently across all sections
+- [x] Icons follow the toolbar colour scheme via `currentColor`
 
 ---
 
@@ -83,7 +77,8 @@ implement but less flexible for theme developers.
 
 | Step | Status |
 |------|--------|
-| Decide icon source (settings.json vs static map) | pending |
-| Add icon rendering to section header template | pending |
-| Add icons for all existing sections | pending |
-| CSS alignment and sizing | pending |
+| Decide icon source (settings.json vs static map) | done — `settings.json` (Option A) |
+| Create `icon-registry.js` with Phosphor webfont | done |
+| Add icon rendering to section header template | done |
+| Add icons for palette sections | done |
+| CSS alignment and sizing | done |

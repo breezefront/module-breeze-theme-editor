@@ -5,7 +5,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper'
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry'
 ], function (
     $,
     widget,
@@ -13,7 +14,8 @@ define([
     PaletteManager,
     BadgeRenderer,
     Logger,
-    StorageHelper
+    StorageHelper,
+    IconRegistry
 ) {
     'use strict';
 
@@ -60,6 +62,9 @@ define([
         _render: function () {
             // Insert template
             this.element.html(paletteTemplate);
+
+            // Prepend palette icon to title
+            this.element.find('.bte-palette-title').prepend(IconRegistry.render('palette'));
 
             // Cache selectors
             this.$header = this.element.find('.bte-palette-header');

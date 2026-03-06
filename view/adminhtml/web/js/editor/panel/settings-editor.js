@@ -20,7 +20,8 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-value',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-draft',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry'
 ], function (
     $,
     widget,
@@ -43,7 +44,8 @@ define([
     saveValue,
     discardDraft,
     StorageHelper,
-    Logger
+    Logger,
+    IconRegistry
 ) {
     'use strict';
 
@@ -530,7 +532,7 @@ define([
             sections.forEach(function(section) {
                 html += '<div class="bte-accordion-section">';
                 html += '<div class="bte-accordion-header" data-section="' + section.code + '">';
-                html += '<i class="bte-icon-' + (section.icon || 'settings') + '"></i>';
+                html += IconRegistry.render(section.icon);
                 html += '<span class="bte-section-label">' + section.label + '</span>';
                 html += '<i class="bte-icon-chevron-down bte-accordion-arrow"></i>';
                 html += '</div>';
