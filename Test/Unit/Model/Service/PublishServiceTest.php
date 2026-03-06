@@ -8,6 +8,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Api\SearchCriteria;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DB\Adapter\AdapterInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
@@ -34,6 +36,8 @@ class PublishServiceTest extends TestCase
     private PublicationFactory|MockObject $publicationFactoryMock;
     private ChangelogFactory|MockObject $changelogFactoryMock;
     private SearchCriteriaBuilder|MockObject $searchCriteriaBuilderMock;
+    private ResourceConnection|MockObject $resourceConnectionMock;
+    private AdapterInterface|MockObject $connectionMock;
 
     protected function setUp(): void
     {
@@ -47,6 +51,14 @@ class PublishServiceTest extends TestCase
         $this->changelogFactoryMock = $this->createMock(ChangelogFactory::class);
         $this->searchCriteriaBuilderMock = $this->createMock(SearchCriteriaBuilder::class);
 
+        $this->connectionMock = $this->createMock(AdapterInterface::class);
+        $this->connectionMock->method('beginTransaction')->willReturnSelf();
+        $this->connectionMock->method('commit')->willReturnSelf();
+        $this->connectionMock->method('rollBack')->willReturnSelf();
+
+        $this->resourceConnectionMock = $this->createMock(ResourceConnection::class);
+        $this->resourceConnectionMock->method('getConnection')->willReturn($this->connectionMock);
+
         $this->publishService = new PublishService(
             $this->valueRepositoryMock,
             $this->valueServiceMock,
@@ -56,7 +68,8 @@ class PublishServiceTest extends TestCase
             $this->changelogRepositoryMock,
             $this->publicationFactoryMock,
             $this->changelogFactoryMock,
-            $this->searchCriteriaBuilderMock
+            $this->searchCriteriaBuilderMock,
+            $this->resourceConnectionMock
         );
     }
 
@@ -95,15 +108,17 @@ class PublishServiceTest extends TestCase
                 ['PUBLISHED', 2],
             ]);
 
-        // Mock draft values
+        // Mock draft values (first call) and current published (second call)
         $draftValues = [
             ['section_code' => 'colors', 'setting_code' => 'primary', 'value' => '#ff0000'],
             ['section_code' => 'colors', 'setting_code' => 'secondary', 'value' => '#00ff00'],
         ];
 
         $this->valueServiceMock->method('getValuesByTheme')
-            ->with($themeId, $storeId, 1, $userId)
-            ->willReturn($draftValues);
+            ->willReturnMap([
+                [$themeId, $storeId, 1, $userId, $draftValues],
+                [$themeId, $storeId, 2, null, []],
+            ]);
 
         // Mock publication creation
         $publicationMock = $this->createMock(Publication::class);
@@ -131,10 +146,8 @@ class PublishServiceTest extends TestCase
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);
         $this->valueRepositoryMock->expects($this->once())->method('saveMultiple');
 
-        // Mock draft deletion
-        $this->valueServiceMock->expects($this->once())
-            ->method('deleteValues')
-            ->with($themeId, $storeId, 1, $userId);
+        // deleteValues is called twice: once for published cleanup, once for draft
+        $this->valueServiceMock->expects($this->exactly(2))->method('deleteValues');
 
         $result = $this->publishService->publish($themeId, $storeId, $userId, $title, $description);
 
@@ -234,7 +247,7 @@ class PublishServiceTest extends TestCase
     }
 
     /**
-     * Test 5: Publish deletes draft values after success
+     * Test 5: Publish deletes both published (cleanup) and draft values
      */
     public function testPublishDeletesDraftValuesAfterSuccess(): void
     {
@@ -242,6 +255,7 @@ class PublishServiceTest extends TestCase
         $storeId = 1;
         $userId = 5;
         $draftStatusId = 1;
+        $publishedStatusId = 2;
 
         $this->compareProviderMock->method('compare')->willReturn([
             'hasChanges' => true,
@@ -249,7 +263,8 @@ class PublishServiceTest extends TestCase
             'changes' => [['sectionCode' => 's', 'fieldCode' => 'f', 'publishedValue' => null, 'draftValue' => 'v']],
         ]);
 
-        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', $draftStatusId], ['PUBLISHED', 2]]);
+        $this->statusProviderMock->method('getStatusId')
+            ->willReturnMap([['DRAFT', $draftStatusId], ['PUBLISHED', $publishedStatusId]]);
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([]);
 
         $publicationMock = $this->createMock(Publication::class);
@@ -259,19 +274,38 @@ class PublishServiceTest extends TestCase
         $changelogMock = $this->createMock(Changelog::class);
         $this->changelogFactoryMock->method('create')->willReturn($changelogMock);
 
-        // Verify draft deletion is called with correct parameters
-        $this->valueServiceMock->expects($this->once())
-            ->method('deleteValues')
-            ->with($themeId, $storeId, $draftStatusId, $userId);
+        // Capture all deleteValues calls via explicit params (func_get_args() is unreliable in closures)
+        $deletedArgs = [];
+        $this->valueServiceMock->method('deleteValues')
+            ->willReturnCallback(
+                function (int $tId, int $sId, int $statusId, ?int $uId = null) use (&$deletedArgs): int {
+                    $deletedArgs[] = [$tId, $sId, $statusId, $uId];
+                    return 0;
+                }
+            );
 
         $this->publishService->publish($themeId, $storeId, $userId, 'Test');
+
+        // Published cleanup must happen (any user_id)
+        $this->assertContains(
+            [$themeId, $storeId, $publishedStatusId, null],
+            $deletedArgs,
+            'All existing published rows must be deleted before saving new snapshot'
+        );
+
+        // Draft must be deleted after publish
+        $this->assertContains(
+            [$themeId, $storeId, $draftStatusId, $userId],
+            $deletedArgs,
+            'Draft values must be deleted after successful publish'
+        );
     }
 
     /**
-     * Test 6: Published values must be saved with user_id=0, not the admin's userId.
-     * Saving with $userId breaks the FK constraint and causes cascade-delete when admin is removed.
+     * Test 6: Published values must be saved with the publishing admin's userId (not 0).
+     * Using real userId ensures the FK constraint is satisfied and the record is auditable.
      */
-    public function testPublishSavesPublishedValuesWithUserIdZero(): void
+    public function testPublishSavesPublishedValuesWithUserId(): void
     {
         $userId = 5; // admin who clicked Publish
 
@@ -284,7 +318,10 @@ class PublishServiceTest extends TestCase
         $this->statusProviderMock->method('getStatusId')
             ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
         $this->valueServiceMock->method('getValuesByTheme')
-            ->willReturn([['section_code' => 'colors', 'setting_code' => 'base-color', 'value' => '#4FC13C']]);
+            ->willReturnMap([
+                [1, 1, 1, $userId, [['section_code' => 'colors', 'setting_code' => 'base-color', 'value' => '#4FC13C']]],
+                [1, 1, 2, null, []],
+            ]);
 
         $publicationMock = $this->createMock(Publication::class);
         $publicationMock->method('getPublicationId')->willReturn(100);
@@ -296,7 +333,7 @@ class PublishServiceTest extends TestCase
         $valueMock = $this->createMock(Value::class);
         $valueMock->expects($this->once())
             ->method('setUserId')
-            ->with(0); // must be 0 (global/published), NOT $userId (5)
+            ->with($userId); // must be real userId, NOT 0
 
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);
 
@@ -336,7 +373,7 @@ class PublishServiceTest extends TestCase
     // ========================================================================
 
     /**
-     * Test 7: Successful rollback to existing publication
+     * Test 8: Successful rollback to existing publication
      */
     public function testRollbackToExistingPublication(): void
     {
@@ -388,10 +425,8 @@ class PublishServiceTest extends TestCase
         $this->statusProviderMock->method('getStatusId')
             ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
-        // Draft must be cleared before old values are applied (regression: rollback used to orphan draft)
-        $this->valueServiceMock->expects($this->once())
-            ->method('deleteValues')
-            ->with(1, 1, 1, $userId);
+        // deleteValues is called twice: draft cleanup + published cleanup
+        $this->valueServiceMock->expects($this->exactly(2))->method('deleteValues');
 
         $valueMock = $this->createMock(Value::class);
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);
@@ -409,7 +444,7 @@ class PublishServiceTest extends TestCase
     }
 
     /**
-     * Test 8: Rollback applies old values to published
+     * Test 9: Rollback applies old values to published
      */
     public function testRollbackAppliesOldValues(): void
     {
@@ -446,10 +481,10 @@ class PublishServiceTest extends TestCase
         // Create two separate value mocks to verify both values are set
         $valueMock1 = $this->createMock(Value::class);
         $valueMock1->expects($this->once())->method('setValue')->with('rollback_value_1');
-        
+
         $valueMock2 = $this->createMock(Value::class);
         $valueMock2->expects($this->once())->method('setValue')->with('rollback_value_2');
-        
+
         $this->valueRepositoryMock->method('create')
             ->willReturnOnConsecutiveCalls($valueMock1, $valueMock2);
 
@@ -460,7 +495,7 @@ class PublishServiceTest extends TestCase
     }
 
     /**
-     * Test 9: Rollback copies changelog from old publication
+     * Test 10: Rollback copies changelog from old publication
      */
     public function testRollbackCopiesChangelog(): void
     {
@@ -507,7 +542,7 @@ class PublishServiceTest extends TestCase
     }
 
     /**
-     * Test 10: Rollback with empty changelog handles gracefully
+     * Test 11: Rollback with empty changelog handles gracefully
      */
     public function testRollbackWithEmptyChangelog(): void
     {
@@ -538,9 +573,10 @@ class PublishServiceTest extends TestCase
     }
 
     /**
-     * Test 10: Rollback published values must be saved with user_id=0, not the admin's userId.
+     * Test 12: Rollback published values must be saved with the rolling-back admin's userId (not 0).
+     * Using real userId satisfies the FK constraint and makes the record auditable.
      */
-    public function testRollbackSavesPublishedValuesWithUserIdZero(): void
+    public function testRollbackSavesPublishedValuesWithUserId(): void
     {
         $userId = 5; // admin who clicked Rollback
 
@@ -571,7 +607,7 @@ class PublishServiceTest extends TestCase
         $valueMock = $this->createMock(Value::class);
         $valueMock->expects($this->once())
             ->method('setUserId')
-            ->with(0); // must be 0 (global/published), NOT $userId (5)
+            ->with($userId); // must be real userId, NOT 0
 
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);
 
@@ -579,5 +615,171 @@ class PublishServiceTest extends TestCase
         $this->changelogFactoryMock->method('create')->willReturn($changelogMock);
 
         $this->publishService->rollback(50, $userId, 'Rollback');
+    }
+
+    /**
+     * Test 13: Publish merges current published values with draft.
+     * Settings that exist in published but NOT in draft must be preserved
+     * in the new published snapshot — not silently dropped.
+     *
+     * Scenario:
+     *   Published: {colors.primary='#000', typography.font='Arial'}
+     *   Draft:     {colors.primary='#ff0000'}
+     *   Expected:  {colors.primary='#ff0000', typography.font='Arial'} ← Arial preserved
+     */
+    public function testPublishPreservesExistingPublishedValuesNotInDraft(): void
+    {
+        $themeId = 1;
+        $storeId = 1;
+        $userId = 5;
+
+        $this->compareProviderMock->method('compare')->willReturn([
+            'hasChanges'   => true,
+            'changesCount' => 1,
+            'changes'      => [['sectionCode' => 'colors', 'fieldCode' => 'primary',
+                                'publishedValue' => '#000', 'draftValue' => '#ff0000']],
+        ]);
+        $this->statusProviderMock->method('getStatusId')
+            ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
+
+        $draftValues = [
+            ['section_code' => 'colors', 'setting_code' => 'primary', 'value' => '#ff0000'],
+        ];
+        $currentPublished = [
+            ['section_code' => 'colors',     'setting_code' => 'primary', 'value' => '#000'],
+            ['section_code' => 'typography', 'setting_code' => 'font',    'value' => 'Arial'],
+        ];
+
+        $this->valueServiceMock->method('getValuesByTheme')
+            ->willReturnMap([
+                [$themeId, $storeId, 1, $userId, $draftValues],
+                [$themeId, $storeId, 2, null,    $currentPublished],
+            ]);
+
+        $publicationMock = $this->createMock(Publication::class);
+        $publicationMock->method('getPublicationId')->willReturn(100);
+        $this->publicationFactoryMock->method('create')->willReturn($publicationMock);
+
+        $changelogMock = $this->createMock(Changelog::class);
+        $this->changelogFactoryMock->method('create')->willReturn($changelogMock);
+
+        // Track all setValue() calls across all created value models
+        $savedValues = [];
+        $valueMock = $this->createMock(Value::class);
+        $valueMock->method('setValue')->willReturnCallback(function (string $v) use (&$savedValues, $valueMock) {
+            $savedValues[] = $v;
+            return $valueMock; // fluent interface: setValue() returns Value
+        });
+        $this->valueRepositoryMock->method('create')->willReturn($valueMock);
+
+        // Must save 2 models: the overridden draft value + the untouched published value
+        $this->valueRepositoryMock->expects($this->once())->method('saveMultiple');
+        $this->valueRepositoryMock->expects($this->exactly(2))->method('create');
+
+        $this->publishService->publish($themeId, $storeId, $userId, 'Test');
+
+        $this->assertContains('#ff0000', $savedValues, 'Draft value must override published');
+        $this->assertContains('Arial',   $savedValues, 'Published value not in draft must be preserved in new snapshot');
+    }
+
+    /**
+     * Test 14: Publish rolls back the DB transaction when an exception is thrown.
+     * commit() must NOT be called; rollBack() must be called; exception must propagate.
+     */
+    public function testPublishRollsBackTransactionOnException(): void
+    {
+        $this->compareProviderMock->method('compare')->willReturn([
+            'hasChanges'   => true,
+            'changesCount' => 1,
+            'changes'      => [['sectionCode' => 's', 'fieldCode' => 'f',
+                                'publishedValue' => null, 'draftValue' => 'v']],
+        ]);
+        $this->statusProviderMock->method('getStatusId')
+            ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([]);
+
+        $publicationMock = $this->createMock(Publication::class);
+        $publicationMock->method('getPublicationId')->willReturn(100);
+        $this->publicationFactoryMock->method('create')->willReturn($publicationMock);
+
+        // Simulate a DB failure inside the transaction
+        $this->publicationRepositoryMock->method('save')
+            ->willThrowException(new \RuntimeException('DB error'));
+
+        $this->connectionMock->expects($this->once())->method('beginTransaction');
+        $this->connectionMock->expects($this->never())->method('commit');
+        $this->connectionMock->expects($this->once())->method('rollBack');
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('DB error');
+
+        $this->publishService->publish(1, 1, 5, 'Test');
+    }
+
+    /**
+     * Test 15: Rollback deletes all existing published rows (any user_id) before restoring
+     * the snapshot, and also clears the current user's draft.
+     */
+    public function testRollbackDeletesAllPublishedBeforeRestoring(): void
+    {
+        $themeId = 1;
+        $storeId = 1;
+        $userId = 5;
+        $draftStatusId = 1;
+        $publishedStatusId = 2;
+
+        $oldPub = $this->createMock(Publication::class);
+        $oldPub->method('getThemeId')->willReturn($themeId);
+        $oldPub->method('getStoreId')->willReturn($storeId);
+        $this->publicationRepositoryMock->method('getById')->willReturn($oldPub);
+
+        $searchCriteria = $this->createMock(SearchCriteria::class);
+        $this->searchCriteriaBuilderMock->method('addFilter')->willReturnSelf();
+        $this->searchCriteriaBuilderMock->method('create')->willReturn($searchCriteria);
+
+        $change = $this->createMock(Changelog::class);
+        $change->method('getSectionCode')->willReturn('colors');
+        $change->method('getSettingCode')->willReturn('primary');
+        $change->method('getNewValue')->willReturn('#000');
+
+        $results = $this->createMock(ChangelogSearchResultsInterface::class);
+        $results->method('getItems')->willReturn([$change]);
+        $this->changelogRepositoryMock->method('getList')->willReturn($results);
+
+        $newPub = $this->createMock(Publication::class);
+        $newPub->method('getPublicationId')->willReturn(101);
+        $this->publicationFactoryMock->method('create')->willReturn($newPub);
+
+        $this->statusProviderMock->method('getStatusId')
+            ->willReturnMap([['DRAFT', $draftStatusId], ['PUBLISHED', $publishedStatusId]]);
+
+        $valueMock = $this->createMock(Value::class);
+        $this->valueRepositoryMock->method('create')->willReturn($valueMock);
+
+        $changelogMock = $this->createMock(Changelog::class);
+        $this->changelogFactoryMock->method('create')->willReturn($changelogMock);
+
+        // Capture all deleteValues calls via explicit params (func_get_args() is unreliable in closures)
+        $deletedArgs = [];
+        $this->valueServiceMock->method('deleteValues')
+            ->willReturnCallback(
+                function (int $tId, int $sId, int $statusId, ?int $uId = null) use (&$deletedArgs): int {
+                    $deletedArgs[] = [$tId, $sId, $statusId, $uId];
+                    return 0;
+                }
+            );
+
+        $this->publishService->rollback(50, $userId, 'Rollback');
+
+        $this->assertContains(
+            [$themeId, $storeId, $publishedStatusId, null],
+            $deletedArgs,
+            'All existing published rows (any user_id) must be deleted before restoring snapshot'
+        );
+        $this->assertContains(
+            [$themeId, $storeId, $draftStatusId, $userId],
+            $deletedArgs,
+            'Current draft must be cleared during rollback'
+        );
     }
 }

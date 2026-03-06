@@ -24,7 +24,7 @@
         <column xsi:type="int" name="theme_id" unsigned="true" nullable="false" comment="Theme ID"/>
         <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" comment="Store ID"/>
         <column xsi:type="smallint" name="status_id" unsigned="true" nullable="false" comment="Status ID"/>
-        <column xsi:type="int" name="user_id" unsigned="true" nullable="false" default="0" comment="Owner (0=published)"/>
+        <column xsi:type="int" name="user_id" unsigned="true" nullable="false" comment="Owner admin user ID"/>
         <column xsi:type="varchar" name="section_code" length="100" nullable="false" comment="Section Code"/>
         <column xsi:type="varchar" name="setting_code" length="100" nullable="false" comment="Setting Code"/>
         <column xsi:type="text" name="value" nullable="true" comment="Flexible value (JSON format)"/>
@@ -56,9 +56,9 @@
         <index referenceId="IDX_UPDATED">
             <column name="updated_at"/>
         </index>
-        <constraint xsi:type="foreign" referenceId="FK_VALUE_STATUS" table="breeze_theme_editor_status" column="status_id" referenceTable="breeze_theme_editor_status" referenceColumn="status_id" onDelete="CASCADE"/>
-        <constraint xsi:type="foreign" referenceId="FK_VALUE_STORE" table="store" column="store_id" referenceTable="store" referenceColumn="store_id" onDelete="CASCADE"/>
-        <!-- user_id=0 means "published/global" — no FK to admin_user since 0 is not a valid admin user ID -->
+        <constraint xsi:type="foreign" referenceId="FK_VALUE_STATUS" table="breeze_theme_editor_value" column="status_id" referenceTable="breeze_theme_editor_status" referenceColumn="status_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="FK_VALUE_STORE" table="breeze_theme_editor_value" column="store_id" referenceTable="store" referenceColumn="store_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="FK_VALUE_USER" table="breeze_theme_editor_value" column="user_id" referenceTable="admin_user" referenceColumn="user_id" onDelete="NO ACTION"/>
     </table>
 
     <!-- 3. Publications Table -->

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Service;
 
+use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\LocalizedException;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
@@ -24,7 +25,8 @@ class PublishService
         private ChangelogRepositoryInterface $changelogRepository,
         private PublicationFactory $publicationFactory,
         private ChangelogFactory $changelogFactory,
-        private SearchCriteriaBuilder $searchCriteriaBuilder
+        private SearchCriteriaBuilder $searchCriteriaBuilder,
+        private ResourceConnection $resourceConnection
     ) {}
 
     public function publish(
@@ -56,35 +58,63 @@ class PublishService
         $publication->setIsRollback(false);
         $publication->setChangesCount($comparison['changesCount']);
 
-        $this->publicationRepository->save($publication);
+        $connection = $this->resourceConnection->getConnection();
+        $connection->beginTransaction();
+        try {
+            $this->publicationRepository->save($publication);
 
-        // Save changelog
-        $this->saveChangelog($publication->getPublicationId(), $comparison['changes']);
+            // Save changelog
+            $this->saveChangelog($publication->getPublicationId(), $comparison['changes']);
 
-        // Copy draft values to published status: draftValues → ValueInterface models → saveMultiple
-        $models = [];
-        foreach ($draftValues as $val) {
-            $model = $this->valueRepository->create();
-            $model->setThemeId($themeId);
-            $model->setStoreId($storeId);
-            $model->setStatusId($publishedStatusId);
-            $model->setSectionCode($val['section_code']);
-            $model->setSettingCode($val['setting_code']);
-            $model->setValue($val['value']);
-            $model->setUserId(0); // 0 = published/global, not tied to a specific admin user
-            $models[] = $model;
+            // Build merged published snapshot: current published values overridden by draft.
+            // This correctly handles legacy rows (user_id != 0) that were saved by old code.
+            // Without this merge+replace, insertOnDuplicate would INSERT new rows alongside
+            // the stale ones (different unique key due to user_id), leaving corrupted duplicates.
+            $currentPublished = $this->valueService->getValuesByTheme(
+                $themeId,
+                $storeId,
+                $publishedStatusId,
+                null // no user_id filter — load ALL published rows regardless of owner
+            );
+
+            $mergedMap = [];
+            foreach ($currentPublished as $val) {
+                $key = $val['section_code'] . '.' . $val['setting_code'];
+                $mergedMap[$key] = $val;
+            }
+            foreach ($draftValues as $val) {
+                $key = $val['section_code'] . '.' . $val['setting_code'];
+                $mergedMap[$key] = $val; // draft overrides published
+            }
+
+            // Delete ALL existing published rows (removes legacy rows of any user_id)
+            $this->valueService->deleteValues($themeId, $storeId, $publishedStatusId, null);
+
+            // Save clean merged snapshot with the publishing admin's user_id
+            $models = [];
+            foreach ($mergedMap as $val) {
+                $model = $this->valueRepository->create();
+                $model->setThemeId($themeId);
+                $model->setStoreId($storeId);
+                $model->setStatusId($publishedStatusId);
+                $model->setSectionCode($val['section_code']);
+                $model->setSettingCode($val['setting_code']);
+                $model->setValue($val['value']);
+                $model->setUserId($userId);
+                $models[] = $model;
+            }
+            if ($models) {
+                $this->valueRepository->saveMultiple($models);
+            }
+
+            // Delete draft values
+            $this->valueService->deleteValues($themeId, $storeId, $draftStatusId, $userId);
+
+            $connection->commit();
+        } catch (\Exception $e) {
+            $connection->rollBack();
+            throw $e;
         }
-        if ($models) {
-            $this->valueRepository->saveMultiple($models);
-        }
-
-        // Delete draft values via ValueService
-        $this->valueService->deleteValues(
-            $themeId,
-            $storeId,
-            $draftStatusId,
-            $userId
-        );
 
         return [
             'publicationId' => $publication->getPublicationId(),
@@ -129,34 +159,46 @@ class PublishService
         $publication->setRollbackFrom($publicationId);
         $publication->setChangesCount(count($oldChanges));
 
-        $this->publicationRepository->save($publication);
-
-        // Clear current draft before restoring old values
-        // (mirrors publish() to prevent draft from silently surviving rollback)
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
-        $this->valueService->deleteValues($themeId, $storeId, $draftStatusId, $userId);
-
-        // Restore old values as published: old changelog entries → ValueInterface[]
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
-        $models = [];
-        foreach ($oldChanges as $change) {
-            $model = $this->valueRepository->create();
-            $model->setThemeId($themeId);
-            $model->setStoreId($storeId);
-            $model->setStatusId($publishedStatusId);
-            $model->setSectionCode($change->getSectionCode());
-            $model->setSettingCode($change->getSettingCode());
-            $model->setValue($change->getNewValue()); // Rollback restores newValue from the old publication
-            $model->setUserId(0); // 0 = published/global, not tied to a specific admin user
-            $models[] = $model;
-        }
-        if ($models) {
-            $this->valueRepository->saveMultiple($models);
-        }
+        $connection = $this->resourceConnection->getConnection();
+        $connection->beginTransaction();
+        try {
+            $this->publicationRepository->save($publication);
 
-        // Save changelog for rollback
-        $this->saveChangelogFromOld($publication->getPublicationId(), $oldChanges);
+            // Save changelog for rollback
+            $this->saveChangelogFromOld($publication->getPublicationId(), $oldChanges);
+
+            // Clear current draft before restoring old values
+            // (prevents draft from silently surviving rollback)
+            $this->valueService->deleteValues($themeId, $storeId, $draftStatusId, $userId);
+
+            // Delete ALL existing published rows (removes legacy rows of any user_id)
+            $this->valueService->deleteValues($themeId, $storeId, $publishedStatusId, null);
+
+            // Restore snapshot from changelog with the rolling-back admin's user_id
+            $models = [];
+            foreach ($oldChanges as $change) {
+                $model = $this->valueRepository->create();
+                $model->setThemeId($themeId);
+                $model->setStoreId($storeId);
+                $model->setStatusId($publishedStatusId);
+                $model->setSectionCode($change->getSectionCode());
+                $model->setSettingCode($change->getSettingCode());
+                $model->setValue($change->getNewValue());
+                $model->setUserId($userId);
+                $models[] = $model;
+            }
+            if ($models) {
+                $this->valueRepository->saveMultiple($models);
+            }
+
+            $connection->commit();
+        } catch (\Exception $e) {
+            $connection->rollBack();
+            throw $e;
+        }
 
         return [
             'publicationId' => $publication->getPublicationId(),

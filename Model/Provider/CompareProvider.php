@@ -41,13 +41,13 @@ class CompareProvider
         // Створити map для швидкого пошуку
         $publishedMap = [];
         foreach ($published as $val) {
-            $key = $val['section_code'] .   '.' . $val['setting_code'];
+            $key = $val['section_code'] . '.' . $val['setting_code'];
             $publishedMap[$key] = $val['value'];
         }
 
         $draftMap = [];
         foreach ($draft as $val) {
-            $key = $val['section_code'] . '.' .  $val['setting_code'];
+            $key = $val['section_code'] . '.' . $val['setting_code'];
             $draftMap[$key] = $val['value'];
         }
 
