@@ -90,6 +90,11 @@ class AdminToolbar implements ArgumentInterface
     private $themeResolver;
 
     /**
+     * @var \Swissup\BreezeThemeEditor\Model\Session\BackendSession
+     */
+    private $backendSession;
+
+    /**
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param AuthSession $authSession
@@ -103,6 +108,7 @@ class AdminToolbar implements ArgumentInterface
      * @param \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator $tokenGenerator
      * @param \Magento\Framework\AuthorizationInterface $authorization
      * @param \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver
+     * @param \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession
      */
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
@@ -117,7 +123,8 @@ class AdminToolbar implements ArgumentInterface
         SearchCriteriaBuilder $searchCriteriaBuilder,
         \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator $tokenGenerator,
         \Magento\Framework\AuthorizationInterface $authorization,
-        \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver
+        \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver,
+        \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession
     ) {
         $this->request = $request;
         $this->urlBuilder = $urlBuilder;
@@ -132,6 +139,7 @@ class AdminToolbar implements ArgumentInterface
         $this->tokenGenerator = $tokenGenerator;
         $this->authorization = $authorization;
         $this->themeResolver = $themeResolver;
+        $this->backendSession = $backendSession;
     }
 
     /**
@@ -175,12 +183,40 @@ class AdminToolbar implements ArgumentInterface
     /**
      * Get current store ID
      *
+     * Priority:
+     * 1. URL parameter ?store=X (highest)
+     * 2. Cookie 'bte_last_store_id' via BackendSession (last used store)
+     * 3. Current store from StoreManager (fallback)
+     *
+     * Mirrors the same priority chain as AbstractEditor::getStoreId().
+     *
      * @return int
      */
     public function getStoreId()
     {
+        // Priority 1: URL parameter ?store=X
+        $storeId = (int) $this->request->getParam('store', 0);
+        if ($storeId > 0) {
+            try {
+                return (int) $this->storeManager->getStore($storeId)->getId();
+            } catch (\Exception $e) {
+                // store not found, fall through
+            }
+        }
+
+        // Priority 2: cookie 'bte_last_store_id' (written by JS scope-selector)
+        $lastStoreId = $this->backendSession->getStoreId();
+        if ($lastStoreId) {
+            try {
+                return (int) $this->storeManager->getStore($lastStoreId)->getId();
+            } catch (\Exception $e) {
+                // store not found, fall through
+            }
+        }
+
+        // Priority 3: fallback
         try {
-            return (int)$this->storeManager->getStore()->getId();
+            return (int) $this->storeManager->getStore()->getId();
         } catch (\Exception $e) {
             return 1;
         }

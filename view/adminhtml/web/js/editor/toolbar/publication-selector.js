@@ -263,6 +263,38 @@ define([
                 }
             });
             
+            // Store changed → reload metadata and publications for new store
+            $(document).on('storeChanged', function(e, storeId) {
+                log.info('Store changed to ' + storeId + ', reloading publication selector data...');
+
+                self.storeId = storeId;
+                self.themeId = null;
+
+                // Update metadataLoader with new store context
+                self.metadataLoader.storeId = storeId;
+                self.metadataLoader.themeId = null;
+
+                // Re-init StorageHelper for the new store to restore persisted state
+                StorageHelper.init(storeId, null);
+
+                // Reset options to a clean state for the new store
+                self.options.changesCount = 0;
+                self.options.publishedModifiedCount = 0;
+                self.options.publications = [];
+                self.options.currentPublicationId = null;
+                self.options.currentPublicationTitle = null;
+                self.options.publicationsPage = 1;
+
+                // Restore status from localStorage for the new store
+                self.options.currentStatus = StorageHelper.getCurrentStatus() || 'DRAFT';
+
+                self.renderer.render(self._getState());
+                self._applyPermissions();
+
+                // Fetch fresh publications and changesCount for the new store
+                self._loadInitialData();
+            });
+
             // Published → reload publications + reset changes count
             $(document).on('bte:published', function(e, data) {
                 self.options.currentStatus = 'PUBLISHED';
