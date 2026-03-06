@@ -1,6 +1,6 @@
 # Issues Dashboard
 
-**Updated:** 2026-03-05
+**Updated:** 2026-03-06
 
 ---
 
@@ -8,10 +8,10 @@
 
 | | Count |
 |---|---|
-| Total issues | 9 |
-| Fixed / Closed | 5 |
-| Pending | 4 |
-| Bugs | 5 |
+| Total issues | 11 |
+| Fixed / Closed | 9 |
+| Pending | 2 |
+| Bugs | 7 |
 | Tasks | 4 |
 
 ---
@@ -20,11 +20,13 @@
 
 | # | Issue | Commit | Status |
 |---|-------|--------|--------|
-| [001](001-publish-service-wrong-user-id.md) | PublishService saves published values with wrong `user_id` | `c7c4abe` + data patch | **Closed** |
-| [002](002-publish-no-cache-invalidation.md) | Published changes not visible without manual cache flush | `c7c4abe` | **Closed** |
+| [001](001-publish-service-wrong-user-id.md) | PublishService saves published values with wrong `user_id` | `fb1cb7a` | **Closed** |
+| [002](002-publish-no-cache-invalidation.md) | Published changes not visible without manual cache flush | `e135ac9` | **Closed** |
 | [003](003-fonts-not-applied-after-publish.md) | Fonts not applied on storefront after publish | `af7049e` | **Closed** |
 | [004](004-version-dropdown-locks-after-save.md) | Version dropdown locks after first save | `e186432` | **Closed** |
-| [005](005-published-variant-differs-from-selected.md) | Published storefront shows different variant than selected | `e186432` | **Closed** — needs manual verification |
+| [005](005-published-variant-differs-from-selected.md) | Published storefront shows different variant than selected | `e186432` | **Closed** |
+| [010](010-font-picker-var-refs-treated-as-palette-color.md) | `font_picker` CSS-var refs incorrectly processed as palette colour | `23fe2a8` | **Closed** |
+| — | Palette sections ignore stored `false` state on reload | `16de0a3` | **Closed** |
 
 ---
 
@@ -33,8 +35,8 @@
 | # | Task | Priority | Status |
 |---|------|----------|--------|
 | [006](006-light-design-side-columns.md) | Light design for side columns (Figma) | High | **Pending** |
-| [007](007-config-groups-closed-by-default.md) | All config groups closed by default | Medium | **Done** |
-| [008](008-icons-for-config-sections.md) | Add icons to config sections | Medium | **Pending** |
+| [007](007-config-groups-closed-by-default.md) | All config groups closed by default | Medium | **Done** — `b134b6b` |
+| [008](008-icons-for-config-sections.md) | Add icons to config sections | Medium | **Done** — `689c6e3` |
 | [009](009-delete-publication-versions.md) | Delete button for saved publication versions | Medium | **Pending** |
 
 ---
@@ -47,22 +49,6 @@ Figma: https://www.figma.com/design/xpUrMtVCZEMWwarMKjlO8K/Breeze-Theme-Editor?n
 
 **Blockers:** none  
 **Notes:** After this is done, Content Builder team (Roma) applies the same design to the content editor.
-
----
-
-### ~~007 · Config groups closed by default~~
-Removed two fallback blocks in `settings-editor.js` that forced the first
-section open when localStorage was empty or saved codes didn't match.
-LocalStorage persistence was already in place; all sections are now closed
-by default on first visit.
-
----
-
-### 008 · Icons for config sections
-Each settings section header needs a small SVG icon. Includes Font Palette section.
-
-**Blockers:** depends on 006 (light design) for correct icon colours  
-**Notes:** Decide icon source — `settings.json` field vs static map by section code.
 
 ---
 
