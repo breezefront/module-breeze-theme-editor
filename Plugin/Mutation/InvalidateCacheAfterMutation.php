@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Plugin\Mutation;
 
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Cache\TypeListInterface;
+use Magento\PageCache\Model\Cache\Type as FullPageCache;
 use Psr\Log\LoggerInterface;
 use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Publish;
 use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Rollback;
@@ -22,7 +23,8 @@ class InvalidateCacheAfterMutation
     public function __construct(
         private CacheInterface $cache,
         private TypeListInterface $cacheTypeList,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private FullPageCache $fullPageCache
     ) {}
 
     public function afterResolve(object $subject, $result)
@@ -56,6 +58,7 @@ class InvalidateCacheAfterMutation
 
     private function invalidateFpc(): void
     {
+        $this->fullPageCache->clean(\Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG, ['bte_theme_variables']);
         $this->cacheTypeList->invalidate('full_page');
     }
 }

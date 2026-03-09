@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Plugin\Mutation;
 
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Cache\TypeListInterface;
+use Magento\PageCache\Model\Cache\Type as FullPageCache;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -19,17 +20,20 @@ class InvalidateCacheAfterMutationTest extends TestCase
     private CacheInterface|MockObject $cache;
     private TypeListInterface|MockObject $cacheTypeList;
     private LoggerInterface|MockObject $logger;
+    private FullPageCache|MockObject $fullPageCache;
 
     protected function setUp(): void
     {
         $this->cache         = $this->createMock(CacheInterface::class);
         $this->cacheTypeList = $this->createMock(TypeListInterface::class);
         $this->logger        = $this->createMock(LoggerInterface::class);
+        $this->fullPageCache = $this->createMock(FullPageCache::class);
 
         $this->plugin = new InvalidateCacheAfterMutation(
             $this->cache,
             $this->cacheTypeList,
-            $this->logger
+            $this->logger,
+            $this->fullPageCache
         );
     }
 
@@ -49,6 +53,9 @@ class InvalidateCacheAfterMutationTest extends TestCase
         $this->cacheTypeList->expects($this->never())
             ->method('invalidate');
 
+        $this->fullPageCache->expects($this->never())
+            ->method('clean');
+
         $this->plugin->afterResolve($subject, $result);
     }
 
@@ -64,6 +71,10 @@ class InvalidateCacheAfterMutationTest extends TestCase
         $this->cache->expects($this->once())
             ->method('clean')
             ->with(['bte_theme_variables']);
+
+        $this->fullPageCache->expects($this->once())
+            ->method('clean')
+            ->with(\Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG, ['bte_theme_variables']);
 
         $this->cacheTypeList->expects($this->once())
             ->method('invalidate')
@@ -85,6 +96,10 @@ class InvalidateCacheAfterMutationTest extends TestCase
             ->method('clean')
             ->with(['bte_theme_variables']);
 
+        $this->fullPageCache->expects($this->once())
+            ->method('clean')
+            ->with(\Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG, ['bte_theme_variables']);
+
         $this->cacheTypeList->expects($this->once())
             ->method('invalidate')
             ->with('full_page');
@@ -102,6 +117,7 @@ class InvalidateCacheAfterMutationTest extends TestCase
         $result  = ['success' => false];
 
         $this->cache->expects($this->never())->method('clean');
+        $this->fullPageCache->expects($this->never())->method('clean');
         $this->cacheTypeList->expects($this->never())->method('invalidate');
 
         $this->plugin->afterResolve($subject, $result);
@@ -112,6 +128,7 @@ class InvalidateCacheAfterMutationTest extends TestCase
         $subject = $this->createMock(Publish::class);
 
         $this->cache->expects($this->never())->method('clean');
+        $this->fullPageCache->expects($this->never())->method('clean');
         $this->cacheTypeList->expects($this->never())->method('invalidate');
 
         $this->plugin->afterResolve($subject, null);
@@ -125,6 +142,7 @@ class InvalidateCacheAfterMutationTest extends TestCase
         $result  = ['publicationId' => 42]; // no 'success' key
 
         $this->cache->expects($this->never())->method('clean');
+        $this->fullPageCache->expects($this->never())->method('clean');
         $this->cacheTypeList->expects($this->never())->method('invalidate');
 
         $this->plugin->afterResolve($subject, $result);
