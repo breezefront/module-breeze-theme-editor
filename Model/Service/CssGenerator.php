@@ -55,7 +55,7 @@ class CssGenerator
 
         $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config, $fieldMap);
         $selectorBlocks = empty($values) ? [] : $this->buildSelectorBlocks($values, $fieldMap);
-        $fontImports = $this->buildFontImports($values, $fieldMap);
+        $fontImports = $this->buildFontImports($values, $fieldMap, $config);
 
         return $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports);
     }
@@ -87,7 +87,7 @@ class CssGenerator
 
         $paletteVarsToEmit = $this->buildPaletteVarsToEmit($values, $config, $fieldMap);
         $selectorBlocks = empty($values) ? [] : $this->buildSelectorBlocks($values, $fieldMap);
-        $fontImports = $this->buildFontImports($values, $fieldMap);
+        $fontImports = $this->buildFontImports($values, $fieldMap, $config);
 
         return $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports);
     }
@@ -543,9 +543,10 @@ class CssGenerator
      *
      * @param array $values   Rows from the DB (each has section_code / setting_code / value)
      * @param array $fieldMap 'section.setting' => field config (built by buildFieldMap())
+     * @param array $config   Full theme configuration (with 'font_palettes' key)
      * @return string[]  Unique stylesheet URLs, in order of first appearance
      */
-    private function buildFontImports(array $values, array $fieldMap): array
+    private function buildFontImports(array $values, array $fieldMap, array $config = []): array
     {
         $urls = [];
 
@@ -570,7 +571,14 @@ class CssGenerator
                 continue;
             }
 
-            foreach ($field['options'] ?? [] as $option) {
+            // Resolve option list: palette-role fields carry no inline options —
+            // their options live in config['font_palettes'][$paletteId]['options'].
+            $paletteId = $field['font_palette'] ?? null;
+            $options = $paletteId
+                ? ($config['font_palettes'][$paletteId]['options'] ?? [])
+                : ($field['options'] ?? []);
+
+            foreach ($options as $option) {
                 if (!empty($option['url']) && ($option['value'] ?? '') === $rawValue) {
                     $urls[] = $option['url'];
                     break;

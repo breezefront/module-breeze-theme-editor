@@ -1870,5 +1870,227 @@ class CssGeneratorTest extends TestCase
             'Secondary font role reference must not be treated as a font name string'
         );
     }
+
+    /**
+     * Test 39: Palette-role font_picker field (font_palette set, no inline options) → @import from font_palettes
+     *
+     * The field has `font_palette: 'default'` and no `options` array.
+     * The palette options live in `config['font_palettes']['default']['options']`.
+     * buildFontImports() must look there instead of the (empty) field options.
+     */
+    public function testPaletteFontRoleFieldProducesImport(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'primary_font_role',
+                'value'        => 'Roboto',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'font_palettes' => [
+                'default' => [
+                    'options' => [
+                        ['value' => 'Arial',  'label' => 'Arial'],
+                        ['value' => 'Roboto', 'label' => 'Roboto', 'url' => 'https://fonts.googleapis.com/css2?family=Roboto'],
+                    ],
+                ],
+            ],
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'           => 'primary_font_role',
+                            'css_var'      => '--primary-font',
+                            'type'         => 'font_picker',
+                            'font_palette' => 'default',
+                            'default'      => 'Arial',
+                            // no 'options' key — palette fields never carry inline options
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            "@import url('https://fonts.googleapis.com/css2?family=Roboto');",
+            $css,
+            'Palette-role field must produce @import by looking up options in font_palettes config'
+        );
+    }
+
+    /**
+     * Test 40: Consumer field storing a CSS-var reference (--primary-font) → no @import
+     *
+     * Consumer fields save a palette role CSS var (e.g. '--primary-font') as their value.
+     * There is no option with `value === '--primary-font'` in any options list, so
+     * no @import should be emitted.
+     */
+    public function testPaletteFontConsumerStoringCssVarProducesNoImport(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value'        => '--primary-font',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'font_palettes' => [
+                'default' => [
+                    'options' => [
+                        ['value' => 'Arial',  'label' => 'Arial'],
+                        ['value' => 'Roboto', 'label' => 'Roboto', 'url' => 'https://fonts.googleapis.com/css2?family=Roboto'],
+                    ],
+                ],
+            ],
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'      => 'base_font',
+                            'css_var' => '--base-font-family',
+                            'type'    => 'font_picker',
+                            'default' => 'Arial',
+                            // consumer field: no font_palette, no inline options
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringNotContainsString(
+            '@import',
+            $css,
+            'Consumer field with a CSS-var reference must not produce an @import'
+        );
+    }
+
+    /**
+     * Test 41: Palette-role field whose current value has no url in its palette option → no @import
+     */
+    public function testPaletteFontWebSafeValueProducesNoImport(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'primary_font_role',
+                'value'        => 'Georgia',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'font_palettes' => [
+                'default' => [
+                    'options' => [
+                        ['value' => 'Arial',   'label' => 'Arial'],
+                        ['value' => 'Georgia', 'label' => 'Georgia'],  // no url — web-safe
+                    ],
+                ],
+            ],
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'           => 'primary_font_role',
+                            'css_var'      => '--primary-font',
+                            'type'         => 'font_picker',
+                            'font_palette' => 'default',
+                            'default'      => 'Arial',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringNotContainsString(
+            '@import',
+            $css,
+            'Palette-role field with a web-safe font value must not produce an @import'
+        );
+    }
+
+    /**
+     * Test 42: Two palette-role fields sharing the same font URL → deduplicated to one @import
+     */
+    public function testPaletteFontDuplicateUrlsAreDeduplicatedToOneImport(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $sharedUrl = 'https://fonts.googleapis.com/css2?family=Roboto';
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'primary_font_role',
+                'value'        => 'Roboto',
+            ],
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'secondary_font_role',
+                'value'        => 'Roboto',
+            ],
+        ]);
+
+        $paletteOptions = [
+            ['value' => 'Arial',  'label' => 'Arial'],
+            ['value' => 'Roboto', 'label' => 'Roboto', 'url' => $sharedUrl],
+        ];
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'font_palettes' => [
+                'default' => [
+                    'options' => $paletteOptions,
+                ],
+            ],
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        [
+                            'id'           => 'primary_font_role',
+                            'css_var'      => '--primary-font',
+                            'type'         => 'font_picker',
+                            'font_palette' => 'default',
+                            'default'      => 'Arial',
+                        ],
+                        [
+                            'id'           => 'secondary_font_role',
+                            'css_var'      => '--secondary-font',
+                            'type'         => 'font_picker',
+                            'font_palette' => 'default',
+                            'default'      => 'Arial',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $importCount = substr_count($css, "@import url('$sharedUrl')");
+        $this->assertSame(
+            1,
+            $importCount,
+            'Duplicate palette font URLs must be deduplicated to a single @import'
+        );
+    }
 }
 
