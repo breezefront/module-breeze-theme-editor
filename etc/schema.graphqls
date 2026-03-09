@@ -153,6 +153,10 @@ type Mutation {
     saveBreezeThemeEditorPaletteValue(
         input: SaveBreezeThemeEditorPaletteValueInput!
     ): SaveBreezeThemeEditorPaletteValueOutput @doc(description: "Save palette color value") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\SavePaletteValue")
+
+    deleteBreezeThemeEditorPublication(
+        publicationId: Int!
+    ): DeleteBreezeThemeEditorPublicationOutput @doc(description: "Delete a historical publication record") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\DeletePublication")
 }
 
 type BreezeThemeEditorConfig {
@@ -560,4 +564,9 @@ type SaveBreezeThemeEditorPaletteValueOutput {
     success: Boolean!
     message: String
     affectedFields: Int! @doc(description: "Number of fields that use this color")
+}
+
+type DeleteBreezeThemeEditorPublicationOutput {
+    success: Boolean!
+    message: String
 }

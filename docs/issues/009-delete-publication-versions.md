@@ -3,7 +3,7 @@
 **Priority:** Medium  
 **Area:** `view/adminhtml/web/js/editor/toolbar/publication-selector.js`, GraphQL  
 **Type:** Feature  
-**Status:** Pending
+**Status:** Done
 
 ---
 
@@ -74,9 +74,9 @@ From the chat:
 
 | Step | Status |
 |------|--------|
-| GraphQL mutation defined | pending |
-| Backend resolver + service implemented | pending |
-| Frontend delete button added to row template | pending |
-| Confirmation flow implemented | pending |
-| Active-version guard implemented | pending |
-| Unit tests | pending |
+| GraphQL mutation defined | done |
+| Backend resolver + service implemented | done |
+| Frontend delete button added to row template | done |
+| Confirmation flow implemented | done |
+| Active-version guard implemented | done |
+| Unit tests | done |

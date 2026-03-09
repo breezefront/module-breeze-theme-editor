@@ -15,13 +15,14 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/rollback',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-draft',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-published',
+    'Swissup_BreezeThemeEditor/js/graphql/mutations/delete-publication',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/renderer',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/metadata-loader',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, widget, $t, template, permissions, errorHandler, loading, cssManager, publishMutation, rollbackMutation, discardDraftMutation, discardPublishedMutation, PanelState, Toastify, StorageHelper, Renderer, MetadataLoader, Logger) {
+], function ($, widget, $t, template, permissions, errorHandler, loading, cssManager, publishMutation, rollbackMutation, discardDraftMutation, discardPublishedMutation, deletePublicationMutation, PanelState, Toastify, StorageHelper, Renderer, MetadataLoader, Logger) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector');
@@ -232,6 +233,17 @@ define([
             this.element.on('click', '[data-action="load-more"]', function(e) {
                 e.preventDefault();
                 self._loadMorePublications();
+            });
+
+            // Delete a historical publication
+            this.element.on('click', '[data-action="delete-publication"]', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var $btn = $(this);
+                self._deletePublication(
+                    parseInt($btn.data('publication-id')),
+                    $btn.data('publication-title')
+                );
             });
 
             // Close dropdown on outside click
@@ -817,6 +829,63 @@ define([
         },
 
         /**
+         * Delete a historical publication after confirmation
+         */
+        _deletePublication: function(publicationId, publicationTitle) {
+            var message = $t('Delete "%1"? This cannot be undone.')
+                .replace('%1', publicationTitle || ('#' + publicationId));
+
+            if (!confirm(message)) {
+                return;
+            }
+
+            var self = this;
+            loading.show(this.element);
+
+            deletePublicationMutation(publicationId)
+                .then(function(response) {
+                    var result = response && response.deleteBreezeThemeEditorPublication;
+
+                    if (result && result.success) {
+                        // Remove from local list
+                        self.options.publications = self.options.publications.filter(function(pub) {
+                            return pub.id !== publicationId;
+                        });
+
+                        // If we were viewing the deleted publication, fall back to DRAFT
+                        if (self.options.currentStatus === 'PUBLICATION' &&
+                                self.options.currentPublicationId === publicationId) {
+                            self._fallbackToDraft();
+                        } else {
+                            self.renderer.render(self._getState());
+                            self._applyPermissions();
+                            self.renderer.updateLoadMoreButton({
+                                publications: self.options.publications,
+                                totalPublications: self.totalPublications ? self.totalPublications - 1 : 0
+                            });
+                        }
+
+                        if (self.totalPublications) {
+                            self.totalPublications--;
+                        }
+
+                        Toastify.show('success', $t('Publication deleted'));
+                    } else {
+                        var errMsg = (result && result.message) ? result.message : 'Delete failed';
+                        Toastify.show('error', $t('Delete failed: %1').replace('%1', errMsg));
+                        errorHandler.handle({ message: errMsg }, 'delete-publication');
+                    }
+                    loading.hide(self.element);
+                })
+                .catch(function(error) {
+                    var errMsg = error.message || 'Unknown error';
+                    Toastify.show('error', $t('Delete failed: %1').replace('%1', errMsg));
+                    errorHandler.handle({ message: errMsg }, 'delete-publication');
+                    loading.hide(self.element);
+                });
+        },
+
+        /**
          * Apply ACL permissions to UI
          */
         _applyPermissions: function() {
@@ -855,7 +924,11 @@ define([
                            this.options.changesCount > 0 && 
                            this.options.currentStatus === 'DRAFT',
                 canRollback: permissions.canRollback(),
-                canResetPublished: permissions.canResetPublished && permissions.canResetPublished()
+                canResetPublished: permissions.canResetPublished && permissions.canResetPublished(),
+                canDeletePublication: permissions.canPublish(),
+                activePublicationId: this.options.publications.length > 0
+                    ? this.options.publications[0].id
+                    : null
             };
         },
 

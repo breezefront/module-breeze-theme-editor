@@ -96,6 +96,9 @@
                                     </button>
                                 </div>
                             <% } %>
+                            <% if (canDeletePublication && pub.id !== activePublicationId) { %>
+                                <button type="button" class="dropdown-delete-publication-button" data-action="delete-publication" data-publication-id="<%- pub.id %>" data-publication-title="<%- pub.title %>" title="Delete this publication">×</button>
+                            <% } %>
                         </div>
                     <% }); %>
                 </div>
