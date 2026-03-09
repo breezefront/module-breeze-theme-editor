@@ -85,10 +85,19 @@ class Config extends AbstractConfigResolver
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
 
         // 6. Отримати збережені значення через InheritanceResolver
+        // For DRAFT: merge published values (base) + draft overrides so that fields
+        // without a draft row still display the published value, not the theme default.
         if ($statusCode === 'PUBLISHED') {
             $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $storeId, $statusId, null);
         } else {
-            $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $storeId, $statusId, $userId);
+            $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
+            $savedValues = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
+                $themeId,
+                $storeId,
+                $statusId,
+                $publishedStatusId,
+                $userId
+            );
         }
 
         // 7. Build values map

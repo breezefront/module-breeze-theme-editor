@@ -50,6 +50,51 @@ class ValueInheritanceResolver
     }
 
     /**
+     * Resolve all values for a status that falls back to a base status.
+     *
+     * Used when loading DRAFT values for display: published rows act as the
+     * base and draft rows are overlaid on top.  Fields that have no draft row
+     * will therefore show their published value instead of the theme default.
+     *
+     * Merge order (later entries win):
+     *   1. fallback status rows (e.g. PUBLISHED) – the base layer
+     *   2. primary status rows (e.g. DRAFT)       – the override layer
+     *
+     * @param int      $themeId
+     * @param int      $storeId
+     * @param int      $statusId         Primary status (DRAFT)
+     * @param int      $fallbackStatusId Fallback status (PUBLISHED)
+     * @param int|null $userId           User ID for the primary status rows
+     * @return array
+     */
+    public function resolveAllValuesWithFallback(
+        int $themeId,
+        int $storeId,
+        int $statusId,
+        int $fallbackStatusId,
+        ?int $userId = null
+    ): array {
+        // Load fallback (published) values as the base layer
+        $baseValues = $this->resolveAllValues($themeId, $storeId, $fallbackStatusId, null);
+
+        // Load primary (draft) values as the override layer
+        $overrideValues = $this->resolveAllValues($themeId, $storeId, $statusId, $userId);
+
+        // Build a map from the base layer, then overwrite with draft entries
+        $mergedMap = [];
+        foreach ($baseValues as $value) {
+            $key = $value['section_code'] . '.' . $value['setting_code'];
+            $mergedMap[$key] = $value;
+        }
+        foreach ($overrideValues as $value) {
+            $key = $value['section_code'] . '.' . $value['setting_code'];
+            $mergedMap[$key] = $value;
+        }
+
+        return array_values($mergedMap);
+    }
+
+    /**
      * Отримати одне значення з inheritance
      */
     public function resolveSingleValue(

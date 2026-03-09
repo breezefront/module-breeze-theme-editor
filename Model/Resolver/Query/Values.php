@@ -62,11 +62,19 @@ class Values extends AbstractQueryResolver
 
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
-        // ✅ Використати ValueInheritanceResolver
+        // For DRAFT: merge published values (base) + draft overrides so that fields
+        // without a draft row still return the published value, not the theme default.
         if ($statusCode === 'PUBLISHED') {
             $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $storeId, $statusId, null);
         } else {
-            $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $storeId, $statusId, $userId);
+            $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
+            $values = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
+                $themeId,
+                $storeId,
+                $statusId,
+                $publishedStatusId,
+                $userId
+            );
         }
 
         // Фільтр по секціях

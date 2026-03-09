@@ -138,10 +138,8 @@ class ConfigTest extends TestCase
             ->with($this->contextMock)
             ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
-        $this->statusProviderMock->expects($this->once())
-            ->method('getStatusId')
-            ->with('DRAFT')
-            ->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')
+            ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         $mockConfig = [
             'version' => '1.0',
@@ -174,9 +172,7 @@ class ConfigTest extends TestCase
             ]
         ];
 
-        $this->valueInheritanceResolverMock->expects($this->once())
-            ->method('resolveAllValues')
-            ->with(1, 1, 1, 1) // themeId, storeId, statusId, userId
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')
             ->willReturn($mockValues);
 
         $this->configProviderMock->method('getAllDefaults')->willReturn(['colors.primary' => '#0000ff']);
@@ -349,11 +345,11 @@ class ConfigTest extends TestCase
             ->with($this->contextMock)
             ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
-        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         $this->configProviderMock->method('getConfigurationWithInheritance')
             ->willReturn(['version' => '1.0', 'sections' => [['id' => 'general', 'name' => 'General', 'settings' => []]], 'presets' => []]);
-        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn([]);
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
@@ -452,7 +448,7 @@ class ConfigTest extends TestCase
             ->with($this->contextMock)
             ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
-        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         // Mock config with color field (format="rgb")
         $mockConfig = [
@@ -488,8 +484,7 @@ class ConfigTest extends TestCase
             ]
         ];
 
-        $this->valueInheritanceResolverMock->method('resolveAllValues')
-            ->willReturn($mockValues);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($mockValues);
 
         $this->configProviderMock->method('getAllDefaults')
             ->willReturn(['colors.text_color' => '#111827']);
@@ -540,7 +535,7 @@ class ConfigTest extends TestCase
             ->with($this->contextMock)
             ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
-        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         // Mock config with text field
         $mockConfig = [
@@ -575,8 +570,7 @@ class ConfigTest extends TestCase
             ]
         ];
 
-        $this->valueInheritanceResolverMock->method('resolveAllValues')
-            ->willReturn($mockValues);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($mockValues);
 
         $this->configProviderMock->method('getAllDefaults')
             ->willReturn(['layout.container_width' => '1280px']);
@@ -759,7 +753,7 @@ class ConfigTest extends TestCase
     {
         $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
-        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         $mockConfig = [
             'version' => '1.0',
@@ -790,7 +784,7 @@ class ConfigTest extends TestCase
             ->willReturn($mockConfig);
 
         // 1 field saved with non-default value
-        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn([
             ['section_code' => 'layout', 'setting_code' => 'container_width', 'value' => '1400px', 'updated_at' => '2026-01-01'],
         ]);
 
@@ -829,13 +823,13 @@ class ConfigTest extends TestCase
     {
         $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(18);
-        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         // Theme has no settings.json → inheritance merge yields empty sections
         $this->configProviderMock->method('getConfigurationWithInheritance')
             ->willReturn(['version' => '1.0', 'sections' => [], 'presets' => []]);
 
-        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn([
             'themeId' => 18,
             'themeName' => 'Argento Breeze Chic'

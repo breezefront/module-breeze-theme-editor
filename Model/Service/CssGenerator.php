@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Service;
 
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
+use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
@@ -16,6 +17,7 @@ class CssGenerator
 {
     public function __construct(
         private ValueService $valueService,
+        private ValueInheritanceResolver $valueInheritanceResolver,
         private StatusProvider $statusProvider,
         private ConfigProvider $configProvider,
         private ColorFormatResolver $colorFormatResolver
@@ -32,7 +34,21 @@ class CssGenerator
     public function generate(int $themeId, int $storeId, string $status = 'PUBLISHED'): string
     {
         $statusId = $this->statusProvider->getStatusId($status);
-        $values = $this->valueService->getValuesByTheme($themeId, $storeId, $statusId, null);
+
+        // For DRAFT: merge published values (base) + draft overrides so that fields
+        // without a draft row are still rendered using the published value.
+        if ($status === 'DRAFT') {
+            $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
+            $values = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
+                $themeId,
+                $storeId,
+                $statusId,
+                $publishedStatusId,
+                null
+            );
+        } else {
+            $values = $this->valueService->getValuesByTheme($themeId, $storeId, $statusId, null);
+        }
 
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $fieldMap = $this->buildFieldMap($config['sections'] ?? []);

@@ -229,7 +229,8 @@ class AbstractConfigResolverColorConversionTest extends TestCase
     {
         $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
-        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')
+            ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         $mockConfig = [
             'version' => '1.0',
@@ -264,6 +265,8 @@ class AbstractConfigResolverColorConversionTest extends TestCase
         ] : [];
 
         $this->valueInheritanceResolverMock->method('resolveAllValues')
+            ->willReturn($mockValues);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')
             ->willReturn($mockValues);
 
         $this->configProviderMock->method('getAllDefaults')

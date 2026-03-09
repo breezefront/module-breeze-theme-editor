@@ -104,10 +104,8 @@ class ValuesTest extends TestCase
             ->with($this->contextMock)
             ->willReturn(1);
         $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
-        $this->statusProviderMock->expects($this->once())
-            ->method('getStatusId')
-            ->with('DRAFT')
-            ->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')
+            ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
         
         $mockValues = [
             [
@@ -118,9 +116,7 @@ class ValuesTest extends TestCase
             ]
         ];
         
-        $this->valueInheritanceResolverMock->expects($this->once())
-            ->method('resolveAllValues')
-            ->with(1, 1, 1, 1) // themeId, storeId, statusId, userId
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')
             ->willReturn($mockValues);
         
         $mockDefaults = ['colors.primary' => '#0000ff']; // different from value

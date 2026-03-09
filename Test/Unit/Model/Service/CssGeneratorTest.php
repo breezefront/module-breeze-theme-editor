@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Service;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Model\Service\CssGenerator;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
+use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
@@ -20,6 +21,7 @@ class CssGeneratorTest extends TestCase
 {
     private CssGenerator $cssGenerator;
     private ValueService $valueServiceMock;
+    private ValueInheritanceResolver $valueInheritanceResolverMock;
     private StatusProvider $statusProviderMock;
     private ConfigProvider $configProviderMock;
     private ColorFormatResolver $colorFormatResolverMock;
@@ -27,12 +29,14 @@ class CssGeneratorTest extends TestCase
     protected function setUp(): void
     {
         $this->valueServiceMock = $this->createMock(ValueService::class);
+        $this->valueInheritanceResolverMock = $this->createMock(ValueInheritanceResolver::class);
         $this->statusProviderMock = $this->createMock(StatusProvider::class);
         $this->configProviderMock = $this->createMock(ConfigProvider::class);
         $this->colorFormatResolverMock = $this->createMock(ColorFormatResolver::class);
         
         $this->cssGenerator = new CssGenerator(
             $this->valueServiceMock,
+            $this->valueInheritanceResolverMock,
             $this->statusProviderMock,
             $this->configProviderMock,
             $this->colorFormatResolverMock
@@ -528,16 +532,18 @@ class CssGeneratorTest extends TestCase
     public function testRgbFormatAutoDetectionForPaletteReference(): void
     {
         // Arrange: Mock status provider
-        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
         
         // Mock saved value: palette reference
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $draftData = [
             [
                 'section_code' => 'test_section',
                 'setting_code' => 'text_color',
                 'value' => '--color-brand-amber-dark'  // Palette reference (HEX version)
             ]
-        ]);
+        ];
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn($draftData);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($draftData);
         
         // Mock config: field with RGB default but NO explicit format field
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -596,15 +602,17 @@ class CssGeneratorTest extends TestCase
     public function testHexFormatForPaletteReference(): void
     {
         // Arrange
-        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
         
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $draftData = [
             [
                 'section_code' => 'test_section',
                 'setting_code' => 'button_color',
                 'value' => '--color-brand-primary'  // Palette reference
             ]
-        ]);
+        ];
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn($draftData);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($draftData);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
@@ -656,15 +664,17 @@ class CssGeneratorTest extends TestCase
     public function testRgbFormatConvertsHexToRgb(): void
     {
         // Arrange
-        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
         
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $draftData = [
             [
                 'section_code' => 'test_section',
                 'setting_code' => 'text_color',
                 'value' => '#c87604'  // HEX color value
             ]
-        ]);
+        ];
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn($draftData);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($draftData);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
@@ -720,16 +730,18 @@ class CssGeneratorTest extends TestCase
      */
     public function testPaletteAtDefaultValueStillEmitsBothHexAndRgbVariants(): void
     {
-        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         // Palette value equals the default (#a16207)
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $draftData = [
             [
                 'section_code' => '_palette',
                 'setting_code' => '--color-brand-amber-dark',
                 'value' => '#a16207'  // Same as default
             ]
-        ]);
+        ];
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn($draftData);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($draftData);
 
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [],
@@ -810,16 +822,18 @@ class CssGeneratorTest extends TestCase
      */
     public function testPaletteVarNotInDbIsEmittedUsingConfigDefault(): void
     {
-        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         // Only the field value is in DB — NO _palette entry for --color-brand-amber-dark
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $draftData = [
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_color',
                 'value' => '--color-brand-amber-dark'  // palette reference, not a hex
             ]
-        ]);
+        ];
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn($draftData);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($draftData);
 
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
