@@ -61,12 +61,12 @@ From the chat:
 
 ## Acceptance Criteria
 
-- [ ] Delete button visible on all non-active, non-draft version rows
-- [ ] Confirmation step before deletion (toast or inline confirm)
-- [ ] Active published version cannot be deleted (button hidden or disabled)
-- [ ] Deletion reflected immediately in the dropdown without page reload
-- [ ] Backend guards against deleting the active published version
-- [ ] Unit tests for the delete resolver/service
+- [x] Delete button visible on all non-active, non-draft version rows
+- [x] Confirmation step before deletion (toast or inline confirm)
+- [x] Active published version cannot be deleted (button hidden or disabled)
+- [x] Deletion reflected immediately in the dropdown without page reload
+- [x] Backend guards against deleting the active published version
+- [x] Unit tests for the delete resolver/service
 
 ---
 
