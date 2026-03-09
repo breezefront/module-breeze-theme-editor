@@ -4,9 +4,20 @@
 
 ---
 
-## ✅ Реалізовані Features
+### Pickr для кольорів палітри / Opacity (09.03.2026)
 
-### selector + property (24.02.2026)
+**Статус:** ✅ Завершено
+
+**Що зроблено:**
+- Нативний `<input type="color">` у swatches палітри замінено на Pickr
+- Додано підтримку opacity (alpha-канал): `#rrggbb` → `#rrggbbaa`
+- Live preview, Save/Cancel, закриття по ESC та кліку поза попапом
+
+**Документація:** [palette-pickr-opacity.md](palette-pickr-opacity.md)
+
+---
+
+
 
 **Статус:** ✅ Завершено (коміти `1a7279e`, `f401f6c`)
 

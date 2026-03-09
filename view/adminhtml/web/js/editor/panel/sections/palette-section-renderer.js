@@ -18,6 +18,7 @@ define([
     IconRegistry
 ) {
     'use strict';
+    'use strict';
 
     /**
      * Palette Section Renderer
@@ -198,13 +199,7 @@ define([
             var $visual = $('<div class="bte-swatch-visual"></div>');
             $visual.css('background-color', hexValue);
 
-            // Create hidden color input
-            var $input = $('<input type="color" class="bte-swatch-input">');
-            $input.val(hexValue);
-            $input.attr('data-property', color.property);
-
             $swatch.append($visual);
-            $swatch.append($input);
 
             return $swatch;
         },
@@ -235,70 +230,26 @@ define([
                 Logger.debug('palette-section', 'Accordion toggled', {open: !isActive});
             });
 
-            // Click on swatch container → trigger hidden input
-            this.$grid.on('click', '.bte-palette-swatch', function(e) {
-                if ($(e.target).hasClass('bte-swatch-input')) {
-                    return; // Already clicking on input
+            // Click on swatch → open Pickr popup
+            this.$grid.on('click', '.bte-palette-swatch', function() {
+                self._openPickrPopup($(this));
+            });
+
+            // Close Pickr popup on outside click
+            $(document).on('click.bte-palette-pickr', function(e) {
+                setTimeout(function() {
+                    if (!$('.bte-color-popup').length) return;
+                    if (!$(e.target).closest('.bte-color-popup, .bte-palette-swatch').length) {
+                        self._closeAllPalettePickrPopups();
+                    }
+                }, 10);
+            });
+
+            // Close Pickr popup on ESC
+            $(document).on('keydown.bte-palette-pickr', function(e) {
+                if (e.key === 'Escape' || e.keyCode === 27) {
+                    self._closeAllPalettePickrPopups();
                 }
-
-                var $swatch = $(this);
-                var $input = $swatch.find('.bte-swatch-input');
-                
-                // Trigger native color picker
-                $input.trigger('click');
-            });
-
-            // Color input — real-time live preview while OS picker is open
-            this.$grid.on('input', '.bte-swatch-input', function(e) {
-                var $input = $(e.currentTarget);
-                var property = $input.attr('data-property');
-                var hexValue = $input.val();
-
-                // Update swatch visual immediately
-                $input.closest('.bte-palette-swatch')
-                    .find('.bte-swatch-visual')
-                    .css('background-color', hexValue);
-
-                // Mark swatch as dirty
-                $input.closest('.bte-palette-swatch').addClass('bte-swatch-dirty');
-
-                // Notify live preview (badges/events handled by change handler below)
-                PaletteManager.updateColor(property, hexValue);
-            });
-
-            // Color input change
-            this.$grid.on('change', '.bte-swatch-input', function(e) {
-                var $input = $(e.currentTarget);
-                var property = $input.attr('data-property');
-                var hexValue = $input.val();
-
-                Logger.info('palette-section', 'Color changed', {property: property, hex: hexValue});
-
-                // Update visual
-                var $swatch = $input.closest('.bte-palette-swatch');
-                $swatch.find('.bte-swatch-visual').css('background-color', hexValue);
-                
-                // Mark swatch as dirty (yellow border)
-                $swatch.addClass('bte-swatch-dirty');
-
-                // Update via PaletteManager (NO auto-save now)
-                PaletteManager.updateColor(property, hexValue);
-
-                // Arm the cooldown: ignore reset-button clicks for the next 500 ms.
-                // Native <input type="color"> on Linux/GTK dispatches a focus-return
-                // click to the page after the OS colour dialog closes.  Without this
-                // guard that click lands on the reset button if it just appeared.
-                self._justChanged = true;
-                clearTimeout(self._justChangedTimer);
-                self._justChangedTimer = setTimeout(function() {
-                    self._justChanged = false;
-                }, 500);
-                
-                // Update header badges
-                self._updateHeaderBadges();
-                
-                // Trigger event to update panel changes count & reset button
-                $(document).trigger('paletteColorChanged');
             });
 
             // Reset button handler
@@ -354,7 +305,6 @@ define([
                     
                     if (color) {
                         $swatch.find('.bte-swatch-visual').css('background-color', color.hex);
-                        $swatch.find('.bte-swatch-input').val(color.hex);
                     }
                 });
                 
@@ -467,11 +417,14 @@ define([
                 return;
             }
 
-            // Update input value
-            $swatch.find('.bte-swatch-input').val(hexValue);
-
             // Update visual
             $swatch.find('.bte-swatch-visual').css('background-color', hexValue);
+
+            // Update open Pickr if any
+            var pickr = $swatch.data('palette-pickr-instance');
+            if (pickr) {
+                pickr.setColor(hexValue, true);
+            }
 
             Logger.debug('palette-section', 'Swatch updated', {property: property, hex: hexValue});
         },
@@ -507,17 +460,193 @@ define([
         },
 
         /**
+         * Normalize hex8 with full opacity: #rrggbbff → #rrggbb
+         *
+         * @param {String} hex
+         * @returns {String}
+         */
+        _normalizeHexAlpha: function(hex) {
+            if (hex && hex.length === 9 && hex.slice(-2).toLowerCase() === 'ff') {
+                return hex.slice(0, 7);
+            }
+            return hex;
+        },
+
+        /**
+         * Open Pickr popup for a palette swatch
+         *
+         * @param {jQuery} $swatch
+         */
+        _openPickrPopup: function($swatch) {
+            var self = this;
+
+            // Close any existing popup first
+            this._closeAllPalettePickrPopups();
+
+            var property = $swatch.attr('data-property');
+            var color = PaletteManager.getColor(property);
+            if (!color) {
+                return;
+            }
+
+            var originalHex = color.hex;
+
+            // Build popup: close button + Pickr container
+            var $popup = $('<div class="bte-color-popup"></div>');
+            var $closeBtn = $('<button type="button" class="bte-popup-close" aria-label="Close">&times;</button>');
+            var $pickrContainer = $('<div class="bte-popup-pickr-container"></div>');
+            var $pickrEl = $('<div class="bte-pickr-widget"></div>');
+
+            $pickrContainer.append($pickrEl);
+            $popup.append($closeBtn);
+            $popup.append($pickrContainer);
+            $('body').append($popup);
+
+            self._positionPickrPopup($popup, $swatch);
+
+            $closeBtn.on('click', function() {
+                self._closeAllPalettePickrPopups();
+            });
+
+            require(['pickr'], function(Pickr) {
+                if (!Pickr) {
+                    $popup.remove();
+                    return;
+                }
+
+                var pickr = Pickr.create({
+                    el: $pickrEl[0],
+                    theme: 'nano',
+                    container: $pickrContainer[0],
+                    inline: true,
+                    showAlways: true,
+                    autoReposition: false,
+                    default: originalHex,
+                    swatches: null,
+                    lockOpacity: false,
+                    components: {
+                        palette: true,
+                        preview: true,
+                        opacity: true,
+                        hue: true,
+                        interaction: {
+                            hex: true,
+                            rgba: false,
+                            hsla: false,
+                            hsva: false,
+                            cmyk: false,
+                            input: true,
+                            clear: false,
+                            cancel: true,
+                            save: true
+                        }
+                    }
+                });
+
+                $swatch.data('palette-pickr-instance', pickr);
+                $swatch.data('palette-pickr-popup', $popup);
+
+                // Live preview while adjusting
+                pickr.on('change', function(color) {
+                    var hex = self._normalizeHexAlpha(color.toHEXA().toString());
+                    $swatch.find('.bte-swatch-visual').css('background-color', hex);
+                    PaletteManager.updateColor(property, hex);
+                });
+
+                // Save → commit
+                pickr.on('save', function(color) {
+                    if (!color) {
+                        self._closeAllPalettePickrPopups();
+                        return;
+                    }
+
+                    var hex = self._normalizeHexAlpha(color.toHEXA().toString());
+
+                    $swatch.find('.bte-swatch-visual').css('background-color', hex);
+                    $swatch.addClass('bte-swatch-dirty');
+                    PaletteManager.updateColor(property, hex);
+
+                    Logger.info('palette-section', 'Color changed (Pickr)', {property: property, hex: hex});
+
+                    // Arm cooldown
+                    self._justChanged = true;
+                    clearTimeout(self._justChangedTimer);
+                    self._justChangedTimer = setTimeout(function() {
+                        self._justChanged = false;
+                    }, 500);
+
+                    self._updateHeaderBadges();
+                    $(document).trigger('paletteColorChanged');
+
+                    self._closeAllPalettePickrPopups();
+                });
+
+                // Cancel → restore original
+                pickr.on('cancel', function() {
+                    $swatch.find('.bte-swatch-visual').css('background-color', originalHex);
+                    PaletteManager.updateColor(property, originalHex);
+                    self._closeAllPalettePickrPopups();
+                });
+            });
+        },
+
+        /**
+         * Position popup to the right of the swatch
+         *
+         * @param {jQuery} $popup
+         * @param {jQuery} $swatch
+         */
+        _positionPickrPopup: function($popup, $swatch) {
+            var offset = $swatch.offset();
+            var left = offset.left + $swatch.outerWidth() + 10;
+            var top = offset.top;
+
+            // Clamp to viewport
+            var popupWidth = 220; // approximate, Pickr nano is ~200px
+            if (left + popupWidth > $(window).width()) {
+                left = offset.left - popupWidth - 10;
+            }
+
+            $popup.css({
+                position: 'absolute',
+                left: left + 'px',
+                top: top + 'px',
+                zIndex: 10001
+            });
+        },
+
+        /**
+         * Close all open palette Pickr popups
+         */
+        _closeAllPalettePickrPopups: function() {
+            this.$grid.find('.bte-palette-swatch').each(function() {
+                var $swatch = $(this);
+                var pickr = $swatch.data('palette-pickr-instance');
+                var $popup = $swatch.data('palette-pickr-popup');
+
+                if (pickr) {
+                    pickr.destroyAndRemove();
+                    $swatch.removeData('palette-pickr-instance');
+                }
+                if ($popup) {
+                    $popup.remove();
+                    $swatch.removeData('palette-pickr-popup');
+                }
+            });
+        },
+
+        /**
          * Destroy widget
          */
         _destroy: function () {
             clearTimeout(this._justChangedTimer);
+            this._closeAllPalettePickrPopups();
             this.$header.off('click');
             this.$grid.off('click', '.bte-palette-swatch');
-            this.$grid.off('change', '.bte-swatch-input');
-            
-            // Cleanup new handlers
             this.element.off('click', '.bte-palette-reset-btn');
             $(document).off('paletteColorChanged paletteChangesReverted');
+            $(document).off('click.bte-palette-pickr');
+            $(document).off('keydown.bte-palette-pickr');
             
             this._super();
         }

@@ -182,6 +182,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/css-preview-manager-palette-test',
             // Palette Reset Behavior Tests (8 tests) - focus-return click fix
             'Swissup_BreezeThemeEditor/js/test/tests/palette-reset-behavior-test',
+            // Palette Pickr Tests (20 tests) - normalizeHexAlpha, popup positioning, save/cancel logic
+            'Swissup_BreezeThemeEditor/js/test/tests/palette-pickr-test',
             // Field Renderers Tests (64 tests) - prepareData() coverage + property rename + selectedLabel + fontStylesheetMap
             'Swissup_BreezeThemeEditor/js/test/tests/field-renderers-test',
             // Font Picker Dropdown Handler Tests (14 tests) - open/close/select/outside-click/Escape

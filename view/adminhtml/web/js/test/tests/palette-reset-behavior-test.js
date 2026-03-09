@@ -5,11 +5,10 @@
  * palette-section-renderer.js:
  *
  *   Guard 1 — Focus-return cooldown (_justChanged flag)
- *     After a native <input type="color"> closes on Linux/GTK the browser fires
- *     a spurious "focus-return" click at the cursor position.  If the reset
- *     button just appeared (badge update created the DOM node), that click hits
- *     it and reverts the user's palette change.  We suppress reset clicks for
- *     500 ms after any colour change via _justChanged.
+ *     After Pickr's Save button is clicked the cooldown is armed for 500 ms.
+ *     This prevents a spurious click (e.g. focus-return on Linux/GTK) from
+ *     immediately triggering the reset button that just appeared in the DOM.
+ *     The cooldown is armed in pickr.on('save') inside _openPickrPopup().
  *
  *   Guard 2 — Dirty-state check (hasDirtyChanges)
  *     Reset is a no-op when nothing has been changed, regardless of the cooldown.
