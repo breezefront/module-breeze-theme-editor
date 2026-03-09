@@ -89,8 +89,8 @@
         <index referenceId="IDX_TITLE">
             <column name="title"/>
         </index>
-        <constraint xsi:type="foreign" referenceId="FK_PUBLICATION_STORE" table="store" column="store_id" referenceTable="store" referenceColumn="store_id" onDelete="CASCADE"/>
-        <constraint xsi:type="foreign" referenceId="FK_PUBLICATION_USER" table="admin_user" column="published_by" referenceTable="admin_user" referenceColumn="user_id" onDelete="NO ACTION"/>
+        <constraint xsi:type="foreign" referenceId="FK_PUBLICATION_STORE" table="breeze_theme_editor_publication" column="store_id" referenceTable="store" referenceColumn="store_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="FK_PUBLICATION_USER" table="breeze_theme_editor_publication" column="published_by" referenceTable="admin_user" referenceColumn="user_id" onDelete="NO ACTION"/>
         <constraint xsi:type="foreign" referenceId="FK_PUBLICATION_ROLLBACK" table="breeze_theme_editor_publication" column="rollback_from" referenceTable="breeze_theme_editor_publication" referenceColumn="publication_id" onDelete="SET NULL"/>
     </table>
 
@@ -112,7 +112,7 @@
             <column name="section_code"/>
             <column name="setting_code"/>
         </index>
-        <constraint xsi:type="foreign" referenceId="FK_CHANGELOG_PUBLICATION" table="breeze_theme_editor_publication" column="publication_id" referenceTable="breeze_theme_editor_publication" referenceColumn="publication_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="FK_CHANGELOG_PUBLICATION" table="breeze_theme_editor_changelog" column="publication_id" referenceTable="breeze_theme_editor_publication" referenceColumn="publication_id" onDelete="CASCADE"/>
     </table>
 
 </schema>

@@ -1,0 +1,85 @@
+{
+    "breeze_theme_editor_status": {
+        "column": {
+            "status_id": true,
+            "code": true,
+            "label": true,
+            "sort_order": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "BREEZE_THEME_EDITOR_STATUS_CODE": true
+        }
+    },
+    "breeze_theme_editor_value": {
+        "column": {
+            "value_id": true,
+            "theme_id": true,
+            "store_id": true,
+            "status_id": true,
+            "user_id": true,
+            "section_code": true,
+            "setting_code": true,
+            "value": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "index": {
+            "BREEZE_THEME_EDITOR_VALUE_THEME_ID_STORE_ID_STATUS_ID": true,
+            "BREEZE_THEME_EDITOR_VALUE_USER_ID_STATUS_ID": true,
+            "BREEZE_THEME_EDITOR_VALUE_SECTION_CODE": true,
+            "BREEZE_THEME_EDITOR_VALUE_UPDATED_AT": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "UNQ_66265B6F5169AC40A511517CBE94613E": true,
+            "BREEZE_THEME_EDITOR_VAL_STS_ID_BREEZE_THEME_EDITOR_STS_STS_ID": true,
+            "BREEZE_THEME_EDITOR_VALUE_STORE_ID_STORE_STORE_ID": true,
+            "BREEZE_THEME_EDITOR_VALUE_USER_ID_ADMIN_USER_USER_ID": true
+        }
+    },
+    "breeze_theme_editor_publication": {
+        "column": {
+            "publication_id": true,
+            "theme_id": true,
+            "store_id": true,
+            "title": true,
+            "description": true,
+            "published_at": true,
+            "published_by": true,
+            "is_rollback": true,
+            "rollback_from": true,
+            "changes_count": true
+        },
+        "index": {
+            "BREEZE_THEME_EDITOR_PUBLICATION_THEME_ID_STORE_ID": true,
+            "BREEZE_THEME_EDITOR_PUBLICATION_PUBLISHED_AT": true,
+            "BREEZE_THEME_EDITOR_PUBLICATION_PUBLISHED_BY": true,
+            "BREEZE_THEME_EDITOR_PUBLICATION_TITLE": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "BREEZE_THEME_EDITOR_PUBLICATION_STORE_ID_STORE_STORE_ID": true,
+            "BREEZE_THEME_EDITOR_PUBLICATION_PUBLISHED_BY_ADMIN_USER_USER_ID": true,
+            "FK_C441AD62A73D76BF136AD4E5FAB6ECC3": true
+        }
+    },
+    "breeze_theme_editor_changelog": {
+        "column": {
+            "change_id": true,
+            "publication_id": true,
+            "section_code": true,
+            "setting_code": true,
+            "old_value": true,
+            "new_value": true
+        },
+        "index": {
+            "BREEZE_THEME_EDITOR_CHANGELOG_PUBLICATION_ID": true,
+            "BREEZE_THEME_EDITOR_CHANGELOG_SECTION_CODE_SETTING_CODE": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FK_A672CA8603BEB69900B025B352C69E61": true
+        }
+    }
+}
