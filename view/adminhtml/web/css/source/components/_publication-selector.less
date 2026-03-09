@@ -296,6 +296,7 @@ _____________________________________________
     .publications-list {
         .dropdown-item {
             padding: 10px 16px;
+            padding-right: 36px; /* room for the delete button on hover */
 
             .item-icon {
                 font-size: 18px;
@@ -312,6 +313,43 @@ _____________________________________________
                     color: @dropdown-item-meta-color;
                 }
             }
+        }
+
+        /* Delete button — sits inside .dropdown-item-group, absolutely on the right */
+        .dropdown-delete-publication-button {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            padding: 0;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            color: @dropdown-item-meta-color;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+
+            &:hover {
+                background: fade(@status-error-color, 10%);
+                border-color: fade(@status-error-color, 40%);
+                color: @status-error-color;
+            }
+
+            &:active {
+                background: fade(@status-error-color, 20%);
+            }
+        }
+
+        .dropdown-item-group:hover .dropdown-delete-publication-button {
+            opacity: 1;
         }
     }
 }
