@@ -42,6 +42,8 @@ define([
                 canPublish: data.canPublish,
                 canRollback: data.canRollback,
                 canResetPublished: data.canResetPublished,
+                canDeletePublication: data.canDeletePublication,
+                activePublicationId: data.activePublicationId,
                 // Computed values
                 displayLabel: this._getDisplayLabel(data),
                 badgeText: this._getBadgeText(data),
