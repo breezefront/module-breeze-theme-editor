@@ -579,10 +579,16 @@ class CssGenerator
                 : ($field['options'] ?? []);
 
             foreach ($options as $option) {
-                if (!empty($option['url']) && ($option['value'] ?? '') === $rawValue) {
-                    $urls[] = $option['url'];
-                    break;
+                if (($option['value'] ?? '') !== $rawValue) {
+                    continue;
                 }
+                // Only external URLs (Google Fonts etc.) get an @import.
+                // Local theme paths (e.g. 'web/fonts/MyFont.woff2') are served
+                // via the theme's own @font-face rules — no @import needed.
+                if (!empty($option['url']) && str_starts_with($option['url'], 'http')) {
+                    $urls[] = $option['url'];
+                }
+                break;
             }
         }
 

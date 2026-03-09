@@ -2092,5 +2092,45 @@ class CssGeneratorTest extends TestCase
             'Duplicate palette font URLs must be deduplicated to a single @import'
         );
     }
+
+    /**
+     * Test 43: Local theme font (url is a relative path, not http) → no @import generated
+     *
+     * When an option carries a theme-relative url like 'web/fonts/MyFont.woff2',
+     * the CSS generator must NOT emit an @import — the font is already loaded by
+     * the theme's own @font-face rules.  Only external http(s) URLs get @import.
+     */
+    public function testLocalFontUrlProducesNoImport(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'base_font',
+                'value'        => 'MyFont',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn(
+            $this->makeFontPickerConfig([
+                ['value' => 'Arial',  'label' => 'Arial'],
+                ['value' => 'MyFont', 'label' => 'My Font', 'url' => 'web/fonts/MyFont.woff2'],
+            ])
+        );
+
+        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+
+        $this->assertStringNotContainsString(
+            '@import',
+            $css,
+            'Local theme font (non-http url) must not produce an @import rule'
+        );
+        $this->assertStringContainsString(
+            '--base-font-family: "MyFont", sans-serif;',
+            $css,
+            'CSS variable must still be emitted even when no @import is generated'
+        );
+    }
 }
 

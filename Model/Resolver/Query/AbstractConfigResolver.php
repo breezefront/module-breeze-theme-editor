@@ -211,7 +211,7 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
             $p['options'] = $this->formatOptions($s['options']);
             $stylesheets = [];
             foreach ($s['options'] as $option) {
-                if (!empty($option['url'])) {
+                if (!empty($option['url']) && str_starts_with($option['url'], 'http')) {
                     $stylesheets[] = ['value' => $option['value'], 'url' => $option['url']];
                 }
             }

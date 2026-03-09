@@ -324,4 +324,55 @@ class AbstractConfigResolverFontStylesheetsTest extends TestCase
         );
         $this->assertCount(1, $field['params']['fontStylesheets'], 'Only the url-bearing option should be in fontStylesheets');
     }
+
+    /**
+     * Test 6: Option with a local theme path url (non-http) → excluded from fontStylesheets
+     *
+     * Local fonts like 'web/fonts/MyFont.woff2' must not appear in fontStylesheets
+     * because the admin UI would try to load the path as a stylesheet URL (→ 404).
+     * The font is loaded by the theme's own @font-face rules.
+     */
+    public function testLocalFontUrlIsExcludedFromFontStylesheets(): void
+    {
+        $this->setupMocksForFontPickerField([
+            ['value' => 'Arial',  'label' => 'Arial'],
+            ['value' => 'MyFont', 'label' => 'My Font', 'url' => 'web/fonts/MyFont.woff2'],
+        ]);
+
+        $field = $this->getFirstField();
+
+        $this->assertArrayNotHasKey(
+            'fontStylesheets',
+            $field['params'] ?? [],
+            'A local theme font path must not appear in fontStylesheets'
+        );
+    }
+
+    /**
+     * Test 7: Mix of external (https://) and local (web/fonts/...) urls
+     *         → only the external ones appear in fontStylesheets
+     */
+    public function testMixedExternalAndLocalUrlsOnlyExternalInFontStylesheets(): void
+    {
+        $this->setupMocksForFontPickerField([
+            ['value' => 'Arial',   'label' => 'Arial'],
+            ['value' => 'MyFont',  'label' => 'My Font',  'url' => 'web/fonts/MyFont.woff2'],
+            ['value' => 'Roboto',  'label' => 'Roboto',   'url' => 'https://fonts.googleapis.com/css2?family=Roboto'],
+            ['value' => 'MyFont2', 'label' => 'My Font2', 'url' => 'web/fonts/MyFont2.woff2'],
+        ]);
+
+        $field = $this->getFirstField();
+
+        $stylesheets = $field['params']['fontStylesheets'] ?? null;
+
+        $this->assertNotNull($stylesheets, 'fontStylesheets must be present for the external url option');
+        $this->assertCount(1, $stylesheets, 'Only the external https:// url must appear in fontStylesheets');
+
+        $this->assertEquals('Roboto', $stylesheets[0]['value']);
+        $this->assertEquals('https://fonts.googleapis.com/css2?family=Roboto', $stylesheets[0]['url']);
+
+        $values = array_column($stylesheets, 'value');
+        $this->assertNotContains('MyFont',  $values, 'Local font must not appear in fontStylesheets');
+        $this->assertNotContains('MyFont2', $values, 'Local font must not appear in fontStylesheets');
+    }
 }
