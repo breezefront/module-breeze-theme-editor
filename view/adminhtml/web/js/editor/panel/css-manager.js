@@ -492,6 +492,44 @@ define([
         },
 
         /**
+         * Refresh published CSS layer from the server.
+         *
+         * Called after discardBreezeThemeEditorPublished succeeds so the iframe
+         * immediately reflects the new published state (empty / theme defaults)
+         * without a full page reload.
+         *
+         * @returns {Promise}
+         */
+        refreshPublishedCss: function() {
+            var self = this;
+
+            return getCss(storeId, themeId, 'PUBLISHED', null)
+                .then(function(response) {
+                    var css = (response &&
+                               response.getThemeEditorCss &&
+                               response.getThemeEditorCss.css) || '';
+
+                    // Refresh cached reference in case the iframe was navigated
+                    if (!$publishedStyle || !$publishedStyle.length) {
+                        $publishedStyle = $(getIframeDocument()).find('#bte-theme-css-variables');
+                    }
+
+                    if ($publishedStyle && $publishedStyle.length) {
+                        $publishedStyle.text(css || ':root {}');
+                        log.info('CSS Manager: Published CSS refreshed in iframe');
+                    } else {
+                        log.warn('CSS Manager: #bte-theme-css-variables not found, cannot refresh');
+                    }
+
+                    return true;
+                })
+                .catch(function(error) {
+                    log.error('CSS Manager: Failed to refresh published CSS: ' + error);
+                    return false;
+                });
+        },
+
+        /**
          * Refresh current status (re-fetch if PUBLICATION)
          */
         refresh: function() {

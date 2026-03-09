@@ -372,6 +372,21 @@ define([
                     window.location.reload();
                 }, 1000);
             });
+
+            $(document).on('bte:publishedDiscarded', function (e, data) {
+                log.info('Published customizations discarded, refreshing preview...');
+
+                // 1. Clear unsaved draft edits from live preview
+                //    (they were built on top of the old published base)
+                CssPreviewManager.reset();
+
+                // 2. Refresh published CSS layer in iframe — the server no longer has
+                //    published values, so #bte-theme-css-variables must show defaults
+                CssManager.refreshPublishedCss();
+
+                // 3. Reload panel config so field values and badges reflect new state
+                self._loadConfig();
+            });
         },
 
         /**
