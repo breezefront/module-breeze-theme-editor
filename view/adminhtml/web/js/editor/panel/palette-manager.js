@@ -41,7 +41,10 @@ define([
             this.themeId = config.themeId || StorageHelper.getThemeId();
             this.palettes = this._indexPalettes(config.palettes);
             this.dirtyColors = {}; // Reset dirty state on init (important for test isolation)
-            this.listeners = []; // Reset listeners on init
+            // NOTE: listeners are intentionally NOT reset here.
+            // CssPreviewManager.subscribe() is called once during app boot; wiping listeners
+            // on every _loadConfig() (store-switch, config reload) would silently disconnect
+            // the live CSS preview from palette Pickr changes.
 
             // Convert legacy RGB dirty colors to HEX format (backward compatibility)
             for (var property in this.dirtyColors) {

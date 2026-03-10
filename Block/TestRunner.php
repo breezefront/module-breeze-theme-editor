@@ -194,10 +194,14 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/font-palette-section-renderer-test',
             // Palette Manager Tests (11 tests) - isColorModified uses saved DB value, not unsaved
             'Swissup_BreezeThemeEditor/js/test/tests/palette-manager-test',
+            // Palette Manager Init Listener Tests (8 tests) - init() must not wipe subscribers
+            'Swissup_BreezeThemeEditor/js/test/tests/palette-manager-init-listeners-test',
             // Publication Selector Tests (15 tests) - canPublish logic + Bug 1 + Bug 2 regression
             'Swissup_BreezeThemeEditor/js/test/tests/publication-selector-test',
             // Settings Editor Reset/Restore CSS Preview Tests (10 tests) - data-property vs data-css-var bug
             'Swissup_BreezeThemeEditor/js/test/tests/settings-editor-reset-test',
+            // Global Reset Button Palette Guard Tests (10 tests) - reset guard ignoring PaletteManager.dirtyColors
+            'Swissup_BreezeThemeEditor/js/test/tests/global-reset-palette-test',
             // Discard Published Preview Refresh Tests (14 tests) - bte:publishedDiscarded had no listener
             'Swissup_BreezeThemeEditor/js/test/tests/discard-published-preview-test',
             // Toastify Library Tests (17 tests) - DOM structure, types, options, hide/show, shortcuts
