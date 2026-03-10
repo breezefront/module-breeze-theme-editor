@@ -46,11 +46,11 @@ class ExportSettings extends AbstractMutationResolver
         // Auth
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        $scope = $args['scope'] ?? 'stores';
-        $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
+        $scope = $args['scope']['type'] ?? 'stores';
+        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
         $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
 
         $statusCode = $args['status'] ?? 'PUBLISHED';
         

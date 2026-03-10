@@ -18,10 +18,10 @@ class CopyFromStore extends AbstractSaveMutation
     ) {
         $input = $args['input'];
 
-        $fromScope   = $input['fromScope'] ?? 'stores';
-        $fromScopeId = (int)($input['fromScopeId'] ?? $input['fromStoreId'] ?? 0);
-        $toScope     = $input['toScope'] ?? 'stores';
-        $toScopeId   = (int)($input['toScopeId'] ?? $input['toStoreId'] ?? 0);
+        $fromScope   = $input['from']['type']    ?? 'stores';
+        $fromScopeId = (int)($input['from']['scopeId'] ?? 0);
+        $toScope     = $input['to']['type']      ?? 'stores';
+        $toScopeId   = (int)($input['to']['scopeId']   ?? 0);
         $sectionCodes = $input['sectionCodes'] ?? null;
 
         if ($fromScope === $toScope && $fromScopeId === $toScopeId) {
@@ -32,13 +32,12 @@ class CopyFromStore extends AbstractSaveMutation
 
         // Використати базовий метод для target scope
         $params = $this->prepareBaseParams([
-            'scope'   => $toScope,
-            'scopeId' => $toScopeId,
+            'scope'   => ['type' => $toScope, 'scopeId' => $toScopeId],
             'status'  => $input['status'] ?? 'DRAFT'
         ], $context);
 
         // Визначити themeId для source scope
-        $fromThemeId = $this->themeResolver->getThemeIdByStoreId($fromScopeId);
+        $fromThemeId = $this->themeResolver->getThemeIdByScope($fromScope, $fromScopeId);
 
         // Копіювати published values з source scope через ValueService
         $fromStatusId = $this->statusProvider->getStatusId('PUBLISHED');

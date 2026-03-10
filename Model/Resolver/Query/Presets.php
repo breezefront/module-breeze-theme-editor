@@ -30,8 +30,8 @@ class Presets extends AbstractQueryResolver
         array $value = null,
         array $args = null
     ) {
-        $scope = $args['scope'] ?? 'stores';
-        $scopeId = (int)$args['scopeId'];
+        $scope = $args['scope']['type'] ?? 'stores';
+        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
         $themeId = $this->themeResolver->getThemeIdByScope($scope, $scopeId);
 
         // Use getConfigurationWithInheritance to get presets from parent themes

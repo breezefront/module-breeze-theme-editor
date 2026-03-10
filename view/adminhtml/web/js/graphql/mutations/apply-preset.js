@@ -31,8 +31,7 @@ define([
     return function applyPreset(scope, scopeId, presetId, status, overwriteExisting) {
         return client.execute(mutation, {
             input: {
-                scope: scope || 'stores',
-                scopeId: parseInt(scopeId) || 0,
+                scope: { type: scope || 'stores', scopeId: parseInt(scopeId) || 0 },
                 presetId: presetId,
                 status: status || 'DRAFT',
                 overwriteExisting: overwriteExisting !== false

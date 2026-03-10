@@ -80,7 +80,7 @@ class GetCssTest extends TestCase
     public function testThrowsExceptionWhenPublicationStatusWithoutPublicationId(): void
     {
         $args = [
-            'scopeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'status' => 'PUBLICATION'
             // publicationId is missing
         ];
@@ -111,7 +111,7 @@ class GetCssTest extends TestCase
             ->willReturn($expectedCss);
         
         $args = [
-            'scopeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 1,
             'status' => 'PUBLISHED'
         ];
@@ -147,7 +147,7 @@ class GetCssTest extends TestCase
             ->willReturn($expectedCss);
         
         $args = [
-            'scopeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 1,
             'status' => 'DRAFT'
         ];
@@ -205,7 +205,7 @@ class GetCssTest extends TestCase
             ->willReturn($expectedCss);
         
         $args = [
-            'scopeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 1,
             'status' => 'PUBLICATION',
             'publicationId' => 123
@@ -239,7 +239,7 @@ class GetCssTest extends TestCase
             ->willReturn($expectedCss);
         
         $args = [
-            'scopeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 1
             // status is not provided
         ];
@@ -275,7 +275,7 @@ class GetCssTest extends TestCase
             ->willReturn($expectedCss);
         
         $args = [
-            'scopeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'status' => 'PUBLISHED'
             // themeId is not provided
         ];
@@ -301,7 +301,7 @@ class GetCssTest extends TestCase
         $this->cssGeneratorMock->method('generate')
             ->willReturn($validCss);
         
-        $args = ['scopeId' => 1, 'themeId' => 1, 'status' => 'PUBLISHED'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 1, 'status' => 'PUBLISHED'];
         
         $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
 
@@ -326,7 +326,7 @@ class GetCssTest extends TestCase
         $this->cssGeneratorMock->method('generate')
             ->willReturn($emptyCss);
         
-        $args = ['scopeId' => 1, 'themeId' => 1, 'status' => 'PUBLISHED'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 1, 'status' => 'PUBLISHED'];
         
         $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         
@@ -356,7 +356,7 @@ class GetCssTest extends TestCase
             ->willReturn($searchCriteriaBuilderMock);
         
         $args = [
-            'scopeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 1,
             'status' => 'PUBLICATION',
             'publicationId' => 123
@@ -404,7 +404,7 @@ class GetCssTest extends TestCase
             ->method('generateFromValuesMap');
         
         $args = [
-            'scopeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 1,
             'status' => 'PUBLICATION',
             'publicationId' => 123

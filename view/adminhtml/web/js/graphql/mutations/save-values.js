@@ -37,8 +37,7 @@ define([
     return function saveValues(scope, scopeId, status, values, autoPublish, publicationTitle) {
         return client.execute(mutation, {
             input: {
-                scope:            scope || 'stores',
-                scopeId:          scopeId,
+                scope:            { type: scope || 'stores', scopeId: scopeId },
                 status:           status || 'DRAFT',
                 values:           values,
                 autoPublish:      autoPublish || false,

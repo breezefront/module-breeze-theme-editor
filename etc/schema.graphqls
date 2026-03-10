@@ -49,10 +49,14 @@ enum BreezeThemeEditorScope {
     stores
 }
 
+input BreezeThemeEditorScopeInput {
+    type: BreezeThemeEditorScope
+    scopeId: Int!
+}
+
 type Query {
     breezeThemeEditorConfig(
-        scope: BreezeThemeEditorScope
-        scopeId: Int!
+        scope: BreezeThemeEditorScopeInput
         status: BreezeThemeEditorStatusCode
     ): BreezeThemeEditorConfig!  @doc(description: "Get theme configuration with current values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Config")
 
@@ -61,22 +65,19 @@ type Query {
     ): BreezeThemeEditorConfig!  @doc(description: "Get theme configuration from specific publication") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\ConfigFromPublication")
 
     breezeThemeEditorValues(
-        scope: BreezeThemeEditorScope
-        scopeId: Int!
+        scope: BreezeThemeEditorScopeInput
         status: BreezeThemeEditorStatusCode
         sectionCodes: [String!] @doc(description: "Filter by specific sections")
     ): [BreezeThemeEditorValue!]!  @doc(description: "Get only values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Values")
 
     breezeThemeEditorCompare(
-        scope: BreezeThemeEditorScope
-        scopeId: Int!
+        scope: BreezeThemeEditorScopeInput
     ): BreezeThemeEditorComparison @doc(description: "Compare draft vs published changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Compare")
 
     breezeThemeEditorStatuses: [BreezeThemeEditorStatus!]! @doc(description: "Get available statuses") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Statuses")
 
     breezeThemeEditorPublications(
-        scope: BreezeThemeEditorScope
-        scopeId: Int!
+        scope: BreezeThemeEditorScopeInput
         pageSize: Int = 20
         currentPage: Int = 1
         search: String @doc(description: "Search by title")
@@ -87,13 +88,11 @@ type Query {
     ): BreezeThemeEditorPublication @doc(description: "Get publication details with changelog") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Publication")
 
     breezeThemeEditorPresets(
-        scope: BreezeThemeEditorScope
-        scopeId: Int!
+        scope: BreezeThemeEditorScopeInput
     ): [BreezeThemeEditorPreset!]! @doc(description: "Get available presets from theme config") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Presets")
 
     getThemeEditorCss(
-        scope: BreezeThemeEditorScope
-        scopeId: Int!
+        scope: BreezeThemeEditorScopeInput
         status: BreezeThemeEditorCssStatusCode
         publicationId: Int @doc(description: "For PUBLICATION status: load CSS from this publication")
     ): BreezeThemeEditorCssOutput @doc(description: "Get generated CSS for specific status") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\GetCss")
@@ -117,15 +116,13 @@ type Mutation {
     ): PublishBreezeThemeEditorOutput @doc(description: "Publish draft to production") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\Publish")
 
     discardBreezeThemeEditorDraft(
-        scope: BreezeThemeEditorScope
-        scopeId: Int!
+        scope: BreezeThemeEditorScopeInput
         sectionCodes: [String!] @doc(description: "Optional: discard only specific sections")
         fieldCodes: [String!] @doc(description: "Optional: discard only specific fields (requires sectionCodes to be set)")
     ): DiscardBreezeThemeEditorDraftOutput @doc(description: "Discard draft changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\DiscardDraft")
 
     discardBreezeThemeEditorPublished(
-        scope: BreezeThemeEditorScope
-        scopeId: Int!
+        scope: BreezeThemeEditorScopeInput
     ): DiscardBreezeThemeEditorPublishedOutput @doc(description: "Reset all published customizations to theme defaults") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\DiscardPublished")
 
     rollbackBreezeThemeEditor(
@@ -145,8 +142,7 @@ type Mutation {
     ): CopyBreezeThemeEditorFromStoreOutput @doc(description: "Copy settings from another scope") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\CopyFromStore")
 
     exportBreezeThemeEditorSettings(
-        scope: BreezeThemeEditorScope
-        scopeId: Int!
+        scope: BreezeThemeEditorScopeInput
         status: BreezeThemeEditorStatusCode
     ): ExportBreezeThemeEditorSettingsOutput @doc(description: "Export settings as JSON") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\ExportSettings")
 
@@ -410,8 +406,7 @@ type BreezeThemeEditorCssOutput {
 }
 
 input SaveBreezeThemeEditorValuesInput {
-    scope: BreezeThemeEditorScope
-    scopeId: Int!
+    scope: BreezeThemeEditorScopeInput
     status: BreezeThemeEditorStatusCode!
     values: [BreezeThemeEditorValueInput!]!
     autoPublish: Boolean @doc(description: "Publish immediately after save")
@@ -419,8 +414,7 @@ input SaveBreezeThemeEditorValuesInput {
 }
 
 input SaveBreezeThemeEditorValueInput {
-    scope: BreezeThemeEditorScope
-    scopeId: Int!
+    scope: BreezeThemeEditorScopeInput
     status: BreezeThemeEditorStatusCode!
     sectionCode: String!
     fieldCode: String!
@@ -434,8 +428,7 @@ input BreezeThemeEditorValueInput {
 }
 
 input PublishBreezeThemeEditorInput {
-    scope: BreezeThemeEditorScope
-    scopeId: Int!
+    scope: BreezeThemeEditorScopeInput
     title: String!
     description: String
     notifyUsers: Boolean @doc(description: "Send notification to other admins")
@@ -448,42 +441,36 @@ input RollbackBreezeThemeEditorInput {
 }
 
 input ApplyBreezeThemeEditorPresetInput {
-    scope: BreezeThemeEditorScope
-    scopeId: Int!
+    scope: BreezeThemeEditorScopeInput
     presetId: String!
     status: BreezeThemeEditorStatusCode
     overwriteExisting: Boolean @doc(description: "Overwrite existing values")
 }
 
 input ResetBreezeThemeEditorToDefaultsInput {
-    scope: BreezeThemeEditorScope
-    scopeId: Int!
+    scope: BreezeThemeEditorScopeInput
     status: BreezeThemeEditorStatusCode
     sectionCodes: [String!] @doc(description: "Reset only specific sections")
     fieldCodes: [String!] @doc(description: "Reset only specific fields")
 }
 
 input CopyBreezeThemeEditorFromStoreInput {
-    fromScope: BreezeThemeEditorScope
-    fromScopeId: Int!
-    toScope: BreezeThemeEditorScope
-    toScopeId: Int!
+    from: BreezeThemeEditorScopeInput!
+    to: BreezeThemeEditorScopeInput!
     status: BreezeThemeEditorStatusCode
     sectionCodes: [String!]
     overwriteExisting: Boolean
 }
 
 input ImportBreezeThemeEditorSettingsInput {
-    scope: BreezeThemeEditorScope
-    scopeId: Int!
+    scope: BreezeThemeEditorScopeInput
     status: BreezeThemeEditorStatusCode
     jsonData: String!  @doc(description: "JSON string with settings")
     overwriteExisting: Boolean
 }
 
 input SaveBreezeThemeEditorPaletteValueInput {
-    scope: BreezeThemeEditorScope
-    scopeId: Int!
+    scope: BreezeThemeEditorScopeInput
     cssVar: String! @doc(description: "CSS variable name (e.g., '--color-brand-primary')") @deprecated(reason: "Use 'property' instead")
     property: String! @doc(description: "CSS variable name (e.g., '--color-brand-primary')")
     value: String! @doc(description: "HEX value (e.g., '#1979c3') or RGB (auto-converted for backward compatibility)")

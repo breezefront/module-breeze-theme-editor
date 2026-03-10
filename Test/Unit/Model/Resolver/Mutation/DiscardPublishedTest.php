@@ -61,7 +61,7 @@ class DiscardPublishedTest extends TestCase
             ->with(10, 'stores', 1, 2, null, null, null)
             ->willReturn(7);
 
-        $args = ['storeId' => 1, 'themeId' => 10];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 10];
         $result = $this->resolver->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -84,8 +84,8 @@ class DiscardPublishedTest extends TestCase
     public function testAutoDetectsThemeIdWhenNotProvided(): void
     {
         $this->themeResolverMock->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(3)
+            ->method('getThemeIdByScope')
+            ->with('stores', 3)
             ->willReturn(15);
 
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
@@ -95,7 +95,7 @@ class DiscardPublishedTest extends TestCase
             ->with(15, 'stores', 3, 2, null, null, null)
             ->willReturn(3);
 
-        $args = ['storeId' => 3]; // no themeId
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 3]]; // no themeId
         $result = $this->resolver->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -117,12 +117,12 @@ class DiscardPublishedTest extends TestCase
     public function testDoesNotCallThemeResolverWhenThemeIdProvided(): void
     {
         $this->themeResolverMock->expects($this->never())
-            ->method('getThemeIdByStoreId');
+            ->method('getThemeIdByScope');
 
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         $this->valueServiceMock->method('deleteValues')->willReturn(0);
 
-        $args = ['storeId' => 1, 'themeId' => 5];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5];
         $this->resolver->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -155,7 +155,7 @@ class DiscardPublishedTest extends TestCase
             )
             ->willReturn(0);
 
-        $args = ['storeId' => 1, 'themeId' => 10];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 10];
         $this->resolver->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -176,7 +176,7 @@ class DiscardPublishedTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         $this->valueServiceMock->method('deleteValues')->willReturn(0);
 
-        $args = ['storeId' => 1, 'themeId' => 10];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 10];
         $result = $this->resolver->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -214,7 +214,7 @@ class DiscardPublishedTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         $this->valueServiceMock->method('deleteValues')->willReturn(4);
 
-        $args = ['storeId' => 1, 'themeId' => 10];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 10];
         $result = $this->resolver->resolve(
             $this->fieldMock,
             $this->contextMock,

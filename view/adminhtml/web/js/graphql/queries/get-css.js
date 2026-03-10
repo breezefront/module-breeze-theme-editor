@@ -4,8 +4,8 @@ define([
     'use strict';
 
     var query = `
-        query GetThemeEditorCss($scope: BreezeThemeEditorScope, $scopeId: Int!, $status: BreezeThemeEditorCssStatusCode, $publicationId: Int) {
-            getThemeEditorCss(scope: $scope, scopeId: $scopeId, status: $status, publicationId: $publicationId) {
+        query GetThemeEditorCss($scope: BreezeThemeEditorScopeInput, $status: BreezeThemeEditorCssStatusCode, $publicationId: Int) {
+            getThemeEditorCss(scope: $scope, status: $status, publicationId: $publicationId) {
                 css
                 status
                 hasContent
@@ -24,8 +24,7 @@ define([
      */
     return function getCss(scope, scopeId, status, publicationId) {
         return client.execute(query, {
-            scope:         scope || 'stores',
-            scopeId:       scopeId,
+            scope:         { type: scope || 'stores', scopeId: scopeId },
             status:        status || 'PUBLISHED',
             publicationId: publicationId || null
         }, 'GetThemeEditorCss');

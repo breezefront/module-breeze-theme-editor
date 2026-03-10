@@ -4,10 +4,9 @@ define([
     'use strict';
 
     var query = `
-        query GetPublications($scope: BreezeThemeEditorScope, $scopeId: Int!, $pageSize: Int, $currentPage: Int, $search: String) {
+        query GetPublications($scope: BreezeThemeEditorScopeInput, $pageSize: Int, $currentPage: Int, $search: String) {
             breezeThemeEditorPublications(
                 scope: $scope
-                scopeId: $scopeId
                 pageSize: $pageSize
                 currentPage: $currentPage
                 search:  $search
@@ -46,8 +45,7 @@ define([
      */
     return function getPublications(scope, scopeId, pageSize, currentPage, search) {
         return client.execute(query, {
-            scope:       scope || 'stores',
-            scopeId:     scopeId,
+            scope:       { type: scope || 'stores', scopeId: scopeId },
             pageSize:    pageSize || 20,
             currentPage: currentPage || 1,
             search:      search || null

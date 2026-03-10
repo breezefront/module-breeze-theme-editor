@@ -59,7 +59,7 @@ class SaveValueTest extends TestCase
     {
         // Arrange
         $input = [
-            'storeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 5,
             'status' => 'DRAFT',
             'sectionCode' => 'header',
@@ -105,7 +105,7 @@ class SaveValueTest extends TestCase
     {
         // Arrange
         $input = [
-            'storeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 5,
             'status' => 'PUBLISHED',
             'sectionCode' => 'footer',
@@ -143,7 +143,7 @@ class SaveValueTest extends TestCase
     {
         // Arrange
         $input = [
-            'storeId' => 2,
+            'scope' => ['type' => 'stores', 'scopeId' => 2],
             'status' => 'DRAFT',
             'sectionCode' => 'colors',
             'fieldCode' => 'primary',
@@ -155,8 +155,8 @@ class SaveValueTest extends TestCase
             ->willReturn(1);
         $this->statusProvider->method('getStatusId')->willReturn(1);
         $this->themeResolver->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(2)
+            ->method('getThemeIdByScope')
+            ->with('stores', 2)
             ->willReturn(10);
 
         $valueMock = $this->createMock(ValueInterface::class);
@@ -182,7 +182,7 @@ class SaveValueTest extends TestCase
     {
         // Arrange
         $input = [
-            'storeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 5,
             'sectionCode' => 'layout',
             'fieldCode' => 'width',
@@ -220,7 +220,7 @@ class SaveValueTest extends TestCase
     {
         // Arrange
         $input = [
-            'storeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 5,
             'status' => 'DRAFT',
             'sectionCode' => 'typography',
@@ -258,7 +258,7 @@ class SaveValueTest extends TestCase
     {
         // Arrange
         $input = [
-            'storeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 5,
             'status' => 'DRAFT',
             'sectionCode' => 'spacing',
@@ -296,7 +296,7 @@ class SaveValueTest extends TestCase
     {
         // Arrange
         $input = [
-            'storeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 5,
             'status' => 'DRAFT',
             'sectionCode' => 'custom',
@@ -332,7 +332,7 @@ class SaveValueTest extends TestCase
     {
         // Arrange
         $input = [
-            'storeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 5,
             'status' => 'DRAFT',
             'sectionCode' => 'buttons',

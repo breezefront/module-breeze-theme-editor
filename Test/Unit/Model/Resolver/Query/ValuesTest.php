@@ -73,7 +73,7 @@ class ValuesTest extends TestCase
     public function testThrowsExceptionWhenStatusIsPublication(): void
     {
         $args = [
-            'storeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'status' => 'PUBLICATION'
         ];
         
@@ -123,7 +123,7 @@ class ValuesTest extends TestCase
         $this->configProviderMock->method('getAllDefaults')->willReturn($mockDefaults);
         
         // Execute
-        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
         $result = $this->values->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -165,7 +165,7 @@ class ValuesTest extends TestCase
         
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         
-        $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
         $result = $this->values->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -188,7 +188,7 @@ class ValuesTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->willThrowException(new GraphQlAuthorizationException(__('Access token required')));
         
-        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
         
         $this->expectException(GraphQlAuthorizationException::class);
         $this->expectExceptionMessage('Access token required');
@@ -241,7 +241,7 @@ class ValuesTest extends TestCase
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
         
         $args = [
-            'storeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'status' => 'PUBLISHED',
             'sectionCodes' => ['colors', 'typography'] // filter to 2 sections
         ];
@@ -293,7 +293,7 @@ class ValuesTest extends TestCase
         $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn($mockValues);
         $this->configProviderMock->method('getAllDefaults')->willReturn($mockDefaults);
         
-        $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
         $result = $this->values->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -335,7 +335,7 @@ class ValuesTest extends TestCase
         $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn($mockValues);
         $this->configProviderMock->method('getAllDefaults')->willReturn($mockDefaults);
         
-        $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
         $result = $this->values->resolve(
             $this->fieldMock,
             $this->contextMock,

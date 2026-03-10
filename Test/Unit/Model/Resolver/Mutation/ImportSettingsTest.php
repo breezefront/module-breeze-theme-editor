@@ -52,7 +52,7 @@ class ImportSettingsTest extends TestCase
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
             ['input' => [
-                'storeId'  => 1,
+                'scope'    => ['type' => 'stores', 'scopeId' => 1],
                 'themeId'  => 5,
                 'status'   => 'DRAFT',
                 'jsonData' => '{}',
@@ -77,7 +77,7 @@ class ImportSettingsTest extends TestCase
         $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
             ['input' => [
-                'storeId'  => 1,
+                'scope'    => ['type' => 'stores', 'scopeId' => 1],
                 'themeId'  => 5,
                 'jsonData' => 'not-json',
             ]]
@@ -89,8 +89,8 @@ class ImportSettingsTest extends TestCase
         $this->userResolver->method('getCurrentUserId')->willReturn(1);
         $this->themeResolver
             ->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(2)
+            ->method('getThemeIdByScope')
+            ->with('stores', 2)
             ->willReturn(10);
         $this->importExportService
             ->method('import')
@@ -99,7 +99,7 @@ class ImportSettingsTest extends TestCase
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
             ['input' => [
-                'storeId'  => 2,
+                'scope'    => ['type' => 'stores', 'scopeId' => 2],
                 'jsonData' => '{}',
             ]]
         );
@@ -119,7 +119,7 @@ class ImportSettingsTest extends TestCase
         $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
             ['input' => [
-                'storeId'  => 1,
+                'scope'    => ['type' => 'stores', 'scopeId' => 1],
                 'themeId'  => 5,
                 'status'   => 'PUBLISHED',
                 'jsonData' => '{}',

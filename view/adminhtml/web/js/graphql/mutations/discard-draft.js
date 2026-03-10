@@ -4,10 +4,9 @@ define([
     'use strict';
 
     var mutation = `
-        mutation DiscardDraft($scope: BreezeThemeEditorScope, $scopeId: Int!, $sectionCodes: [String!], $fieldCodes: [String!]) {
+        mutation DiscardDraft($scope: BreezeThemeEditorScopeInput, $sectionCodes: [String!], $fieldCodes: [String!]) {
             discardBreezeThemeEditorDraft(
                 scope: $scope
-                scopeId: $scopeId
                 sectionCodes: $sectionCodes
                 fieldCodes: $fieldCodes
             ) {
@@ -29,8 +28,7 @@ define([
      */
     return function discardDraft(scope, scopeId, sectionCodes, fieldCodes) {
         return client.execute(mutation, {
-            scope:        scope || 'stores',
-            scopeId:      scopeId,
+            scope:        { type: scope || 'stores', scopeId: scopeId },
             sectionCodes: sectionCodes || null,
             fieldCodes:   fieldCodes || null
         }, 'DiscardDraft');

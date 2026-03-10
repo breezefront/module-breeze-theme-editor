@@ -32,8 +32,7 @@ define([
     return function publish(scope, scopeId, title, description, notifyUsers) {
         return client.execute(mutation, {
             input:  {
-                scope:        scope || 'stores',
-                scopeId:      scopeId,
+                scope:        { type: scope || 'stores', scopeId: scopeId },
                 title:        title,
                 description:  description || null,
                 notifyUsers:  notifyUsers || false

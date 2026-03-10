@@ -79,7 +79,7 @@ class ResetToDefaultsTest extends TestCase
 
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['input' => ['storeId' => 1, 'themeId' => 5]]
+            ['input' => ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5]]
         );
 
         $this->assertTrue($result['success']);
@@ -106,7 +106,7 @@ class ResetToDefaultsTest extends TestCase
 
         $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['input' => ['storeId' => 1, 'themeId' => 5, 'sectionCodes' => ['colors']]]
+            ['input' => ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5, 'sectionCodes' => ['colors']]]
         );
     }
 
@@ -128,7 +128,7 @@ class ResetToDefaultsTest extends TestCase
 
         $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['input' => ['storeId' => 1, 'themeId' => 5, 'fieldCodes' => ['primary']]]
+            ['input' => ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5, 'fieldCodes' => ['primary']]]
         );
     }
 
@@ -144,7 +144,7 @@ class ResetToDefaultsTest extends TestCase
 
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['input' => ['storeId' => 1, 'themeId' => 5]]
+            ['input' => ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5]]
         );
 
         $this->assertArrayHasKey('success', $result);
@@ -160,8 +160,8 @@ class ResetToDefaultsTest extends TestCase
         $this->statusProvider->method('getStatusId')->willReturn(1);
         $this->themeResolver
             ->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(3)
+            ->method('getThemeIdByScope')
+            ->with('stores', 3)
             ->willReturn(10);
         $this->configProvider->method('getAllDefaults')->willReturn([]);
         $this->valueRepository->method('saveMultiple')->willReturn(0);
@@ -169,7 +169,7 @@ class ResetToDefaultsTest extends TestCase
 
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['input' => ['storeId' => 3]]
+            ['input' => ['scope' => ['type' => 'stores', 'scopeId' => 3]]]
         );
 
         $this->assertTrue($result['success']);

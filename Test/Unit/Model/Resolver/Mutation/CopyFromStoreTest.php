@@ -61,9 +61,8 @@ class CopyFromStoreTest extends TestCase
         $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
             ['input' => [
-                'fromStoreId' => 1,
-                'toStoreId'   => 1,
-                'themeId'     => 5,
+                'from' => ['type' => 'stores', 'scopeId' => 1],
+                'to'   => ['type' => 'stores', 'scopeId' => 1],
             ]]
         );
     }
@@ -73,17 +72,16 @@ class CopyFromStoreTest extends TestCase
         $this->userResolver->method('getCurrentUserId')->willReturn(1);
         $this->statusProvider->method('getStatusId')
             ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
-        $this->themeResolver->method('getThemeIdByStoreId')
-            ->willReturnMap([[1, 10], [2, 5]]);
+        $this->themeResolver->method('getThemeIdByScope')
+            ->willReturnMap([['stores', 1, 10], ['stores', 2, 5]]);
         $this->valueService->method('copyValues')->willReturn(3);
         $this->valueService->method('getValuesByTheme')->willReturn([]);
 
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
             ['input' => [
-                'fromStoreId' => 1,
-                'toStoreId'   => 2,
-                'themeId'     => 5,
+                'from' => ['type' => 'stores', 'scopeId' => 1],
+                'to'   => ['type' => 'stores', 'scopeId' => 2],
             ]]
         );
 
@@ -96,16 +94,15 @@ class CopyFromStoreTest extends TestCase
     {
         $this->userResolver->method('getCurrentUserId')->willReturn(1);
         $this->statusProvider->method('getStatusId')->willReturn(1);
-        $this->themeResolver->method('getThemeIdByStoreId')->willReturn(5);
+        $this->themeResolver->method('getThemeIdByScope')->willReturn(5);
         $this->valueService->method('copyValues')->willReturn(0);
         $this->valueService->method('getValuesByTheme')->willReturn([]);
 
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
             ['input' => [
-                'fromStoreId' => 1,
-                'toStoreId'   => 2,
-                'themeId'     => 5,
+                'from' => ['type' => 'stores', 'scopeId' => 1],
+                'to'   => ['type' => 'stores', 'scopeId' => 2],
             ]]
         );
 
@@ -119,7 +116,7 @@ class CopyFromStoreTest extends TestCase
     {
         $this->userResolver->method('getCurrentUserId')->willReturn(1);
         $this->statusProvider->method('getStatusId')->willReturn(1);
-        $this->themeResolver->method('getThemeIdByStoreId')->willReturn(5);
+        $this->themeResolver->method('getThemeIdByScope')->willReturn(5);
         $this->valueService->method('copyValues')->willReturn(2);
         $this->valueService->method('getValuesByTheme')->willReturn([
             ['section_code' => 'colors', 'setting_code' => 'primary', 'value' => '#fff', 'updated_at' => '2024-01-01'],
@@ -129,9 +126,8 @@ class CopyFromStoreTest extends TestCase
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
             ['input' => [
-                'fromStoreId'  => 1,
-                'toStoreId'    => 2,
-                'themeId'      => 5,
+                'from'         => ['type' => 'stores', 'scopeId' => 1],
+                'to'           => ['type' => 'stores', 'scopeId' => 2],
                 'sectionCodes' => ['colors'],
             ]]
         );
@@ -145,17 +141,17 @@ class CopyFromStoreTest extends TestCase
         $this->userResolver->method('getCurrentUserId')->willReturn(1);
         $this->statusProvider->method('getStatusId')->willReturn(1);
         $this->themeResolver
-            ->method('getThemeIdByStoreId')
-            ->willReturnMap([[1, 10], [2, 7]]);
+            ->method('getThemeIdByScope')
+            ->willReturnMap([['stores', 1, 10], ['stores', 2, 7]]);
         $this->valueService->method('copyValues')->willReturn(0);
         $this->valueService->method('getValuesByTheme')->willReturn([]);
 
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
             ['input' => [
-                'fromStoreId' => 1,
-                'toStoreId'   => 2,
-                // no themeId — should resolve from toStoreId
+                'from' => ['type' => 'stores', 'scopeId' => 1],
+                'to'   => ['type' => 'stores', 'scopeId' => 2],
+                // no themeId — should resolve from to scope
             ]]
         );
 

@@ -54,8 +54,8 @@ class Config extends AbstractConfigResolver
         $userId = $this->userResolver->getCurrentUserId($context);
 
         // 2. Отримати scope / scopeId
-        $scope = $args['scope'] ?? 'stores';
-        $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
+        $scope = $args['scope']['type'] ?? 'stores';
+        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
 
         // 3. Визначити theme ID
         try {

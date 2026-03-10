@@ -4,8 +4,8 @@ define([
     'use strict';
 
     var query = `
-        query GetPresets($scope: BreezeThemeEditorScope, $scopeId: Int!) {
-            breezeThemeEditorPresets(scope: $scope, scopeId: $scopeId) {
+        query GetPresets($scope: BreezeThemeEditorScopeInput) {
+            breezeThemeEditorPresets(scope: $scope) {
                 id
                 name
                 description
@@ -23,8 +23,7 @@ define([
      */
     return function getPresets(scope, scopeId) {
         return client.execute(query, {
-            scope:   scope || 'stores',
-            scopeId: scopeId
+            scope: { type: scope || 'stores', scopeId: scopeId }
         }, 'GetPresets');
     };
 });

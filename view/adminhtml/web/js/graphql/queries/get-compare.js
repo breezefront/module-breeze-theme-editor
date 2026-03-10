@@ -4,8 +4,8 @@ define([
     'use strict';
 
     var query = `
-        query CompareChanges($scope: BreezeThemeEditorScope, $scopeId: Int!) {
-            breezeThemeEditorCompare(scope: $scope, scopeId: $scopeId) {
+        query CompareChanges($scope: BreezeThemeEditorScopeInput) {
+            breezeThemeEditorCompare(scope: $scope) {
                 hasChanges
                 changesCount
                 changes {
@@ -30,8 +30,7 @@ define([
      */
     return function getCompare(scope, scopeId) {
         return client.execute(query, {
-            scope:   scope || 'stores',
-            scopeId: scopeId
+            scope: { type: scope || 'stores', scopeId: scopeId }
         }, 'CompareChanges');
     };
 });

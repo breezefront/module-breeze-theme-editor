@@ -33,8 +33,7 @@ define([
     return function saveValue(scope, scopeId, status, sectionCode, fieldCode, value) {
         return client.execute(mutation, {
             input: {
-                scope:       scope || 'stores',
-                scopeId:     scopeId,
+                scope:       { type: scope || 'stores', scopeId: scopeId },
                 status:      status || 'DRAFT',
                 sectionCode: sectionCode,
                 fieldCode:   fieldCode,

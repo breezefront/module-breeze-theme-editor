@@ -25,8 +25,7 @@ define([
     return function savePaletteValue(scope, scopeId, property, value) {
         return client.execute(mutation, {
             input: {
-                scope:    scope || 'stores',
-                scopeId:  scopeId,
+                scope:    { type: scope || 'stores', scopeId: scopeId },
                 property: property,
                 value:    value
             }

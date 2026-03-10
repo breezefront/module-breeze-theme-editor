@@ -36,8 +36,8 @@ class Values extends AbstractQueryResolver
         array $value = null,
         array $args = null
     ) {
-        $scope = $args['scope'] ?? 'stores';
-        $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
+        $scope = $args['scope']['type'] ?? 'stores';
+        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
 
         // Auto-detect themeId
         $themeId = isset($args['themeId'])

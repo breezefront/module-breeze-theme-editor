@@ -51,7 +51,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'scopeId' => 1,
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
                 'title' => 'v1.0 Release',
                 'description' => 'Initial release'
@@ -126,7 +126,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'scopeId' => 1,
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
                 'title' => 'Quick Fix'
             ]
@@ -179,7 +179,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'scopeId' => 1,
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
                 'title' => ''
             ]
@@ -213,7 +213,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'scopeId' => 1,
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'title' => 'Auto Theme'
             ]
         ];
@@ -267,7 +267,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'scopeId' => 1,
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 15,
                 'title' => 'Custom Theme'
             ]
@@ -323,7 +323,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'scopeId' => 1,
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
                 'title' => 'Multi Change'
             ]
@@ -422,7 +422,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'scopeId' => 1,
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
                 'title' => 'No Changes'
             ]
@@ -470,7 +470,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'scopeId' => 1,
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
                 'title' => 'With Metadata'
             ]
@@ -525,7 +525,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'scopeId' => 1,
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
                 'title' => 'No Metadata'
             ]
@@ -573,7 +573,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'scopeId' => 1,
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
                 'title' => 'Complete Test'
             ]

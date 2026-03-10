@@ -44,8 +44,8 @@ class GetCss extends AbstractQueryResolver
         array $args = null
     ) {
         // 1. Get scope and scopeId
-        $scope = $args['scope'] ?? 'stores';
-        $scopeId = (int) $args['scopeId'];
+        $scope = $args['scope']['type'] ?? 'stores';
+        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
 
         // 2. Get theme ID via ThemeResolver
         $themeId = $this->themeResolver->getThemeIdByScope($scope, $scopeId);

@@ -4,8 +4,8 @@ define([
     'use strict';
 
     var query = `
-        query GetThemeConfig($scope: BreezeThemeEditorScope, $scopeId: Int!, $status: BreezeThemeEditorStatusCode) {
-            breezeThemeEditorConfig(scope: $scope, scopeId: $scopeId, status: $status) {
+        query GetThemeConfig($scope: BreezeThemeEditorScopeInput, $status: BreezeThemeEditorStatusCode) {
+            breezeThemeEditorConfig(scope: $scope, status: $status) {
                 version
                 metadata {
                     themeId
@@ -152,8 +152,7 @@ define([
      */
     return function getConfig(scope, scopeId, status) {
         return client.execute(query, {
-            scope:   scope || 'stores',
-            scopeId: scopeId,
+            scope:   { type: scope || 'stores', scopeId: scopeId },
             status:  status || 'DRAFT'
         }, 'GetThemeConfig');
     };

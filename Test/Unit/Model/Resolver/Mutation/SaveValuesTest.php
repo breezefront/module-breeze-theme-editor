@@ -80,7 +80,7 @@ class SaveValuesTest extends TestCase
     private function buildInput(array $values, array $override = []): array
     {
         return array_merge([
-            'storeId' => 1,
+            'scope'   => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 5,
             'status'  => 'DRAFT',
             'values'  => $values,
@@ -207,17 +207,17 @@ class SaveValuesTest extends TestCase
         $this->statusProvider->method('getStatusId')->willReturn(1);
         $this->themeResolver
             ->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(2)
+            ->method('getThemeIdByScope')
+            ->with('stores', 2)
             ->willReturn(10);
         $this->valueRepository->method('create')->willReturn($this->makeValueMock());
         $this->valueRepository->method('saveMultiple')->willReturn(1);
         $this->configProvider->method('getAllDefaults')->willReturn([]);
 
         $input = [
-            'storeId' => 2,
-            'status'  => 'DRAFT',
-            'values'  => [['sectionCode' => 'a', 'fieldCode' => 'b', 'value' => 'c']],
+            'scope'  => ['type' => 'stores', 'scopeId' => 2],
+            'status' => 'DRAFT',
+            'values' => [['sectionCode' => 'a', 'fieldCode' => 'b', 'value' => 'c']],
         ];
 
         $result = $this->mutation->resolve($this->field, $this->context, $this->resolveInfo, null, ['input' => $input]);
@@ -238,7 +238,7 @@ class SaveValuesTest extends TestCase
         $this->configProvider->method('getAllDefaults')->willReturn([]);
 
         $input = [
-            'storeId' => 1,
+            'scope'   => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 5,
             'values'  => [['sectionCode' => 'a', 'fieldCode' => 'b', 'value' => 'c']],
         ];

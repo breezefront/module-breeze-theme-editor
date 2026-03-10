@@ -47,8 +47,8 @@ class Publish extends AbstractMutationResolver
         $userId = $this->userResolver->getCurrentUserId($context);
         $userMetadata = $this->userResolver->getCurrentUserMetadata($context);
 
-        $scope = $input['scope'] ?? 'stores';
-        $scopeId = (int)$input['scopeId'];
+        $scope = $input['scope']['type'] ?? 'stores';
+        $scopeId = (int)($input['scope']['scopeId'] ?? 0);
         $themeId = $this->themeResolver->getThemeIdByScope($scope, $scopeId);
 
         $title = $input['title'];

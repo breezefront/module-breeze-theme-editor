@@ -32,11 +32,11 @@ class DiscardDraft extends AbstractMutationResolver
         array $value = null,
         array $args = null
     ) {
-        $scope = $args['scope'] ?? 'stores';
-        $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
+        $scope = $args['scope']['type'] ?? 'stores';
+        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
         $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
 
         $sectionCodes = $args['sectionCodes'] ??  null;
         $fieldCodes   = $args['fieldCodes']   ?? null;

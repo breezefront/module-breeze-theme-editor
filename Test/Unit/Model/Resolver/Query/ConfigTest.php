@@ -106,7 +106,7 @@ class ConfigTest extends TestCase
     public function testThrowsExceptionWhenStatusIsPublication(): void
     {
         $args = [
-            'storeId' => 1,
+            'scope'  => ['type' => 'stores', 'scopeId' => 1],
             'themeId' => 1,
             'status' => 'PUBLICATION'
         ];
@@ -189,7 +189,7 @@ class ConfigTest extends TestCase
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
 
         // Execute
-        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
         $result = $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -249,7 +249,7 @@ class ConfigTest extends TestCase
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
 
         // Execute
-        $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
         $result = $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -288,7 +288,7 @@ class ConfigTest extends TestCase
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
 
-        $args = ['storeId' => 1]; // no status
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1]]; // no status
         $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -323,7 +323,7 @@ class ConfigTest extends TestCase
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 5]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
 
-        $args = ['storeId' => 1, 'status' => 'PUBLISHED']; // no themeId
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED']; // no themeId
         $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -362,7 +362,7 @@ class ConfigTest extends TestCase
                 'changesCount' => 5
             ]);
 
-        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
         $result = $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -401,7 +401,7 @@ class ConfigTest extends TestCase
         $this->compareProviderMock->expects($this->never())
             ->method('compare');
 
-        $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
         $result = $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -501,7 +501,7 @@ class ConfigTest extends TestCase
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
 
         // Execute with REAL ColorFormatter
-        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
         $result = $config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -587,7 +587,7 @@ class ConfigTest extends TestCase
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
 
         // Execute
-        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
         $result = $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -658,7 +658,7 @@ class ConfigTest extends TestCase
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
 
-        $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
         $result = $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -731,7 +731,7 @@ class ConfigTest extends TestCase
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
 
-        $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
         $result = $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -799,7 +799,7 @@ class ConfigTest extends TestCase
             'changesCount' => 2
         ]);
 
-        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
         $result = $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -839,7 +839,7 @@ class ConfigTest extends TestCase
         $this->expectException(\Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException::class);
         $this->expectExceptionMessageMatches('/configuration file not found.*Argento Breeze Chic/i');
 
-        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
         $this->config->resolve(
             $this->fieldMock,
             $this->contextMock,

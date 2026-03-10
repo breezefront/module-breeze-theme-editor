@@ -57,7 +57,7 @@ class DiscardDraftTest extends TestCase
 
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['storeId' => 1, 'themeId' => 5]
+            ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5]
         );
 
         $this->assertTrue($result['success']);
@@ -70,14 +70,14 @@ class DiscardDraftTest extends TestCase
         $this->statusProvider->method('getStatusId')->willReturn(1);
         $this->themeResolver
             ->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(3)
+            ->method('getThemeIdByScope')
+            ->with('stores', 3)
             ->willReturn(10);
         $this->valueService->method('deleteValues')->willReturn(0);
 
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['storeId' => 3]
+            ['scope' => ['type' => 'stores', 'scopeId' => 3]]
         );
 
         $this->assertTrue($result['success']);
@@ -96,7 +96,7 @@ class DiscardDraftTest extends TestCase
         $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
             [
-                'storeId'      => 1,
+                'scope'        => ['type' => 'stores', 'scopeId' => 1],
                 'themeId'      => 5,
                 'sectionCodes' => ['colors', 'typography'],
                 'fieldCodes'   => ['primary', 'font_size'],
@@ -112,7 +112,7 @@ class DiscardDraftTest extends TestCase
 
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['storeId' => 1, 'themeId' => 5]
+            ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5]
         );
 
         $this->assertArrayHasKey('success', $result);

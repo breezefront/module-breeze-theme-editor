@@ -4,10 +4,9 @@ define([
     'use strict';
 
     var query = `
-        query GetValues($scope: BreezeThemeEditorScope, $scopeId: Int!, $status: BreezeThemeEditorStatusCode, $sectionCodes: [String! ]) {
+        query GetValues($scope: BreezeThemeEditorScopeInput, $status: BreezeThemeEditorStatusCode, $sectionCodes: [String! ]) {
             breezeThemeEditorValues(
                 scope: $scope
-                scopeId: $scopeId
                 status: $status
                 sectionCodes: $sectionCodes
             ) {
@@ -31,8 +30,7 @@ define([
      */
     return function getValues(scope, scopeId, status, sectionCodes) {
         return client.execute(query, {
-            scope:        scope || 'stores',
-            scopeId:      scopeId,
+            scope:        { type: scope || 'stores', scopeId: scopeId },
             status:       status || 'DRAFT',
             sectionCodes: sectionCodes || null
         }, 'GetValues');

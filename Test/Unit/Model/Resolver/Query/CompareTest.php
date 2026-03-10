@@ -53,7 +53,7 @@ class CompareTest extends TestCase
 
         $result = $this->resolver->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['storeId' => 1, 'themeId' => 5]
+            ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5]
         );
 
         $this->assertSame($expected, $result);
@@ -75,7 +75,7 @@ class CompareTest extends TestCase
 
         $this->resolver->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['storeId' => 2]
+            ['scope' => ['type' => 'stores', 'scopeId' => 2]]
         );
     }
 
@@ -91,7 +91,7 @@ class CompareTest extends TestCase
 
         $this->resolver->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['storeId' => 1, 'themeId' => 7]
+            ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 7]
         );
     }
 }

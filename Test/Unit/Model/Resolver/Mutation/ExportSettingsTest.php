@@ -72,7 +72,7 @@ class ExportSettingsTest extends TestCase
             ->willReturn(1);
         
         $args = [
-            'storeId' => 1,
+            'scope' => ['type' => 'stores', 'scopeId' => 1],
             'status' => 'PUBLICATION'
         ];
         
@@ -101,7 +101,7 @@ class ExportSettingsTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(5);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         
         $mockJson = '{"colors":{"primary":"#ff0000"},"typography":{"font":"Arial"}}';
         
@@ -113,7 +113,7 @@ class ExportSettingsTest extends TestCase
                 'filename' => 'theme_1_store_1_DRAFT_2024-01-15_10-30-00.json'
             ]);
         
-        $args = ['storeId' => 1, 'status' => 'DRAFT'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
         $result = $this->exportSettings->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -140,7 +140,7 @@ class ExportSettingsTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         
         $this->importExportServiceMock->expects($this->once())
             ->method('export')
@@ -150,7 +150,7 @@ class ExportSettingsTest extends TestCase
                 'filename' => 'theme_1_store_1_PUBLISHED_2024-01-15_10-30-00.json'
             ]);
         
-        $args = ['storeId' => 1, 'status' => 'PUBLISHED'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
         $result = $this->exportSettings->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -174,14 +174,14 @@ class ExportSettingsTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         
         $this->importExportServiceMock->method('export')->willReturn([
             'jsonData' => '{}',
             'filename' => 'theme_1_store_1_PUBLISHED_2024-01-15_10-30-00.json'
         ]);
         
-        $args = ['storeId' => 1]; // no status
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1]]; // no status
         $result = $this->exportSettings->resolve(
             $this->fieldMock,
             $this->contextMock,
@@ -204,14 +204,14 @@ class ExportSettingsTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(3);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(3);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         $this->importExportServiceMock->method('export')->willReturn([
             'jsonData' => '{}',
             'filename' => 'theme_3_store_5_PUBLISHED_2024-01-15_10-30-00.json'
         ]);
         
-        $args = ['storeId' => 5, 'status' => 'PUBLISHED'];
+        $args = ['scope' => ['type' => 'stores', 'scopeId' => 5], 'status' => 'PUBLISHED'];
         $result = $this->exportSettings->resolve(
             $this->fieldMock,
             $this->contextMock,
