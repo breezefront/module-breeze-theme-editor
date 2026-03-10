@@ -285,12 +285,12 @@ define([
             });
 
             // Listen for palette changes to update reset button
-            $(document).on('paletteColorChanged', function() {
+            $(document).on('paletteColorChanged.paletteSection', function() {
                 self._updateResetButton();
             });
 
             // Listen for revert to update UI
-            $(document).on('paletteChangesReverted', function(e, data) {
+            $(document).on('paletteChangesReverted.paletteSection', function(e, data) {
                 // Remove all dirty classes
                 self.$grid.find('.bte-palette-swatch').removeClass('bte-swatch-dirty');
                 
@@ -637,7 +637,7 @@ define([
             this.$header.off('click');
             this.$grid.off('click', '.bte-palette-swatch');
             this.element.off('click', '.bte-palette-reset-btn');
-            $(document).off('paletteColorChanged paletteChangesReverted');
+            $(document).off('paletteColorChanged.paletteSection paletteChangesReverted.paletteSection');
             $(document).off('click.bte-palette-pickr');
             $(document).off('keydown.bte-palette-pickr');
             

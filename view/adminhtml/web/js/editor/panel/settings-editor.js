@@ -642,7 +642,7 @@ define([
                 // Enable all fields (DRAFT mode)
                 this._enableAllFields();
                 this.$saveButton.prop('disabled', false);
-                this.$resetButton.prop('disabled', false);
+                this._updateChangesCount();
             } else {
                 // Disable all fields (PUBLISHED or PUBLICATION mode)
                 this._disableAllFields();
