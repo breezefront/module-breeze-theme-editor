@@ -137,7 +137,7 @@ class ConfigTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')
             ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
@@ -220,7 +220,7 @@ class ConfigTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->expects($this->once())
             ->method('getStatusId')
             ->with('PUBLISHED')
@@ -237,7 +237,7 @@ class ConfigTest extends TestCase
 
         $this->valueInheritanceResolverMock->expects($this->once())
             ->method('resolveAllValues')
-            ->with(1, 1, 2, null) // userId = null for PUBLISHED
+            ->with(1, 'stores', 1, 2, null) // userId = null for PUBLISHED
             ->willReturn([]);
 
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
@@ -274,7 +274,7 @@ class ConfigTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
 
         $this->statusProviderMock->expects($this->once())
             ->method('getStatusId')
@@ -311,8 +311,8 @@ class ConfigTest extends TestCase
             ->willReturn(1);
 
         $this->themeResolverMock->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(1)
+            ->method('getThemeIdByScope')
+            ->with('stores', 1)
             ->willReturn(5);
 
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
@@ -344,7 +344,7 @@ class ConfigTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         $this->configProviderMock->method('getConfigurationWithInheritance')
@@ -387,7 +387,7 @@ class ConfigTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
 
         $this->configProviderMock->method('getConfigurationWithInheritance')
@@ -447,7 +447,7 @@ class ConfigTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         // Mock config with color field (format="rgb")
@@ -534,7 +534,7 @@ class ConfigTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         // Mock config with text field
@@ -617,7 +617,7 @@ class ConfigTest extends TestCase
     public function testModifiedCountIsZeroWhenNoFieldsDifferFromDefaults(): void
     {
         $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
 
         $mockConfig = [
@@ -679,7 +679,7 @@ class ConfigTest extends TestCase
     public function testModifiedCountCountsOnlyFieldsThatDifferFromDefaults(): void
     {
         $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
 
         $mockConfig = [
@@ -752,7 +752,7 @@ class ConfigTest extends TestCase
     public function testModifiedCountIsAlsoComputedForDraftStatus(): void
     {
         $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         $mockConfig = [
@@ -822,7 +822,7 @@ class ConfigTest extends TestCase
     public function testThrowsExceptionWhenThemeHasNoConfig(): void
     {
         $this->userResolverMock->method('getCurrentUserId')->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(18);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(18);
         $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         // Theme has no settings.json → inheritance merge yields empty sections

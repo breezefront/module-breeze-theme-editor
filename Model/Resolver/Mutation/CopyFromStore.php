@@ -18,37 +18,40 @@ class CopyFromStore extends AbstractSaveMutation
     ) {
         $input = $args['input'];
 
-        $fromStoreId = (int)$input['fromStoreId'];
-        $toStoreId = (int)$input['toStoreId'];
+        $fromScope   = $input['fromScope'] ?? 'stores';
+        $fromScopeId = (int)($input['fromScopeId'] ?? $input['fromStoreId'] ?? 0);
+        $toScope     = $input['toScope'] ?? 'stores';
+        $toScopeId   = (int)($input['toScopeId'] ?? $input['toStoreId'] ?? 0);
         $sectionCodes = $input['sectionCodes'] ?? null;
-        $overwriteExisting = $input['overwriteExisting'] ?? true;
 
-        if ($fromStoreId === $toStoreId) {
+        if ($fromScope === $toScope && $fromScopeId === $toScopeId) {
             throw new GraphQlInputException(
-                __('Cannot copy from the same store')
+                __('Cannot copy from the same scope/scopeId')
             );
         }
 
-        // Використати базовий метод для target store
+        // Використати базовий метод для target scope
         $params = $this->prepareBaseParams([
-            'storeId' => $toStoreId,
-            'themeId' => $input['themeId'] ?? null,
-            'status' => $input['status'] ??  'DRAFT'
+            'scope'   => $toScope,
+            'scopeId' => $toScopeId,
+            'status'  => $input['status'] ?? 'DRAFT'
         ], $context);
 
-        // Визначити themeId для source store
-        $fromThemeId = $this->themeResolver->getThemeIdByStoreId($fromStoreId);
+        // Визначити themeId для source scope
+        $fromThemeId = $this->themeResolver->getThemeIdByStoreId($fromScopeId);
 
-        // Копіювати published values з source store через ValueService
+        // Копіювати published values з source scope через ValueService
         $fromStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
         $copiedCount = $this->valueService->copyValues(
             $fromThemeId,
-            $fromStoreId,
+            $fromScope,
+            $fromScopeId,
             $fromStatusId,
             null, // Published values не мають userId
             $params['themeId'],
-            $toStoreId,
+            $toScope,
+            $toScopeId,
             $params['statusId'],
             $params['statusCode'] === 'DRAFT' ? $params['userId'] : 0,
             $sectionCodes
@@ -57,7 +60,8 @@ class CopyFromStore extends AbstractSaveMutation
         // Отримати скопійовані values через ValueService
         $values = $this->valueService->getValuesByTheme(
             $params['themeId'],
-            $toStoreId,
+            $toScope,
+            $toScopeId,
             $params['statusId'],
             $params['statusCode'] === 'DRAFT' ? $params['userId'] : null
         );
@@ -79,7 +83,7 @@ class CopyFromStore extends AbstractSaveMutation
 
         return [
             'success' => true,
-            'message' => __('Successfully copied settings from store %1 to store %2', $fromStoreId, $toStoreId),
+            'message' => __('Successfully copied settings from %1/%2 to %3/%4', $fromScope, $fromScopeId, $toScope, $toScopeId),
             'values' => $copiedValues,
             'copiedCount' => $copiedCount
         ];

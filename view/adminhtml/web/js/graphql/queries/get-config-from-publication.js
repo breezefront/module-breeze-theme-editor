@@ -4,10 +4,8 @@ define([
     'use strict';
 
     var query = `
-        query GetConfigFromPublication($storeId: Int!, $themeId: Int, $publicationId: Int!) {
+        query GetConfigFromPublication($publicationId: Int!) {
             breezeThemeEditorConfigFromPublication(
-                storeId: $storeId
-                themeId: $themeId
                 publicationId:  $publicationId
             ) {
                 version
@@ -139,19 +137,15 @@ define([
     /**
      * Get theme configuration from specific publication
      *
-     * @param {Number} storeId - Required
-     * @param {Number|null} themeId - Optional, auto-detected if null
      * @param {Number} publicationId - Publication ID to load from
      * @returns {Promise<Object>} - Returns full config structure
      */
-    return function getConfigFromPublication(storeId, themeId, publicationId) {
+    return function getConfigFromPublication(publicationId) {
         if (!publicationId) {
             return Promise.reject(new Error('publicationId is required'));
         }
 
         return client.execute(query, {
-            storeId: storeId,
-            themeId: themeId || null,
             publicationId: publicationId
         }, 'GetConfigFromPublication').then(function (response) {
             return response.breezeThemeEditorConfigFromPublication;

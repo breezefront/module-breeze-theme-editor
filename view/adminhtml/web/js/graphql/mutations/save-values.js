@@ -26,22 +26,22 @@ define([
     /**
      * Save multiple values at once
      *
-     * @param {Number} storeId
-     * @param {Number} themeId - Optional
+     * @param {String} scope - 'default', 'websites', or 'stores'
+     * @param {Number} scopeId
      * @param {String} status
      * @param {Array} values - [{sectionCode, fieldCode, value}]
      * @param {Boolean} autoPublish
      * @param {String} publicationTitle - Required if autoPublish
      * @returns {Promise}
      */
-    return function saveValues(storeId, themeId, status, values, autoPublish, publicationTitle) {
+    return function saveValues(scope, scopeId, status, values, autoPublish, publicationTitle) {
         return client.execute(mutation, {
             input: {
-                storeId: storeId,
-                themeId: themeId || null,
-                status: status || 'DRAFT',
-                values: values,
-                autoPublish: autoPublish || false,
+                scope:            scope || 'stores',
+                scopeId:          scopeId,
+                status:           status || 'DRAFT',
+                values:           values,
+                autoPublish:      autoPublish || false,
                 publicationTitle: publicationTitle || null
             }
         }, 'SaveMultipleValues');

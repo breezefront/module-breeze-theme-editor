@@ -7,6 +7,7 @@ interface PublicationInterface
 {
     public const PUBLICATION_ID = 'publication_id';
     public const THEME_ID = 'theme_id';
+    public const SCOPE = 'scope';
     public const STORE_ID = 'store_id';
     public const TITLE = 'title';
     public const DESCRIPTION = 'description';
@@ -37,6 +38,17 @@ interface PublicationInterface
      * @return $this
      */
     public function setThemeId(int $themeId): self;
+
+    /**
+     * @return string
+     */
+    public function getScope(): string;
+
+    /**
+     * @param string $scope
+     * @return $this
+     */
+    public function setScope(string $scope): self;
 
     /**
      * @return int

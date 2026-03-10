@@ -318,6 +318,7 @@ class PresetServiceTest extends TestCase
 
         // Verify models are set correctly
         $valueMock1->expects($this->once())->method('setThemeId')->with($themeId)->willReturn($valueMock1);
+        $valueMock1->expects($this->once())->method('setScope')->with('stores')->willReturn($valueMock1);
         $valueMock1->expects($this->once())->method('setStoreId')->with($storeId)->willReturn($valueMock1);
         $valueMock1->expects($this->once())->method('setStatusId')->with(1)->willReturn($valueMock1);
         $valueMock1->expects($this->once())->method('setUserId')->with($userId)->willReturn($valueMock1);
@@ -326,6 +327,7 @@ class PresetServiceTest extends TestCase
         $valueMock1->expects($this->once())->method('setValue')->with('logo.png')->willReturn($valueMock1);
 
         $valueMock2->method('setThemeId')->willReturn($valueMock2);
+        $valueMock2->method('setScope')->willReturn($valueMock2);
         $valueMock2->method('setStoreId')->willReturn($valueMock2);
         $valueMock2->method('setStatusId')->willReturn($valueMock2);
         $valueMock2->method('setUserId')->willReturn($valueMock2);
@@ -336,7 +338,7 @@ class PresetServiceTest extends TestCase
         // Overwrite existing
         $this->valueServiceMock->expects($this->once())
             ->method('deleteValues')
-            ->with($themeId, $storeId, 1, $userId);
+            ->with($themeId, 'stores', $storeId, 1, $userId);
 
         $this->valueRepositoryMock->expects($this->once())
             ->method('saveMultiple')
@@ -345,7 +347,7 @@ class PresetServiceTest extends TestCase
             }))
             ->willReturn(2);
 
-        $result = $this->presetService->applyPreset($themeId, $storeId, $presetId, $statusCode, $userId, true);
+        $result = $this->presetService->applyPreset($themeId, 'stores', $storeId, $presetId, $statusCode, $userId, true);
 
         $this->assertEquals(2, $result['appliedCount']);
         $this->assertCount(2, $result['values']);
@@ -386,6 +388,7 @@ class PresetServiceTest extends TestCase
         // Verify userId is set to 0 for PUBLISHED
         $valueMock->expects($this->once())->method('setUserId')->with(0)->willReturn($valueMock);
         $valueMock->method('setThemeId')->willReturn($valueMock);
+        $valueMock->method('setScope')->willReturn($valueMock);
         $valueMock->method('setStoreId')->willReturn($valueMock);
         $valueMock->method('setStatusId')->willReturn($valueMock);
         $valueMock->method('setSectionCode')->willReturn($valueMock);
@@ -395,11 +398,11 @@ class PresetServiceTest extends TestCase
         // Verify deleteValues called with userId = 0
         $this->valueServiceMock->expects($this->once())
             ->method('deleteValues')
-            ->with($themeId, $storeId, 2, 0);
+            ->with($themeId, 'stores', $storeId, 2, 0);
 
         $this->valueRepositoryMock->method('saveMultiple')->willReturn(1);
 
-        $result = $this->presetService->applyPreset($themeId, $storeId, $presetId, $statusCode, $userId, true);
+        $result = $this->presetService->applyPreset($themeId, 'stores', $storeId, $presetId, $statusCode, $userId, true);
 
         $this->assertEquals(1, $result['appliedCount']);
     }
@@ -427,7 +430,7 @@ class PresetServiceTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Preset "empty-preset" has no settings');
 
-        $this->presetService->applyPreset($themeId, $storeId, $presetId, $statusCode, $userId);
+        $this->presetService->applyPreset($themeId, 'stores', $storeId, $presetId, $statusCode, $userId);
     }
 
     /**
@@ -456,6 +459,7 @@ class PresetServiceTest extends TestCase
         $valueMock = $this->createMock(ValueInterface::class);
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);
         $valueMock->method('setThemeId')->willReturn($valueMock);
+        $valueMock->method('setScope')->willReturn($valueMock);
         $valueMock->method('setStoreId')->willReturn($valueMock);
         $valueMock->method('setStatusId')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
@@ -466,11 +470,11 @@ class PresetServiceTest extends TestCase
         // VERIFY: deleteValues IS called
         $this->valueServiceMock->expects($this->once())
             ->method('deleteValues')
-            ->with($themeId, $storeId, 1, $userId);
+            ->with($themeId, 'stores', $storeId, 1, $userId);
 
         $this->valueRepositoryMock->method('saveMultiple')->willReturn(1);
 
-        $this->presetService->applyPreset($themeId, $storeId, $presetId, $statusCode, $userId, true);
+        $this->presetService->applyPreset($themeId, 'stores', $storeId, $presetId, $statusCode, $userId, true);
     }
 
     /**
@@ -499,6 +503,7 @@ class PresetServiceTest extends TestCase
         $valueMock = $this->createMock(ValueInterface::class);
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);
         $valueMock->method('setThemeId')->willReturn($valueMock);
+        $valueMock->method('setScope')->willReturn($valueMock);
         $valueMock->method('setStoreId')->willReturn($valueMock);
         $valueMock->method('setStatusId')->willReturn($valueMock);
         $valueMock->method('setUserId')->willReturn($valueMock);
@@ -512,6 +517,6 @@ class PresetServiceTest extends TestCase
 
         $this->valueRepositoryMock->method('saveMultiple')->willReturn(1);
 
-        $this->presetService->applyPreset($themeId, $storeId, $presetId, $statusCode, $userId, false);
+        $this->presetService->applyPreset($themeId, 'stores', $storeId, $presetId, $statusCode, $userId, false);
     }
 }

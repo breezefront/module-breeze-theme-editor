@@ -22,21 +22,21 @@ define([
     /**
      * Publish draft to production
      *
-     * @param {Number} storeId
-     * @param {Number} themeId - Optional
+     * @param {String} scope - 'default', 'websites', or 'stores'
+     * @param {Number} scopeId
      * @param {String} title - Publication title
      * @param {String} description - Optional
      * @param {Boolean} notifyUsers
      * @returns {Promise}
      */
-    return function publish(storeId, themeId, title, description, notifyUsers) {
+    return function publish(scope, scopeId, title, description, notifyUsers) {
         return client.execute(mutation, {
             input:  {
-                storeId: storeId,
-                themeId: themeId || null,
-                title: title,
-                description: description || null,
-                notifyUsers: notifyUsers || false
+                scope:        scope || 'stores',
+                scopeId:      scopeId,
+                title:        title,
+                description:  description || null,
+                notifyUsers:  notifyUsers || false
             }
         }, 'PublishDraft');
     };

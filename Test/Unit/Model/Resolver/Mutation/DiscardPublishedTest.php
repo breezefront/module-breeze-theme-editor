@@ -58,7 +58,7 @@ class DiscardPublishedTest extends TestCase
 
         $this->valueServiceMock->expects($this->once())
             ->method('deleteValues')
-            ->with(10, 1, 2, null, null, null)
+            ->with(10, 'stores', 1, 2, null, null, null)
             ->willReturn(7);
 
         $args = ['storeId' => 1, 'themeId' => 10];
@@ -92,7 +92,7 @@ class DiscardPublishedTest extends TestCase
 
         $this->valueServiceMock->expects($this->once())
             ->method('deleteValues')
-            ->with(15, 3, 2, null, null, null)
+            ->with(15, 'stores', 3, 2, null, null, null)
             ->willReturn(3);
 
         $args = ['storeId' => 3]; // no themeId
@@ -146,7 +146,8 @@ class DiscardPublishedTest extends TestCase
             ->method('deleteValues')
             ->with(
                 $this->anything(), // themeId
-                $this->anything(), // storeId
+                $this->anything(), // scope
+                $this->anything(), // scopeId
                 $this->anything(), // statusId
                 null,              // userId MUST be null
                 null,

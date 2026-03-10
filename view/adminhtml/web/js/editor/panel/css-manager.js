@@ -14,7 +14,8 @@ define([
     var $livePreviewStyle = null;
     var $publicationStyle = null;
     var currentStatus = null;
-    var storeId = null;
+    var scope   = null;
+    var scopeId = null;
     var themeId = null;
 
     /**
@@ -41,23 +42,28 @@ define([
         /**
          * Initialize CSS manager
          * 
-         * @param {Number} store - Store ID
-         * @param {Number} theme - Theme ID
+         * @param {Object} config - { scope, scopeId, themeId, iframeId }
          * @param {Number} retries - Internal retry counter
          */
-        init: function(store, theme, retries) {
+        init: function(config, retries) {
+            // Support legacy call: init(scopeId, themeId) → convert to object
+            if (typeof config === 'number' || typeof config === 'string') {
+                config = { scopeId: config, themeId: retries };
+                retries = 0;
+            }
             retries = retries || 0;
             var self = this;
             
-            storeId = store;
-            themeId = theme;
+            scope   = config.scope   || 'stores';
+            scopeId = config.scopeId;
+            themeId = config.themeId;
             
-            // Initialize storage helper with store/theme context
-            StorageHelper.init(store, theme);
+            // Initialize storage helper with scope/theme context
+            StorageHelper.init(scopeId, themeId);
             
             // Validate parameters
-            if (!storeId || !themeId) {
-                log.error('CSS Manager: Invalid storeId or themeId storeId=' + storeId + ' themeId=' + themeId);
+            if (!scopeId && scope !== 'default') {
+                log.error('CSS Manager: Invalid scopeId for scope=' + scope);
                 return false;
             }
             
@@ -65,7 +71,7 @@ define([
                 if (retries < 20) {
                     log.info('CSS Manager: iframe not ready, retry ' + (retries + 1));
                     setTimeout(function() {
-                        self.init(store, theme, retries + 1);
+                        self.init(config, retries + 1);
                     }, 200);
                     return false;
                 }
@@ -82,7 +88,7 @@ define([
                 if (retries < 20) {
                     log.info('CSS Manager: #bte-theme-css-variables not ready, retry ' + (retries + 1));
                     setTimeout(function() {
-                        self.init(store, theme, retries + 1);
+                        self.init(config, retries + 1);
                     }, 200);
                     return false;
                 }
@@ -270,7 +276,7 @@ define([
             if (!$draftStyle || !$draftStyle.length) {
                 log.info('Loading draft CSS from GraphQL...');
                 
-                return getCss(storeId, themeId, 'DRAFT', null)
+                return getCss(scope, scopeId, 'DRAFT', null)
                     .then(function(response) {
                         if (response && response.getThemeEditorCss) {
                             var css = response.getThemeEditorCss.css || '';
@@ -381,7 +387,7 @@ define([
             resetLivePreview();
 
             // Fetch publication CSS via GraphQL
-            return getCss(storeId, themeId, 'PUBLICATION', publicationId)
+            return getCss(scope, scopeId, 'PUBLICATION', publicationId)
                 .then(function(response) {
                     // GraphQL client returns response.data, so response = {getThemeEditorCss: {...}}
                     if (!response || !response.getThemeEditorCss) {
@@ -503,7 +509,7 @@ define([
         refreshPublishedCss: function() {
             var self = this;
 
-            return getCss(storeId, themeId, 'PUBLISHED', null)
+            return getCss(scope, scopeId, 'PUBLISHED', null)
                 .then(function(response) {
                     var css = (response &&
                                response.getThemeEditorCss &&

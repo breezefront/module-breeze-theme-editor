@@ -28,7 +28,8 @@ class SaveValues extends AbstractSaveMutation
             /** @var ValueInterface $valueModel */
             $valueModel = $this->valueRepository->create();
             $valueModel->setThemeId($params['themeId']);
-            $valueModel->setStoreId($params['storeId']);
+            $valueModel->setScope($params['scope']);
+            $valueModel->setStoreId($params['scopeId']);
             $valueModel->setStatusId($params['statusId']);
             $valueModel->setSectionCode($val['sectionCode']);
             $valueModel->setSettingCode($val['fieldCode']); // NOTICE: у ValueInterface поле скоріш за все називається SettingCode, а не fieldCode

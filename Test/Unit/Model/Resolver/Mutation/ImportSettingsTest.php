@@ -113,7 +113,7 @@ class ImportSettingsTest extends TestCase
         $this->importExportService
             ->expects($this->once())
             ->method('import')
-            ->with(5, 1, 'PUBLISHED', 1, '{}', true)
+            ->with(5, 'stores', 1, 'PUBLISHED', 1, '{}', true)
             ->willReturn(['imported' => 0, 'skipped' => 0, 'errors' => []]);
 
         $this->mutation->resolve(

@@ -1,6 +1,6 @@
 <div class="bte-scope-selector">
     <button type="button" class="toolbar-select">
-        <span class="select-text"><%- currentStoreName %></span>
+        <span class="select-text"><%- currentScopeName %></span>
         <span class="select-arrow">
             <svg width="7" height="5" viewBox="0 0 7 5" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" clip-rule="evenodd" d="M3.35355 2.64645L6.00003 0L6.70713 0.70711L3.35355 4.06062L0 0.70711L0.70711 0L3.35355 2.64645Z" fill="currentColor"></path>
@@ -10,46 +10,70 @@
 
     <div class="toolbar-dropdown" style="display: none;">
         <div class="dropdown-header">
-            <span>Switch Store View</span>
+            <span>Switch Scope</span>
         </div>
 
         <div class="dropdown-content scope-hierarchy">
-            <% websites.forEach(function(website) { %>
-                <div class="scope-website" data-website-id="<%- website.id %>">
-                    <!-- Website Header -->
-                    <div class="scope-header scope-header-website">
-                        <span class="scope-toggle"><%- website.isExpanded ? '▼' : '▶' %></span>
-                        <span class="scope-name"><%- website.name %></span>
-                    </div>
+            <% websites.forEach(function(entry) { %>
+                <% if (entry.type === 'default') { %>
+                    <!-- Default / All Store Views -->
+                    <a href="#"
+                       class="dropdown-item scope-store scope-default-item <%= (currentScope === 'default' && currentScopeId == 0) ? 'active' : '' %>"
+                       data-scope="default"
+                       data-scope-id="0"
+                       data-store-code="">
+                        <span class="item-text"><%- entry.name %></span>
+                        <% if (currentScope === 'default' && currentScopeId == 0) { %>
+                            <span class="item-check">✓</span>
+                        <% } %>
+                    </a>
+                <% } else if (entry.type === 'website') { %>
+                    <div class="scope-website" data-website-id="<%- entry.scopeId %>">
+                        <!-- Website — clickable as scope + toggle for groups -->
+                        <div class="scope-header scope-header-website">
+                            <a href="#"
+                               class="scope-website-item <%= (currentScope === 'websites' && currentScopeId == entry.scopeId) ? 'active' : '' %>"
+                               data-scope="websites"
+                               data-scope-id="<%- entry.scopeId %>"
+                               data-store-code="<%- entry.code %>">
+                                <span class="scope-name"><%- entry.name %></span>
+                                <% if (currentScope === 'websites' && currentScopeId == entry.scopeId) { %>
+                                    <span class="item-check">✓</span>
+                                <% } %>
+                            </a>
+                            <span class="scope-toggle"><%- entry.isExpanded ? '▼' : '▶' %></span>
+                        </div>
 
-                    <!-- Store Groups -->
-                    <div class="scope-groups" style="<%= website.isExpanded ? '' : 'display: none;' %>">
-                        <% website.groups.forEach(function(group) { %>
-                            <div class="scope-group" data-group-id="<%- group.id %>">
-                                <!-- Group Header -->
-                                <div class="scope-header scope-header-group">
-                                    <span class="scope-toggle"><%- group.isExpanded ? '▼' : '▶' %></span>
-                                    <span class="scope-name"><%- group.name %></span>
-                                </div>
+                        <!-- Store Groups -->
+                        <div class="scope-groups" style="<%= entry.isExpanded ? '' : 'display: none;' %>">
+                            <% entry.groups.forEach(function(group) { %>
+                                <div class="scope-group" data-group-id="<%- group.id %>">
+                                    <!-- Group Header (not selectable, just a label) -->
+                                    <div class="scope-header scope-header-group">
+                                        <span class="scope-toggle"><%- group.isExpanded ? '▼' : '▶' %></span>
+                                        <span class="scope-name"><%- group.name %></span>
+                                    </div>
 
-                                <!-- Store Views -->
-                                <div class="scope-stores" style="<%= group.isExpanded ? '' : 'display: none;' %>">
-                                    <% group.stores.forEach(function(store) { %>
-                                        <a href="#" 
-                                           class="dropdown-item scope-store <%= store.id == currentStoreId ? 'active' : '' %>" 
-                                           data-store-id="<%- store.id %>"
-                                           data-store-code="<%- store.code %>">
-                                            <span class="item-text"><%- store.name %></span>
-                                            <% if (store.id == currentStoreId) { %>
-                                                <span class="item-check">✓</span>
-                                            <% } %>
-                                        </a>
-                                    <% }); %>
+                                    <!-- Store Views -->
+                                    <div class="scope-stores" style="<%= group.isExpanded ? '' : 'display: none;' %>">
+                                        <% group.stores.forEach(function(store) { %>
+                                            <a href="#"
+                                               class="dropdown-item scope-store <%= (currentScope === 'stores' && currentScopeId == store.scopeId) ? 'active' : '' %>"
+                                               data-scope="stores"
+                                               data-scope-id="<%- store.scopeId %>"
+                                               data-store-code="<%- store.code %>">
+                                                <span class="item-text"><%- store.name %></span>
+                                                <% if (currentScope === 'stores' && currentScopeId == store.scopeId) { %>
+                                                    <span class="item-check">✓</span>
+                                                <% } %>
+                                            </a>
+                                        <% }); %>
+                                    </div>
                                 </div>
-                            </div>
-                        <% }); %>
+                            <% }); %>
+                        </div>
                     </div>
-                </div>
+                <% } %>
             <% }); %>
         </div>
     </div>

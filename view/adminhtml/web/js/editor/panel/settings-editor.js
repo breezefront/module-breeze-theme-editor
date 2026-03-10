@@ -65,24 +65,25 @@ define([
             // Admin config from ViewModel
             var config = window.breezeThemeEditorConfig || {};
             
-            this.storeId = config.storeId || this.options.storeId || 1;
+            this.scope   = config.scope   || this.options.scope   || 'stores';
+            this.scopeId = config.scopeId != null ? config.scopeId : (this.options.scopeId != null ? this.options.scopeId : 1);
             this.themeId = config.themeId || this.options.themeId || 0;
             this.themeName = config.themeName || 'current theme';
             this.adminUrl = config.adminUrl || '/admin';
             
             // Update title with scope info
-            if (config.storeId && config.themeName) {
+            if (config.scopeId != null && config.themeName) {
                 this.options.title = this.options.title
-                    .replace('%1', this.storeId)
+                    .replace('%1', this.scopeId)
                     .replace('%2', this.themeName);
             }
 
             // Store reference to navigation widget for closing panel
             this.$navigation = $('#toolbar-navigation');
 
-            // Initialize storage helper
-            if (this.storeId && this.themeId) {
-                StorageHelper.init(this.storeId, this.themeId);
+            // Initialize storage helper (scoped by themeId for localStorage keys)
+            if (this.themeId) {
+                StorageHelper.init(this.scopeId, this.themeId);
             }
 
             this.template = mageTemplate(panelTemplate);
@@ -244,7 +245,7 @@ define([
 
                     // Auto-delete: remove the overridden value from draft so the default takes effect
                     log.info('Discarding override for ' + data.sectionCode + '.' + data.fieldCode);
-                    discardDraft(self.storeId, self.themeId, [data.sectionCode], [data.fieldCode])
+                    discardDraft(self.scope, self.scopeId, [data.sectionCode], [data.fieldCode])
                         .then(function(result) {
                             if (result.discardBreezeThemeEditorDraft.success) {
                                 log.info('Discard success: ' + data.sectionCode + '.' + data.fieldCode);
@@ -264,7 +265,8 @@ define([
                                 var fieldModified = PanelState.getModifiedCount();
                                 var paletteModified = PaletteManager.getModifiedCount();
                                 $(document).trigger('themeEditorDraftSaved', {
-                                    storeId: self.storeId,
+                                    scope:   self.scope,
+                                    scopeId: self.scopeId,
                                     themeId: self.themeId,
                                     draftChangesCount: fieldModified + paletteModified
                                 });
@@ -330,22 +332,23 @@ define([
                 self._loadConfigFromPublication(data.publicationId);
             });
 
-            // ✅ Listen for store scope changes (scope-selector triggers 'storeChanged')
-            $(document).on('storeChanged', function (e, storeId, storeCode) {
-                log.info('Store changed to: ' + storeCode + ' (ID: ' + storeId + ')');
+            // Listen for scope changes (scope-selector triggers 'scopeChanged')
+            $(document).on('scopeChanged', function (e, scope, scopeId, storeCode) {
+                log.info('Scope changed to: ' + scope + ':' + scopeId + ' (' + storeCode + ')');
 
-                // Update storeId; clear themeId so backend resolves it from the new store
-                self.storeId = storeId;
+                // Update scope; clear themeId so backend resolves it from the new scope
+                self.scope   = scope;
+                self.scopeId = scopeId;
                 self.themeId = null;
 
                 // Re-init storage helper for new scope
-                StorageHelper.init(storeId, null);
+                StorageHelper.init(scopeId, null);
 
                 // Reset live preview (stale CSS no longer applies)
                 CssPreviewManager.reset();
 
-                // Reload config for new store
-                log.info('Reloading config for new store');
+                // Reload config for new scope
+                log.info('Reloading config for new scope');
                 self._loadConfig();
             });
 
@@ -401,7 +404,7 @@ define([
                 // Only initialize if not already done
                 if (!CssManager.getCurrentStatus()) {
                     log.debug('CSS Manager not initialized yet, initializing now...');
-                    CssManager.init(self.storeId, self.themeId);
+                    CssManager.init(self.scopeId, self.themeId);
                 } else {
                     log.debug('CSS Manager already initialized (early init from toolbar)');
                 }
@@ -433,23 +436,23 @@ define([
             
             log.info('Loading config with status: ' + this.options.status);
 
-            getConfig(this.storeId, this.themeId, this.options.status)
+            getConfig(this.scope, this.scopeId, this.options.status)
                 .then(function(data) {
                     log.info('Config loaded for status "' + self.options.status + '"');
                     var config = data.breezeThemeEditorConfig;
 
-                    // Update themeId from resolved metadata (important after store switch)
+                    // Update themeId from resolved metadata (important after scope switch)
                     if (config.metadata && config.metadata.themeId) {
                         self.themeId = config.metadata.themeId;
                         // Re-initialize storage with the resolved themeId so that
                         // open-sections state is saved/restored under the correct
-                        // scoped key (bte_{storeId}_{themeId}_open_sections).
-                        // Without this, a store-switch or an initial load where PHP
+                        // scoped key (bte_{scopeId}_{themeId}_open_sections).
+                        // Without this, a scope-switch or an initial load where PHP
                         // returned themeId=0 would cause saves to go to the unscoped
                         // key "bte_open_sections", while the next F5 (which gets the
                         // real themeId from PHP) would read from the scoped key and
                         // find nothing — losing the accordion state.
-                        StorageHelper.init(self.storeId, self.themeId);
+                        StorageHelper.init(self.scopeId, self.themeId);
                         log.info('themeId resolved from metadata: ' + self.themeId);
                     }
                     self.config = config; // Store config for palette initialization
@@ -459,8 +462,9 @@ define([
                     if (config.palettes && config.palettes.length > 0) {
                         PaletteManager.init({
                             palettes: config.palettes,
-                            storeId: self.storeId,
-                            themeId: self.themeId
+                            scope:    self.scope,
+                            scopeId:  self.scopeId,
+                            themeId:  self.themeId
                         });
                         log.info('PaletteManager initialized with ' + config.palettes.length + ' palette(s)');
                     }
@@ -501,7 +505,7 @@ define([
             var self = this;
             this._showLoader('Loading publication #' + publicationId + '...');
 
-            getConfigFromPublication(this.storeId, this.themeId, publicationId)
+            getConfigFromPublication(publicationId)
                 .then(function(config) {
                     log.info('Config loaded from publication');
                     
@@ -511,8 +515,9 @@ define([
                     if (config.palettes && config.palettes.length > 0) {
                         PaletteManager.init({
                             palettes: config.palettes,
-                            storeId: self.storeId,
-                            themeId: self.themeId
+                            scope:    self.scope,
+                            scopeId:  self.scopeId,
+                            themeId:  self.themeId
                         });
                         log.info('PaletteManager initialized with ' + config.palettes.length + ' palette(s)');
                     }
@@ -964,7 +969,7 @@ define([
 
             this.$saveButton.prop('disabled', true).text('Saving...');
 
-            saveValues(this.storeId, this.themeId, this.options.status, values)
+            saveValues(this.scope, this.scopeId, this.options.status, values)
                 .then(function(data) {
                     log.info('Saved successfully');
 
@@ -984,7 +989,8 @@ define([
                         var fieldModified = PanelState.getModifiedCount();
                         var paletteModified = PaletteManager.getModifiedCount();
                         $(document).trigger('themeEditorDraftSaved', {
-                            storeId: self.storeId,
+                            scope:   self.scope,
+                            scopeId: self.scopeId,
                             themeId: self.themeId,
                             draftChangesCount: fieldModified + paletteModified
                         });
@@ -1255,8 +1261,9 @@ define([
 
             this.$paletteContainer.paletteSection({
                 palettes: this.config.palettes,
-                storeId: this.storeId,
-                themeId: this.themeId
+                scope:    this.scope,
+                scopeId:  this.scopeId,
+                themeId:  this.themeId
             });
 
             log.info('Palette section initialized');
@@ -1334,9 +1341,10 @@ define([
             }
             
             this.$presetContainer.presetSelector({
-                storeId: this.storeId,
-                themeId: this.themeId,
-                onApply: $.proxy(this._onPresetApplied, this)
+                scope:    this.scope,
+                scopeId:  this.scopeId,
+                themeId:  this.themeId,
+                onApply:  $.proxy(this._onPresetApplied, this)
             });
             
             log.info('Preset selector initialized');

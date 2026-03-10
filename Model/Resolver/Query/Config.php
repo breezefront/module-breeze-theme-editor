@@ -53,14 +53,15 @@ class Config extends AbstractConfigResolver
         // 1. Отримати userId
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        // 2. Отримати store ID
-        $storeId = (int)$args['storeId'];
+        // 2. Отримати scope / scopeId
+        $scope = $args['scope'] ?? 'stores';
+        $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
 
         // 3. Визначити theme ID
         try {
-            $themeId = isset($args['themeId']) && $args['themeId']
+            $themeId = isset($args['themeId'])
                 ? (int)$args['themeId']
-                : $this->themeResolver->getThemeIdByStoreId($storeId);
+                : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
         } catch (LocalizedException $e) {
             throw new GraphQlInputException(__($e->getMessage()));
         }
@@ -88,12 +89,13 @@ class Config extends AbstractConfigResolver
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row still display the published value, not the theme default.
         if ($statusCode === 'PUBLISHED') {
-            $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $storeId, $statusId, null);
+            $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope, $scopeId, $statusId, null);
         } else {
             $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
             $savedValues = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
                 $themeId,
-                $storeId,
+                $scope,
+                $scopeId,
                 $statusId,
                 $publishedStatusId,
                 $userId
@@ -133,7 +135,7 @@ class Config extends AbstractConfigResolver
 
         // 11. Якщо draft - перевірити зміни
         if ($statusCode === 'DRAFT') {
-            $comparison = $this->compareProvider->compare($themeId, $storeId, $userId);
+            $comparison = $this->compareProvider->compare($themeId, $scope, $scopeId, $userId);
             $metadata['hasUnpublishedChanges'] = $comparison['hasChanges'];
             $metadata['draftChangesCount'] = $comparison['changesCount'];
         }

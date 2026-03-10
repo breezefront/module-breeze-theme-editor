@@ -20,3 +20,6 @@ THEME_DEVELOPER_GUIDE.md
 
 # PHPUnit
 .phpunit.result.cache
+
+# PHPStan
+phpstan.neon

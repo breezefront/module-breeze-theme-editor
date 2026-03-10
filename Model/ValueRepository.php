@@ -51,6 +51,7 @@ class ValueRepository implements ValueRepositoryInterface
 
             $row = [
                 ValueInterface::THEME_ID     => $value->getThemeId(),
+                ValueInterface::SCOPE        => $value->getScope(),
                 ValueInterface::STORE_ID     => $value->getStoreId(),
                 ValueInterface::STATUS_ID    => $value->getStatusId(),
                 ValueInterface::SECTION_CODE => $value->getSectionCode(),
@@ -99,6 +100,7 @@ class ValueRepository implements ValueRepositoryInterface
 
                 $row = [
                     ValueInterface::THEME_ID => $value->getThemeId(),
+                    ValueInterface::SCOPE => $value->getScope(),
                     ValueInterface::STORE_ID => $value->getStoreId(),
                     ValueInterface::STATUS_ID => $value->getStatusId(),
                     ValueInterface::SECTION_CODE => $value->getSectionCode(),

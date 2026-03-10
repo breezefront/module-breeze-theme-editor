@@ -31,12 +31,13 @@ class PublishService
 
     public function publish(
         int $themeId,
-        int $storeId,
+        string $scope,
+        int $scopeId,
         int $userId,
         string $title,
         ?string $description = null
     ): array {
-        $comparison = $this->compareProvider->compare($themeId, $storeId, $userId);
+        $comparison = $this->compareProvider->compare($themeId, $scope, $scopeId, $userId);
 
         if (!$comparison['hasChanges']) {
             throw new LocalizedException(__('No changes to publish'));
@@ -46,12 +47,13 @@ class PublishService
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
         // Load all draft values via ValueService
-        $draftValues = $this->valueService->getValuesByTheme($themeId, $storeId, $draftStatusId, $userId);
+        $draftValues = $this->valueService->getValuesByTheme($themeId, $scope, $scopeId, $draftStatusId, $userId);
 
         // Create publication record
         $publication = $this->publicationFactory->create();
         $publication->setThemeId($themeId);
-        $publication->setStoreId($storeId);
+        $publication->setScope($scope);
+        $publication->setStoreId($scopeId);
         $publication->setTitle($title);
         $publication->setDescription($description);
         $publication->setPublishedBy($userId);
@@ -67,12 +69,10 @@ class PublishService
             $this->saveChangelog($publication->getPublicationId(), $comparison['changes']);
 
             // Build merged published snapshot: current published values overridden by draft.
-            // This correctly handles legacy rows (user_id != 0) that were saved by old code.
-            // Without this merge+replace, insertOnDuplicate would INSERT new rows alongside
-            // the stale ones (different unique key due to user_id), leaving corrupted duplicates.
             $currentPublished = $this->valueService->getValuesByTheme(
                 $themeId,
-                $storeId,
+                $scope,
+                $scopeId,
                 $publishedStatusId,
                 null // no user_id filter — load ALL published rows regardless of owner
             );
@@ -88,14 +88,15 @@ class PublishService
             }
 
             // Delete ALL existing published rows (removes legacy rows of any user_id)
-            $this->valueService->deleteValues($themeId, $storeId, $publishedStatusId, null);
+            $this->valueService->deleteValues($themeId, $scope, $scopeId, $publishedStatusId, null);
 
             // Save clean merged snapshot with the publishing admin's user_id
             $models = [];
             foreach ($mergedMap as $val) {
                 $model = $this->valueRepository->create();
                 $model->setThemeId($themeId);
-                $model->setStoreId($storeId);
+                $model->setScope($scope);
+                $model->setStoreId($scopeId);
                 $model->setStatusId($publishedStatusId);
                 $model->setSectionCode($val['section_code']);
                 $model->setSettingCode($val['setting_code']);
@@ -108,7 +109,7 @@ class PublishService
             }
 
             // Delete draft values
-            $this->valueService->deleteValues($themeId, $storeId, $draftStatusId, $userId);
+            $this->valueService->deleteValues($themeId, $scope, $scopeId, $draftStatusId, $userId);
 
             $connection->commit();
         } catch (\Exception $e) {
@@ -119,7 +120,8 @@ class PublishService
         return [
             'publicationId' => $publication->getPublicationId(),
             'themeId' => $themeId,
-            'storeId' => $storeId,
+            'scope' => $scope,
+            'scopeId' => $scopeId,
             'title' => $title,
             'description' => $description,
             'publishedAt' => $publication->getPublishedAt(),
@@ -139,7 +141,8 @@ class PublishService
         $oldPublication = $this->publicationRepository->getById($publicationId);
 
         $themeId = $oldPublication->getThemeId();
-        $storeId = $oldPublication->getStoreId();
+        $scope = $oldPublication->getScope() ?: 'stores';
+        $scopeId = (int)$oldPublication->getStoreId();
 
         // Load changelog entries for the old publication via SearchCriteria
         $criteria = $this->searchCriteriaBuilder
@@ -151,7 +154,8 @@ class PublishService
         // Create new publication record for rollback
         $publication = $this->publicationFactory->create();
         $publication->setThemeId($themeId);
-        $publication->setStoreId($storeId);
+        $publication->setScope($scope);
+        $publication->setStoreId($scopeId);
         $publication->setTitle($title);
         $publication->setDescription($description);
         $publication->setPublishedBy($userId);
@@ -172,17 +176,18 @@ class PublishService
 
             // Clear current draft before restoring old values
             // (prevents draft from silently surviving rollback)
-            $this->valueService->deleteValues($themeId, $storeId, $draftStatusId, $userId);
+            $this->valueService->deleteValues($themeId, $scope, $scopeId, $draftStatusId, $userId);
 
             // Delete ALL existing published rows (removes legacy rows of any user_id)
-            $this->valueService->deleteValues($themeId, $storeId, $publishedStatusId, null);
+            $this->valueService->deleteValues($themeId, $scope, $scopeId, $publishedStatusId, null);
 
             // Restore snapshot from changelog with the rolling-back admin's user_id
             $models = [];
             foreach ($oldChanges as $change) {
                 $model = $this->valueRepository->create();
                 $model->setThemeId($themeId);
-                $model->setStoreId($storeId);
+                $model->setScope($scope);
+                $model->setStoreId($scopeId);
                 $model->setStatusId($publishedStatusId);
                 $model->setSectionCode($change->getSectionCode());
                 $model->setSettingCode($change->getSettingCode());
@@ -203,7 +208,8 @@ class PublishService
         return [
             'publicationId' => $publication->getPublicationId(),
             'themeId' => $themeId,
-            'storeId' => $storeId,
+            'scope' => $scope,
+            'scopeId' => $scopeId,
             'title' => $title,
             'isRollback' => true,
             'rollbackFrom' => $publicationId,

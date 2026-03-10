@@ -4,8 +4,8 @@ define([
     'use strict';
 
     var query = `
-        query GetThemeEditorCss($storeId: Int!, $themeId: Int, $status: BreezeThemeEditorCssStatusCode, $publicationId: Int) {
-            getThemeEditorCss(storeId: $storeId, themeId: $themeId, status: $status, publicationId: $publicationId) {
+        query GetThemeEditorCss($scope: BreezeThemeEditorScope, $scopeId: Int!, $status: BreezeThemeEditorCssStatusCode, $publicationId: Int) {
+            getThemeEditorCss(scope: $scope, scopeId: $scopeId, status: $status, publicationId: $publicationId) {
                 css
                 status
                 hasContent
@@ -16,17 +16,17 @@ define([
     /**
      * Get theme CSS by status
      *
-     * @param {Number} storeId
-     * @param {Number} themeId - Optional
+     * @param {String} scope - 'default', 'websites', or 'stores'
+     * @param {Number} scopeId
      * @param {String} status - DRAFT, PUBLISHED, or PUBLICATION
      * @param {Number} publicationId - Optional, required for PUBLICATION status
      * @returns {Promise}
      */
-    return function getCss(storeId, themeId, status, publicationId) {
+    return function getCss(scope, scopeId, status, publicationId) {
         return client.execute(query, {
-            storeId: storeId,
-            themeId: themeId || null,
-            status: status || 'PUBLISHED',
+            scope:         scope || 'stores',
+            scopeId:       scopeId,
+            status:        status || 'PUBLISHED',
             publicationId: publicationId || null
         }, 'GetThemeEditorCss');
     };

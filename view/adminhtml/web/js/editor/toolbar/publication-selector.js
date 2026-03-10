@@ -35,7 +35,8 @@ define([
             publishedModifiedCount: 0,
             currentPublicationId: null,
             currentPublicationTitle: null,
-            storeId: null,
+            scope: 'stores',
+            scopeId: null,
             themeId: null,
             publicationsPage: 1,
             publicationsPageSize: 10
@@ -47,9 +48,10 @@ define([
         _create: function() {
             log.info('Initializing publication selector');
             
-            // Get store and theme IDs
+            // Get scope and theme IDs
             var config = window.breezeThemeEditorConfig || {};
-            this.storeId = config.storeId || this.options.storeId;
+            this.scope   = config.scope   || this.options.scope   || 'stores';
+            this.scopeId = config.scopeId || this.options.scopeId;
             this.themeId = config.themeId || this.options.themeId;
             
             // Initialize modules
@@ -81,8 +83,8 @@ define([
          */
         _initModules: function() {
             // Initialize StorageHelper
-            if (this.storeId && this.themeId) {
-                StorageHelper.init(this.storeId, this.themeId);
+            if (this.scopeId && this.themeId) {
+                StorageHelper.init(this.scopeId, this.themeId);
             }
             
             // Initialize Renderer
@@ -93,7 +95,8 @@ define([
             
             // Initialize MetadataLoader
             this.metadataLoader = Object.create(MetadataLoader).init({
-                storeId: this.storeId,
+                scope:   this.scope,
+                scopeId: this.scopeId,
                 themeId: this.themeId,
                 pageSize: this.options.publicationsPageSize
             });
@@ -115,7 +118,8 @@ define([
          */
         _initCssManager: function() {
             cssManager.init({
-                storeId: this.storeId,
+                scope:   this.scope,
+                scopeId: this.scopeId,
                 themeId: this.themeId,
                 iframeId: 'bte-iframe'
             });
@@ -275,21 +279,23 @@ define([
                 }
             });
             
-            // Store changed → reload metadata and publications for new store
-            $(document).on('storeChanged', function(e, storeId) {
-                log.info('Store changed to ' + storeId + ', reloading publication selector data...');
+            // Scope changed → reload metadata and publications for new scope
+            $(document).on('scopeChanged', function(e, scope, scopeId) {
+                log.info('Scope changed to ' + scope + ':' + scopeId + ', reloading publication selector data...');
 
-                self.storeId = storeId;
+                self.scope   = scope;
+                self.scopeId = scopeId;
                 self.themeId = null;
 
-                // Update metadataLoader with new store context
-                self.metadataLoader.storeId = storeId;
+                // Update metadataLoader with new scope context
+                self.metadataLoader.scope   = scope;
+                self.metadataLoader.scopeId = scopeId;
                 self.metadataLoader.themeId = null;
 
-                // Re-init StorageHelper for the new store to restore persisted state
-                StorageHelper.init(storeId, null);
+                // Re-init StorageHelper for the new scope to restore persisted state
+                StorageHelper.init(scopeId, null);
 
-                // Reset options to a clean state for the new store
+                // Reset options to a clean state for the new scope
                 self.options.changesCount = 0;
                 self.options.publishedModifiedCount = 0;
                 self.options.publications = [];
@@ -297,13 +303,13 @@ define([
                 self.options.currentPublicationTitle = null;
                 self.options.publicationsPage = 1;
 
-                // Restore status from localStorage for the new store
+                // Restore status from localStorage for the new scope
                 self.options.currentStatus = StorageHelper.getCurrentStatus() || 'DRAFT';
 
                 self.renderer.render(self._getState());
                 self._applyPermissions();
 
-                // Fetch fresh publications and changesCount for the new store
+                // Fetch fresh publications and changesCount for the new scope
                 self._loadInitialData();
             });
 
@@ -589,8 +595,8 @@ define([
             loading.show(this.element);
             
             publishMutation(
-                parseInt(this.storeId),
-                parseInt(this.themeId),
+                this.scope,
+                parseInt(this.scopeId),
                 title,
                 null,
                 false
@@ -607,7 +613,8 @@ define([
                     
                     $(document).trigger('bte:published', {
                         publication: result.publication,
-                        storeId: self.storeId,
+                        scope:   self.scope,
+                        scopeId: self.scopeId,
                         themeId: self.themeId
                     });
                     
@@ -650,8 +657,8 @@ define([
             loading.show(this.element);
 
             discardDraftMutation(
-                parseInt(this.storeId),
-                parseInt(this.themeId),
+                this.scope,
+                parseInt(this.scopeId),
                 null
             ).then(function(response) {
                 if (response && response.discardBreezeThemeEditorDraft && response.discardBreezeThemeEditorDraft.success) {
@@ -662,7 +669,8 @@ define([
                     Toastify.show('success', $t('Draft changes discarded'));
 
                     $(document).trigger('bte:draftDiscarded', {
-                        storeId: self.storeId,
+                        scope:   self.scope,
+                        scopeId: self.scopeId,
                         themeId: self.themeId
                     });
 
@@ -710,8 +718,8 @@ define([
             loading.show(this.element);
 
             discardPublishedMutation(
-                parseInt(this.storeId),
-                parseInt(this.themeId)
+                this.scope,
+                parseInt(this.scopeId)
             ).then(function(response) {
                 if (response && response.discardBreezeThemeEditorPublished && response.discardBreezeThemeEditorPublished.success) {
                     self.options.publishedModifiedCount = 0;
@@ -721,7 +729,8 @@ define([
                     Toastify.show('success', $t('Published customizations reset to defaults'));
 
                     $(document).trigger('bte:publishedDiscarded', {
-                        storeId: self.storeId,
+                        scope:   self.scope,
+                        scopeId: self.scopeId,
                         themeId: self.themeId
                     });
 
@@ -803,7 +812,8 @@ define([
 
                         $(document).trigger('bte:published', {
                             publication: result.publication,
-                            storeId: self.storeId,
+                            scope:   self.scope,
+                            scopeId: self.scopeId,
                             themeId: self.themeId,
                             isRollback: true
                         });

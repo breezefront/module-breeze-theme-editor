@@ -4,10 +4,10 @@ define([
     'use strict';
 
     var query = `
-        query GetValues($storeId: Int!, $themeId: Int, $status: BreezeThemeEditorStatusCode, $sectionCodes: [String! ]) {
+        query GetValues($scope: BreezeThemeEditorScope, $scopeId: Int!, $status: BreezeThemeEditorStatusCode, $sectionCodes: [String! ]) {
             breezeThemeEditorValues(
-                storeId: $storeId
-                themeId: $themeId
+                scope: $scope
+                scopeId: $scopeId
                 status: $status
                 sectionCodes: $sectionCodes
             ) {
@@ -23,17 +23,17 @@ define([
     /**
      * Get theme values only (without config)
      *
-     * @param {Number} storeId
-     * @param {Number} themeId - Optional
+     * @param {String} scope - 'default', 'websites', or 'stores'
+     * @param {Number} scopeId
      * @param {String} status - DRAFT or PUBLISHED
      * @param {Array} sectionCodes - Optional filter
      * @returns {Promise}
      */
-    return function getValues(storeId, themeId, status, sectionCodes) {
+    return function getValues(scope, scopeId, status, sectionCodes) {
         return client.execute(query, {
-            storeId: storeId,
-            themeId: themeId || null,
-            status: status || 'DRAFT',
+            scope:        scope || 'stores',
+            scopeId:      scopeId,
+            status:       status || 'DRAFT',
             sectionCodes: sectionCodes || null
         }, 'GetValues');
     };

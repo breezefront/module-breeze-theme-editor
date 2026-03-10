@@ -16,19 +16,19 @@ define([
     /**
      * Save palette color value
      *
-     * @param {Number} storeId
-     * @param {Number} themeId
+     * @param {String} scope - 'default', 'websites', or 'stores'
+     * @param {Number} scopeId
      * @param {String} property - CSS variable name (e.g., "--color-brand-primary")
      * @param {String} value - RGB value (e.g., "25, 121, 195")
      * @returns {Promise}
      */
-    return function savePaletteValue(storeId, themeId, property, value) {
+    return function savePaletteValue(scope, scopeId, property, value) {
         return client.execute(mutation, {
             input: {
-                storeId: storeId,
-                themeId: themeId,
+                scope:    scope || 'stores',
+                scopeId:  scopeId,
                 property: property,
-                value: value
+                value:    value
             }
         }, 'SavePaletteValue');
     };

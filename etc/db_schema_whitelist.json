@@ -22,20 +22,23 @@
             "setting_code": true,
             "value": true,
             "created_at": true,
-            "updated_at": true
+            "updated_at": true,
+            "scope": true
         },
         "index": {
             "BREEZE_THEME_EDITOR_VALUE_THEME_ID_STORE_ID_STATUS_ID": true,
             "BREEZE_THEME_EDITOR_VALUE_USER_ID_STATUS_ID": true,
             "BREEZE_THEME_EDITOR_VALUE_SECTION_CODE": true,
-            "BREEZE_THEME_EDITOR_VALUE_UPDATED_AT": true
+            "BREEZE_THEME_EDITOR_VALUE_UPDATED_AT": true,
+            "BREEZE_THEME_EDITOR_VALUE_THEME_ID_SCOPE_STORE_ID_STATUS_ID": true
         },
         "constraint": {
             "PRIMARY": true,
             "UNQ_66265B6F5169AC40A511517CBE94613E": true,
             "BREEZE_THEME_EDITOR_VAL_STS_ID_BREEZE_THEME_EDITOR_STS_STS_ID": true,
             "BREEZE_THEME_EDITOR_VALUE_STORE_ID_STORE_STORE_ID": true,
-            "BREEZE_THEME_EDITOR_VALUE_USER_ID_ADMIN_USER_USER_ID": true
+            "BREEZE_THEME_EDITOR_VALUE_USER_ID_ADMIN_USER_USER_ID": true,
+            "UNQ_F700CE8C21CC97F53E1BD8AE09F3B86F": true
         }
     },
     "breeze_theme_editor_publication": {
@@ -49,7 +52,8 @@
             "published_by": true,
             "is_rollback": true,
             "rollback_from": true,
-            "changes_count": true
+            "changes_count": true,
+            "scope": true
         },
         "index": {
             "BREEZE_THEME_EDITOR_PUBLICATION_THEME_ID_STORE_ID": true,

@@ -51,7 +51,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'storeId' => 1,
+                'scopeId' => 1,
                 'themeId' => 10,
                 'title' => 'v1.0 Release',
                 'description' => 'Initial release'
@@ -61,7 +61,8 @@ class PublishTest extends TestCase
         $serviceResult = [
             'publicationId' => 100,
             'themeId' => 10,
-            'storeId' => 1,
+            'scope' => 'stores',
+            'scopeId' => 1,
             'title' => 'v1.0 Release',
             'description' => 'Initial release',
             'publishedAt' => '2024-01-15 10:00:00',
@@ -93,9 +94,11 @@ class PublishTest extends TestCase
             ->with($this->contextMock)
             ->willReturn($userMetadata);
 
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(10);
+
         $this->publishServiceMock->expects($this->once())
             ->method('publish')
-            ->with(10, 1, 5, 'v1.0 Release', 'Initial release')
+            ->with(10, 'stores', 1, 5, 'v1.0 Release', 'Initial release')
             ->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -123,7 +126,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'storeId' => 1,
+                'scopeId' => 1,
                 'themeId' => 10,
                 'title' => 'Quick Fix'
             ]
@@ -132,7 +135,8 @@ class PublishTest extends TestCase
         $serviceResult = [
             'publicationId' => 101,
             'themeId' => 10,
-            'storeId' => 1,
+            'scope' => 'stores',
+            'scopeId' => 1,
             'title' => 'Quick Fix',
             'description' => null,
             'publishedAt' => '2024-01-15 11:00:00',
@@ -149,9 +153,11 @@ class PublishTest extends TestCase
             ->with($this->contextMock)
             ->willReturn([]);
 
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(10);
+
         $this->publishServiceMock->expects($this->once())
             ->method('publish')
-            ->with(10, 1, 5, 'Quick Fix', null)
+            ->with(10, 'stores', 1, 5, 'Quick Fix', null)
             ->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -173,7 +179,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'storeId' => 1,
+                'scopeId' => 1,
                 'themeId' => 10,
                 'title' => ''
             ]
@@ -185,6 +191,8 @@ class PublishTest extends TestCase
         $this->userResolverMock->method('getCurrentUserMetadata')
             ->with($this->contextMock)
             ->willReturn([]);
+
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(10);
 
         $this->expectException(GraphQlInputException::class);
         $this->expectExceptionMessage('Publication title is required');
@@ -205,7 +213,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'storeId' => 1,
+                'scopeId' => 1,
                 'title' => 'Auto Theme'
             ]
         ];
@@ -213,7 +221,8 @@ class PublishTest extends TestCase
         $serviceResult = [
             'publicationId' => 102,
             'themeId' => 20,
-            'storeId' => 1,
+            'scope' => 'stores',
+            'scopeId' => 1,
             'title' => 'Auto Theme',
             'description' => null,
             'publishedAt' => '2024-01-15 12:00:00',
@@ -231,13 +240,13 @@ class PublishTest extends TestCase
             ->willReturn([]);
 
         $this->themeResolverMock->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(1)
+            ->method('getThemeIdByScope')
+            ->with('stores', 1)
             ->willReturn(20);
 
         $this->publishServiceMock->expects($this->once())
             ->method('publish')
-            ->with(20, 1, 5, 'Auto Theme', null)
+            ->with(20, 'stores', 1, 5, 'Auto Theme', null)
             ->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -258,7 +267,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'storeId' => 1,
+                'scopeId' => 1,
                 'themeId' => 15,
                 'title' => 'Custom Theme'
             ]
@@ -267,7 +276,8 @@ class PublishTest extends TestCase
         $serviceResult = [
             'publicationId' => 103,
             'themeId' => 15,
-            'storeId' => 1,
+            'scope' => 'stores',
+            'scopeId' => 1,
             'title' => 'Custom Theme',
             'description' => null,
             'publishedAt' => '2024-01-15 13:00:00',
@@ -284,13 +294,15 @@ class PublishTest extends TestCase
             ->with($this->contextMock)
             ->willReturn([]);
 
-        // ThemeResolver should NOT be called
-        $this->themeResolverMock->expects($this->never())
-            ->method('getThemeIdByStoreId');
+        // ThemeResolver is always called to resolve themeId from scope
+        $this->themeResolverMock->expects($this->once())
+            ->method('getThemeIdByScope')
+            ->with('stores', 1)
+            ->willReturn(15);
 
         $this->publishServiceMock->expects($this->once())
             ->method('publish')
-            ->with(15, 1, 5, 'Custom Theme', null)
+            ->with(15, 'stores', 1, 5, 'Custom Theme', null)
             ->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -311,7 +323,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'storeId' => 1,
+                'scopeId' => 1,
                 'themeId' => 10,
                 'title' => 'Multi Change'
             ]
@@ -320,7 +332,8 @@ class PublishTest extends TestCase
         $serviceResult = [
             'publicationId' => 104,
             'themeId' => 10,
-            'storeId' => 1,
+            'scope' => 'stores',
+            'scopeId' => 1,
             'title' => 'Multi Change',
             'description' => null,
             'publishedAt' => '2024-01-15 14:00:00',
@@ -364,6 +377,7 @@ class PublishTest extends TestCase
         $this->userResolverMock->method('getCurrentUserMetadata')
             ->with($this->contextMock)
             ->willReturn([]);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(10);
         $this->publishServiceMock->method('publish')->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -408,7 +422,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'storeId' => 1,
+                'scopeId' => 1,
                 'themeId' => 10,
                 'title' => 'No Changes'
             ]
@@ -417,7 +431,8 @@ class PublishTest extends TestCase
         $serviceResult = [
             'publicationId' => 105,
             'themeId' => 10,
-            'storeId' => 1,
+            'scope' => 'stores',
+            'scopeId' => 1,
             'title' => 'No Changes',
             'description' => null,
             'publishedAt' => '2024-01-15 15:00:00',
@@ -433,6 +448,7 @@ class PublishTest extends TestCase
         $this->userResolverMock->method('getCurrentUserMetadata')
             ->with($this->contextMock)
             ->willReturn([]);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(10);
         $this->publishServiceMock->method('publish')->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -454,7 +470,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'storeId' => 1,
+                'scopeId' => 1,
                 'themeId' => 10,
                 'title' => 'With Metadata'
             ]
@@ -463,7 +479,8 @@ class PublishTest extends TestCase
         $serviceResult = [
             'publicationId' => 106,
             'themeId' => 10,
-            'storeId' => 1,
+            'scope' => 'stores',
+            'scopeId' => 1,
             'title' => 'With Metadata',
             'description' => null,
             'publishedAt' => '2024-01-15 16:00:00',
@@ -486,6 +503,7 @@ class PublishTest extends TestCase
         $this->userResolverMock->method('getCurrentUserMetadata')
             ->with($this->contextMock)
             ->willReturn($userMetadata);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(10);
         $this->publishServiceMock->method('publish')->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -507,7 +525,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'storeId' => 1,
+                'scopeId' => 1,
                 'themeId' => 10,
                 'title' => 'No Metadata'
             ]
@@ -516,7 +534,8 @@ class PublishTest extends TestCase
         $serviceResult = [
             'publicationId' => 107,
             'themeId' => 10,
-            'storeId' => 1,
+            'scope' => 'stores',
+            'scopeId' => 1,
             'title' => 'No Metadata',
             'description' => null,
             'publishedAt' => '2024-01-15 17:00:00',
@@ -532,6 +551,7 @@ class PublishTest extends TestCase
         $this->userResolverMock->method('getCurrentUserMetadata')
             ->with($this->contextMock)
             ->willReturn([]);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(10);
         $this->publishServiceMock->method('publish')->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -553,7 +573,7 @@ class PublishTest extends TestCase
     {
         $args = [
             'input' => [
-                'storeId' => 1,
+                'scopeId' => 1,
                 'themeId' => 10,
                 'title' => 'Complete Test'
             ]
@@ -562,7 +582,8 @@ class PublishTest extends TestCase
         $serviceResult = [
             'publicationId' => 108,
             'themeId' => 10,
-            'storeId' => 1,
+            'scope' => 'stores',
+            'scopeId' => 1,
             'title' => 'Complete Test',
             'description' => 'Description',
             'publishedAt' => '2024-01-15 18:00:00',
@@ -578,6 +599,7 @@ class PublishTest extends TestCase
         $this->userResolverMock->method('getCurrentUserMetadata')
             ->with($this->contextMock)
             ->willReturn(['username' => 'user9']);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(10);
         $this->publishServiceMock->method('publish')->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -593,7 +615,8 @@ class PublishTest extends TestCase
         // Verify all required fields are present
         $this->assertArrayHasKey('publicationId', $publication);
         $this->assertArrayHasKey('themeId', $publication);
-        $this->assertArrayHasKey('storeId', $publication);
+        $this->assertArrayHasKey('scope', $publication);
+        $this->assertArrayHasKey('scopeId', $publication);
         $this->assertArrayHasKey('title', $publication);
         $this->assertArrayHasKey('description', $publication);
         $this->assertArrayHasKey('publishedAt', $publication);
@@ -609,7 +632,7 @@ class PublishTest extends TestCase
         // Verify values
         $this->assertEquals(108, $publication['publicationId']);
         $this->assertEquals(10, $publication['themeId']);
-        $this->assertEquals(1, $publication['storeId']);
+        $this->assertEquals(1, $publication['scopeId']);
         $this->assertFalse($publication['isRollback']);
         $this->assertNull($publication['rollbackFrom']);
         $this->assertTrue($publication['canRollback']);

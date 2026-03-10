@@ -36,10 +36,11 @@ class ImportSettings extends AbstractMutationResolver
         // Auth
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        $storeId = (int)$input['storeId'];
-        $themeId = isset($input['themeId']) && $input['themeId']
+        $scope = $input['scope'] ?? 'stores';
+        $scopeId = (int)($input['scopeId'] ?? $input['storeId'] ?? 0);
+        $themeId = isset($input['themeId'])
             ? (int)$input['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
+            : $this->themeResolver->getThemeIdByStoreId($scopeId);
 
         $statusCode = $input['status'] ?? 'DRAFT';
         $jsonData = $input['jsonData'];
@@ -48,7 +49,8 @@ class ImportSettings extends AbstractMutationResolver
         try {
             $result = $this->importExportService->import(
                 $themeId,
-                $storeId,
+                $scope,
+                $scopeId,
                 $statusCode,
                 $userId,
                 $jsonData,

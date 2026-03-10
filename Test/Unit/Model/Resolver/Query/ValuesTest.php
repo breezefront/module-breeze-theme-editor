@@ -103,7 +103,7 @@ class ValuesTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')
             ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
         
@@ -152,7 +152,7 @@ class ValuesTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->expects($this->once())
             ->method('getStatusId')
             ->with('PUBLISHED')
@@ -160,7 +160,7 @@ class ValuesTest extends TestCase
         
         $this->valueInheritanceResolverMock->expects($this->once())
             ->method('resolveAllValues')
-            ->with(1, 1, 2, null) // userId = null for PUBLISHED
+            ->with(1, 'stores', 1, 2, null) // userId = null for PUBLISHED
             ->willReturn([]);
         
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);
@@ -213,7 +213,7 @@ class ValuesTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         
         $mockValues = [
@@ -274,7 +274,7 @@ class ValuesTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         
         $mockValues = [
@@ -316,7 +316,7 @@ class ValuesTest extends TestCase
         $this->userResolverMock->method('getCurrentUserId')
             ->with($this->contextMock)
             ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByStoreId')->willReturn(1);
+        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         
         $mockValues = [

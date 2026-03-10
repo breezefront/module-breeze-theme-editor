@@ -25,7 +25,8 @@ define([
 
     $.widget('swissup.presetSelector', {
         options: {
-            storeId: null,
+            scope: 'stores',
+            scopeId: null,
             themeId: null,
             presets: [],
             selectedPresetId: null,
@@ -112,7 +113,7 @@ define([
 
             log.info('Loading presets...');
 
-            getPresets(this.options.storeId, this.options.themeId)
+            getPresets(this.options.scope, this.options.scopeId)
                 .then(function (data) {
                     self.options.presets = data.breezeThemeEditorPresets || [];
                     log.info('Loaded ' + self.options.presets.length + ' presets');
@@ -317,8 +318,8 @@ define([
             this.$applyBtn.prop('disabled', true).text('Applying...');
 
             applyPreset(
-                this.options.storeId,
-                this.options.themeId,
+                this.options.scope,
+                this.options.scopeId,
                 presetId,
                 'DRAFT',
                 overwrite

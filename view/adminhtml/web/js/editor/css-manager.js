@@ -18,7 +18,8 @@ define([
     
     var currentStatus = 'DRAFT';
     var currentPublicationId = null;
-    var storeId = null;
+    var scope   = null;
+    var scopeId = null;
     var themeId = null;
     var iframeId = null;
     
@@ -27,7 +28,8 @@ define([
          * Initialize CSS Manager
          * 
          * @param {Object} config - Configuration object
-         * @param {Number} config.storeId - Store ID
+         * @param {String} config.scope - Scope ('default'|'websites'|'stores')
+         * @param {Number} config.scopeId - Scope ID
          * @param {Number} config.themeId - Theme ID
          * @param {String} config.iframeId - Preview iframe ID
          * @param {Number} retries - Internal retry counter (for iframe load waiting)
@@ -37,13 +39,14 @@ define([
             retries = retries || 0;
             var self = this;
             
-            storeId = config.storeId;
+            scope   = config.scope   || 'stores';
+            scopeId = config.scopeId;
             themeId = config.themeId;
             iframeId = config.iframeId || 'bte-iframe';
             
             // Validate parameters
-            if (!storeId || !themeId) {
-                log.error('CSS Manager: Invalid storeId or themeId storeId=' + storeId + ' themeId=' + themeId);
+            if (!scopeId && scope !== 'default') {
+                log.error('CSS Manager: Invalid scopeId for scope=' + scope);
                 return false;
             }
             
@@ -95,7 +98,7 @@ define([
             // Draft CSS will be created dynamically when switching to DRAFT
             // No need to check for it in init()
             
-            log.info('CSS Manager initialized storeId=' + storeId + ' themeId=' + themeId + ' iframeId=' + iframeId + ' publishedStyleFound=true');
+            log.info('CSS Manager initialized scope=' + scope + ':' + scopeId + ' iframeId=' + iframeId + ' publishedStyleFound=true');
             
             // Trigger ready event for other components
             $(document).trigger('bte:cssManagerReady');
@@ -108,7 +111,7 @@ define([
          * @returns {Boolean}
          */
         isReady: function() {
-            return !!(storeId && this._getCurrentIframeDoc());
+            return !!(scopeId !== null && this._getCurrentIframeDoc());
         },
         
         /**
@@ -264,7 +267,7 @@ define([
             
             var doc = this._getCurrentIframeDoc();
             
-            if (!storeId || !doc) {
+            if ((!scopeId && scope !== 'default') || !doc) {
                 log.error('CSS Manager not initialized or iframe document not available');
                 return Promise.reject(new Error('CSS Manager not initialized'));
             }
@@ -282,7 +285,7 @@ define([
             switch (status) {
                 case 'DRAFT':
                     // Load draft CSS via GraphQL and create style dynamically
-                    return getCss(storeId, themeId, 'DRAFT', null)
+                    return getCss(scope, scopeId, 'DRAFT', null)
                         .then(function(response) {
                             if (response && response.getThemeEditorCss) {
                                 var css = response.getThemeEditorCss.css || '';
@@ -346,7 +349,7 @@ define([
                     }
                     
                     // Load publication CSS via GraphQL
-                    return getCss(storeId, themeId, 'PUBLICATION', publicationId)
+                    return getCss(scope, scopeId, 'PUBLICATION', publicationId)
                         .then(function(response) {
                             if (response && response.getThemeEditorCss) {
                                 var css = response.getThemeEditorCss.css || '';

@@ -11,6 +11,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Serialize\SerializerInterface;
+use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 
 class ThemeResolver
 {
@@ -35,6 +36,49 @@ class ThemeResolver
 
         if (!$themeId) {
             throw new LocalizedException(__('Unable to determine theme for store %1', $storeId));
+        }
+
+        return (int)$themeId;
+    }
+
+    /**
+     * Get theme ID by scope and scopeId.
+     *
+     * scope='default'  → reads from default scope (scopeId ignored)
+     * scope='websites' → reads from website scope
+     * scope='stores'   → same as getThemeIdByStoreId()
+     */
+    public function getThemeIdByScope(string $scope, int $scopeId): int
+    {
+        switch ($scope) {
+            case ValueInterface::SCOPE_DEFAULT:
+                $themeId = $this->scopeConfig->getValue(
+                    DesignInterface::XML_PATH_THEME_ID
+                );
+                break;
+
+            case ValueInterface::SCOPE_WEBSITES:
+                $themeId = $this->scopeConfig->getValue(
+                    DesignInterface::XML_PATH_THEME_ID,
+                    ScopeInterface::SCOPE_WEBSITE,
+                    $scopeId
+                );
+                break;
+
+            case ValueInterface::SCOPE_STORES:
+            default:
+                $themeId = $this->scopeConfig->getValue(
+                    DesignInterface::XML_PATH_THEME_ID,
+                    ScopeInterface::SCOPE_STORE,
+                    $scopeId
+                );
+                break;
+        }
+
+        if (!$themeId) {
+            throw new LocalizedException(
+                __('Unable to determine theme for scope %1 / scopeId %2', $scope, $scopeId)
+            );
         }
 
         return (int)$themeId;

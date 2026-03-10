@@ -39,17 +39,19 @@ class DiscardPublished extends AbstractMutationResolver
         array $value = null,
         array $args = null
     ) {
-        $storeId = (int)$args['storeId'];
-        $themeId = isset($args['themeId']) && $args['themeId']
+        $scope = $args['scope'] ?? 'stores';
+        $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
+        $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
+            : $this->themeResolver->getThemeIdByStoreId($scopeId);
 
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
         // Delete all PUBLISHED values (userId=null — published values have no per-user scope)
         $discardedCount = $this->valueService->deleteValues(
             $themeId,
-            $storeId,
+            $scope,
+            $scopeId,
             $publishedStatusId,
             null,   // userId — not applicable for PUBLISHED
             null,   // sectionCodes — reset everything

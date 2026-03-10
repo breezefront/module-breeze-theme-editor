@@ -126,7 +126,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
 
         $query = <<<GQL
         {
-            breezeThemeEditorConfig(storeId: {$storeId}, status: DRAFT) {
+            breezeThemeEditorConfig(scopeId: {$storeId}, status: DRAFT) {
                 version
                 sections { code label fields { code type } }
                 metadata { themeId hasUnpublishedChanges draftChangesCount }
@@ -162,7 +162,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         $mutation = <<<GQL
         mutation {
             saveBreezeThemeEditorValues(input: {
-                storeId: {$storeId}
+                scopeId: {$storeId}
                 status: DRAFT
                 values: [{ sectionCode: "{$sectionCode}", fieldCode: "{$fieldCode}", value: "{$testValue}" }]
             }) {
@@ -182,7 +182,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         // Re-fetch and check the unpublished-changes flag.
         $configQuery = <<<GQL
         {
-            breezeThemeEditorConfig(storeId: {$storeId}, status: DRAFT) {
+            breezeThemeEditorConfig(scopeId: {$storeId}, status: DRAFT) {
                 metadata { hasUnpublishedChanges draftChangesCount }
             }
         }
@@ -212,7 +212,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         $saveMutation = <<<GQL
         mutation {
             saveBreezeThemeEditorValues(input: {
-                storeId: {$storeId}
+                scopeId: {$storeId}
                 status: DRAFT
                 values: [{ sectionCode: "{$sectionCode}", fieldCode: "{$fieldCode}", value: "{$testValue}" }]
             }) { success }
@@ -224,7 +224,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         // Discard the entire draft for this store.
         $discardMutation = <<<GQL
         mutation {
-            discardBreezeThemeEditorDraft(storeId: {$storeId}) {
+            discardBreezeThemeEditorDraft(scopeId: {$storeId}) {
                 success
                 discardedCount
             }
@@ -240,7 +240,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         // Verify clean state.
         $configQuery = <<<GQL
         {
-            breezeThemeEditorConfig(storeId: {$storeId}, status: DRAFT) {
+            breezeThemeEditorConfig(scopeId: {$storeId}, status: DRAFT) {
                 metadata { hasUnpublishedChanges draftChangesCount }
             }
         }
@@ -273,7 +273,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         $saveMutation = <<<GQL
         mutation {
             saveBreezeThemeEditorValues(input: {
-                storeId: {$storeId}
+                scopeId: {$storeId}
                 status: DRAFT
                 values: [{ sectionCode: "{$sectionCode}", fieldCode: "{$fieldCode}", value: "{$testValue}" }]
             }) { success }
@@ -285,7 +285,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         $publishMutation = <<<GQL
         mutation {
             publishBreezeThemeEditor(input: {
-                storeId: {$storeId}
+                scopeId: {$storeId}
                 title: "Integration Test Publication"
             }) {
                 success
@@ -311,7 +311,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         // Draft should be gone after publish.
         $configQuery = <<<GQL
         {
-            breezeThemeEditorConfig(storeId: {$storeId}, status: DRAFT) {
+            breezeThemeEditorConfig(scopeId: {$storeId}, status: DRAFT) {
                 metadata { hasUnpublishedChanges }
             }
         }
@@ -344,7 +344,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         $saveMutation = <<<GQL
         mutation {
             saveBreezeThemeEditorValues(input: {
-                storeId: {$storeId}
+                scopeId: {$storeId}
                 status: DRAFT
                 values: [{ sectionCode: "{$sectionCode}", fieldCode: "{$fieldCode}", value: "{$testValue}" }]
             }) { success }
@@ -356,7 +356,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         $publishMutation = <<<GQL
         mutation {
             publishBreezeThemeEditor(input: {
-                storeId: {$storeId}
+                scopeId: {$storeId}
                 title: "{$uniqueTitle}"
             }) {
                 success
@@ -370,7 +370,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
 
         $listQuery = <<<GQL
         {
-            breezeThemeEditorPublications(storeId: {$storeId}, pageSize: 20, currentPage: 1) {
+            breezeThemeEditorPublications(scopeId: {$storeId}, pageSize: 20, currentPage: 1) {
                 total_count
                 items {
                     publicationId
@@ -424,7 +424,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
 
         $configQuery = <<<GQL
         {
-            breezeThemeEditorConfig(storeId: {$storeId}, status: DRAFT) {
+            breezeThemeEditorConfig(scopeId: {$storeId}, status: DRAFT) {
                 metadata { hasUnpublishedChanges draftChangesCount }
             }
         }
@@ -441,7 +441,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         $saveMutation = <<<GQL
         mutation {
             saveBreezeThemeEditorValues(input: {
-                storeId: {$storeId}
+                scopeId: {$storeId}
                 status: DRAFT
                 values: [{ sectionCode: "{$sectionCode}", fieldCode: "{$fieldCode}", value: "{$testValue}" }]
             }) { success }
@@ -472,7 +472,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         $publishMutation = <<<GQL
         mutation {
             publishBreezeThemeEditor(input: {
-                storeId: {$storeId}
+                scopeId: {$storeId}
                 title: "Full Workflow Integration Test"
             }) {
                 success
@@ -504,7 +504,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         // Step 5: new publication visible in the list.
         $listQuery = <<<GQL
         {
-            breezeThemeEditorPublications(storeId: {$storeId}, pageSize: 5, currentPage: 1) {
+            breezeThemeEditorPublications(scopeId: {$storeId}, pageSize: 5, currentPage: 1) {
                 total_count
                 items { publicationId }
             }
@@ -627,7 +627,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         // Query DRAFT to discover available fields (code, type, default value).
         $draftQuery = <<<GQL
         {
-            breezeThemeEditorConfig(storeId: {$storeId}, status: DRAFT) {
+            breezeThemeEditorConfig(scopeId: {$storeId}, status: DRAFT) {
                 sections {
                     code
                     fields { code type value default }
@@ -694,7 +694,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         try {
             $query = <<<GQL
             {
-                breezeThemeEditorConfig(storeId: {$storeId}, status: PUBLISHED) {
+                breezeThemeEditorConfig(scopeId: {$storeId}, status: PUBLISHED) {
                     sections {
                         code
                         fields { code value }
@@ -770,7 +770,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         try {
             $query = <<<GQL
             {
-                breezeThemeEditorConfig(storeId: {$storeId}, status: PUBLISHED) {
+                breezeThemeEditorConfig(scopeId: {$storeId}, status: PUBLISHED) {
                     sections {
                         code
                         fields { code value }
@@ -823,7 +823,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         try {
             $mutation = <<<GQL
             mutation {
-                discardBreezeThemeEditorDraft(storeId: {$storeId}) {
+                discardBreezeThemeEditorDraft(scopeId: {$storeId}) {
                     success
                     discardedCount
                 }

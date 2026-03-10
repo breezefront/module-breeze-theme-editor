@@ -4,8 +4,8 @@ define([
     'use strict';
 
     var query = `
-        query GetThemeConfig($storeId: Int!, $themeId: Int, $status: BreezeThemeEditorStatusCode) {
-            breezeThemeEditorConfig(storeId: $storeId, themeId: $themeId, status: $status) {
+        query GetThemeConfig($scope: BreezeThemeEditorScope, $scopeId: Int!, $status: BreezeThemeEditorStatusCode) {
+            breezeThemeEditorConfig(scope: $scope, scopeId: $scopeId, status: $status) {
                 version
                 metadata {
                     themeId
@@ -145,15 +145,15 @@ define([
     /**
      * Get theme configuration with values
      *
-     * @param {Number} storeId
-     * @param {Number} themeId - Optional
+     * @param {String} scope - 'default', 'websites', or 'stores'
+     * @param {Number} scopeId
      * @param {String} status - DRAFT or PUBLISHED
      * @returns {Promise}
      */
-    return function getConfig(storeId, themeId, status) {
+    return function getConfig(scope, scopeId, status) {
         return client.execute(query, {
-            storeId: storeId,
-            themeId: themeId || null,
+            scope:   scope || 'stores',
+            scopeId: scopeId,
             status:  status || 'DRAFT'
         }, 'GetThemeConfig');
     };

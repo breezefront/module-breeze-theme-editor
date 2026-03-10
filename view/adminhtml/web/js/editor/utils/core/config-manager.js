@@ -21,7 +21,8 @@ define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], func
      * Default config values
      */
     var DEFAULTS = {
-        storeId: null,
+        scope: 'stores',
+        scopeId: null,
         storeCode: 'default',
         themeId: null,
         graphqlEndpoint: '/graphql'
@@ -42,19 +43,20 @@ define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], func
          * Set entire toolbar configuration
          * 
          * @param {Object} config - Configuration object
-         * @param {number} config.storeId - Store ID
-         * @param {string} config.storeCode - Store code
-         * @param {number} config.themeId - Theme ID
+         * @param {string} config.scope    - 'default', 'websites', or 'stores'
+         * @param {number} config.scopeId  - Scope ID (0 for default, website/store ID otherwise)
+         * @param {string} config.storeCode - Store code (for iframe URL / cookie)
+         * @param {number} config.themeId  - Theme ID (kept for CSS-manager / storage scoping)
          * @param {string} config.graphqlEndpoint - GraphQL endpoint URL
          */
         set: function(config) {
             if (!config || typeof config !== 'object') {
-                log.error('❌ Config must be an object');
+                log.error('Config must be an object');
                 return;
             }
             
             $('body').data(CONFIG_KEY, config);
-            log.info('✅ Toolbar config set:', config);
+            log.info('Toolbar config set:', config);
         },
         
         /**
@@ -65,27 +67,40 @@ define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], func
          */
         update: function(updates) {
             if (!updates || typeof updates !== 'object') {
-                log.error('❌ Updates must be an object');
+                log.error('Updates must be an object');
                 return;
             }
             
             var current = this.get();
             var newConfig = $.extend({}, current, updates);
             $('body').data(CONFIG_KEY, newConfig);
-            log.info('🔄 Toolbar config updated:', updates);
+            log.info('Toolbar config updated:', updates);
         },
         
         /**
-         * Get store ID with optional fallback
+         * Get scope ('default', 'websites', or 'stores') with optional fallback
          * 
-         * @param {number|null} fallback - Fallback value if not set
-         * @returns {number|null} Store ID
+         * @param {string} fallback
+         * @returns {string}
          */
-        getStoreId: function(fallback) {
+        getScope: function(fallback) {
             var config = this.get();
-            return config.storeId !== null ? config.storeId : (fallback || null);
+            return config.scope || fallback || DEFAULTS.scope;
         },
-        
+
+        /**
+         * Get scope ID with optional fallback
+         * 
+         * @param {number|null} fallback
+         * @returns {number|null}
+         */
+        getScopeId: function(fallback) {
+            var config = this.get();
+            return config.scopeId !== null && config.scopeId !== undefined
+                ? config.scopeId
+                : (fallback !== undefined ? fallback : null);
+        },
+
         /**
          * Get store code with optional fallback
          * 
@@ -105,7 +120,9 @@ define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], func
          */
         getThemeId: function(fallback) {
             var config = this.get();
-            return config.themeId !== null ? config.themeId : (fallback || null);
+            return config.themeId !== null && config.themeId !== undefined
+                ? config.themeId
+                : (fallback || null);
         },
         
         /**
@@ -118,6 +135,24 @@ define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], func
             var config = this.get();
             return config.graphqlEndpoint || fallback || DEFAULTS.graphqlEndpoint;
         },
+
+        /**
+         * Set scope (convenience method)
+         * 
+         * @param {string} scope
+         */
+        setScope: function(scope) {
+            this.update({ scope: scope });
+        },
+
+        /**
+         * Set scope ID (convenience method)
+         * 
+         * @param {number} scopeId
+         */
+        setScopeId: function(scopeId) {
+            this.update({ scopeId: scopeId });
+        },
         
         /**
          * Set store code (convenience method)
@@ -126,15 +161,6 @@ define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], func
          */
         setStoreCode: function(storeCode) {
             this.update({ storeCode: storeCode });
-        },
-        
-        /**
-         * Set store ID (convenience method)
-         * 
-         * @param {number} storeId - New store ID
-         */
-        setStoreId: function(storeId) {
-            this.update({ storeId: storeId });
         },
         
         /**
@@ -160,7 +186,7 @@ define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], func
          */
         clear: function() {
             $('body').removeData(CONFIG_KEY);
-            log.info('🗑️  Toolbar config cleared');
+            log.info('Toolbar config cleared');
         }
     };
 });

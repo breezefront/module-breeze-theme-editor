@@ -4,10 +4,10 @@ define([
     'use strict';
 
     var mutation = `
-        mutation DiscardPublished($storeId: Int!, $themeId: Int) {
+        mutation DiscardPublished($scope: BreezeThemeEditorScope, $scopeId: Int!) {
             discardBreezeThemeEditorPublished(
-                storeId: $storeId
-                themeId: $themeId
+                scope: $scope
+                scopeId: $scopeId
             ) {
                 success
                 message
@@ -19,14 +19,14 @@ define([
     /**
      * Reset all published customizations to theme defaults
      *
-     * @param {Number} storeId
-     * @param {Number} themeId - Optional
+     * @param {String} scope - 'default', 'websites', or 'stores'
+     * @param {Number} scopeId
      * @returns {Promise}
      */
-    return function discardPublished(storeId, themeId) {
+    return function discardPublished(scope, scopeId) {
         return client.execute(mutation, {
-            storeId: storeId,
-            themeId: themeId || null
+            scope:   scope || 'stores',
+            scopeId: scopeId
         }, 'DiscardPublished');
     };
 });

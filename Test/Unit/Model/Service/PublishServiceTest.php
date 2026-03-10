@@ -99,7 +99,7 @@ class PublishServiceTest extends TestCase
         ];
 
         $this->compareProviderMock->method('compare')
-            ->with($themeId, $storeId, $userId)
+            ->with($themeId, 'stores', $storeId, $userId)
             ->willReturn($comparison);
 
         $this->statusProviderMock->method('getStatusId')
@@ -116,8 +116,8 @@ class PublishServiceTest extends TestCase
 
         $this->valueServiceMock->method('getValuesByTheme')
             ->willReturnMap([
-                [$themeId, $storeId, 1, $userId, $draftValues],
-                [$themeId, $storeId, 2, null, []],
+                [$themeId, 'stores', $storeId, 1, $userId, $draftValues],
+                [$themeId, 'stores', $storeId, 2, null, []],
             ]);
 
         // Mock publication creation
@@ -149,11 +149,11 @@ class PublishServiceTest extends TestCase
         // deleteValues is called twice: once for published cleanup, once for draft
         $this->valueServiceMock->expects($this->exactly(2))->method('deleteValues');
 
-        $result = $this->publishService->publish($themeId, $storeId, $userId, $title, $description);
+        $result = $this->publishService->publish($themeId, 'stores', $storeId, $userId, $title, $description);
 
         $this->assertEquals(100, $result['publicationId']);
         $this->assertEquals($themeId, $result['themeId']);
-        $this->assertEquals($storeId, $result['storeId']);
+        $this->assertEquals($storeId, $result['scopeId']);
         $this->assertEquals($title, $result['title']);
         $this->assertEquals($description, $result['description']);
         $this->assertFalse($result['isRollback']);
@@ -176,7 +176,7 @@ class PublishServiceTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('No changes to publish');
 
-        $this->publishService->publish(1, 1, 5, 'Test');
+        $this->publishService->publish(1, 'stores', 1, 5, 'Test');
     }
 
     /**
@@ -208,7 +208,7 @@ class PublishServiceTest extends TestCase
         // Verify 3 changelog entries are saved
         $this->changelogRepositoryMock->expects($this->exactly(3))->method('save');
 
-        $this->publishService->publish(1, 1, 5, 'Test');
+        $this->publishService->publish(1, 'stores', 1, 5, 'Test');
     }
 
     /**
@@ -243,7 +243,7 @@ class PublishServiceTest extends TestCase
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);
         $this->valueRepositoryMock->expects($this->once())->method('saveMultiple');
 
-        $this->publishService->publish(1, 1, 5, 'Test');
+        $this->publishService->publish(1, 'stores', 1, 5, 'Test');
     }
 
     /**
@@ -278,24 +278,24 @@ class PublishServiceTest extends TestCase
         $deletedArgs = [];
         $this->valueServiceMock->method('deleteValues')
             ->willReturnCallback(
-                function (int $tId, int $sId, int $statusId, ?int $uId = null) use (&$deletedArgs): int {
-                    $deletedArgs[] = [$tId, $sId, $statusId, $uId];
+                function (int $tId, string $scope, int $sId, int $statusId, ?int $uId = null) use (&$deletedArgs): int {
+                    $deletedArgs[] = [$tId, $scope, $sId, $statusId, $uId];
                     return 0;
                 }
             );
 
-        $this->publishService->publish($themeId, $storeId, $userId, 'Test');
+        $this->publishService->publish($themeId, 'stores', $storeId, $userId, 'Test');
 
         // Published cleanup must happen (any user_id)
         $this->assertContains(
-            [$themeId, $storeId, $publishedStatusId, null],
+            [$themeId, 'stores', $storeId, $publishedStatusId, null],
             $deletedArgs,
             'All existing published rows must be deleted before saving new snapshot'
         );
 
         // Draft must be deleted after publish
         $this->assertContains(
-            [$themeId, $storeId, $draftStatusId, $userId],
+            [$themeId, 'stores', $storeId, $draftStatusId, $userId],
             $deletedArgs,
             'Draft values must be deleted after successful publish'
         );
@@ -319,8 +319,8 @@ class PublishServiceTest extends TestCase
             ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
         $this->valueServiceMock->method('getValuesByTheme')
             ->willReturnMap([
-                [1, 1, 1, $userId, [['section_code' => 'colors', 'setting_code' => 'base-color', 'value' => '#4FC13C']]],
-                [1, 1, 2, null, []],
+                [1, 'stores', 1, 1, $userId, [['section_code' => 'colors', 'setting_code' => 'base-color', 'value' => '#4FC13C']]],
+                [1, 'stores', 1, 2, null, []],
             ]);
 
         $publicationMock = $this->createMock(Publication::class);
@@ -337,7 +337,7 @@ class PublishServiceTest extends TestCase
 
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);
 
-        $this->publishService->publish(1, 1, $userId, 'Test');
+        $this->publishService->publish(1, 'stores', 1, $userId, 'Test');
     }
 
     /**
@@ -364,7 +364,7 @@ class PublishServiceTest extends TestCase
         // When no draft values, saveMultiple should NOT be called
         $this->valueRepositoryMock->expects($this->never())->method('saveMultiple');
 
-        $result = $this->publishService->publish(1, 1, 5, 'Test');
+        $result = $this->publishService->publish(1, 'stores', 1, 5, 'Test');
         $this->assertIsArray($result);
     }
 
@@ -652,8 +652,8 @@ class PublishServiceTest extends TestCase
 
         $this->valueServiceMock->method('getValuesByTheme')
             ->willReturnMap([
-                [$themeId, $storeId, 1, $userId, $draftValues],
-                [$themeId, $storeId, 2, null,    $currentPublished],
+                [$themeId, 'stores', $storeId, 1, $userId, $draftValues],
+                [$themeId, 'stores', $storeId, 2, null,    $currentPublished],
             ]);
 
         $publicationMock = $this->createMock(Publication::class);
@@ -676,7 +676,7 @@ class PublishServiceTest extends TestCase
         $this->valueRepositoryMock->expects($this->once())->method('saveMultiple');
         $this->valueRepositoryMock->expects($this->exactly(2))->method('create');
 
-        $this->publishService->publish($themeId, $storeId, $userId, 'Test');
+        $this->publishService->publish($themeId, 'stores', $storeId, $userId, 'Test');
 
         $this->assertContains('#ff0000', $savedValues, 'Draft value must override published');
         $this->assertContains('Arial',   $savedValues, 'Published value not in draft must be preserved in new snapshot');
@@ -713,7 +713,7 @@ class PublishServiceTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('DB error');
 
-        $this->publishService->publish(1, 1, 5, 'Test');
+        $this->publishService->publish(1, 'stores', 1, 5, 'Test');
     }
 
     /**
@@ -763,8 +763,8 @@ class PublishServiceTest extends TestCase
         $deletedArgs = [];
         $this->valueServiceMock->method('deleteValues')
             ->willReturnCallback(
-                function (int $tId, int $sId, int $statusId, ?int $uId = null) use (&$deletedArgs): int {
-                    $deletedArgs[] = [$tId, $sId, $statusId, $uId];
+                function (int $tId, string $scope, int $sId, int $statusId, ?int $uId = null) use (&$deletedArgs): int {
+                    $deletedArgs[] = [$tId, $scope, $sId, $statusId, $uId];
                     return 0;
                 }
             );
@@ -772,12 +772,12 @@ class PublishServiceTest extends TestCase
         $this->publishService->rollback(50, $userId, 'Rollback');
 
         $this->assertContains(
-            [$themeId, $storeId, $publishedStatusId, null],
+            [$themeId, 'stores', $storeId, $publishedStatusId, null],
             $deletedArgs,
             'All existing published rows (any user_id) must be deleted before restoring snapshot'
         );
         $this->assertContains(
-            [$themeId, $storeId, $draftStatusId, $userId],
+            [$themeId, 'stores', $storeId, $draftStatusId, $userId],
             $deletedArgs,
             'Current draft must be cleared during rollback'
         );

@@ -47,10 +47,9 @@ class Publish extends AbstractMutationResolver
         $userId = $this->userResolver->getCurrentUserId($context);
         $userMetadata = $this->userResolver->getCurrentUserMetadata($context);
 
-        $storeId = (int)$input['storeId'];
-        $themeId = isset($input['themeId']) && $input['themeId']
-            ? (int)$input['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
+        $scope = $input['scope'] ?? 'stores';
+        $scopeId = (int)$input['scopeId'];
+        $themeId = $this->themeResolver->getThemeIdByScope($scope, $scopeId);
 
         $title = $input['title'];
         $description = $input['description'] ?? null;
@@ -62,7 +61,8 @@ class Publish extends AbstractMutationResolver
         // Опублікувати через PublishManager
         $result = $this->publishManager->publish(
             $themeId,
-            $storeId,
+            $scope,
+            $scopeId,
             $userId,
             $title,
             $description
@@ -74,7 +74,8 @@ class Publish extends AbstractMutationResolver
             'publication' => [
                 'publicationId' => $result['publicationId'],
                 'themeId' => $result['themeId'],
-                'storeId' => $result['storeId'],
+                'scope' => $result['scope'],
+                'scopeId' => $result['scopeId'],
                 'title' => $result['title'],
                 'description' => $result['description'],
                 'publishedAt' => $result['publishedAt'],

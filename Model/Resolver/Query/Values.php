@@ -36,12 +36,13 @@ class Values extends AbstractQueryResolver
         array $value = null,
         array $args = null
     ) {
-        $storeId = (int)$args['storeId'];
+        $scope = $args['scope'] ?? 'stores';
+        $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
 
         // Auto-detect themeId
-        $themeId = isset($args['themeId']) && $args['themeId']
+        $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
+            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
 
         $statusCode = $args['status'] ?? 'PUBLISHED';
         $sectionCodes = $args['sectionCodes'] ?? null;
@@ -65,12 +66,13 @@ class Values extends AbstractQueryResolver
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row still return the published value, not the theme default.
         if ($statusCode === 'PUBLISHED') {
-            $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $storeId, $statusId, null);
+            $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope, $scopeId, $statusId, null);
         } else {
             $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
             $values = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
                 $themeId,
-                $storeId,
+                $scope,
+                $scopeId,
                 $statusId,
                 $publishedStatusId,
                 $userId

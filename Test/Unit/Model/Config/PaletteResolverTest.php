@@ -32,7 +32,7 @@ class PaletteResolverTest extends TestCase
     public function testReturnsOriginalValueWhenNotCssVariable(): void
     {
         // Act
-        $result = $this->paletteResolver->resolve('#ff0000', 1, 5);
+        $result = $this->paletteResolver->resolve('#ff0000', 'stores', 1, 5);
 
         // Assert
         $this->assertEquals('#ff0000', $result);
@@ -41,7 +41,7 @@ class PaletteResolverTest extends TestCase
     public function testReturnsOriginalValueWhenNotColorVariable(): void
     {
         // Act
-        $result = $this->paletteResolver->resolve('var(--spacing-large)', 1, 5);
+        $result = $this->paletteResolver->resolve('var(--spacing-large)', 'stores', 1, 5);
 
         // Assert
         $this->assertEquals('var(--spacing-large)', $result);
@@ -50,7 +50,7 @@ class PaletteResolverTest extends TestCase
     public function testReturnsOriginalValueWhenInvalidCssVariableFormat(): void
     {
         // Act
-        $result = $this->paletteResolver->resolve('var(--color-', 1, 5);
+        $result = $this->paletteResolver->resolve('var(--color-', 'stores', 1, 5);
 
         // Assert
         $this->assertEquals('var(--color-', $result);
@@ -61,11 +61,11 @@ class PaletteResolverTest extends TestCase
         // Arrange
         $this->valueInheritanceResolver->expects($this->once())
             ->method('resolveSingleValue')
-            ->with(5, 1, 1, '_palette', '--color-brand-primary', null)
+            ->with(5, 'stores', 1, 1, '_palette', '--color-brand-primary', null)
             ->willReturn(['value' => '#123456']);
 
         // Act
-        $result = $this->paletteResolver->resolve('var(--color-brand-primary)', 1, 5);
+        $result = $this->paletteResolver->resolve('var(--color-brand-primary)', 'stores', 1, 5);
 
         // Assert
         $this->assertEquals('#123456', $result);
@@ -78,7 +78,7 @@ class PaletteResolverTest extends TestCase
             ->willReturn(['value' => '255, 0, 0']);
 
         // Act
-        $result = $this->paletteResolver->resolve('var(--color-brand-primary)', 1, 5);
+        $result = $this->paletteResolver->resolve('var(--color-brand-primary)', 'stores', 1, 5);
 
         // Assert
         $this->assertEquals('#ff0000', $result);
@@ -111,7 +111,7 @@ class PaletteResolverTest extends TestCase
             ]);
 
         // Act
-        $result = $this->paletteResolver->resolve('var(--color-brand-primary)', 1, 5);
+        $result = $this->paletteResolver->resolve('var(--color-brand-primary)', 'stores', 1, 5);
 
         // Assert
         $this->assertEquals('#1979c3', $result);
@@ -142,7 +142,7 @@ class PaletteResolverTest extends TestCase
             ]);
 
         // Act
-        $result = $this->paletteResolver->resolve('var(--color-not-found)', 1, 5);
+        $result = $this->paletteResolver->resolve('var(--color-not-found)', 'stores', 1, 5);
 
         // Assert
         $this->assertEquals('#000000', $result);
@@ -158,7 +158,7 @@ class PaletteResolverTest extends TestCase
             ->willReturn([]);
 
         // Act
-        $result = $this->paletteResolver->resolve('var(--color-brand-primary)', 1, 5);
+        $result = $this->paletteResolver->resolve('var(--color-brand-primary)', 'stores', 1, 5);
 
         // Assert
         $this->assertEquals('#000000', $result);
@@ -301,11 +301,11 @@ class PaletteResolverTest extends TestCase
         // Arrange
         $this->valueInheritanceResolver->expects($this->once())
             ->method('resolveSingleValue')
-            ->with(5, 1, 1, '_palette', '--color-brand-secondary', null)
+            ->with(5, 'stores', 1, 1, '_palette', '--color-brand-secondary', null)
             ->willReturn(['value' => '#abcdef']);
 
         // Act
-        $result = $this->paletteResolver->resolve('var(--color-brand-secondary)', 1, 5);
+        $result = $this->paletteResolver->resolve('var(--color-brand-secondary)', 'stores', 1, 5);
 
         // Assert
         $this->assertEquals('#abcdef', $result);

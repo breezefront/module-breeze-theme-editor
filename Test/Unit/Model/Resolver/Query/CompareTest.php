@@ -48,7 +48,7 @@ class CompareTest extends TestCase
         $this->compareProvider
             ->expects($this->once())
             ->method('compare')
-            ->with(5, 1, 42)
+            ->with(5, 'stores', 1, 42)
             ->willReturn($expected);
 
         $result = $this->resolver->resolve(
@@ -64,13 +64,13 @@ class CompareTest extends TestCase
         $this->userResolver->method('getCurrentUserId')->willReturn(1);
         $this->themeResolver
             ->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(2)
+            ->method('getThemeIdByScope')
+            ->with('stores', 2)
             ->willReturn(10);
         $this->compareProvider
             ->expects($this->once())
             ->method('compare')
-            ->with(10, 2, 1)
+            ->with(10, 'stores', 2, 1)
             ->willReturn([]);
 
         $this->resolver->resolve(
@@ -82,11 +82,11 @@ class CompareTest extends TestCase
     public function testUsesThemeIdFromArgsWhenProvided(): void
     {
         $this->userResolver->method('getCurrentUserId')->willReturn(1);
-        $this->themeResolver->expects($this->never())->method('getThemeIdByStoreId');
+        $this->themeResolver->expects($this->never())->method('getThemeIdByScope');
         $this->compareProvider
             ->expects($this->once())
             ->method('compare')
-            ->with(7, 1, 1)
+            ->with(7, 'stores', 1, 1)
             ->willReturn([]);
 
         $this->resolver->resolve(

@@ -23,11 +23,12 @@ class PaletteResolver
      * Resolve a color value (either custom hex or palette reference)
      * 
      * @param string $value The value to resolve (e.g., "var(--color-brand-primary)" or "#ff0000")
-     * @param int $storeId Store ID for palette values
+     * @param string $scope Scope: 'default', 'websites', 'stores'
+     * @param int $scopeId Scope ID (0 for default, website_id or store_view_id)
      * @param int $themeId Theme ID
      * @return string Resolved HEX value (e.g., "#1979c3") or original value
      */
-    public function resolve(string $value, int $storeId, int $themeId): string
+    public function resolve(string $value, string $scope, int $scopeId, int $themeId): string
     {
         // If it's not a CSS variable reference, return as-is
         if (!str_starts_with($value, 'var(--color-')) {
@@ -42,7 +43,7 @@ class PaletteResolver
         $cssVar = $matches[1];
 
         // Try to get custom value from database (section: _palette)
-        $customValue = $this->getCustomPaletteValue($cssVar, $storeId, $themeId);
+        $customValue = $this->getCustomPaletteValue($cssVar, $scope, $scopeId, $themeId);
         if ($customValue !== null) {
             return $customValue;
         }
@@ -57,17 +58,19 @@ class PaletteResolver
      * Returns HEX format, converts legacy RGB if needed.
      * 
      * @param string $cssVar CSS variable name (e.g., "--color-brand-primary")
-     * @param int $storeId
+     * @param string $scope
+     * @param int $scopeId
      * @param int $themeId
      * @return string|null HEX value or null if not found
      */
-    private function getCustomPaletteValue(string $cssVar, int $storeId, int $themeId): ?string
+    private function getCustomPaletteValue(string $cssVar, string $scope, int $scopeId, int $themeId): ?string
     {
         // Palette values are stored in section "_palette"
         // Setting code is the CSS variable name (e.g., "--color-brand-primary")
         $result = $this->valueInheritanceResolver->resolveSingleValue(
             $themeId,
-            $storeId,
+            $scope,
+            $scopeId,
             1, // statusId = 1 (PUBLISHED)
             '_palette',
             $cssVar,

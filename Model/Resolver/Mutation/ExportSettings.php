@@ -46,10 +46,11 @@ class ExportSettings extends AbstractMutationResolver
         // Auth
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        $storeId = (int)$args['storeId'];
-        $themeId = isset($args['themeId']) && $args['themeId']
+        $scope = $args['scope'] ?? 'stores';
+        $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
+        $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
+            : $this->themeResolver->getThemeIdByStoreId($scopeId);
 
         $statusCode = $args['status'] ?? 'PUBLISHED';
         
@@ -59,14 +60,13 @@ class ExportSettings extends AbstractMutationResolver
                 __('PUBLICATION status is not supported for export. Export from DRAFT or PUBLISHED status only.')
             );
         }
-        
-        $statusId = $this->statusProvider->getStatusId($statusCode);
 
-        // Export - fix bug: pass $statusCode not $statusId
+        // Export
         $result = $this->importExportService->export(
             $themeId,
-            $storeId,
-            $statusCode, // ← Fixed: was $statusId
+            $scope,
+            $scopeId,
+            $statusCode,
             $statusCode === 'DRAFT' ? $userId : null
         );
 

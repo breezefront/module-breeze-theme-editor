@@ -36,17 +36,19 @@ abstract class AbstractSaveMutation extends AbstractMutationResolver
         // Отримати userId з токена
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        $storeId = (int)$input['storeId'];
-        $themeId = isset($input['themeId']) && $input['themeId']
-            ?  (int)$input['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
+        $scope = $input['scope'] ?? 'stores';
+        $scopeId = (int)($input['scopeId'] ?? $input['storeId'] ?? 0);
+        $themeId = isset($input['themeId'])
+            ? (int)$input['themeId']
+            : $this->themeResolver->getThemeIdByStoreId($scopeId);
 
         $statusCode = $input['status'] ?? 'DRAFT';
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
         return [
             'userId' => $userId,
-            'storeId' => $storeId,
+            'scope' => $scope,
+            'scopeId' => $scopeId,
             'themeId' => $themeId,
             'statusCode' => $statusCode,
             'statusId' => $statusId

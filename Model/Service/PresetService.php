@@ -79,7 +79,8 @@ class PresetService
      */
     public function applyPreset(
         int $themeId,
-        int $storeId,
+        string $scope,
+        int $scopeId,
         string $presetId,
         string $statusCode,
         int $userId,
@@ -100,7 +101,8 @@ class PresetService
         foreach ($presetValues as $item) {
             $model = $this->valueRepository->create();
             $model->setThemeId($themeId);
-            $model->setStoreId($storeId);
+            $model->setScope($scope);
+            $model->setStoreId($scopeId);
             $model->setStatusId($statusId);
             $model->setUserId($userIdForSave);
             $model->setSectionCode($item['sectionCode']);
@@ -113,7 +115,8 @@ class PresetService
         if ($overwriteExisting) {
             $this->valueService->deleteValues(
                 $themeId,
-                $storeId,
+                $scope,
+                $scopeId,
                 $statusId,
                 $userIdForSave
             );

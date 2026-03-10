@@ -74,9 +74,6 @@ class CopyFromStoreTest extends TestCase
         $this->statusProvider->method('getStatusId')
             ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
         $this->themeResolver->method('getThemeIdByStoreId')
-            ->with(1)
-            ->willReturn(10); // fromThemeId
-        $this->themeResolver->method('getThemeIdByStoreId')
             ->willReturnMap([[1, 10], [2, 5]]);
         $this->valueService->method('copyValues')->willReturn(3);
         $this->valueService->method('getValuesByTheme')->willReturn([]);

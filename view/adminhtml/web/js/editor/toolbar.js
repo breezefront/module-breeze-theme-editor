@@ -42,13 +42,14 @@ define([
      */
     return function(config, element) {
         log.info('Initializing admin toolbar');
-        log.debug('Config details: storeId=' + config.storeId + ' storeCode=' + config.storeCode + ' themeId=' + config.themeId + ' iframeBaseUrl=' + config.iframeBaseUrl);
+        log.debug('Config details: scope=' + config.scope + ' scopeId=' + config.scopeId + ' storeCode=' + config.storeCode + ' themeId=' + config.themeId + ' iframeBaseUrl=' + config.iframeBaseUrl);
         
         // Store config globally for child widgets to access via configManager
         configManager.set({
-            storeId: config.storeId,
-            storeCode: config.storeCode,
-            themeId: config.themeId,
+            scope:           config.scope || 'stores',
+            scopeId:         config.scopeId,
+            storeCode:       config.storeCode,
+            themeId:         config.themeId,
             graphqlEndpoint: config.graphqlEndpoint
         });
         
@@ -63,7 +64,6 @@ define([
             log.warn('Check backend logs for errors');
         }
         
-        // Setup link interception for iframe navigation
         var iframeSelector = config.iframeSelector || '#bte-iframe';
         var $iframe = $(iframeSelector);
         if ($iframe.length && config.storeCode && config.themeId) {
@@ -91,12 +91,13 @@ define([
                 items: config.components.navigation.items || [],
                 panelSelector: '#bte-panels-container',
                 panelWidgets: Object.assign({
-                    'theme-editor': {
+                     'theme-editor': {
                         selector: '#theme-editor-panel',
                         widget: 'themeSettingsEditor',
                         config: {
-                            storeId: config.storeId,
-                            themeId: config.themeId,
+                            scope:     config.scope || 'stores',
+                            scopeId:   config.scopeId,
+                            themeId:   config.themeId,
                             themeName: config.themeName || 'Theme'
                         }
                     }
@@ -121,13 +122,14 @@ define([
         
         // Store config globally for settings-editor to access (when initialized lazily)
         window.breezeThemeEditorConfig = {
-            storeId: config.storeId,
-            themeId: config.themeId,
-            themeName: config.themeName || 'Theme',
-            adminUrl: config.adminUrl || '/admin',
+            scope:           config.scope || 'stores',
+            scopeId:         config.scopeId,
+            themeId:         config.themeId,
+            themeName:       config.themeName || 'Theme',
+            adminUrl:        config.adminUrl || '/admin',
             graphqlEndpoint: config.graphqlEndpoint,
-            permissions: config.permissions || {},
-            activatePanel: config.activatePanel || null
+            permissions:     config.permissions || {},
+            activatePanel:   config.activatePanel || null
         };
         
         // Initialize device switcher widget
@@ -143,12 +145,13 @@ define([
         // Initialize publication selector widget
         if ($('#bte-publication-selector').length) {
             $('#bte-publication-selector').breezePublicationSelector({
-                publications: config.publications || [],
-                currentStatus: config.currentStatus || 'DRAFT',
-                changesCount: config.changesCount || 0,
+                publications:        config.publications || [],
+                currentStatus:       config.currentStatus || 'DRAFT',
+                changesCount:        config.changesCount || 0,
                 currentPublicationId: config.currentPublicationId || null,
-                storeId: config.storeId,
-                themeId: config.themeId
+                scope:               config.scope || 'stores',
+                scopeId:             config.scopeId,
+                themeId:             config.themeId
             });
             log.info('Publication selector initialized');
         }
@@ -156,10 +159,11 @@ define([
         // Initialize scope selector widget
         if ($('#bte-scope-selector').length) {
             $('#bte-scope-selector').breezeScopeSelector({
-                websites: config.storeHierarchy || [],
-                currentStoreId: config.storeId || null,
+                websites:       config.storeHierarchy || [],
+                currentScope:   config.scope || 'stores',
+                currentScopeId: config.scopeId || null,
                 iframeSelector: config.iframeSelector || '#bte-iframe',
-                themeId: config.themeId || null
+                themeId:        config.themeId || null
             });
             log.info('Scope selector initialized');
         }
@@ -345,27 +349,29 @@ define([
                 // No action needed - css-manager already switched CSS in publication-selector
             });
 
-            // When store scope changes: update global config so that lazy-initialized
-            // panel widgets (settings-editor) pick up the new storeId on first open.
-            // Also update the navigation panelWidgets config so re-init uses new storeId.
-            $(document).on('storeChanged', function(e, storeId, storeCode) {
-                log.info('Toolbar: store changed to ' + storeCode + ' (ID: ' + storeId + ')');
+            // When scope changes: update global config so that lazy-initialized
+            // panel widgets (settings-editor) pick up the new scope/scopeId on first open.
+            // Also update the navigation panelWidgets config so re-init uses new scope.
+            $(document).on('scopeChanged', function(e, scope, scopeId, storeCode) {
+                log.info('Toolbar: scope changed to ' + scope + ':' + scopeId + ' (' + storeCode + ')');
 
                 // Update global config read by settings-editor _create()
                 if (window.breezeThemeEditorConfig) {
-                    window.breezeThemeEditorConfig.storeId = storeId;
-                    window.breezeThemeEditorConfig.themeId = null; // backend will resolve from storeId
+                    window.breezeThemeEditorConfig.scope   = scope;
+                    window.breezeThemeEditorConfig.scopeId = scopeId;
+                    window.breezeThemeEditorConfig.themeId = null; // backend will resolve from scope
                 }
 
                 // Update navigation panelWidget config (used on first lazy init)
                 var $nav = $('#toolbar-navigation');
                 var navWidget = $nav.data('swissupBreezeNavigation');
                 if (navWidget && navWidget.options.panelWidgets['theme-editor']) {
-                    navWidget.options.panelWidgets['theme-editor'].config.storeId = storeId;
+                    navWidget.options.panelWidgets['theme-editor'].config.scope   = scope;
+                    navWidget.options.panelWidgets['theme-editor'].config.scopeId = scopeId;
                     navWidget.options.panelWidgets['theme-editor'].config.themeId = null;
                 }
 
-                log.info('Toolbar: global config updated for new store');
+                log.info('Toolbar: global config updated for new scope');
             });
             
             // Update page-selector when iframe navigates to different page type

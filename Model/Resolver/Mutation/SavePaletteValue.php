@@ -37,10 +37,11 @@ class SavePaletteValue extends AbstractMutationResolver
     ) {
         $input = $args['input'];
 
-        $storeId = (int)$input['storeId'];
-        $themeId = isset($input['themeId']) && $input['themeId']
+        $scope = $input['scope'] ?? 'stores';
+        $scopeId = (int)($input['scopeId'] ?? $input['storeId'] ?? 0);
+        $themeId = isset($input['themeId'])
             ? (int)$input['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
+            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
 
         $cssVar = $input['property'] ?? $input['cssVar'];
         $colorValue = $input['value'];
@@ -76,7 +77,8 @@ class SavePaletteValue extends AbstractMutationResolver
         /** @var ValueInterface $valueModel */
         $valueModel = $this->valueRepository->create();
         $valueModel->setThemeId($themeId);
-        $valueModel->setStoreId($storeId);
+        $valueModel->setScope($scope);
+        $valueModel->setStoreId($scopeId);
         $valueModel->setStatusId(1); // 1 = PUBLISHED (palette changes are always published)
         $valueModel->setSectionCode('_palette');
         $valueModel->setSettingCode($cssVar);

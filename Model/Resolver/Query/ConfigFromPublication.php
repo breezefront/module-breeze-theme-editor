@@ -54,14 +54,8 @@ class ConfigFromPublication extends AbstractConfigResolver
         }
 
         $publicationId = (int)$args['publicationId'];
-        $storeId = (int)$args['storeId'];
 
-        // 2. Визначити theme ID
-        $themeId = isset($args['themeId']) && $args['themeId']
-            ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
-
-        // 3. Перевірити, що публікація існує
+        // 2. Перевірити, що публікація існує; взяти scope/scopeId/themeId з publication record
         try {
             $publication = $this->publicationRepository->getById($publicationId);
         } catch (\Exception $e) {
@@ -70,23 +64,29 @@ class ConfigFromPublication extends AbstractConfigResolver
             );
         }
 
-        // 4. Отримати базовий конфіг теми
+        $themeId = $publication->getThemeId();
+        if (!$themeId) {
+            $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
+            $themeId = $this->themeResolver->getThemeIdByStoreId($scopeId);
+        }
+
+        // 3. Отримати базовий конфіг теми
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
 
-        // 5. Отримати changelog публікації
+        // 4. Отримати changelog публікації
         $changelog = $this->getPublicationChangelog($publicationId);
 
-        // 6. Реконструювати values з changelog
+        // 5. Реконструювати values з changelog
         $valuesMap = $this->buildValuesMapFromChangelog($changelog);
 
-        // 7. Змержити sections з values (inherited method)
+        // 6. Змержити sections з values (inherited method)
         $sections = $this->mergeSectionsWithValues(
             $config['sections'] ?? [],
             $valuesMap,
             $themeId
         );
 
-        // 8. Metadata
+        // 7. Metadata
         $metadata = $this->configProvider->getMetadata($themeId);
         $metadata['themeVersion'] = $config['version'] ?? null;
         $metadata['lastPublished'] = $publication->getPublishedAt();

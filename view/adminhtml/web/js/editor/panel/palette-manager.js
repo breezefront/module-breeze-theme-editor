@@ -21,7 +21,8 @@ define([
      */
     return {
         palettes: {},
-        storeId: null,
+        scope: 'stores',
+        scopeId: null,
         themeId: null,
         listeners: [],
         dirtyColors: {}, // Track unsaved changes with original values
@@ -37,7 +38,8 @@ define([
                 return;
             }
 
-            this.storeId = config.storeId || StorageHelper.getStoreId();
+            this.scope   = config.scope   || 'stores';
+            this.scopeId = config.scopeId;
             this.themeId = config.themeId || StorageHelper.getThemeId();
             this.palettes = this._indexPalettes(config.palettes);
             this.dirtyColors = {}; // Reset dirty state on init (important for test isolation)

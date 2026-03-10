@@ -42,7 +42,8 @@ class ResetToDefaults extends AbstractSaveMutation
             /** @var ValueInterface $valueModel */
             $valueModel = $this->valueRepository->create();
             $valueModel->setThemeId($params['themeId']);
-            $valueModel->setStoreId($params['storeId']);
+            $valueModel->setScope($params['scope']);
+            $valueModel->setStoreId($params['scopeId']);
             $valueModel->setStatusId($params['statusId']);
             $valueModel->setSectionCode($sectionCode);
             $valueModel->setSettingCode($fieldCode);
@@ -60,7 +61,8 @@ class ResetToDefaults extends AbstractSaveMutation
         // Отримати збережені значення через ValueService
         $values = $this->valueService->getValuesByTheme(
             $params['themeId'],
-            $params['storeId'],
+            $params['scope'],
+            $params['scopeId'],
             $params['statusId'],
             $params['statusCode'] === 'DRAFT' ? $params['userId'] : null
         );

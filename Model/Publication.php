@@ -33,6 +33,16 @@ class Publication extends AbstractModel implements PublicationInterface
         return $this->setData(self::THEME_ID, $themeId);
     }
 
+    public function getScope(): string
+    {
+        return (string)($this->getData(self::SCOPE) ?: 'stores');
+    }
+
+    public function setScope(string $scope): PublicationInterface
+    {
+        return $this->setData(self::SCOPE, $scope);
+    }
+
     public function getStoreId(): int
     {
         return (int)$this->getData(self::STORE_ID);

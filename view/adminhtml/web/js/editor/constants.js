@@ -117,7 +117,7 @@ define([], function() {
          * Event names for custom events
          */
         EVENTS: {
-            STORE_CHANGED: 'storeChanged',
+            SCOPE_CHANGED: 'scopeChanged',
             PAGE_CHANGED: 'pageChanged',
             DEVICE_CHANGED: 'deviceChanged',
             PUBLICATION_CHANGED: 'publicationChanged',

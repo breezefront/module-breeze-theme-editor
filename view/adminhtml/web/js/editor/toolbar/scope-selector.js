@@ -1,8 +1,8 @@
 /**
  * Scope Selector Widget
- * 
- * Allows switching between store views with hierarchical display:
- * Website → Store Group → Store View
+ *
+ * Allows switching between Default / Website / Store View scopes
+ * with hierarchical display: Default → Website → Store Group → Store View
  */
 define([
     'jquery',
@@ -19,18 +19,19 @@ define([
 
     $.widget('swissup.breezeScopeSelector', {
         options: {
-            websites: [],           // Hierarchical store data from ViewModel
-            currentStoreId: null,   // Current store ID
+            websites: [],            // Hierarchical store data from StoreDataProvider::getHierarchicalStores()
+            currentScope: 'stores',  // Active scope: 'default' | 'websites' | 'stores'
+            currentScopeId: null,    // Active scope ID
             iframeSelector: '#bte-iframe',
-            pageSelectorElement: '#bte-page-selector', // Page selector element (to update store param)
-            themeId: null           // Theme ID for preview cookie
+            pageSelectorElement: '#bte-page-selector',
+            themeId: null
         },
 
         /**
          * Widget initialization
          * @private
          */
-        _create: function() {
+        _create: function () {
             log.debug('Initializing scope selector: ' + JSON.stringify(this.options));
             this._processHierarchy();
             this._render();
@@ -39,52 +40,164 @@ define([
         },
 
         /**
-         * Process hierarchy data and add UI states
+         * Process hierarchy data and resolve current display name
          * @private
          */
-        _processHierarchy: function() {
-            // Add expanded states to hierarchy data
-            this.options.websites.forEach(function(website) {
-                website.isExpanded = true; // Expand by default
-                website.groups.forEach(function(group) {
-                    group.isExpanded = true;
-                });
+        _processHierarchy: function () {
+            var self = this;
+
+            // Add expanded states
+            this.options.websites.forEach(function (entry) {
+                if (entry.type === 'website') {
+                    entry.isExpanded = true;
+                    entry.groups.forEach(function (group) {
+                        group.isExpanded = true;
+                    });
+                }
             });
 
-            // Find current store name
-            this.currentStoreName = this._findStoreName(this.options.currentStoreId);
-            log.debug('Current store: ' + this.currentStoreName + ' (ID: ' + this.options.currentStoreId + ')');
+            // Resolve current display name
+            this.currentScopeName = this._findScopeName(
+                this.options.currentScope,
+                this.options.currentScopeId
+            );
+            log.debug('Current scope: ' + this.options.currentScope + ':' + this.options.currentScopeId + ' (' + this.currentScopeName + ')');
         },
 
         /**
-         * Find store name by ID
-         * @param {number} storeId
+         * Find display name for a given scope + scopeId
+         * @param {string} scope
+         * @param {number} scopeId
          * @returns {string}
          * @private
          */
-        _findStoreName: function(storeId) {
-            var name = 'Unknown Store';
-            this.options.websites.forEach(function(website) {
-                website.groups.forEach(function(group) {
-                    group.stores.forEach(function(store) {
-                        if (store.id == storeId) {
-                            name = store.name;
-                        }
+        _findScopeName: function (scope, scopeId) {
+            var name = 'All Store Views';
+
+            this.options.websites.forEach(function (entry) {
+                if (entry.type === 'default' && scope === 'default') {
+                    name = entry.name;
+                    return;
+                }
+                if (entry.type === 'website' && scope === 'websites' && entry.scopeId == scopeId) {
+                    name = entry.name;
+                    return;
+                }
+                if (entry.type === 'website') {
+                    entry.groups.forEach(function (group) {
+                        group.stores.forEach(function (store) {
+                            if (scope === 'stores' && store.scopeId == scopeId) {
+                                name = store.name;
+                            }
+                        });
                     });
-                });
+                }
             });
+
             return name;
+        },
+
+        /**
+         * Find first store code for a given scope entry (for iframe / cookie)
+         * @param {string} scope
+         * @param {number} scopeId
+         * @returns {string}
+         * @private
+         */
+        _findStoreCode: function (scope, scopeId) {
+            var code = null;
+
+            this.options.websites.forEach(function (entry) {
+                if (entry.type === 'default' && scope === 'default') {
+                    // Use previewStoreId — find its code
+                    if (code !== null) { return; }
+                    var previewId = entry.previewStoreId;
+                    // walk all stores to find matching code
+                }
+                if (entry.type === 'website') {
+                    if (scope === 'websites' && entry.scopeId == scopeId) {
+                        // Use first store of this website
+                        if (code === null && entry.groups.length && entry.groups[0].stores.length) {
+                            code = entry.groups[0].stores[0].code;
+                        }
+                    }
+                    entry.groups.forEach(function (group) {
+                        group.stores.forEach(function (store) {
+                            if (scope === 'stores' && store.scopeId == scopeId) {
+                                code = store.code;
+                            }
+                            // For default scope — find by previewStoreId
+                            if (scope === 'default' && code === null) {
+                                // will be set below
+                            }
+                        });
+                    });
+                }
+            });
+
+            // Default scope: use previewStoreId → find store code
+            if (scope === 'default' && code === null) {
+                var previewId = 0;
+                this.options.websites.forEach(function (entry) {
+                    if (entry.type === 'default') {
+                        previewId = entry.previewStoreId;
+                    }
+                });
+                this.options.websites.forEach(function (entry) {
+                    if (entry.type === 'website') {
+                        entry.groups.forEach(function (group) {
+                            group.stores.forEach(function (store) {
+                                if (store.scopeId == previewId && code === null) {
+                                    code = store.code;
+                                }
+                            });
+                        });
+                    }
+                });
+            }
+
+            return code || 'default';
+        },
+
+        /**
+         * Find previewStoreId for iframe URL construction
+         * @param {string} scope
+         * @param {number} scopeId
+         * @returns {number}
+         * @private
+         */
+        _findPreviewStoreId: function (scope, scopeId) {
+            var id = 0;
+            this.options.websites.forEach(function (entry) {
+                if (entry.type === 'default' && scope === 'default') {
+                    id = entry.previewStoreId || 0;
+                }
+                if (entry.type === 'website' && scope === 'websites' && entry.scopeId == scopeId) {
+                    id = entry.previewStoreId || 0;
+                }
+                if (entry.type === 'website') {
+                    entry.groups.forEach(function (group) {
+                        group.stores.forEach(function (store) {
+                            if (scope === 'stores' && store.scopeId == scopeId) {
+                                id = store.scopeId;
+                            }
+                        });
+                    });
+                }
+            });
+            return id;
         },
 
         /**
          * Render widget HTML
          * @private
          */
-        _render: function() {
+        _render: function () {
             var html = mageTemplate(template, {
-                websites: this.options.websites,
-                currentStoreId: this.options.currentStoreId,
-                currentStoreName: this.currentStoreName
+                websites:       this.options.websites,
+                currentScope:   this.options.currentScope,
+                currentScopeId: this.options.currentScopeId,
+                currentScopeName: this.currentScopeName
             });
             this.element.html(html);
         },
@@ -93,17 +206,33 @@ define([
          * Bind event handlers
          * @private
          */
-        _bindEvents: function() {
+        _bindEvents: function () {
             var self = this;
 
             // Toggle dropdown
-            this.element.on('click', '.toolbar-select', function(e) {
+            this.element.on('click', '.toolbar-select', function (e) {
                 e.preventDefault();
                 self._toggleDropdown();
             });
 
-            // Toggle website
-            this.element.on('click', '.scope-header-website', function(e) {
+            // Select Default scope
+            this.element.on('click', '.scope-default', function (e) {
+                e.preventDefault();
+                var name = $(this).find('.item-text').text();
+                self._selectScope('default', 0, self._findStoreCode('default', 0), name);
+            });
+
+            // Select Website scope
+            this.element.on('click', '.scope-website-item', function (e) {
+                e.preventDefault();
+                var scopeId = parseInt($(this).data('scope-id'), 10);
+                var name    = $(this).find('.item-text').text();
+                var code    = self._findStoreCode('websites', scopeId);
+                self._selectScope('websites', scopeId, code, name);
+            });
+
+            // Toggle website subtree (click on header arrow)
+            this.element.on('click', '.scope-header-website', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
                 var $website = $(this).closest('.scope-website');
@@ -112,7 +241,7 @@ define([
             });
 
             // Toggle group
-            this.element.on('click', '.scope-header-group', function(e) {
+            this.element.on('click', '.scope-header-group', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
                 var $group = $(this).closest('.scope-group');
@@ -120,17 +249,17 @@ define([
                 self._toggleGroup(groupId);
             });
 
-            // Select store
-            this.element.on('click', '.scope-store', function(e) {
+            // Select store view
+            this.element.on('click', '.scope-store', function (e) {
                 e.preventDefault();
-                var storeId = $(this).data('store-id');
+                var scopeId   = parseInt($(this).data('scope-id'), 10);
                 var storeCode = $(this).data('store-code');
-                var storeName = $(this).find('.item-text').text();
-                self._selectStore(storeId, storeCode, storeName);
+                var name      = $(this).find('.item-text').text();
+                self._selectScope('stores', scopeId, storeCode, name);
             });
 
             // Close dropdown when clicking outside
-            $(document).on('click', function(e) {
+            $(document).on('click', function (e) {
                 if (!$(e.target).closest(self.element).length) {
                     self._closeDropdown();
                 }
@@ -141,19 +270,18 @@ define([
          * Toggle dropdown visibility
          * @private
          */
-        _toggleDropdown: function() {
+        _toggleDropdown: function () {
             var $dropdown = this.element.find('.toolbar-dropdown');
-            var $button = this.element.find('.toolbar-select');
+            var $button   = this.element.find('.toolbar-select');
             var isVisible = $dropdown.is(':visible');
-            
+
             // Close all other dropdowns first
             $('.toolbar-dropdown').not($dropdown).hide();
             $('.toolbar-select').not($button).removeClass('active');
-            
-            // Toggle this dropdown
+
             $dropdown.toggle();
             $button.toggleClass('active', !isVisible);
-            
+
             log.info(isVisible ? 'Closing scope dropdown' : 'Opening scope dropdown');
         },
 
@@ -161,7 +289,7 @@ define([
          * Close dropdown
          * @private
          */
-        _closeDropdown: function() {
+        _closeDropdown: function () {
             this.element.find('.toolbar-dropdown').hide();
             this.element.find('.toolbar-select').removeClass('active');
         },
@@ -171,15 +299,15 @@ define([
          * @param {number} websiteId
          * @private
          */
-        _toggleWebsite: function(websiteId) {
+        _toggleWebsite: function (websiteId) {
             var $website = this.element.find('[data-website-id="' + websiteId + '"]');
-            var $groups = $website.find('.scope-groups').first();
-            var $toggle = $website.find('.scope-header-website .scope-toggle').first();
+            var $groups  = $website.find('.scope-groups').first();
+            var $toggle  = $website.find('.scope-header-website .scope-toggle').first();
             var isVisible = $groups.is(':visible');
 
             $groups.toggle();
             $toggle.text(isVisible ? '▶' : '▼');
-            
+
             log.debug((isVisible ? 'Collapsed' : 'Expanded') + ' website: ' + websiteId);
         },
 
@@ -188,96 +316,104 @@ define([
          * @param {number} groupId
          * @private
          */
-        _toggleGroup: function(groupId) {
-            var $group = this.element.find('[data-group-id="' + groupId + '"]');
+        _toggleGroup: function (groupId) {
+            var $group  = this.element.find('[data-group-id="' + groupId + '"]');
             var $stores = $group.find('.scope-stores').first();
             var $toggle = $group.find('.scope-header-group .scope-toggle').first();
             var isVisible = $stores.is(':visible');
 
             $stores.toggle();
             $toggle.text(isVisible ? '▶' : '▼');
-            
+
             log.debug((isVisible ? 'Collapsed' : 'Expanded') + ' group: ' + groupId);
         },
 
         /**
-         * Select store and reload iframe
-         * @param {number} storeId
-         * @param {string} storeCode
-         * @param {string} storeName
+         * Select scope and reload iframe
+         * @param {string} scope    - 'default' | 'websites' | 'stores'
+         * @param {number} scopeId
+         * @param {string} storeCode - store code for iframe / cookie
+         * @param {string} name
          * @private
          */
-        _selectStore: function(storeId, storeCode, storeName) {
-            log.info('Switching to store: ' + storeCode + ' (ID: ' + storeId + ')');
+        _selectScope: function (scope, scopeId, storeCode, name) {
+            log.info('Switching to scope: ' + scope + ':' + scopeId + ' (' + storeCode + ')');
 
-            if (storeId == this.options.currentStoreId) {
-                log.info('Already viewing store: ' + storeCode);
+            if (scope === this.options.currentScope && scopeId == this.options.currentScopeId) {
+                log.info('Already viewing this scope');
                 this._closeDropdown();
                 return;
             }
 
-            // Update current store
-            this.options.currentStoreId = storeId;
-            this.currentStoreName = storeName;
+            // Update current scope
+            this.options.currentScope   = scope;
+            this.options.currentScopeId = scopeId;
+            this.currentScopeName       = name;
 
-            var $iframe = $(this.options.iframeSelector);
+            // Determine which store view to show in iframe
+            var previewStoreId = this._findPreviewStoreId(scope, scopeId);
+
+            var $iframe    = $(this.options.iframeSelector);
             var currentSrc = $iframe.attr('src');
-            
+
             // Replace /store/OLD_ID/ with /store/NEW_ID/
-            // Also replace /url/.../ with /url/%2F/ (always reset to homepage)
+            // Also reset URL to homepage
             var newSrc = currentSrc
-                .replace(/\/store\/\d+\//, '/store/' + storeId + '/')
+                .replace(/\/store\/\d+\//, '/store/' + previewStoreId + '/')
                 .replace(/\/url\/[^\/]*\//, '/url/%2F/');
-            
+
             log.info('Updating iframe src');
             log.debug('Old: ' + currentSrc);
             log.debug('New: ' + newSrc);
-            
-            // Set store cookie only (theme determined automatically from store config)
+
+            // Set store cookie (needed for frontend store context)
             cookieManager.setStoreCookie(storeCode);
-            
-            // Save last store ID for next session (24h)
-            cookieManager.setCookie('bte_last_store_id', storeId, {
-                path: '/',
-                maxAge: 86400,  // 24 hours
-                sameSite: 'Lax'
+
+            // Save last scope to cookies (24h)
+            cookieManager.setCookie('bte_last_scope', scope, {
+                path: '/', maxAge: 86400, sameSite: 'Lax'
             });
-            log.debug('Saved last store ID: ' + storeId);
-            
+            cookieManager.setCookie('bte_last_scope_id', scopeId, {
+                path: '/', maxAge: 86400, sameSite: 'Lax'
+            });
+
             // Update iframe src (triggers reload with new store + homepage)
             $iframe.attr('src', newSrc);
-            
+
             // Update UI
             this._render();
             this._closeDropdown();
-            
-            // Update page selector - reset to homepage when store changes
+
+            // Update page selector - reset to homepage when scope changes
             var $pageSelector = $(this.options.pageSelectorElement);
             if ($pageSelector.length && $pageSelector.data('swissup-breezePageSelector')) {
                 $pageSelector.breezePageSelector('updateStoreParam', storeCode);
                 $pageSelector.breezePageSelector('resetToHomePage');
             }
-            
-            // Trigger event
-            $(this.element).trigger('storeChanged', [storeId, storeCode]);
-            log.info('Store switched to: ' + storeName);
-            
-            // Update config
+
+            // Update config manager
             configManager.update({
+                scope:     scope,
+                scopeId:   scopeId,
                 storeCode: storeCode,
-                storeId: storeId
+                themeId:   null  // backend will resolve themeId from new scope
             });
+
+            // Trigger event for toolbar.js and settings-editor.js
+            $(this.element).trigger('scopeChanged', [scope, scopeId, storeCode]);
+            log.info('Scope switched to: ' + name);
         },
 
         /**
-         * Public API: Set current store
-         * @param {number} storeId
+         * Public API: Set current scope externally
+         * @param {string} scope
+         * @param {number} scopeId
          * @param {string} storeCode
          */
-        setStore: function(storeId, storeCode) {
-            log.info('Setting store externally: ' + storeCode);
-            var storeName = this._findStoreName(storeId);
-            this._selectStore(storeId, storeCode, storeName);
+        setScope: function (scope, scopeId, storeCode) {
+            log.info('Setting scope externally: ' + scope + ':' + scopeId);
+            var name = this._findScopeName(scope, scopeId);
+            this._selectScope(scope, scopeId, storeCode || this._findStoreCode(scope, scopeId), name);
         }
     });
 

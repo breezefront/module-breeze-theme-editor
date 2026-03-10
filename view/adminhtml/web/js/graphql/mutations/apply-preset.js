@@ -21,18 +21,18 @@ define([
     /**
      * Apply preset to draft
      *
-     * @param {Number} storeId
-     * @param {Number} themeId - Optional
+     * @param {String} scope
+     * @param {Number} scopeId
      * @param {String} presetId
      * @param {String} status
      * @param {Boolean} overwriteExisting
      * @returns {Promise}
      */
-    return function applyPreset(storeId, themeId, presetId, status, overwriteExisting) {
+    return function applyPreset(scope, scopeId, presetId, status, overwriteExisting) {
         return client.execute(mutation, {
             input: {
-                storeId: storeId,
-                themeId: themeId || null,
+                scope: scope || 'stores',
+                scopeId: parseInt(scopeId) || 0,
                 presetId: presetId,
                 status: status || 'DRAFT',
                 overwriteExisting: overwriteExisting !== false

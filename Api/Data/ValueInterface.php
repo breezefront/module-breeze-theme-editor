@@ -7,8 +7,13 @@ interface ValueInterface
 {
     public const VALUE_ID = 'value_id';
     public const THEME_ID = 'theme_id';
+    public const SCOPE = 'scope';
     public const STORE_ID = 'store_id';
     public const STATUS_ID = 'status_id';
+
+    public const SCOPE_DEFAULT  = 'default';
+    public const SCOPE_WEBSITES = 'websites';
+    public const SCOPE_STORES   = 'stores';
     public const USER_ID = 'user_id';
     public const SECTION_CODE = 'section_code';
     public const SETTING_CODE = 'setting_code';
@@ -37,6 +42,17 @@ interface ValueInterface
      * @return $this
      */
     public function setThemeId(int $themeId): self;
+
+    /**
+     * @return string
+     */
+    public function getScope(): string;
+
+    /**
+     * @param string $scope
+     * @return $this
+     */
+    public function setScope(string $scope): self;
 
     /**
      * @return int

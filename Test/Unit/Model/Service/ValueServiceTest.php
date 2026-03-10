@@ -56,7 +56,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $result = $this->valueService->getValuesByTheme(5, 1, 1, 42);
+        $result = $this->valueService->getValuesByTheme(5, 'stores', 1, 1, 42);
 
         // Assert
         $this->assertCount(2, $result);
@@ -70,7 +70,7 @@ class ValueServiceTest extends TestCase
     public function testGetValuesByThemeWithUserId(): void
     {
         // Arrange
-        $this->searchCriteriaBuilder->expects($this->exactly(4))
+        $this->searchCriteriaBuilder->expects($this->exactly(5))
             ->method('addFilter')
             ->willReturnCallback(function ($field, $value, $condition = null) {
                 static $callCount = 0;
@@ -80,12 +80,15 @@ class ValueServiceTest extends TestCase
                     $this->assertEquals('theme_id', $field);
                     $this->assertEquals(5, $value);
                 } elseif ($callCount === 2) {
+                    $this->assertEquals('scope', $field);
+                    $this->assertEquals('stores', $value);
+                } elseif ($callCount === 3) {
                     $this->assertEquals('store_id', $field);
                     $this->assertEquals(1, $value);
-                } elseif ($callCount === 3) {
+                } elseif ($callCount === 4) {
                     $this->assertEquals('status_id', $field);
                     $this->assertEquals(1, $value);
-                } elseif ($callCount === 4) {
+                } elseif ($callCount === 5) {
                     $this->assertEquals('user_id', $field);
                     $this->assertEquals(42, $value);
                 }
@@ -97,13 +100,13 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $this->valueService->getValuesByTheme(5, 1, 1, 42);
+        $this->valueService->getValuesByTheme(5, 'stores', 1, 1, 42);
     }
 
     public function testGetValuesByThemeWithoutUserId(): void
     {
         // Arrange
-        $this->searchCriteriaBuilder->expects($this->exactly(3))
+        $this->searchCriteriaBuilder->expects($this->exactly(4))
             ->method('addFilter')
             ->willReturnCallback(function ($field, $value, $condition = null) {
                 static $callCount = 0;
@@ -119,7 +122,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $this->valueService->getValuesByTheme(5, 1, 2, null);
+        $this->valueService->getValuesByTheme(5, 'stores', 1, 2, null);
     }
 
     public function testGetValuesByThemeReturnsEmptyArrayWhenNoResults(): void
@@ -129,7 +132,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $result = $this->valueService->getValuesByTheme(5, 1, 1);
+        $result = $this->valueService->getValuesByTheme(5, 'stores', 1, 1);
 
         // Assert
         $this->assertIsArray($result);
@@ -146,7 +149,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $result = $this->valueService->getSingleValue(5, 1, 1, 'colors', 'primary', 42);
+        $result = $this->valueService->getSingleValue(5, 'stores', 1, 1, 'colors', 'primary', 42);
 
         // Assert
         $this->assertEquals('#123456', $result);
@@ -159,7 +162,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $result = $this->valueService->getSingleValue(5, 1, 1, 'colors', 'primary');
+        $result = $this->valueService->getSingleValue(5, 'stores', 1, 1, 'colors', 'primary');
 
         // Assert
         $this->assertNull($result);
@@ -177,7 +180,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $this->valueService->getSingleValue(5, 1, 1, 'test', 'field');
+        $this->valueService->getSingleValue(5, 'stores', 1, 1, 'test', 'field');
     }
 
     public function testDeleteValuesReturnsCountOfDeletedItems(): void
@@ -192,7 +195,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->expects($this->exactly(3))->method('delete');
 
         // Act
-        $count = $this->valueService->deleteValues(5, 1, 1, 42);
+        $count = $this->valueService->deleteValues(5, 'stores', 1, 1, 42);
 
         // Assert
         $this->assertEquals(3, $count);
@@ -201,13 +204,13 @@ class ValueServiceTest extends TestCase
     public function testDeleteValuesWithSectionCodesFilter(): void
     {
         // Arrange
-        $this->searchCriteriaBuilder->expects($this->exactly(4))
+        $this->searchCriteriaBuilder->expects($this->exactly(5))
             ->method('addFilter')
             ->willReturnCallback(function ($field, $value, $condition = null) {
                 static $callCount = 0;
                 $callCount++;
                 
-                if ($callCount === 4) {
+                if ($callCount === 5) {
                     $this->assertEquals('section_code', $field);
                     $this->assertEquals(['header', 'footer'], $value);
                     $this->assertEquals('in', $condition);
@@ -220,7 +223,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $this->valueService->deleteValues(5, 1, 1, null, ['header', 'footer']);
+        $this->valueService->deleteValues(5, 'stores', 1, 1, null, ['header', 'footer']);
     }
 
     public function testDeleteValuesReturnsZeroWhenNoMatches(): void
@@ -230,7 +233,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $count = $this->valueService->deleteValues(5, 1, 1);
+        $count = $this->valueService->deleteValues(5, 'stores', 1, 1);
 
         // Assert
         $this->assertEquals(0, $count);
@@ -281,7 +284,7 @@ class ValueServiceTest extends TestCase
             ->willReturn(2);
 
         // Act
-        $count = $this->valueService->copyValues(5, 1, 1, 42, 6, 2, 2, 100);
+        $count = $this->valueService->copyValues(5, 'stores', 1, 1, 42, 6, 'stores', 2, 2, 100);
 
         // Assert
         $this->assertEquals(2, $count);
@@ -294,7 +297,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $count = $this->valueService->copyValues(5, 1, 1, 42, 6, 2, 2, 100);
+        $count = $this->valueService->copyValues(5, 'stores', 1, 1, 42, 6, 'stores', 2, 2, 100);
 
         // Assert
         $this->assertEquals(0, $count);
@@ -324,14 +327,14 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('saveMultiple')->willReturn(1);
 
         // Act
-        $this->valueService->copyValues(5, 1, 1, 42, 10, 3, 2, 99);
+        $this->valueService->copyValues(5, 'stores', 1, 1, 42, 10, 'stores', 3, 2, 99);
     }
 
     public function testCopyValuesWithSectionCodesFilter(): void
     {
         // Arrange
         $filterCalls = [];
-        $this->searchCriteriaBuilder->expects($this->exactly(5))
+        $this->searchCriteriaBuilder->expects($this->exactly(6))
             ->method('addFilter')
             ->willReturnCallback(function ($field, $value, $condition = null) use (&$filterCalls) {
                 $filterCalls[] = ['field' => $field, 'value' => $value, 'condition' => $condition];
@@ -342,7 +345,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $this->valueService->copyValues(5, 1, 1, 42, 6, 2, 2, 100, ['colors', 'typography']);
+        $this->valueService->copyValues(5, 'stores', 1, 1, 42, 6, 'stores', 2, 2, 100, ['colors', 'typography']);
 
         // Assert
         $sectionCodeFilter = array_filter($filterCalls, fn($f) => $f['field'] === 'section_code');
@@ -356,7 +359,7 @@ class ValueServiceTest extends TestCase
     {
         // Arrange: verify that setting_code 'in' filter is applied when fieldCodes provided
         $filterCalls = [];
-        $this->searchCriteriaBuilder->expects($this->exactly(5))
+        $this->searchCriteriaBuilder->expects($this->exactly(6))
             ->method('addFilter')
             ->willReturnCallback(function ($field, $value, $condition = null) use (&$filterCalls) {
                 $filterCalls[] = ['field' => $field, 'value' => $value, 'condition' => $condition];
@@ -367,7 +370,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $this->valueService->deleteValues(5, 1, 1, null, ['colors'], ['body-bg', 'text-color']);
+        $this->valueService->deleteValues(5, 'stores', 1, 1, null, ['colors'], ['body-bg', 'text-color']);
 
         // Assert: setting_code filter was added
         $fieldCodeFilter = array_filter($filterCalls, fn($f) => $f['field'] === 'setting_code');
@@ -382,7 +385,7 @@ class ValueServiceTest extends TestCase
     {
         // Arrange: without fieldCodes, setting_code filter must NOT be added
         $filterCalls = [];
-        $this->searchCriteriaBuilder->expects($this->exactly(3))
+        $this->searchCriteriaBuilder->expects($this->exactly(4))
             ->method('addFilter')
             ->willReturnCallback(function ($field, $value, $condition = null) use (&$filterCalls) {
                 $filterCalls[] = ['field' => $field, 'value' => $value];
@@ -393,7 +396,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->method('getList')->willReturn($this->searchResults);
 
         // Act
-        $this->valueService->deleteValues(5, 1, 1);
+        $this->valueService->deleteValues(5, 'stores', 1, 1);
 
         // Assert: no setting_code filter
         $settingFilter = array_filter($filterCalls, fn($f) => $f['field'] === 'setting_code');
@@ -410,7 +413,7 @@ class ValueServiceTest extends TestCase
         $this->valueRepository->expects($this->once())->method('delete')->with($matchingValue);
 
         // Act
-        $count = $this->valueService->deleteValues(21, 21, 1, null, ['colors'], ['body-bg']);
+        $count = $this->valueService->deleteValues(21, 'stores', 21, 1, null, ['colors'], ['body-bg']);
 
         // Assert
         $this->assertEquals(1, $count);

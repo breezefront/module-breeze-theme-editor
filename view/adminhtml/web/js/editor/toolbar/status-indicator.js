@@ -42,9 +42,10 @@ define([
          * Initialize widget
          */
         _create: function () {
-            // Get store and theme IDs from config
+            // Get scope info from config
             var config = window.breezeThemeEditorConfig || {};
-            this.storeId = config.storeId || this.options.storeId;
+            this.scope = config.scope || this.options.scope || 'stores';
+            this.scopeId = config.scopeId !== undefined ? config.scopeId : (this.options.scopeId !== undefined ? this.options.scopeId : null);
             this.themeId = config.themeId || this.options.themeId;
             
             this.template = mageTemplate(statusTemplate);
@@ -157,8 +158,8 @@ define([
         _refreshStatus: function() {
             var self = this;
             
-            if (!this.storeId || !this.themeId) {
-                log.warn('Status refresh skipped: missing storeId or themeId');
+            if (this.scopeId === null && this.scope !== 'default') {
+                log.warn('Status refresh skipped: missing scopeId');
                 return;
             }
             

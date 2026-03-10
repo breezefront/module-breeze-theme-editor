@@ -52,6 +52,22 @@ class Value extends AbstractModel implements ValueInterface
     /**
      * @inheritdoc
      */
+    public function getScope(): string
+    {
+        return (string)($this->getData(self::SCOPE) ?: self::SCOPE_STORES);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setScope(string $scope): self
+    {
+        return $this->setData(self::SCOPE, $scope);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function getStoreId(): int
     {
         return (int)$this->getData(self::STORE_ID);

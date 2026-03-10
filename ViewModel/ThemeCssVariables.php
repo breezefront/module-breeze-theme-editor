@@ -35,7 +35,7 @@ class ThemeCssVariables implements ArgumentInterface
             $storeId = (int) $this->storeManager->getStore()->getId();
             $themeId = $this->themeResolver->getThemeIdByStoreId($storeId);
 
-            return $this->cssGenerator->generate($themeId, $storeId, 'PUBLISHED');
+            return $this->cssGenerator->generate($themeId, 'stores', $storeId, 'PUBLISHED');
         } catch (\Exception $e) {
             return "/* Breeze Theme Editor: Error generating CSS - {$e->getMessage()} */";
         }

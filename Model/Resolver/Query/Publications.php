@@ -37,10 +37,11 @@ class Publications extends AbstractQueryResolver
         array $value = null,
         array $args = null
     ) {
-        $storeId = (int)$args['storeId'];
-        $themeId = isset($args['themeId']) && $args['themeId']
+        $scope = $args['scope'] ?? 'stores';
+        $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
+        $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
+            : $this->themeResolver->getThemeIdByStoreId($scopeId);
 
         $pageSize = $args['pageSize'] ?? 20;
         $currentPage = $args['currentPage'] ?? 1;
@@ -48,7 +49,8 @@ class Publications extends AbstractQueryResolver
 
         // Формуємо SearchCriteria замість старого array getList!
         $this->searchCriteriaBuilder->addFilter('theme_id', $themeId);
-        $this->searchCriteriaBuilder->addFilter('store_id', $storeId);
+        $this->searchCriteriaBuilder->addFilter('scope', $scope);
+        $this->searchCriteriaBuilder->addFilter('store_id', $scopeId);
 
         if ($search) {
             $this->searchCriteriaBuilder->addFilter('title', "%$search%", 'like');
@@ -85,7 +87,8 @@ class Publications extends AbstractQueryResolver
             $items[] = [
                 'publicationId' => $publication->getPublicationId(),
                 'themeId' => $publication->getThemeId(),
-                'storeId' => $publication->getStoreId(),
+                'scope' => $publication->getScope(),
+                'scopeId' => $publication->getStoreId(),
                 'title' => $publication->getTitle(),
                 'description' => $publication->getDescription(),
                 'publishedAt' => $publication->getPublishedAt(),

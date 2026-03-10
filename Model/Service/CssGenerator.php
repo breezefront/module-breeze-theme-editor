@@ -27,11 +27,12 @@ class CssGenerator
      * Generate CSS variables from saved values
      *
      * @param int $themeId
-     * @param int $storeId
+     * @param string $scope
+     * @param int $scopeId
      * @param string $status 'PUBLISHED' or 'DRAFT'
      * @return string CSS code with :root { ... }
      */
-    public function generate(int $themeId, int $storeId, string $status = 'PUBLISHED'): string
+    public function generate(int $themeId, string $scope, int $scopeId, string $status = 'PUBLISHED'): string
     {
         $statusId = $this->statusProvider->getStatusId($status);
 
@@ -41,13 +42,14 @@ class CssGenerator
             $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
             $values = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
                 $themeId,
-                $storeId,
+                $scope,
+                $scopeId,
                 $statusId,
                 $publishedStatusId,
                 null
             );
         } else {
-            $values = $this->valueService->getValuesByTheme($themeId, $storeId, $statusId, null);
+            $values = $this->valueService->getValuesByTheme($themeId, $scope, $scopeId, $statusId, null);
         }
 
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);

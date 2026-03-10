@@ -16,16 +16,18 @@ define([
         /**
          * Initialize loader
          * @param {Object} options
-         * @param {number} options.storeId
+         * @param {string} options.scope
+         * @param {number} options.scopeId
          * @param {number} options.themeId
          * @param {number} options.pageSize
          */
         init: function(options) {
-            this.storeId = options.storeId;
+            this.scope   = options.scope   || 'stores';
+            this.scopeId = options.scopeId;
             this.themeId = options.themeId;
             this.pageSize = options.pageSize || 10;
             
-            log.debug('Metadata loader initialized: storeId=' + this.storeId + ' themeId=' + this.themeId + ' pageSize=' + this.pageSize);
+            log.debug('Metadata loader initialized: scope=' + this.scope + ' scopeId=' + this.scopeId + ' themeId=' + this.themeId + ' pageSize=' + this.pageSize);
             
             return this;
         },
@@ -38,18 +40,18 @@ define([
          * @returns {Promise<Object>} Promise with {draftChangesCount, modifiedCount, lastPublished}
          */
         loadMetadata: function() {
-            if (!this.storeId) {
-                log.warn('Cannot load metadata: storeId missing');
-                return $.Deferred().reject('Store ID missing').promise();
+            if (!this.scopeId && this.scope !== 'default') {
+                log.warn('Cannot load metadata: scopeId missing');
+                return $.Deferred().reject('Scope ID missing').promise();
             }
 
             log.info('Loading draft + published metadata...');
 
-            var storeId = parseInt(this.storeId);
-            var themeId = parseInt(this.themeId) || null;
+            var scope   = this.scope;
+            var scopeId = parseInt(this.scopeId) || 0;
 
-            var draftRequest = getConfig(storeId, themeId, 'DRAFT');
-            var publishedRequest = getConfig(storeId, themeId, 'PUBLISHED');
+            var draftRequest     = getConfig(scope, scopeId, 'DRAFT');
+            var publishedRequest = getConfig(scope, scopeId, 'PUBLISHED');
 
             return $.when(draftRequest, publishedRequest).then(function(draftData, publishedData) {
                 var draftMeta     = draftData.breezeThemeEditorConfig.metadata;
@@ -80,26 +82,26 @@ define([
          * @returns {Promise<Object>} Promise with {items, total_count, page_info}
          */
         loadPublications: function(page, search) {
-            page = page || 1;
-            search = search || null;
-            
-            if (!this.storeId) {
-                log.warn('Cannot load publications: storeId missing');
-                return $.Deferred().reject('Store ID missing').promise();
-            }
-            
-            log.info('Loading publications (page ' + page + ')...');
-            
-            var self = this;
-            
-            // Use getPublications function
-            return getPublications(
-                parseInt(this.storeId),
-                parseInt(this.themeId) || null,
-                this.pageSize,
-                page,
-                search
-            ).then(function(data) {
+             page = page || 1;
+             search = search || null;
+             
+             if (!this.scopeId && this.scope !== 'default') {
+                 log.warn('Cannot load publications: scopeId missing');
+                 return $.Deferred().reject('Scope ID missing').promise();
+             }
+             
+             log.info('Loading publications (page ' + page + ')...');
+             
+             var self = this;
+             
+             // Use getPublications function
+             return getPublications(
+                 this.scope,
+                 parseInt(this.scopeId) || 0,
+                 this.pageSize,
+                 page,
+                 search
+             ).then(function(data) {
                 log.debug('Publications loaded: page=' + page + ' count=' + (data.items ? data.items.length : 0) + ' total=' + data.total_count);
                 
                 // Format publications for UI

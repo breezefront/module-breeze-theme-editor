@@ -25,7 +25,8 @@ class ImportExportService
      */
     public function export(
         int $themeId,
-        int $storeId,
+        string $scope,
+        int $scopeId,
         string $statusCode,
         ?  int $userId = null
     ): array {
@@ -33,9 +34,9 @@ class ImportExportService
 
         // Використати ValueService для отримання значень
         if ($statusCode === 'PUBLISHED') {
-            $values = $this->valueService->getValuesByTheme($themeId, $storeId, $statusId, null);
+            $values = $this->valueService->getValuesByTheme($themeId, $scope, $scopeId, $statusId, null);
         } else {
-            $values = $this->valueService->getValuesByTheme($themeId, $storeId, $statusId, $userId);
+            $values = $this->valueService->getValuesByTheme($themeId, $scope, $scopeId, $statusId, $userId);
         }
 
         // Форматувати для експорту
@@ -47,9 +48,10 @@ class ImportExportService
 
         $jsonData = $this->serializer->serialize($export);
         $filename = sprintf(
-            'theme_%d_store_%d_%s_%s.json',
+            'theme_%d_%s_%d_%s_%s.json',
             $themeId,
-            $storeId,
+            $scope,
+            $scopeId,
             $statusCode,
             date('Y-m-d_H-i-s')
         );
@@ -62,7 +64,8 @@ class ImportExportService
 
     /**
      * @param int $themeId
-     * @param int $storeId
+     * @param string $scope
+     * @param int $scopeId
      * @param string $statusCode
      * @param int $userId
      * @param string $jsonData
@@ -74,7 +77,8 @@ class ImportExportService
      */
     public function import(
         int $themeId,
-        int $storeId,
+        string $scope,
+        int $scopeId,
         string $statusCode,
         int $userId,
         string $jsonData,
@@ -107,7 +111,8 @@ class ImportExportService
 
             $model = $this->valueRepository->create();
             $model->setThemeId($themeId);
-            $model->setStoreId($storeId);
+            $model->setScope($scope);
+            $model->setStoreId($scopeId);
             $model->setStatusId($statusId);
             $model->setUserId($userIdForSave);
             $model->setSectionCode($sectionCode);
@@ -133,7 +138,8 @@ class ImportExportService
             if ($overwriteExisting) {
                 $this->valueService->deleteValues(
                     $themeId,
-                    $storeId,
+                    $scope,
+                    $scopeId,
                     $statusId,
                     $userIdForSave
                 );

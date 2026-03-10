@@ -128,22 +128,27 @@ class StoreDataProvider
     }
 
     /**
-     * Get stores organized by website and group hierarchy
-     * 
+     * Get stores organized by website and group hierarchy.
+     * Includes a top-level "Default" entry and per-website entries.
+     *
      * Structure:
      * [
+     *   ['type'=>'default', 'scope'=>'default', 'scopeId'=>0,  'name'=>'All Store Views', 'previewStoreId'=>1],
      *   [
      *     'type' => 'website',
+     *     'scope' => 'websites',
+     *     'scopeId' => 1,
      *     'id' => 1,
      *     'name' => 'Main Website',
      *     'code' => 'base',
+     *     'previewStoreId' => 1,
      *     'groups' => [
      *       [
      *         'type' => 'group',
      *         'id' => 1,
      *         'name' => 'Main Website Store',
      *         'stores' => [
-     *           ['type' => 'store', 'id' => 1, 'name' => 'Default', 'url' => '...', 'active' => true],
+     *           ['type'=>'store', 'scope'=>'stores', 'scopeId'=>1, 'id'=>1, 'name'=>'Default', 'url'=>'...', 'active'=>true],
      *           ...
      *         ]
      *       ]
@@ -157,61 +162,95 @@ class StoreDataProvider
     {
         $result = [];
         $currentStoreId = $this->storeManager->getStore()->getId();
-        
+
         // Get all websites except admin
         $websites = $this->storeManager->getWebsites(false, false);
-        
+
+        // Collect the first active store across all websites for Default preview
+        $firstActiveStoreId = 0;
+
+        $websiteEntries = [];
         foreach ($websites as $website) {
+            $websiteFirstStoreId = 0;
             $websiteData = [
-                'type' => 'website',
-                'id' => (int)$website->getId(),
-                'code' => $website->getCode(),
-                'name' => $website->getName(),
-                'groups' => []
+                'type'          => 'website',
+                'scope'         => 'websites',
+                'scopeId'       => (int)$website->getId(),
+                'id'            => (int)$website->getId(),
+                'code'          => $website->getCode(),
+                'name'          => $website->getName(),
+                'previewStoreId'=> 0,
+                'groups'        => []
             ];
-            
+
             // Get all groups for this website
             foreach ($website->getGroups() as $group) {
                 $groupData = [
-                    'type' => 'group',
-                    'id' => (int)$group->getId(),
-                    'name' => $group->getName(),
+                    'type'   => 'group',
+                    'id'     => (int)$group->getId(),
+                    'name'   => $group->getName(),
                     'stores' => []
                 ];
-                
+
                 // Get all stores for this group
                 foreach ($group->getStores() as $store) {
                     if (!$store->isActive()) {
                         continue;
                     }
-                    
+
+                    $storeId = (int)$store->getId();
+
+                    if ($websiteFirstStoreId === 0) {
+                        $websiteFirstStoreId = $storeId;
+                    }
+                    if ($firstActiveStoreId === 0) {
+                        $firstActiveStoreId = $storeId;
+                    }
+
                     $groupData['stores'][] = [
-                        'type' => 'store',
-                        'id' => (int)$store->getId(),
-                        'code' => $store->getCode(),
-                        'name' => $store->getName(),
-                        'url' => $this->getStoreUrl($store),
-                        'active' => (int)$store->getId() === (int)$currentStoreId
+                        'type'    => 'store',
+                        'scope'   => 'stores',
+                        'scopeId' => $storeId,
+                        'id'      => $storeId,
+                        'code'    => $store->getCode(),
+                        'name'    => $store->getName(),
+                        'url'     => $this->getStoreUrl($store),
+                        'active'  => (int)$store->getId() === (int)$currentStoreId
                     ];
                 }
-                
+
                 // Sort stores by name
                 usort($groupData['stores'], function ($a, $b) {
                     return strcmp($a['name'], $b['name']);
                 });
-                
+
                 // Only add groups with active stores
                 if (!empty($groupData['stores'])) {
                     $websiteData['groups'][] = $groupData;
                 }
             }
-            
+
+            $websiteData['previewStoreId'] = $websiteFirstStoreId;
+
             // Only add websites with groups that have stores
             if (!empty($websiteData['groups'])) {
-                $result[] = $websiteData;
+                $websiteEntries[] = $websiteData;
             }
         }
-        
+
+        // Prepend "All Store Views" (Default scope) entry
+        $result[] = [
+            'type'          => 'default',
+            'scope'         => 'default',
+            'scopeId'       => 0,
+            'name'          => (string)__('All Store Views'),
+            'previewStoreId'=> $firstActiveStoreId,
+        ];
+
+        foreach ($websiteEntries as $websiteData) {
+            $result[] = $websiteData;
+        }
+
         return $result;
     }
 

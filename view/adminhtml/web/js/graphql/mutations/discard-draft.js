@@ -4,10 +4,10 @@ define([
     'use strict';
 
     var mutation = `
-        mutation DiscardDraft($storeId: Int!, $themeId: Int, $sectionCodes: [String!], $fieldCodes: [String!]) {
+        mutation DiscardDraft($scope: BreezeThemeEditorScope, $scopeId: Int!, $sectionCodes: [String!], $fieldCodes: [String!]) {
             discardBreezeThemeEditorDraft(
-                storeId: $storeId
-                themeId: $themeId
+                scope: $scope
+                scopeId: $scopeId
                 sectionCodes: $sectionCodes
                 fieldCodes: $fieldCodes
             ) {
@@ -21,18 +21,18 @@ define([
     /**
      * Discard draft changes
      *
-     * @param {Number} storeId
-     * @param {Number} themeId      - Optional
+     * @param {String} scope - 'default', 'websites', or 'stores'
+     * @param {Number} scopeId
      * @param {Array}  sectionCodes - Optional (discard only specific sections)
      * @param {Array}  fieldCodes   - Optional (discard only specific fields within the given sections)
      * @returns {Promise}
      */
-    return function discardDraft(storeId, themeId, sectionCodes, fieldCodes) {
+    return function discardDraft(scope, scopeId, sectionCodes, fieldCodes) {
         return client.execute(mutation, {
-            storeId: storeId,
-            themeId: themeId || null,
+            scope:        scope || 'stores',
+            scopeId:      scopeId,
             sectionCodes: sectionCodes || null,
-            fieldCodes: fieldCodes || null
+            fieldCodes:   fieldCodes || null
         }, 'DiscardDraft');
     };
 });

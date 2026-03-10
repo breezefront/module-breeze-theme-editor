@@ -56,10 +56,10 @@ class ValueInheritanceResolverTest extends TestCase
 
         $this->valueServiceMock->expects($this->once())
             ->method('getValuesByTheme')
-            ->with(10, $storeId, $statusId, $userId)
+            ->with(10, 'stores', $storeId, $statusId, $userId)
             ->willReturn($values);
 
-        $result = $this->resolver->resolveAllValues($themeId, $storeId, $statusId, $userId);
+        $result = $this->resolver->resolveAllValues($themeId, 'stores', $storeId, $statusId, $userId);
 
         $this->assertCount(2, $result);
         $this->assertEquals($values, $result);
@@ -110,7 +110,7 @@ class ValueInheritanceResolverTest extends TestCase
                 };
             });
 
-        $result = $this->resolver->resolveAllValues($themeId, $storeId, $statusId);
+        $result = $this->resolver->resolveAllValues($themeId, 'stores', $storeId, $statusId);
 
         // Should have 3 unique keys: header.logo (from child), colors.primary (from grandparent), footer.text (from parent)
         $this->assertCount(3, $result);
@@ -141,7 +141,7 @@ class ValueInheritanceResolverTest extends TestCase
     {
         $this->themeResolverMock->method('getThemeHierarchy')->willReturn([]);
 
-        $result = $this->resolver->resolveAllValues(999, 1, 2);
+        $result = $this->resolver->resolveAllValues(999, 'stores', 1, 2);
 
         $this->assertEmpty($result);
     }
@@ -165,10 +165,10 @@ class ValueInheritanceResolverTest extends TestCase
 
         $this->valueServiceMock->expects($this->once())
             ->method('getSingleValue')
-            ->with(10, $storeId, $statusId, $sectionCode, $fieldCode, null)
+            ->with(10, 'stores', $storeId, $statusId, $sectionCode, $fieldCode, null)
             ->willReturn('child_logo.png');
 
-        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, $sectionCode, $fieldCode);
+        $result = $this->resolver->resolveSingleValue($themeId, 'stores', $storeId, $statusId, $sectionCode, $fieldCode);
 
         $this->assertEquals('child_logo.png', $result['value']);
         $this->assertFalse($result['isInherited']);
@@ -201,7 +201,7 @@ class ValueInheritanceResolverTest extends TestCase
                 return $themeId === 20 ? null : 'parent_logo.png';
             });
 
-        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, $sectionCode, $fieldCode);
+        $result = $this->resolver->resolveSingleValue($themeId, 'stores', $storeId, $statusId, $sectionCode, $fieldCode);
 
         $this->assertEquals('parent_logo.png', $result['value']);
         $this->assertTrue($result['isInherited']);
@@ -235,7 +235,7 @@ class ValueInheritanceResolverTest extends TestCase
                 return $themeId === 10 ? '#FF0000' : null;
             });
 
-        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, $sectionCode, $fieldCode);
+        $result = $this->resolver->resolveSingleValue($themeId, 'stores', $storeId, $statusId, $sectionCode, $fieldCode);
 
         $this->assertEquals('#FF0000', $result['value']);
         $this->assertTrue($result['isInherited']);
@@ -267,7 +267,7 @@ class ValueInheritanceResolverTest extends TestCase
             ->with($themeId, $sectionCode, $fieldCode)
             ->willReturn('default_logo.png');
 
-        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, $sectionCode, $fieldCode);
+        $result = $this->resolver->resolveSingleValue($themeId, 'stores', $storeId, $statusId, $sectionCode, $fieldCode);
 
         $this->assertEquals('default_logo.png', $result['value']);
         $this->assertFalse($result['isInherited']);
@@ -286,7 +286,7 @@ class ValueInheritanceResolverTest extends TestCase
         $this->valueServiceMock->method('getSingleValue')->willReturn(null);
         $this->configProviderMock->method('getFieldDefault')->willReturn(null);
 
-        $result = $this->resolver->resolveSingleValue(10, 1, 2, 'header', 'logo');
+        $result = $this->resolver->resolveSingleValue(10, 'stores', 1, 2, 'header', 'logo');
 
         $this->assertNull($result['value']);
         $this->assertFalse($result['isInherited']);
@@ -309,7 +309,7 @@ class ValueInheritanceResolverTest extends TestCase
             ->method('getSingleValue')
             ->willReturnCallback(fn($themeId) => $themeId === 10 ? 'parent_value' : null);
 
-        $result = $this->resolver->isValueInherited(20, 1, 2, 'section', 'field');
+        $result = $this->resolver->isValueInherited(20, 'stores', 1, 2, 'section', 'field');
 
         $this->assertTrue($result);
     }
@@ -327,7 +327,7 @@ class ValueInheritanceResolverTest extends TestCase
         $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
         $this->valueServiceMock->method('getSingleValue')->willReturn('child_value');
 
-        $result = $this->resolver->isValueInherited(20, 1, 2, 'section', 'field');
+        $result = $this->resolver->isValueInherited(20, 'stores', 1, 2, 'section', 'field');
 
         $this->assertFalse($result);
     }
@@ -343,7 +343,7 @@ class ValueInheritanceResolverTest extends TestCase
         $this->valueServiceMock->method('getSingleValue')->willReturn(null);
         $this->configProviderMock->method('getFieldDefault')->willReturn('default_value');
 
-        $result = $this->resolver->isValueInherited(10, 1, 2, 'section', 'field');
+        $result = $this->resolver->isValueInherited(10, 'stores', 1, 2, 'section', 'field');
 
         $this->assertFalse($result);
     }
@@ -365,7 +365,7 @@ class ValueInheritanceResolverTest extends TestCase
             ->method('getSingleValue')
             ->willReturnCallback(fn($themeId) => $themeId === 10 ? 'parent_value' : null);
 
-        $result = $this->resolver->getInheritedFromTheme(20, 1, 2, 'section', 'field');
+        $result = $this->resolver->getInheritedFromTheme(20, 'stores', 1, 2, 'section', 'field');
 
         $this->assertEquals($parentThemeInfo, $result);
         $this->assertEquals('parent', $result['theme_code']);
@@ -384,7 +384,7 @@ class ValueInheritanceResolverTest extends TestCase
         $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
         $this->valueServiceMock->method('getSingleValue')->willReturn('child_value');
 
-        $result = $this->resolver->getInheritedFromTheme(20, 1, 2, 'section', 'field');
+        $result = $this->resolver->getInheritedFromTheme(20, 'stores', 1, 2, 'section', 'field');
 
         $this->assertNull($result);
     }
@@ -400,7 +400,7 @@ class ValueInheritanceResolverTest extends TestCase
         $this->valueServiceMock->method('getSingleValue')->willReturn(null);
         $this->configProviderMock->method('getFieldDefault')->willReturn('default_value');
 
-        $result = $this->resolver->getInheritedFromTheme(10, 1, 2, 'section', 'field');
+        $result = $this->resolver->getInheritedFromTheme(10, 'stores', 1, 2, 'section', 'field');
 
         $this->assertNull($result);
     }
@@ -422,10 +422,10 @@ class ValueInheritanceResolverTest extends TestCase
 
         $this->valueServiceMock->expects($this->once())
             ->method('getValuesByTheme')
-            ->with(10, $storeId, $statusId, $userId)
+            ->with(10, 'stores', $storeId, $statusId, $userId)
             ->willReturn($values);
 
-        $result = $this->resolver->resolveAllValues($themeId, $storeId, $statusId, $userId);
+        $result = $this->resolver->resolveAllValues($themeId, 'stores', $storeId, $statusId, $userId);
 
         $this->assertCount(1, $result);
         $this->assertEquals('user_logo.png', $result[0]['value']);
@@ -447,10 +447,10 @@ class ValueInheritanceResolverTest extends TestCase
 
         $this->valueServiceMock->expects($this->once())
             ->method('getSingleValue')
-            ->with(10, $storeId, $statusId, 'header', 'logo', $userId)
+            ->with(10, 'stores', $storeId, $statusId, 'header', 'logo', $userId)
             ->willReturn('user_logo.png');
 
-        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, 'header', 'logo', $userId);
+        $result = $this->resolver->resolveSingleValue($themeId, 'stores', $storeId, $statusId, 'header', 'logo', $userId);
 
         $this->assertEquals('user_logo.png', $result['value']);
     }
@@ -470,10 +470,10 @@ class ValueInheritanceResolverTest extends TestCase
         // Both child and parent have value, but child should win
         $this->valueServiceMock->expects($this->once()) // Only called once - stops at child
             ->method('getSingleValue')
-            ->with(20, 1, 2, 'header', 'logo', null)
+            ->with(20, 'stores', 1, 2, 'header', 'logo', null)
             ->willReturn('child_logo.png');
 
-        $result = $this->resolver->resolveSingleValue(20, 1, 2, 'header', 'logo');
+        $result = $this->resolver->resolveSingleValue(20, 'stores', 1, 2, 'header', 'logo');
 
         $this->assertEquals('child_logo.png', $result['value']);
         $this->assertFalse($result['isInherited']);
@@ -504,7 +504,7 @@ class ValueInheritanceResolverTest extends TestCase
                 };
             });
 
-        $result = $this->resolver->resolveAllValues(40, 1, 2);
+        $result = $this->resolver->resolveAllValues(40, 'stores', 1, 2);
 
         $this->assertCount(2, $result);
         
@@ -539,7 +539,7 @@ class ValueInheritanceResolverTest extends TestCase
                 };
             });
 
-        $result = $this->resolver->resolveAllValues(30, 1, 2);
+        $result = $this->resolver->resolveAllValues(30, 'stores', 1, 2);
 
         $this->assertCount(2, $result);
     }
@@ -569,10 +569,10 @@ class ValueInheritanceResolverTest extends TestCase
 
         $this->valueServiceMock->expects($this->once())
             ->method('getValuesByTheme')
-            ->with($themeId, $storeId, $statusId, null)
+            ->with($themeId, 'stores', $storeId, $statusId, null)
             ->willReturn($ownValues);
 
-        $result = $this->resolver->resolveAllValues($themeId, $storeId, $statusId);
+        $result = $this->resolver->resolveAllValues($themeId, 'stores', $storeId, $statusId);
 
         $this->assertCount(1, $result);
         $this->assertEquals('child_logo.png', $result[0]['value']);
@@ -601,10 +601,10 @@ class ValueInheritanceResolverTest extends TestCase
         // Only one getSingleValue call — for the child theme itself
         $this->valueServiceMock->expects($this->once())
             ->method('getSingleValue')
-            ->with($themeId, $storeId, $statusId, 'header', 'logo', null)
+            ->with($themeId, 'stores', $storeId, $statusId, 'header', 'logo', null)
             ->willReturn('child_logo.png');
 
-        $result = $this->resolver->resolveSingleValue($themeId, $storeId, $statusId, 'header', 'logo');
+        $result = $this->resolver->resolveSingleValue($themeId, 'stores', $storeId, $statusId, 'header', 'logo');
 
         $this->assertEquals('child_logo.png', $result['value']);
         $this->assertFalse($result['isInherited']);
@@ -641,7 +641,7 @@ class ValueInheritanceResolverTest extends TestCase
             ->method('getValuesByTheme')
             ->willReturn([]);
 
-        $result = $this->resolver->resolveAllValues($themeId, $storeId, $statusId);
+        $result = $this->resolver->resolveAllValues($themeId, 'stores', $storeId, $statusId);
 
         $this->assertIsArray($result);
     }
@@ -674,7 +674,7 @@ class ValueInheritanceResolverTest extends TestCase
                 return $themeId === 10 ? $parentValues : $childValues;
             });
 
-        $result = $this->resolver->resolveAllValues(20, 1, 2);
+        $result = $this->resolver->resolveAllValues(20, 'stores', 1, 2);
 
         // Verify parent was called first (due to array_reverse in implementation)
         $this->assertEquals([10, 20], $callOrder);

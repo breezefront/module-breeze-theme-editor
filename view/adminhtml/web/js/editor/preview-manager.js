@@ -21,10 +21,10 @@ define([
          * Inject draft CSS into preview iframe
          * 
          * @param {string} iframeId - ID of the iframe element
-         * @param {number} storeId - Store ID
-         * @param {number} themeId - Theme ID (optional, can be null)
+         * @param {string} scope - Scope type ('default', 'websites', 'stores')
+         * @param {number} scopeId - Scope ID
          */
-        injectDraftCSS: function(iframeId, storeId, themeId) {
+        injectDraftCSS: function(iframeId, scope, scopeId) {
             var self = this;
             var $iframe = $('#' + iframeId);
             
@@ -33,10 +33,10 @@ define([
                 return;
             }
             
-            log.debug('Loading draft CSS for store ' + storeId + ' theme ' + themeId);
+            log.debug('Loading draft CSS for scope=' + scope + ' scopeId=' + scopeId);
             
             // Load CSS from GraphQL using the query function
-            getCssQuery(parseInt(storeId), themeId ? parseInt(themeId) : null, 'DRAFT', null)
+            getCssQuery(scope, scopeId, 'DRAFT', null)
                 .then(function(response) {
                 if (response && response.getThemeEditorCss) {
                     var css = response.getThemeEditorCss.css;
@@ -106,12 +106,12 @@ define([
          * Reloads and re-injects the draft CSS.
          * 
          * @param {string} iframeId - ID of the iframe element
-         * @param {number} storeId - Store ID
-         * @param {number} themeId - Theme ID (optional)
+         * @param {string} scope - Scope type ('default', 'websites', 'stores')
+         * @param {number} scopeId - Scope ID
          */
-        refresh: function(iframeId, storeId, themeId) {
+        refresh: function(iframeId, scope, scopeId) {
             log.debug('Refreshing preview CSS...');
-            this.injectDraftCSS(iframeId, storeId, themeId);
+            this.injectDraftCSS(iframeId, scope, scopeId);
         },
         
         /**

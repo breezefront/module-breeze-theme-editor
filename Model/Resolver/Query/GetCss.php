@@ -43,13 +43,12 @@ class GetCss extends AbstractQueryResolver
         array $value = null,
         array $args = null
     ) {
-        // 1. Get store ID
-        $storeId = (int) $args['storeId'];
+        // 1. Get scope and scopeId
+        $scope = $args['scope'] ?? 'stores';
+        $scopeId = (int) $args['scopeId'];
 
-        // 2. Get theme ID (auto-detect if not provided)
-        $themeId = isset($args['themeId']) && $args['themeId']
-            ? (int) $args['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
+        // 2. Get theme ID via ThemeResolver
+        $themeId = $this->themeResolver->getThemeIdByScope($scope, $scopeId);
 
         // 3. Get status (default: PUBLISHED)
         $status = $args['status'] ?? 'PUBLISHED';
@@ -64,9 +63,9 @@ class GetCss extends AbstractQueryResolver
                     __('publicationId is required when status is PUBLICATION')
                 );
             }
-            $css = $this->generateCssFromPublication($themeId, $storeId, $publicationId);
+            $css = $this->generateCssFromPublication($themeId, $publicationId);
         } else {
-            $css = $this->cssGenerator->generate($themeId, $storeId, $status);
+            $css = $this->cssGenerator->generate($themeId, $scope, $scopeId, $status);
         }
 
         // 6. Return structured response
@@ -95,11 +94,10 @@ class GetCss extends AbstractQueryResolver
      * Loads values from specific publication and generates CSS
      *
      * @param int $themeId
-     * @param int $storeId
      * @param int $publicationId
      * @return string
      */
-    private function generateCssFromPublication(int $themeId, int $storeId, int $publicationId): string
+    private function generateCssFromPublication(int $themeId, int $publicationId): string
     {
         try {
             // Get changelog entries for this publication

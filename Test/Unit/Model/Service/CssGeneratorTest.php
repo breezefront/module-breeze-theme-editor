@@ -74,7 +74,7 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
         
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
         
         // Assert: Both HEX and RGB variants are generated
         $this->assertStringContainsString(
@@ -120,7 +120,7 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
         
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
         
         // Assert: Comments are included
         $this->assertStringContainsString(
@@ -168,7 +168,7 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
         
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
         
         // Assert: All colors generated in both formats
         $this->assertStringContainsString('--color-brand-primary: #1979c3', $css);
@@ -222,7 +222,7 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
         
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
         
         // Assert: Field maps to base palette variable (no -rgb suffix)
         $this->assertStringContainsString(
@@ -282,7 +282,7 @@ class CssGeneratorTest extends TestCase
             ->with('rgb', '#ffffff')
             ->willReturn('rgb');
         
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
         
         // Assert: Field maps to -rgb palette variant
         $this->assertStringContainsString(
@@ -335,7 +335,7 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
         
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
         
         // Assert: Field maps to base palette variable (default HEX)
         $this->assertStringContainsString(
@@ -377,7 +377,7 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
         
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
         
         // Assert: Direct color value is used as-is
         $this->assertStringContainsString(
@@ -444,7 +444,7 @@ class CssGeneratorTest extends TestCase
                 return $format;
             });
         
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
         
         // Assert: Same palette color referenced in different formats
         $this->assertStringContainsString('--color-brand-primary: #1979c3', $css);
@@ -490,7 +490,7 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
         
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
         
         // Assert: Palette colors appear before field references
         $palettePos = strpos($css, '--color-brand-primary: #1979c3');
@@ -510,7 +510,7 @@ class CssGeneratorTest extends TestCase
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([]);
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn(['sections' => []]);
         
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
         
         $this->assertEquals(":root {\n}\n", $css, 'Should return empty :root block when no values');
     }
@@ -574,7 +574,7 @@ class CssGeneratorTest extends TestCase
             ->willReturn('rgb');
         
         // Act: Generate CSS
-        $css = $this->cssGenerator->generate(1, 1, 'DRAFT');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'DRAFT');
         
         // Assert: Should append -rgb suffix for RGB format
         $this->assertStringContainsString(
@@ -639,7 +639,7 @@ class CssGeneratorTest extends TestCase
             ->willReturn('hex');
         
         // Act
-        $css = $this->cssGenerator->generate(1, 1, 'DRAFT');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'DRAFT');
         
         // Assert: Should use HEX version (without -rgb suffix)
         $this->assertStringContainsString(
@@ -701,7 +701,7 @@ class CssGeneratorTest extends TestCase
             ->willReturn('rgb');
         
         // Act
-        $css = $this->cssGenerator->generate(1, 1, 'DRAFT');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'DRAFT');
         
         // Assert: Should convert HEX to RGB
         $this->assertStringContainsString(
@@ -761,7 +761,7 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'DRAFT');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'DRAFT');
 
         // Both variants must be present even though the value equals the default
         $this->assertStringContainsString(
@@ -870,7 +870,7 @@ class CssGeneratorTest extends TestCase
             ->method('resolve')
             ->willReturn('rgb');
 
-        $css = $this->cssGenerator->generate(1, 1, 'DRAFT');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'DRAFT');
 
         // Palette variable must be emitted even though it is not in DB
         $this->assertStringContainsString(
@@ -986,7 +986,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         // Custom selector block must be present
         $this->assertStringContainsString('.columns-container {', $css);
@@ -1045,7 +1045,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         // bg_color must be in :root
         $rootStart = strpos($css, ':root {');
@@ -1089,7 +1089,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString('.columns-container, .page-wrapper {', $css);
         $this->assertStringContainsString('--max-width: 1440px;', $css);
@@ -1128,7 +1128,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString('--font-size-base: 18px;', $css);
         $this->assertStringNotContainsString('--old-var-name', $css);
@@ -1164,7 +1164,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString('--font-size-base: 18px;', $css);
     }
@@ -1209,7 +1209,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $rootPos    = strpos($css, ':root {');
         $sectionPos = strpos($css, '.columns-container {');
@@ -1253,7 +1253,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             '--overlay-color: rgba(25, 121, 195, 0.502);',
@@ -1295,7 +1295,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             '--overlay-color: #1979c380;',
@@ -1338,7 +1338,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             '--brand-color: rgba(25, 121, 195, 1);',
@@ -1397,7 +1397,7 @@ class CssGeneratorTest extends TestCase
             ])
         );
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             "@import url('https://fonts.googleapis.com/css2?family=Roboto');",
@@ -1434,7 +1434,7 @@ class CssGeneratorTest extends TestCase
             ])
         );
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringNotContainsString('@import', $css, 'Web-safe font should produce no @import');
     }
@@ -1464,7 +1464,7 @@ class CssGeneratorTest extends TestCase
             )
         );
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringNotContainsString(
             '@import',
@@ -1523,7 +1523,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             "@import url('https://fonts.googleapis.com/css2?family=Roboto');",
@@ -1586,7 +1586,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $importCount = substr_count($css, "@import url('$sharedUrl')");
         $this->assertEquals(1, $importCount, 'Duplicate font URL should produce exactly one @import');
@@ -1650,7 +1650,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             '--base-font-family: Roboto, sans-serif;',
@@ -1690,7 +1690,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             '--base-font-family: "Lato", sans-serif;',
@@ -1730,7 +1730,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             '--base-font-family: "Georgia", serif;',
@@ -1770,7 +1770,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             '--base-font-family: "Courier New", monospace;',
@@ -1812,7 +1812,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             '--base-font-family: var(--primary-font);',
@@ -1857,7 +1857,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             '--headings-font-family: var(--secondary-font);',
@@ -1916,7 +1916,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringContainsString(
             "@import url('https://fonts.googleapis.com/css2?family=Roboto');",
@@ -1969,7 +1969,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringNotContainsString(
             '@import',
@@ -2018,7 +2018,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringNotContainsString(
             '@import',
@@ -2083,7 +2083,7 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $importCount = substr_count($css, "@import url('$sharedUrl')");
         $this->assertSame(
@@ -2119,7 +2119,7 @@ class CssGeneratorTest extends TestCase
             ])
         );
 
-        $css = $this->cssGenerator->generate(1, 1, 'PUBLISHED');
+        $css = $this->cssGenerator->generate(1, 'stores', 1, 'PUBLISHED');
 
         $this->assertStringNotContainsString(
             '@import',

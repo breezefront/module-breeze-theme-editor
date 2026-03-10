@@ -181,14 +181,81 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
-     * Get current store ID
+     * Get current scope ('default'|'websites'|'stores')
      *
      * Priority:
-     * 1. URL parameter ?store=X (highest)
-     * 2. Cookie 'bte_last_store_id' via BackendSession (last used store)
-     * 3. Current store from StoreManager (fallback)
+     * 1. URL parameter ?scope=X
+     * 2. BackendSession last used scope
+     * 3. Fallback: 'stores'
      *
-     * Mirrors the same priority chain as AbstractEditor::getStoreId().
+     * @return string
+     */
+    public function getScope(): string
+    {
+        $valid = ['default', 'websites', 'stores'];
+
+        $scope = (string)$this->request->getParam('scope', '');
+        if (in_array($scope, $valid, true)) {
+            return $scope;
+        }
+
+        $lastScope = (string)$this->backendSession->getScopeType();
+        if (in_array($lastScope, $valid, true)) {
+            return $lastScope;
+        }
+
+        return 'stores';
+    }
+
+    /**
+     * Get current scope ID.
+     *
+     * For scope='default'  → 0
+     * For scope='websites' → website_id from URL param or session
+     * For scope='stores'   → store_view_id (same logic as old getStoreId())
+     *
+     * @return int
+     */
+    public function getScopeId(): int
+    {
+        $scope = $this->getScope();
+
+        if ($scope === 'default') {
+            return 0;
+        }
+
+        // Priority 1: URL parameter
+        $scopeId = (int)$this->request->getParam('scopeId', 0);
+        if ($scopeId > 0) {
+            return $scopeId;
+        }
+
+        // Priority 2: session
+        $lastScopeId = (int)$this->backendSession->getScopeId();
+        if ($lastScopeId > 0) {
+            return $lastScopeId;
+        }
+
+        // Priority 3: fallback — current store
+        if ($scope === 'stores') {
+            try {
+                return (int)$this->storeManager->getStore()->getId();
+            } catch (\Exception $e) {
+                return 1;
+            }
+        }
+
+        // websites fallback — current website
+        try {
+            return (int)$this->storeManager->getWebsite()->getId();
+        } catch (\Exception $e) {
+            return 1;
+        }
+    }
+
+    /**
+     * Get current store ID (legacy helper, kept for iframe preview URL).
+     * Uses session/URL priority chain.
      *
      * @return int
      */
@@ -223,17 +290,17 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
-     * Get frontend theme ID for the current store
+     * Get frontend theme ID for the current scope.
      *
-     * Uses ThemeResolver to return the store's frontend theme instead of the
-     * backend theme that DesignInterface would return in adminhtml area.
+     * Uses ThemeResolver::getThemeIdByScope() so that Default and Website
+     * scopes are resolved correctly instead of always reading from store scope.
      *
      * @return int
      */
     public function getThemeId()
     {
         try {
-            return $this->themeResolver->getThemeIdByStoreId($this->getStoreId());
+            return $this->themeResolver->getThemeIdByScope($this->getScope(), $this->getScopeId());
         } catch (\Exception $e) {
             try {
                 return (int)$this->design->getDesignTheme()->getId();
@@ -459,8 +526,8 @@ class AdminToolbar implements ArgumentInterface
     {
         return [
             // ===== Core parameters =====
-            'storeId'          => $this->getStoreId(),
-            'storeCode'        => $this->storeManager->getStore($this->getStoreId())->getCode(),
+            'scope'            => $this->getScope(),
+            'scopeId'          => $this->getScopeId(),
             'token'            => $this->getToken(),
             'themeId'          => $this->getThemeId(),
             'jstest'           => $this->isJstestMode(),

@@ -31,7 +31,8 @@ define([
     $.widget('swissup.paletteSection', {
         options: {
             palettes: [],
-            storeId: null,
+            scope: 'stores',
+            scopeId: null,
             themeId: null
         },
 

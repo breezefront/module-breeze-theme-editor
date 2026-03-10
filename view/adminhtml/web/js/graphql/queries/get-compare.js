@@ -4,8 +4,8 @@ define([
     'use strict';
 
     var query = `
-        query CompareChanges($storeId: Int!, $themeId: Int) {
-            breezeThemeEditorCompare(storeId: $storeId, themeId: $themeId) {
+        query CompareChanges($scope: BreezeThemeEditorScope, $scopeId: Int!) {
+            breezeThemeEditorCompare(scope: $scope, scopeId: $scopeId) {
                 hasChanges
                 changesCount
                 changes {
@@ -24,14 +24,14 @@ define([
     /**
      * Compare draft vs published changes
      *
-     * @param {Number} storeId
-     * @param {Number} themeId - Optional
+     * @param {String} scope - 'default', 'websites', or 'stores'
+     * @param {Number} scopeId
      * @returns {Promise}
      */
-    return function getCompare(storeId, themeId) {
+    return function getCompare(scope, scopeId) {
         return client.execute(query, {
-            storeId: storeId,
-            themeId: themeId || null
+            scope:   scope || 'stores',
+            scopeId: scopeId
         }, 'CompareChanges');
     };
 });

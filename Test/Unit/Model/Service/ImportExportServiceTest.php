@@ -65,7 +65,7 @@ class ImportExportServiceTest extends TestCase
 
         $this->valueServiceMock->expects($this->once())
             ->method('getValuesByTheme')
-            ->with($themeId, $storeId, $statusId, null)
+            ->with($themeId, 'stores', $storeId, $statusId, null)
             ->willReturn($values);
 
         $expectedExport = [
@@ -78,11 +78,11 @@ class ImportExportServiceTest extends TestCase
             ->with($expectedExport)
             ->willReturn(json_encode($expectedExport));
 
-        $result = $this->importExportService->export($themeId, $storeId, $statusCode, null);
+        $result = $this->importExportService->export($themeId, 'stores', $storeId, $statusCode, null);
 
         $this->assertArrayHasKey('jsonData', $result);
         $this->assertArrayHasKey('filename', $result);
-        $this->assertStringContainsString('theme_1_store_1_PUBLISHED', $result['filename']);
+        $this->assertStringContainsString('theme_1_stores_1_PUBLISHED', $result['filename']);
         $this->assertStringContainsString('.json', $result['filename']);
     }
 
@@ -107,7 +107,7 @@ class ImportExportServiceTest extends TestCase
 
         $this->valueServiceMock->expects($this->once())
             ->method('getValuesByTheme')
-            ->with($themeId, $storeId, $statusId, $userId)
+            ->with($themeId, 'stores', $storeId, $statusId, $userId)
             ->willReturn($values);
 
         $expectedExport = ['typography.font' => 'Arial'];
@@ -117,7 +117,7 @@ class ImportExportServiceTest extends TestCase
             ->with($expectedExport)
             ->willReturn(json_encode($expectedExport));
 
-        $result = $this->importExportService->export($themeId, $storeId, $statusCode, $userId);
+        $result = $this->importExportService->export($themeId, 'stores', $storeId, $statusCode, $userId);
 
         $this->assertStringContainsString('DRAFT', $result['filename']);
     }
@@ -131,7 +131,7 @@ class ImportExportServiceTest extends TestCase
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([]);
         $this->serializerMock->method('serialize')->with([])->willReturn('{}');
 
-        $result = $this->importExportService->export(1, 1, 'PUBLISHED', null);
+        $result = $this->importExportService->export(1, 'stores', 1, 'PUBLISHED', null);
 
         $this->assertEquals('{}', $result['jsonData']);
     }
@@ -145,11 +145,11 @@ class ImportExportServiceTest extends TestCase
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([]);
         $this->serializerMock->method('serialize')->willReturn('{}');
 
-        $result = $this->importExportService->export(3, 5, 'PUBLISHED', null);
+        $result = $this->importExportService->export(3, 'stores', 5, 'PUBLISHED', null);
 
         // Format: theme_{themeId}_store_{storeId}_{status}_{date}.json
         $this->assertMatchesRegularExpression(
-            '/^theme_3_store_5_PUBLISHED_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.json$/',
+            '/^theme_3_stores_5_PUBLISHED_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.json$/',
             $result['filename']
         );
     }
@@ -175,7 +175,7 @@ class ImportExportServiceTest extends TestCase
                 'footer.copyright' => '© 2024',
             ]);
 
-        $this->importExportService->export(1, 1, 'PUBLISHED', null);
+        $this->importExportService->export(1, 'stores', 1, 'PUBLISHED', null);
     }
 
     // ========================================================================
@@ -215,7 +215,7 @@ class ImportExportServiceTest extends TestCase
 
         $result = $this->importExportService->import(
             $themeId,
-            $storeId,
+            'stores', $storeId,
             $statusCode,
             $userId,
             $jsonData,
@@ -238,7 +238,7 @@ class ImportExportServiceTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Invalid JSON data');
 
-        $this->importExportService->import(1, 1, 'DRAFT', 5, 'invalid json', true);
+        $this->importExportService->import(1, 'stores', 1, 'DRAFT', 5, 'invalid json', true);
     }
 
     /**
@@ -251,7 +251,7 @@ class ImportExportServiceTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Invalid data format');
 
-        $this->importExportService->import(1, 1, 'DRAFT', 5, '"string"', true);
+        $this->importExportService->import(1, 'stores', 1, 'DRAFT', 5, '"string"', true);
     }
 
     /**
@@ -264,7 +264,7 @@ class ImportExportServiceTest extends TestCase
             'invalid_key_no_dot' => 'value',
         ]);
 
-        $result = $this->importExportService->import(1, 1, 'DRAFT', 5, '{}', true);
+        $result = $this->importExportService->import(1, 'stores', 1, 'DRAFT', 5, '{}', true);
 
         $this->assertEquals(0, $result['importedCount']);
         $this->assertEquals(1, $result['skippedCount']);
@@ -289,7 +289,7 @@ class ImportExportServiceTest extends TestCase
             ['message' => 'Invalid color format'],
         ]);
 
-        $result = $this->importExportService->import(1, 1, 'DRAFT', 5, '{}', true);
+        $result = $this->importExportService->import(1, 'stores', 1, 'DRAFT', 5, '{}', true);
 
         $this->assertEquals(0, $result['importedCount']);
         $this->assertEquals(1, $result['skippedCount']);
@@ -317,9 +317,9 @@ class ImportExportServiceTest extends TestCase
         // overwriteExisting=true means "replace all" - delete first
         $this->valueServiceMock->expects($this->once())
             ->method('deleteValues')
-            ->with(1, 1, 1, 5);
+            ->with(1, 'stores', 1, 1, 5);
 
-        $this->importExportService->import(1, 1, 'DRAFT', 5, '{}', true);
+        $this->importExportService->import(1, 'stores', 1, 'DRAFT', 5, '{}', true);
     }
 
     /**
@@ -343,7 +343,7 @@ class ImportExportServiceTest extends TestCase
         $this->valueServiceMock->expects($this->never())
             ->method('deleteValues');
 
-        $this->importExportService->import(1, 1, 'DRAFT', 5, '{}', false);
+        $this->importExportService->import(1, 'stores', 1, 'DRAFT', 5, '{}', false);
     }
 
     /**
@@ -356,7 +356,7 @@ class ImportExportServiceTest extends TestCase
 
         $this->valueRepositoryMock->expects($this->never())->method('saveMultiple');
 
-        $result = $this->importExportService->import(1, 1, 'DRAFT', 5, '{}', true);
+        $result = $this->importExportService->import(1, 'stores', 1, 'DRAFT', 5, '{}', true);
 
         $this->assertEquals(0, $result['importedCount']);
         $this->assertEquals(0, $result['skippedCount']);
@@ -388,7 +388,7 @@ class ImportExportServiceTest extends TestCase
             ->with($complexValue)
             ->willReturn(json_encode($complexValue));
 
-        $this->importExportService->import(1, 1, 'DRAFT', 5, '{}', true);
+        $this->importExportService->import(1, 'stores', 1, 'DRAFT', 5, '{}', true);
     }
 
     /**
@@ -410,7 +410,7 @@ class ImportExportServiceTest extends TestCase
         $this->validationServiceMock->method('validateValues')->willReturn([]);
         $this->valueRepositoryMock->method('saveMultiple')->willReturn(1);
 
-        $this->importExportService->import(1, 1, 'PUBLISHED', 5, '{}', true);
+        $this->importExportService->import(1, 'stores', 1, 'PUBLISHED', 5, '{}', true);
     }
 
     /**
@@ -435,7 +435,7 @@ class ImportExportServiceTest extends TestCase
         // saveMultiple is NOT called because there are errors
         $this->valueRepositoryMock->expects($this->never())->method('saveMultiple');
 
-        $result = $this->importExportService->import(1, 1, 'DRAFT', 5, '{}', true);
+        $result = $this->importExportService->import(1, 'stores', 1, 'DRAFT', 5, '{}', true);
 
         // When there are errors, nothing is saved
         $this->assertEquals(0, $result['importedCount']);
@@ -460,7 +460,7 @@ class ImportExportServiceTest extends TestCase
             ['message' => 'Invalid color format'],
         ]);
 
-        $result = $this->importExportService->import(1, 1, 'DRAFT', 5, '{}', true);
+        $result = $this->importExportService->import(1, 'stores', 1, 'DRAFT', 5, '{}', true);
 
         $this->assertEquals(0, $result['importedCount']);
         $this->assertEquals(2, $result['skippedCount']); // Both errors counted

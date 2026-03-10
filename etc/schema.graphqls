@@ -43,36 +43,40 @@ enum BreezeThemeEditorChangeType {
     DELETED
 }
 
+enum BreezeThemeEditorScope {
+    default
+    websites
+    stores
+}
+
 type Query {
     breezeThemeEditorConfig(
-        storeId: Int!
-        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        scope: BreezeThemeEditorScope
+        scopeId: Int!
         status: BreezeThemeEditorStatusCode
     ): BreezeThemeEditorConfig!  @doc(description: "Get theme configuration with current values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Config")
 
     breezeThemeEditorConfigFromPublication(
-        storeId: Int!
-        themeId: Int @doc(description: "Optional: override auto-detected theme")
-        publicationId: Int! @doc(description: "Load configuration from this publication")
+        publicationId: Int! @doc(description: "Load configuration from this publication (scope/themeId taken from publication record)")
     ): BreezeThemeEditorConfig!  @doc(description: "Get theme configuration from specific publication") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\ConfigFromPublication")
 
     breezeThemeEditorValues(
-        storeId: Int!
-        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        scope: BreezeThemeEditorScope
+        scopeId: Int!
         status: BreezeThemeEditorStatusCode
         sectionCodes: [String!] @doc(description: "Filter by specific sections")
     ): [BreezeThemeEditorValue!]!  @doc(description: "Get only values") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Values")
 
     breezeThemeEditorCompare(
-        storeId: Int!
-        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        scope: BreezeThemeEditorScope
+        scopeId: Int!
     ): BreezeThemeEditorComparison @doc(description: "Compare draft vs published changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Compare")
 
     breezeThemeEditorStatuses: [BreezeThemeEditorStatus!]! @doc(description: "Get available statuses") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Statuses")
 
     breezeThemeEditorPublications(
-        storeId: Int!
-        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        scope: BreezeThemeEditorScope
+        scopeId: Int!
         pageSize: Int = 20
         currentPage: Int = 1
         search: String @doc(description: "Search by title")
@@ -83,13 +87,13 @@ type Query {
     ): BreezeThemeEditorPublication @doc(description: "Get publication details with changelog") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Publication")
 
     breezeThemeEditorPresets(
-        storeId: Int!
-        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        scope: BreezeThemeEditorScope
+        scopeId: Int!
     ): [BreezeThemeEditorPreset!]! @doc(description: "Get available presets from theme config") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\Presets")
 
     getThemeEditorCss(
-        storeId: Int!
-        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        scope: BreezeThemeEditorScope
+        scopeId: Int!
         status: BreezeThemeEditorCssStatusCode
         publicationId: Int @doc(description: "For PUBLICATION status: load CSS from this publication")
     ): BreezeThemeEditorCssOutput @doc(description: "Get generated CSS for specific status") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Query\\GetCss")
@@ -113,15 +117,15 @@ type Mutation {
     ): PublishBreezeThemeEditorOutput @doc(description: "Publish draft to production") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\Publish")
 
     discardBreezeThemeEditorDraft(
-        storeId: Int!
-        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        scope: BreezeThemeEditorScope
+        scopeId: Int!
         sectionCodes: [String!] @doc(description: "Optional: discard only specific sections")
         fieldCodes: [String!] @doc(description: "Optional: discard only specific fields (requires sectionCodes to be set)")
     ): DiscardBreezeThemeEditorDraftOutput @doc(description: "Discard draft changes") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\DiscardDraft")
 
     discardBreezeThemeEditorPublished(
-        storeId: Int!
-        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        scope: BreezeThemeEditorScope
+        scopeId: Int!
     ): DiscardBreezeThemeEditorPublishedOutput @doc(description: "Reset all published customizations to theme defaults") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\DiscardPublished")
 
     rollbackBreezeThemeEditor(
@@ -138,11 +142,11 @@ type Mutation {
 
     copyBreezeThemeEditorFromStore(
         input: CopyBreezeThemeEditorFromStoreInput!
-    ): CopyBreezeThemeEditorFromStoreOutput @doc(description: "Copy settings from another store") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\CopyFromStore")
+    ): CopyBreezeThemeEditorFromStoreOutput @doc(description: "Copy settings from another scope") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\CopyFromStore")
 
     exportBreezeThemeEditorSettings(
-        storeId: Int!
-        themeId: Int @doc(description: "Optional: override auto-detected theme")
+        scope: BreezeThemeEditorScope
+        scopeId: Int!
         status: BreezeThemeEditorStatusCode
     ): ExportBreezeThemeEditorSettingsOutput @doc(description: "Export settings as JSON") @resolver(class: "Swissup\\BreezeThemeEditor\\Model\\Resolver\\Mutation\\ExportSettings")
 
@@ -367,7 +371,8 @@ type BreezeThemeEditorPublicationList {
 type BreezeThemeEditorPublication {
     publicationId: Int!
     themeId: Int!
-    storeId: Int!
+    scope: String!
+    scopeId: Int!
     title: String!
     description: String
     publishedAt: String!
@@ -405,8 +410,8 @@ type BreezeThemeEditorCssOutput {
 }
 
 input SaveBreezeThemeEditorValuesInput {
-    storeId: Int!
-    themeId: Int @doc(description: "Optional: override auto-detected theme")
+    scope: BreezeThemeEditorScope
+    scopeId: Int!
     status: BreezeThemeEditorStatusCode!
     values: [BreezeThemeEditorValueInput!]!
     autoPublish: Boolean @doc(description: "Publish immediately after save")
@@ -414,8 +419,8 @@ input SaveBreezeThemeEditorValuesInput {
 }
 
 input SaveBreezeThemeEditorValueInput {
-    storeId: Int!
-    themeId: Int @doc(description: "Optional: override auto-detected theme")
+    scope: BreezeThemeEditorScope
+    scopeId: Int!
     status: BreezeThemeEditorStatusCode!
     sectionCode: String!
     fieldCode: String!
@@ -429,8 +434,8 @@ input BreezeThemeEditorValueInput {
 }
 
 input PublishBreezeThemeEditorInput {
-    storeId: Int!
-    themeId: Int @doc(description: "Optional: override auto-detected theme")
+    scope: BreezeThemeEditorScope
+    scopeId: Int!
     title: String!
     description: String
     notifyUsers: Boolean @doc(description: "Send notification to other admins")
@@ -443,40 +448,42 @@ input RollbackBreezeThemeEditorInput {
 }
 
 input ApplyBreezeThemeEditorPresetInput {
-    storeId: Int!
-    themeId: Int @doc(description: "Optional: override auto-detected theme")
+    scope: BreezeThemeEditorScope
+    scopeId: Int!
     presetId: String!
     status: BreezeThemeEditorStatusCode
     overwriteExisting: Boolean @doc(description: "Overwrite existing values")
 }
 
 input ResetBreezeThemeEditorToDefaultsInput {
-    storeId: Int!
-    themeId: Int @doc(description: "Optional: override auto-detected theme")
+    scope: BreezeThemeEditorScope
+    scopeId: Int!
     status: BreezeThemeEditorStatusCode
     sectionCodes: [String!] @doc(description: "Reset only specific sections")
     fieldCodes: [String!] @doc(description: "Reset only specific fields")
 }
 
 input CopyBreezeThemeEditorFromStoreInput {
-    fromStoreId: Int!
-    toStoreId: Int!
+    fromScope: BreezeThemeEditorScope
+    fromScopeId: Int!
+    toScope: BreezeThemeEditorScope
+    toScopeId: Int!
     status: BreezeThemeEditorStatusCode
     sectionCodes: [String!]
     overwriteExisting: Boolean
 }
 
 input ImportBreezeThemeEditorSettingsInput {
-    storeId: Int!
-    themeId: Int @doc(description: "Optional: override auto-detected theme")
+    scope: BreezeThemeEditorScope
+    scopeId: Int!
     status: BreezeThemeEditorStatusCode
     jsonData: String!  @doc(description: "JSON string with settings")
     overwriteExisting: Boolean
 }
 
 input SaveBreezeThemeEditorPaletteValueInput {
-    storeId: Int!
-    themeId: Int @doc(description: "Optional: override auto-detected theme")
+    scope: BreezeThemeEditorScope
+    scopeId: Int!
     cssVar: String! @doc(description: "CSS variable name (e.g., '--color-brand-primary')") @deprecated(reason: "Use 'property' instead")
     property: String! @doc(description: "CSS variable name (e.g., '--color-brand-primary')")
     value: String! @doc(description: "HEX value (e.g., '#1979c3') or RGB (auto-converted for backward compatibility)")

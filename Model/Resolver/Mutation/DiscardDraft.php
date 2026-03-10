@@ -32,10 +32,11 @@ class DiscardDraft extends AbstractMutationResolver
         array $value = null,
         array $args = null
     ) {
-        $storeId = (int)$args['storeId'];
-        $themeId = isset($args['themeId']) && $args['themeId']
+        $scope = $args['scope'] ?? 'stores';
+        $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
+        $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($storeId);
+            : $this->themeResolver->getThemeIdByStoreId($scopeId);
 
         $sectionCodes = $args['sectionCodes'] ??  null;
         $fieldCodes   = $args['fieldCodes']   ?? null;
@@ -46,7 +47,8 @@ class DiscardDraft extends AbstractMutationResolver
         // Видалити draft значення через ValueService
         $discardedCount = $this->valueService->deleteValues(
             $themeId,
-            $storeId,
+            $scope,
+            $scopeId,
             $draftStatusId,
             $userId,
             $sectionCodes,

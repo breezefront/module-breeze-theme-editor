@@ -326,8 +326,8 @@ class SavePaletteValueTest extends TestCase
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);
 
         $this->themeResolverMock->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(1)
+            ->method('getThemeIdByScope')
+            ->with('stores', 1)
             ->willReturn(20);
 
         $valueMock->expects($this->once())->method('setThemeId')->with(20);
@@ -374,7 +374,7 @@ class SavePaletteValueTest extends TestCase
 
         // ThemeResolver should NOT be called
         $this->themeResolverMock->expects($this->never())
-            ->method('getThemeIdByStoreId');
+            ->method('getThemeIdByScope');
 
         $valueMock->expects($this->once())->method('setThemeId')->with(15);
         $valueMock->method('setStoreId')->willReturn($valueMock);

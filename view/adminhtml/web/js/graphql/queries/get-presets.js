@@ -4,8 +4,8 @@ define([
     'use strict';
 
     var query = `
-        query GetPresets($storeId:  Int!, $themeId: Int) {
-            breezeThemeEditorPresets(storeId: $storeId, themeId: $themeId) {
+        query GetPresets($scope: BreezeThemeEditorScope, $scopeId: Int!) {
+            breezeThemeEditorPresets(scope: $scope, scopeId: $scopeId) {
                 id
                 name
                 description
@@ -17,14 +17,14 @@ define([
     /**
      * Get available presets
      *
-     * @param {Number} storeId
-     * @param {Number} themeId - Optional
+     * @param {String} scope - 'default', 'websites', or 'stores'
+     * @param {Number} scopeId
      * @returns {Promise}
      */
-    return function getPresets(storeId, themeId) {
+    return function getPresets(scope, scopeId) {
         return client.execute(query, {
-            storeId: storeId,
-            themeId: themeId || null
+            scope:   scope || 'stores',
+            scopeId: scopeId
         }, 'GetPresets');
     };
 });

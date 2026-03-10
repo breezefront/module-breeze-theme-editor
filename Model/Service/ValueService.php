@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Service;
 
+use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 
@@ -27,13 +28,15 @@ class ValueService
      */
     public function getValuesByTheme(
         int $themeId,
-        int $storeId,
+        string $scope,
+        int $scopeId,
         int $statusId,
         ?int $userId = null
     ): array {
         $criteria = $this->searchCriteriaBuilder
             ->addFilter('theme_id', $themeId)
-            ->addFilter('store_id', $storeId)
+            ->addFilter('scope', $scope)
+            ->addFilter('store_id', $scopeId)
             ->addFilter('status_id', $statusId);
 
         if ($userId !== null) {
@@ -62,7 +65,8 @@ class ValueService
      */
     public function getSingleValue(
         int $themeId,
-        int $storeId,
+        string $scope,
+        int $scopeId,
         int $statusId,
         string $sectionCode,
         string $fieldCode,
@@ -70,7 +74,8 @@ class ValueService
     ): ?string {
         $criteria = $this->searchCriteriaBuilder
             ->addFilter('theme_id', $themeId)
-            ->addFilter('store_id', $storeId)
+            ->addFilter('scope', $scope)
+            ->addFilter('store_id', $scopeId)
             ->addFilter('status_id', $statusId)
             ->addFilter('section_code', $sectionCode)
             ->addFilter('setting_code', $fieldCode)
@@ -99,7 +104,8 @@ class ValueService
      * Replaces: ValueRepository::deleteValues()
      *
      * @param int         $themeId
-     * @param int         $storeId
+     * @param string      $scope
+     * @param int         $scopeId
      * @param int         $statusId
      * @param int|null    $userId
      * @param array|null  $sectionCodes  Optional section filter
@@ -107,7 +113,8 @@ class ValueService
      */
     public function deleteValues(
         int $themeId,
-        int $storeId,
+        string $scope,
+        int $scopeId,
         int $statusId,
         ?int $userId = null,
         ?array $sectionCodes = null,
@@ -115,7 +122,8 @@ class ValueService
     ): int {
         $criteria = $this->searchCriteriaBuilder
             ->addFilter('theme_id', $themeId)
-            ->addFilter('store_id', $storeId)
+            ->addFilter('scope', $scope)
+            ->addFilter('store_id', $scopeId)
             ->addFilter('status_id', $statusId);
 
         if ($userId !== null) {
@@ -152,18 +160,21 @@ class ValueService
      */
     public function copyValues(
         int $fromThemeId,
-        int $fromStoreId,
+        string $fromScope,
+        int $fromScopeId,
         int $fromStatusId,
-        ? int $fromUserId,
+        ?int $fromUserId,
         int $toThemeId,
-        int $toStoreId,
+        string $toScope,
+        int $toScopeId,
         int $toStatusId,
         ?int $toUserId,
         ?array $sectionCodes = null
     ): int {
         $criteria = $this->searchCriteriaBuilder
             ->addFilter('theme_id', $fromThemeId)
-            ->addFilter('store_id', $fromStoreId)
+            ->addFilter('scope', $fromScope)
+            ->addFilter('store_id', $fromScopeId)
             ->addFilter('status_id', $fromStatusId);
 
         if ($fromUserId !== null) {
@@ -185,7 +196,8 @@ class ValueService
         foreach ($values as $val) {
             $model = $this->valueRepository->create();
             $model->setThemeId($toThemeId);
-            $model->setStoreId($toStoreId);
+            $model->setScope($toScope);
+            $model->setStoreId($toScopeId);
             $model->setStatusId($toStatusId);
             $model->setUserId($toUserId);
             $model->setSectionCode($val->getSectionCode());
