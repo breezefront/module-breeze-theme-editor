@@ -90,7 +90,7 @@ class PublicationsTest extends TestCase
 
         $result = $this->resolver->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['storeId' => 1, 'themeId' => 5]
+            ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5]
         );
 
         $this->assertSame([], $result['items']);
@@ -118,7 +118,7 @@ class PublicationsTest extends TestCase
 
         $result = $this->resolver->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['storeId' => 1, 'themeId' => 5]
+            ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5]
         );
 
         $this->assertCount(1, $result['items']);
@@ -130,15 +130,15 @@ class PublicationsTest extends TestCase
     {
         $this->themeResolver
             ->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(2)
+            ->method('getThemeIdByScope')
+            ->with('stores', 2)
             ->willReturn(10);
         $this->publicationRepository->method('getList')->willReturn($this->makeSearchResults([]));
         $this->adminUserLoader->method('getMultipleUsersData')->willReturn([]);
 
         $this->resolver->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['storeId' => 2]
+            ['scope' => ['type' => 'stores', 'scopeId' => 2]]
         );
     }
 
@@ -149,7 +149,7 @@ class PublicationsTest extends TestCase
 
         $result = $this->resolver->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['storeId' => 1, 'themeId' => 5, 'pageSize' => 10, 'currentPage' => 2]
+            ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5, 'pageSize' => 10, 'currentPage' => 2]
         );
 
         $this->assertSame(10, $result['page_info']['page_size']);
@@ -164,7 +164,7 @@ class PublicationsTest extends TestCase
 
         $result = $this->resolver->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
-            ['storeId' => 1, 'themeId' => 5]
+            ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 5]
         );
 
         $this->assertArrayHasKey('items', $result);

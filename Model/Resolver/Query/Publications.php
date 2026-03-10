@@ -41,7 +41,7 @@ class Publications extends AbstractQueryResolver
         $scopeId = (int)($args['scope']['scopeId'] ?? 0);
         $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByStoreId($scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
 
         $pageSize = $args['pageSize'] ?? 20;
         $currentPage = $args['currentPage'] ?? 1;
