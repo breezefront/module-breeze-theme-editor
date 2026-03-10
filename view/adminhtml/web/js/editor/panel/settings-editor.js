@@ -924,13 +924,14 @@ define([
          * Reset changes
          */
         _reset: function () {
-            if (!PanelState.hasChanges()) {
+            if (!PanelState.hasChanges() && !PaletteManager.hasDirtyChanges()) {
                 this._showToast('notice', 'No changes to reset');
                 return;
             }
 
             if (confirm('Reset all changes to default values?')) {
                 PanelState.reset();
+                PaletteManager.revertDirtyChanges();
                 CssPreviewManager.reset();
                 this._loadConfig();
                 log.info('Reset complete');
