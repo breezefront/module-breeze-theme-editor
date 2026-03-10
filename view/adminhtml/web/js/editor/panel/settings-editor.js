@@ -383,11 +383,17 @@ define([
                 //    (they were built on top of the old published base)
                 CssPreviewManager.reset();
 
-                // 2. Refresh published CSS layer in iframe — the server no longer has
-                //    published values, so #bte-theme-css-variables must show defaults
+                // 2. Switch iframe to PUBLISHED mode immediately.
+                //    If the editor was in PUBLICATION mode, this removes the
+                //    #bte-publication-css layer and re-enables #bte-theme-css-variables
+                //    so the stale publication color stops showing right away.
+                CssManager.showPublished();
+
+                // 3. Refresh published CSS layer content from the server — the DB now
+                //    has no published values so #bte-theme-css-variables becomes :root {}
                 CssManager.refreshPublishedCss();
 
-                // 3. Reload panel config so field values and badges reflect new state
+                // 4. Reload panel config so field values and badges reflect new state
                 self._loadConfig();
             });
         },

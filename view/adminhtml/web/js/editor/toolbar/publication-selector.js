@@ -723,6 +723,16 @@ define([
             ).then(function(response) {
                 if (response && response.discardBreezeThemeEditorPublished && response.discardBreezeThemeEditorPublished.success) {
                     self.options.publishedModifiedCount = 0;
+
+                    // Reset localStorage state to PUBLISHED (clear any active PUBLICATION)
+                    // so that after page reload the editor does not re-apply a stale
+                    // publication CSS layer that shows the old (now discarded) values.
+                    StorageHelper.setCurrentStatus('PUBLISHED');
+                    StorageHelper.clearCurrentPublication();
+                    self.options.currentStatus = 'PUBLISHED';
+                    self.options.currentPublicationId = null;
+                    self.options.currentPublicationTitle = null;
+
                     self.renderer.render(self._getState());
                     self._applyPermissions();
 
