@@ -283,7 +283,7 @@ define([
                         input: true,    // Show input field
                         clear: false,   // Hide clear button
                         cancel: true,   // Show cancel button
-                        save: true      // Show save button
+                        save: false     // Hide save button (live-commit via on('change'))
                     }
                 }
             });
@@ -339,59 +339,14 @@ define([
                 self._handleColorChange($textInput, callback);
             });
             
-            // On save button click
-            pickr.on('save', function(color) {
-                if (!color) {
-                    // Close popup after save
-                    self._closeAllPopups();
-                    return;
-                }
-                
-                // Check if this is a palette cascade update (from PaletteManager)
-                var isPaletteUpdate = $textInput.data('is-palette-update');
-                if (isPaletteUpdate) {
-                    log.debug('Palette cascade - preserving reference (save)');
-                    // Close popup after save
-                    self._closeAllPopups();
-                    return; // Don't remove palette-ref, don't trigger save
-                }
-                
-                var hex = self._normalizeHexAlpha(color.toHEXA().toString());
-                $textInput.val(hex);
-                $trigger.find('.bte-color-preview').css('background-color', hex);
-                
-                // Check if this is a palette selection
-                var isPaletteSelection = $textInput.data('is-palette-selection');
-                
-                if (!isPaletteSelection) {
-                    // 🆕 Remove palette reference (manual save)
-                    $textInput.removeAttr('data-palette-ref');
-                    $trigger.removeAttr('data-palette-ref');
-                    
-                    // 🆕 Remove selected class from all swatches
-                    $popup.find('.bte-palette-swatch').removeClass('selected');
-                    
-                    log.debug('Palette reference removed (manual save)');
-                } else {
-                    log.debug('Palette reference preserved (palette selection on save)');
-                }
-                
-                self._handleColorChange($textInput, callback);
-                
-                // Close popup after save
-                self._closeAllPopups();
-            });
-            
-            // On cancel button click
+            // On cancel button click — restore original colour and close popup
             pickr.on('cancel', function() {
-                // Restore original color (no need to call pickr.setColor - popup will be destroyed)
                 $textInput.val(currentColor);
                 $trigger.find('.bte-color-preview').css('background-color', currentColor);
-                
-                // Close popup
+                self._handleColorChange($textInput, callback);
                 self._closeAllPopups();
             });
-            
+
             // === CUSTOM PALETTE GRID HANDLERS ===
             
             // Handle swatch clicks

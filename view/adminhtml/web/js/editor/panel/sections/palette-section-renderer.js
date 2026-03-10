@@ -534,7 +534,7 @@ define([
                             cmyk: false,
                             input: true,
                             clear: false,
-                            cancel: false,
+                            cancel: true,
                             save: false
                         }
                     }
@@ -579,6 +579,16 @@ define([
                         self._updateHeaderBadges();
                         $(document).trigger('paletteColorChanged');
                     }, 150);
+                });
+
+                // On cancel — restore original colour and close popup
+                pickr.on('cancel', function() {
+                    $swatch.find('.bte-swatch-visual').css('background-color', originalHex);
+                    $swatch.removeClass('bte-swatch-dirty');
+                    PaletteManager.updateColor(property, originalHex);
+                    self._updateHeaderBadges();
+                    $(document).trigger('paletteColorChanged');
+                    self._closeAllPalettePickrPopups();
                 });
             });
         },
