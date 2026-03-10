@@ -169,7 +169,8 @@
     border-radius: 6px;
     margin: 16px 0;
     background: rgba(255, 255, 255, 0.03);
-    overflow: hidden;
+    // overflow: hidden removed — it was clipping .bte-font-picker-dropdown
+    // border-radius is preserved via :first-child / :last-child below
 
     .bte-palette-reset-btn {
         background: transparent;
@@ -197,6 +198,16 @@
 }
 
 .bte-font-palette-section {
+}
+
+// Preserve rounded corners after removing overflow:hidden from .bte-font-palette-container
+.bte-font-palette-container > .bte-font-palette-header {
+    border-radius: 6px 6px 0 0;
+}
+
+.bte-font-palette-container > .bte-font-palette-header:last-child,
+.bte-font-palette-container > .bte-font-palette-content:last-child {
+    border-radius: 0 0 6px 6px;
 }
 
 // Header (accordion toggle)
