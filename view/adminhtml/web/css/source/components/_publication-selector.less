@@ -315,12 +315,10 @@ _____________________________________________
             }
         }
 
-        /* Delete button — sits inside .dropdown-item-group, absolutely on the right */
+        /* Delete button — sits inside .dropdown-item (flex row), after item-check */
         .dropdown-delete-publication-button {
-            position: absolute;
-            top: 50%;
-            right: 8px;
-            transform: translateY(-50%);
+            flex-shrink: 0;
+            margin-left: auto;
             display: flex;
             align-items: center;
             justify-content: center;

@@ -88,6 +88,9 @@
                                 <% if (status === 'PUBLICATION' && currentPublicationId == pub.id) { %>
                                     <span class="item-check">✓</span>
                                 <% } %>
+                                <% if (canDeletePublication && pub.id !== activePublicationId) { %>
+                                    <button type="button" class="dropdown-delete-publication-button" data-action="delete-publication" data-publication-id="<%- pub.id %>" data-publication-title="<%- pub.title %>" title="Delete this publication">×</button>
+                                <% } %>
                             </a>
                             <% if (canRollback && status === 'PUBLICATION' && currentPublicationId == pub.id) { %>
                                 <div class="dropdown-rollback-button-wrapper">
@@ -95,9 +98,6 @@
                                         <span class="rollback-label">↩ Publish this version</span>
                                     </button>
                                 </div>
-                            <% } %>
-                            <% if (canDeletePublication && pub.id !== activePublicationId) { %>
-                                <button type="button" class="dropdown-delete-publication-button" data-action="delete-publication" data-publication-id="<%- pub.id %>" data-publication-title="<%- pub.title %>" title="Delete this publication">×</button>
                             <% } %>
                         </div>
                     <% }); %>
