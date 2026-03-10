@@ -534,8 +534,8 @@ define([
                             cmyk: false,
                             input: true,
                             clear: false,
-                            cancel: true,
-                            save: true
+                            cancel: false,
+                            save: false
                         }
                     }
                 });
@@ -543,46 +543,42 @@ define([
                 $swatch.data('palette-pickr-instance', pickr);
                 $swatch.data('palette-pickr-popup', $popup);
 
-                // Live preview while adjusting (no dirty state — just CSS update)
-                pickr.on('change', function(color) {
-                    var hex = self._normalizeHexAlpha(color.toHEXA().toString());
-                    $swatch.find('.bte-swatch-visual').css('background-color', hex);
-                    PaletteManager.notify(property, hex);
-                });
+                // Guard: Pickr fires 'change' once during initialization with the
+                // default colour — ignore it so simply opening the picker does not
+                // create a dirty entry.
+                var pickrInitialized = false;
+                var badgesDebounceTimer = null;
 
-                // Save → commit
-                pickr.on('save', function(color) {
-                    if (!color) {
-                        self._closeAllPalettePickrPopups();
+                // Live commit: every user-driven colour change is persisted immediately.
+                // CSS preview + dirty state update on every event; badge/panel updates
+                // are debounced to avoid excessive re-renders while dragging sliders.
+                pickr.on('change', function(color) {
+                    if (!pickrInitialized) {
+                        pickrInitialized = true;
                         return;
                     }
 
                     var hex = self._normalizeHexAlpha(color.toHEXA().toString());
-
                     $swatch.find('.bte-swatch-visual').css('background-color', hex);
                     $swatch.addClass('bte-swatch-dirty');
                     PaletteManager.updateColor(property, hex);
 
                     Logger.info('palette-section', 'Color changed (Pickr)', {property: property, hex: hex});
 
-                    // Arm cooldown
-                    self._justChanged = true;
-                    clearTimeout(self._justChangedTimer);
-                    self._justChangedTimer = setTimeout(function() {
-                        self._justChanged = false;
-                    }, 500);
+                    // Debounce badge/panel updates (~150 ms) to avoid flicker during drag
+                    clearTimeout(badgesDebounceTimer);
+                    badgesDebounceTimer = setTimeout(function() {
+                        // Arm cooldown so a stray click after picker close can't
+                        // accidentally trigger the Reset button
+                        self._justChanged = true;
+                        clearTimeout(self._justChangedTimer);
+                        self._justChangedTimer = setTimeout(function() {
+                            self._justChanged = false;
+                        }, 500);
 
-                    self._updateHeaderBadges();
-                    $(document).trigger('paletteColorChanged');
-
-                    self._closeAllPalettePickrPopups();
-                });
-
-                // Cancel → restore original (CSS preview only, no dirty state change)
-                pickr.on('cancel', function() {
-                    $swatch.find('.bte-swatch-visual').css('background-color', originalHex);
-                    PaletteManager.notify(property, originalHex);
-                    self._closeAllPalettePickrPopups();
+                        self._updateHeaderBadges();
+                        $(document).trigger('paletteColorChanged');
+                    }, 150);
                 });
             });
         },
