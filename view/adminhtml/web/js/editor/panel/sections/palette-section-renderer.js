@@ -18,7 +18,6 @@ define([
     IconRegistry
 ) {
     'use strict';
-    'use strict';
 
     /**
      * Palette Section Renderer
@@ -26,7 +25,7 @@ define([
      * Renders color palette matrix in sidebar
      * - Matrix layout (5 colors per row)
      * - Groups separated by thick borders
-     * - Native color picker on click
+     * - Pickr color picker on click (with opacity/alpha support)
      * - Debounced save (500ms)
      */
     $.widget('swissup.paletteSection', {
@@ -46,11 +45,9 @@ define([
 
             this._render();
 
-            // Guard flag: native color picker (Linux/GTK) fires a focus-return click
-            // on the page when the OS dialog closes.  If the reset button was just
-            // made visible by the colour-change badge update, that spurious click
-            // would trigger an unwanted palette reset.  We suppress reset clicks for
-            // 500 ms after any palette colour change.
+            // Guard flag: suppress reset clicks for 500 ms after a palette colour
+            // change, to prevent accidental resets triggered by a stray click that
+            // arrives just after the Reset button appears in the header.
             this._justChanged = false;
             this._justChangedTimer = null;
 
@@ -546,11 +543,11 @@ define([
                 $swatch.data('palette-pickr-instance', pickr);
                 $swatch.data('palette-pickr-popup', $popup);
 
-                // Live preview while adjusting
+                // Live preview while adjusting (no dirty state — just CSS update)
                 pickr.on('change', function(color) {
                     var hex = self._normalizeHexAlpha(color.toHEXA().toString());
                     $swatch.find('.bte-swatch-visual').css('background-color', hex);
-                    PaletteManager.updateColor(property, hex);
+                    PaletteManager.notify(property, hex);
                 });
 
                 // Save → commit
@@ -581,10 +578,10 @@ define([
                     self._closeAllPalettePickrPopups();
                 });
 
-                // Cancel → restore original
+                // Cancel → restore original (CSS preview only, no dirty state change)
                 pickr.on('cancel', function() {
                     $swatch.find('.bte-swatch-visual').css('background-color', originalHex);
-                    PaletteManager.updateColor(property, originalHex);
+                    PaletteManager.notify(property, originalHex);
                     self._closeAllPalettePickrPopups();
                 });
             });

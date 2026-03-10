@@ -83,9 +83,11 @@ define([
                     var hasOpenPopup = $('.bte-color-popup').length > 0;
                     if (!hasOpenPopup) return;
                     
-                    // Close if clicked outside popup or trigger
-                    // Note: .pcr-app is inside .bte-color-popup, so no need to check separately
-                    if (!$(e.target).closest('.bte-color-popup, .bte-color-trigger').length) {
+                    // Close if clicked outside popup or trigger.
+                    // Note: .pcr-app is inside .bte-color-popup, so no need to check separately.
+                    // Also exclude .bte-palette-swatch: clicking a palette swatch opens its own
+                    // Pickr popup (which reuses .bte-color-popup class) and must not be closed here.
+                    if (!$(e.target).closest('.bte-color-popup, .bte-color-trigger, .bte-palette-swatch').length) {
                         self._closeAllPopups();
                     }
                 }, 10);
