@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Service;
 
+use Magento\Store\Model\StoreManagerInterface;
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
@@ -16,7 +17,8 @@ class ValueInheritanceResolver
         private ValueService $valueService,
         private ThemeResolver $themeResolver,
         private ConfigProvider $configProvider,
-        private ScopeFactory $scopeFactory
+        private ScopeFactory $scopeFactory,
+        private ?StoreManagerInterface $storeManager = null
     ) {}
 
     // ========================================================================
@@ -38,6 +40,10 @@ class ValueInheritanceResolver
      */
     public function buildScopeChain(ScopeInterface $scope, int $websiteId = 0): array
     {
+        if ($websiteId === 0) {
+            $websiteId = $this->resolveWebsiteId($scope);
+        }
+
         // If scope is 'default', or no website context is known, use a single-entry chain.
         // Full scope chain (default → websites → stores) requires a valid websiteId.
         if ($scope->getType() === ValueInterface::SCOPE_DEFAULT || $websiteId === 0) {
@@ -257,6 +263,30 @@ class ValueInheritanceResolver
     // ========================================================================
     // PRIVATE HELPERS
     // ========================================================================
+
+    /**
+     * Resolve websiteId from scope without requiring callers to pass it.
+     *
+     * - websites/W  → websiteId is already the scopeId, no StoreManager needed
+     * - stores/N    → ask StoreManager for the store's websiteId
+     * - default/0   → 0 (no website leg)
+     */
+    private function resolveWebsiteId(ScopeInterface $scope): int
+    {
+        // websites/W — websiteId вже в scope, StoreManager не потрібен
+        if ($scope->getType() === ValueInterface::SCOPE_WEBSITES) {
+            return $scope->getScopeId();
+        }
+        // stores/N — треба йти через StoreManager
+        if ($scope->getType() === ValueInterface::SCOPE_STORES && $this->storeManager) {
+            try {
+                return (int) $this->storeManager->getStore($scope->getScopeId())->getWebsiteId();
+            } catch (\Exception) {
+                return 0;
+            }
+        }
+        return 0;
+    }
 
     /**
      * Merge values across a scope chain for a single theme.

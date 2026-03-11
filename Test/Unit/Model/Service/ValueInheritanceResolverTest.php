@@ -839,8 +839,7 @@ class ValueInheritanceResolverTest extends TestCase
     /**
      * Issue-014 / Test F (FAIL before fix, PASS after fix):
      * Store-view value overrides website and default; all three scopes are queried.
-     */
-    public function testStoreViewValueOverridesWebsiteAndDefaultViaStoreManager(): void
+     */    public function testStoreViewValueOverridesWebsiteAndDefaultViaStoreManager(): void
     {
         $storeMock = $this->createMock(StoreInterface::class);
         $storeMock->method('getWebsiteId')->willReturn(2);
@@ -882,6 +881,65 @@ class ValueInheritanceResolverTest extends TestCase
 
         $this->assertCount(1, $result, 'Duplicate keys must be merged to a single entry');
         $this->assertEquals('from-store', $result[0]['value'], 'Store-view value must override website and default');
+    }
+
+    /**
+     * Issue-014 bonus / Test G:
+     * buildScopeChain for websites/2 returns [default/0, websites/2]
+     * WITHOUT StoreManager — websiteId is already in scopeId.
+     */
+    public function testBuildScopeChainForWebsiteScopeReturnsChainWithDefault(): void
+    {
+        // Resolver without StoreManager — websites scope must still resolve correctly
+        $resolver = new ValueInheritanceResolver(
+            $this->valueServiceMock,
+            $this->themeResolverMock,
+            $this->configProviderMock,
+            $this->scopeFactoryMock
+            // no StoreManagerInterface
+        );
+
+        $scope = new Scope('websites', 2);
+        $chain = $resolver->buildScopeChain($scope);
+
+        $this->assertCount(2, $chain, 'websites/W chain must have 2 entries: default/0, websites/2');
+        $this->assertEquals('default',  $chain[0]->getType());
+        $this->assertEquals(0,          $chain[0]->getScopeId());
+        $this->assertEquals('websites', $chain[1]->getType());
+        $this->assertEquals(2,          $chain[1]->getScopeId());
+    }
+
+    /**
+     * Issue-014 bonus / Test H:
+     * A value saved at default/0 must be inherited by websites/2
+     * WITHOUT StoreManager — websiteId is resolved directly from scopeId.
+     */
+    public function testDefaultScopeValueIsInheritedByWebsiteScopeWithoutStoreManager(): void
+    {
+        // Resolver without StoreManager
+        $resolver = new ValueInheritanceResolver(
+            $this->valueServiceMock,
+            $this->themeResolverMock,
+            $this->configProviderMock,
+            $this->scopeFactoryMock
+        );
+
+        $themeId  = 10;
+        $statusId = 2;
+        $defaultValue = ['section_code' => 'header', 'setting_code' => 'color', 'value' => 'green'];
+
+        $hierarchy = [['theme_id' => $themeId, 'theme_code' => 'child', 'level' => 0]];
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
+
+        $this->valueServiceMock->method('getValuesByTheme')
+            ->willReturnCallback(function (int $tid, ScopeInterface $s) use ($defaultValue) {
+                return ($s->getType() === 'default') ? [$defaultValue] : [];
+            });
+
+        $result = $resolver->resolveAllValues($themeId, new Scope('websites', 2), $statusId);
+
+        $this->assertCount(1, $result, 'Value from default/0 must be inherited by websites/2');
+        $this->assertEquals('green', $result[0]['value']);
     }
 
     /**
