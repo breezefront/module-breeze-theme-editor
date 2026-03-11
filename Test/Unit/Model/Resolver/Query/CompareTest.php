@@ -12,6 +12,8 @@ use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Model\Resolver\Query\Compare;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 class CompareTest extends TestCase
 {
@@ -19,6 +21,8 @@ class CompareTest extends TestCase
     private CompareProvider|MockObject $compareProvider;
     private UserResolver|MockObject $userResolver;
     private ThemeResolver|MockObject $themeResolver;
+    private ScopeFactory|MockObject $scopeFactory;
+    private ScopeInterface|MockObject $scopeMock;
     private Field|MockObject $field;
     private ContextInterface|MockObject $context;
     private ResolveInfo|MockObject $resolveInfo;
@@ -28,6 +32,11 @@ class CompareTest extends TestCase
         $this->compareProvider = $this->createMock(CompareProvider::class);
         $this->userResolver    = $this->createMock(UserResolver::class);
         $this->themeResolver   = $this->createMock(ThemeResolver::class);
+        $this->scopeFactory    = $this->createMock(ScopeFactory::class);
+        $this->scopeMock       = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         $this->field           = $this->createMock(Field::class);
         $this->context         = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -37,7 +46,8 @@ class CompareTest extends TestCase
         $this->resolver = new Compare(
             $this->compareProvider,
             $this->userResolver,
-            $this->themeResolver
+            $this->themeResolver,
+            $this->scopeFactory
         );
     }
 
@@ -65,7 +75,7 @@ class CompareTest extends TestCase
         $this->themeResolver
             ->expects($this->once())
             ->method('getThemeIdByScope')
-            ->with('stores', 2)
+            ->with($this->isInstanceOf(ScopeInterface::class))
             ->willReturn(10);
         $this->compareProvider
             ->expects($this->once())

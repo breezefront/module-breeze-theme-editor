@@ -18,6 +18,8 @@ use Swissup\BreezeThemeEditor\Model\Service\PresetService;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 class ApplyPresetTest extends TestCase
 {
@@ -29,6 +31,8 @@ class ApplyPresetTest extends TestCase
     private ThemeResolver|MockObject $themeResolver;
     private ConfigProvider|MockObject $configProvider;
     private PresetService|MockObject $presetService;
+    private ScopeFactory|MockObject $scopeFactory;
+    private ScopeInterface|MockObject $scopeMock;
     private ValueInterface|MockObject $valueModel;
     private Field|MockObject $field;
     private ContextInterface|MockObject $context;
@@ -43,6 +47,11 @@ class ApplyPresetTest extends TestCase
         $this->themeResolver   = $this->createMock(ThemeResolver::class);
         $this->configProvider  = $this->createMock(ConfigProvider::class);
         $this->presetService   = $this->createMock(PresetService::class);
+        $this->scopeFactory    = $this->createMock(ScopeFactory::class);
+        $this->scopeMock       = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         $this->field           = $this->createMock(Field::class);
         $this->context         = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -65,6 +74,7 @@ class ApplyPresetTest extends TestCase
             $this->userResolver,
             $this->themeResolver,
             $this->configProvider,
+            $this->scopeFactory,
             $this->presetService
         );
     }

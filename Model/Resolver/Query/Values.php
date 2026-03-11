@@ -12,6 +12,7 @@ use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
 /**
@@ -26,7 +27,8 @@ class Values extends AbstractQueryResolver
         private StatusProvider $statusProvider,
         private ConfigProvider $configProvider,
         private UserResolver $userResolver,
-        private ThemeResolver $themeResolver
+        private ThemeResolver $themeResolver,
+        private ScopeFactory $scopeFactory
     ) {}
 
     public function resolve(
@@ -36,13 +38,15 @@ class Values extends AbstractQueryResolver
         array $value = null,
         array $args = null
     ) {
-        $scope = $args['scope']['type'] ?? 'stores';
-        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
+        $scope = $this->scopeFactory->create(
+            $args['scope']['type'] ?? 'stores',
+            (int)($args['scope']['scopeId'] ?? 0)
+        );
 
         // Auto-detect themeId
         $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope);
 
         $statusCode = $args['status'] ?? 'PUBLISHED';
         $sectionCodes = $args['sectionCodes'] ?? null;
@@ -66,13 +70,13 @@ class Values extends AbstractQueryResolver
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row still return the published value, not the theme default.
         if ($statusCode === 'PUBLISHED') {
-            $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope, $scopeId, $statusId, null);
+            $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope->getType(), $scope->getScopeId(), $statusId, null);
         } else {
             $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
             $values = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
                 $themeId,
-                $scope,
-                $scopeId,
+                $scope->getType(),
+                $scope->getScopeId(),
                 $statusId,
                 $publishedStatusId,
                 $userId

@@ -13,6 +13,8 @@ use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\ImportSettings;
 use Swissup\BreezeThemeEditor\Model\Service\ImportExportService;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 class ImportSettingsTest extends TestCase
 {
@@ -20,6 +22,8 @@ class ImportSettingsTest extends TestCase
     private ImportExportService|MockObject $importExportService;
     private UserResolver|MockObject $userResolver;
     private ThemeResolver|MockObject $themeResolver;
+    private ScopeFactory|MockObject $scopeFactory;
+    private ScopeInterface|MockObject $scopeMock;
     private Field|MockObject $field;
     private ContextInterface|MockObject $context;
     private ResolveInfo|MockObject $resolveInfo;
@@ -29,6 +33,11 @@ class ImportSettingsTest extends TestCase
         $this->importExportService = $this->createMock(ImportExportService::class);
         $this->userResolver        = $this->createMock(UserResolver::class);
         $this->themeResolver       = $this->createMock(ThemeResolver::class);
+        $this->scopeFactory        = $this->createMock(ScopeFactory::class);
+        $this->scopeMock           = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         $this->field               = $this->createMock(Field::class);
         $this->context             = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -38,7 +47,8 @@ class ImportSettingsTest extends TestCase
         $this->mutation = new ImportSettings(
             $this->importExportService,
             $this->userResolver,
-            $this->themeResolver
+            $this->themeResolver,
+            $this->scopeFactory
         );
     }
 
@@ -90,7 +100,7 @@ class ImportSettingsTest extends TestCase
         $this->themeResolver
             ->expects($this->once())
             ->method('getThemeIdByScope')
-            ->with('stores', 2)
+            ->with($this->isInstanceOf(ScopeInterface::class))
             ->willReturn(10);
         $this->importExportService
             ->method('import')

@@ -12,6 +12,8 @@ use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\ExportSettings;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 /**
  * Unit tests for ExportSettings GraphQL mutation
@@ -27,6 +29,8 @@ class ExportSettingsTest extends TestCase
     private UserResolver $userResolverMock;
     private ThemeResolver $themeResolverMock;
     private StatusProvider $statusProviderMock;
+    private ScopeFactory $scopeFactory;
+    private ScopeInterface $scopeMock;
     
     private Field $fieldMock;
     private ContextInterface $contextMock;
@@ -39,6 +43,11 @@ class ExportSettingsTest extends TestCase
         $this->userResolverMock = $this->createMock(UserResolver::class);
         $this->themeResolverMock = $this->createMock(ThemeResolver::class);
         $this->statusProviderMock = $this->createMock(StatusProvider::class);
+        $this->scopeFactory = $this->createMock(ScopeFactory::class);
+        $this->scopeMock    = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         
         // Create GraphQL mocks
         $this->fieldMock = $this->createMock(Field::class);
@@ -54,7 +63,8 @@ class ExportSettingsTest extends TestCase
             $this->importExportServiceMock,
             $this->userResolverMock,
             $this->themeResolverMock,
-            $this->statusProviderMock
+            $this->statusProviderMock,
+            $this->scopeFactory
         );
     }
     

@@ -9,6 +9,7 @@ use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\PublishService;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
 /**
@@ -31,7 +32,8 @@ class Publish extends AbstractMutationResolver
     public function __construct(
         private PublishService $publishManager,
         private UserResolver $userResolver,
-        private ThemeResolver $themeResolver
+        private ThemeResolver $themeResolver,
+        private ScopeFactory $scopeFactory
     ) {}
 
     public function resolve(
@@ -47,9 +49,11 @@ class Publish extends AbstractMutationResolver
         $userId = $this->userResolver->getCurrentUserId($context);
         $userMetadata = $this->userResolver->getCurrentUserMetadata($context);
 
-        $scope = $input['scope']['type'] ?? 'stores';
-        $scopeId = (int)($input['scope']['scopeId'] ?? 0);
-        $themeId = $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+        $scope = $this->scopeFactory->create(
+            $input['scope']['type'] ?? 'stores',
+            (int)($input['scope']['scopeId'] ?? 0)
+        );
+        $themeId = $this->themeResolver->getThemeIdByScope($scope);
 
         $title = $input['title'];
         $description = $input['description'] ?? null;
@@ -61,8 +65,8 @@ class Publish extends AbstractMutationResolver
         // Опублікувати через PublishManager
         $result = $this->publishManager->publish(
             $themeId,
-            $scope,
-            $scopeId,
+            $scope->getType(),
+            $scope->getScopeId(),
             $userId,
             $title,
             $description

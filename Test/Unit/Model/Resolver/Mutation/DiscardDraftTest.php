@@ -13,6 +13,8 @@ use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\DiscardDraft;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 class DiscardDraftTest extends TestCase
 {
@@ -21,6 +23,8 @@ class DiscardDraftTest extends TestCase
     private StatusProvider|MockObject $statusProvider;
     private UserResolver|MockObject $userResolver;
     private ThemeResolver|MockObject $themeResolver;
+    private ScopeFactory|MockObject $scopeFactory;
+    private ScopeInterface|MockObject $scopeMock;
     private Field|MockObject $field;
     private ContextInterface|MockObject $context;
     private ResolveInfo|MockObject $resolveInfo;
@@ -31,6 +35,11 @@ class DiscardDraftTest extends TestCase
         $this->statusProvider = $this->createMock(StatusProvider::class);
         $this->userResolver   = $this->createMock(UserResolver::class);
         $this->themeResolver  = $this->createMock(ThemeResolver::class);
+        $this->scopeFactory   = $this->createMock(ScopeFactory::class);
+        $this->scopeMock      = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         $this->field          = $this->createMock(Field::class);
         $this->context        = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -41,7 +50,8 @@ class DiscardDraftTest extends TestCase
             $this->valueService,
             $this->statusProvider,
             $this->userResolver,
-            $this->themeResolver
+            $this->themeResolver,
+            $this->scopeFactory
         );
     }
 
@@ -71,7 +81,7 @@ class DiscardDraftTest extends TestCase
         $this->themeResolver
             ->expects($this->once())
             ->method('getThemeIdByScope')
-            ->with('stores', 3)
+            ->with($this->isInstanceOf(ScopeInterface::class))
             ->willReturn(10);
         $this->valueService->method('deleteValues')->willReturn(0);
 

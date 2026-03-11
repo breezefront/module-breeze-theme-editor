@@ -9,6 +9,8 @@ use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\DiscardPublished;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
@@ -19,6 +21,8 @@ class DiscardPublishedTest extends TestCase
     private ValueService|MockObject $valueServiceMock;
     private StatusProvider|MockObject $statusProviderMock;
     private ThemeResolver|MockObject $themeResolverMock;
+    private ScopeFactory|MockObject $scopeFactory;
+    private ScopeInterface|MockObject $scopeMock;
     private Field|MockObject $fieldMock;
     private ContextInterface|MockObject $contextMock;
     private ResolveInfo|MockObject $resolveInfoMock;
@@ -28,6 +32,11 @@ class DiscardPublishedTest extends TestCase
         $this->valueServiceMock = $this->createMock(ValueService::class);
         $this->statusProviderMock = $this->createMock(StatusProvider::class);
         $this->themeResolverMock = $this->createMock(ThemeResolver::class);
+        $this->scopeFactory = $this->createMock(ScopeFactory::class);
+        $this->scopeMock    = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         $this->fieldMock = $this->createMock(Field::class);
         $this->contextMock = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -39,7 +48,8 @@ class DiscardPublishedTest extends TestCase
         $this->resolver = new DiscardPublished(
             $this->valueServiceMock,
             $this->statusProviderMock,
-            $this->themeResolverMock
+            $this->themeResolverMock,
+            $this->scopeFactory
         );
     }
 
@@ -85,7 +95,7 @@ class DiscardPublishedTest extends TestCase
     {
         $this->themeResolverMock->expects($this->once())
             ->method('getThemeIdByScope')
-            ->with('stores', 3)
+            ->with($this->isInstanceOf(ScopeInterface::class))
             ->willReturn(15);
 
         $this->statusProviderMock->method('getStatusId')->willReturn(2);

@@ -10,6 +10,7 @@ use Magento\Backend\Model\Auth\Session as AuthSession;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Api\SortOrder;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 
 /**
  * ViewModel for Theme Editor admin toolbar
@@ -95,6 +96,11 @@ class AdminToolbar implements ArgumentInterface
     private $backendSession;
 
     /**
+     * @var ScopeFactory
+     */
+    private $scopeFactory;
+
+    /**
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param AuthSession $authSession
@@ -109,6 +115,7 @@ class AdminToolbar implements ArgumentInterface
      * @param \Magento\Framework\AuthorizationInterface $authorization
      * @param \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver
      * @param \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession
+     * @param ScopeFactory $scopeFactory
      */
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
@@ -124,7 +131,8 @@ class AdminToolbar implements ArgumentInterface
         \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator $tokenGenerator,
         \Magento\Framework\AuthorizationInterface $authorization,
         \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver,
-        \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession
+        \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession,
+        ScopeFactory $scopeFactory
     ) {
         $this->request = $request;
         $this->urlBuilder = $urlBuilder;
@@ -140,6 +148,7 @@ class AdminToolbar implements ArgumentInterface
         $this->authorization = $authorization;
         $this->themeResolver = $themeResolver;
         $this->backendSession = $backendSession;
+        $this->scopeFactory = $scopeFactory;
     }
 
     /**
@@ -300,7 +309,8 @@ class AdminToolbar implements ArgumentInterface
     public function getThemeId()
     {
         try {
-            return $this->themeResolver->getThemeIdByScope($this->getScope(), $this->getScopeId());
+            $scope = $this->scopeFactory->create($this->getScope(), $this->getScopeId());
+            return $this->themeResolver->getThemeIdByScope($scope);
         } catch (\Exception $e) {
             try {
                 return (int)$this->design->getDesignTheme()->getId();

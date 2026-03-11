@@ -19,6 +19,8 @@ use Swissup\BreezeThemeEditor\Model\Resolver\Query\Publications;
 use Swissup\BreezeThemeEditor\Model\Utility\AdminUserLoader;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 class PublicationsTest extends TestCase
 {
@@ -26,6 +28,8 @@ class PublicationsTest extends TestCase
     private PublicationRepositoryInterface|MockObject $publicationRepository;
     private UserResolver|MockObject $userResolver;
     private ThemeResolver|MockObject $themeResolver;
+    private ScopeFactory|MockObject $scopeFactory;
+    private ScopeInterface|MockObject $scopeMock;
     private SearchCriteriaBuilder|MockObject $searchCriteriaBuilder;
     private SortOrderBuilder|MockObject $sortOrderBuilder;
     private AdminUserLoader|MockObject $adminUserLoader;
@@ -39,6 +43,9 @@ class PublicationsTest extends TestCase
         $this->userResolver          = $this->createMock(UserResolver::class);
         $this->themeResolver         = $this->createMock(ThemeResolver::class);
         $this->adminUserLoader       = $this->createMock(AdminUserLoader::class);
+        $this->scopeFactory          = $this->createMock(ScopeFactory::class);
+        $this->scopeMock             = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturn($this->scopeMock);
         $this->field                 = $this->createMock(Field::class);
         $this->context               = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -71,7 +78,8 @@ class PublicationsTest extends TestCase
             $this->themeResolver,
             $this->searchCriteriaBuilder,
             $this->sortOrderBuilder,
-            $this->adminUserLoader
+            $this->adminUserLoader,
+            $this->scopeFactory
         );
     }
 
@@ -131,7 +139,7 @@ class PublicationsTest extends TestCase
         $this->themeResolver
             ->expects($this->once())
             ->method('getThemeIdByScope')
-            ->with('stores', 2)
+            ->with($this->isInstanceOf(ScopeInterface::class))
             ->willReturn(10);
         $this->publicationRepository->method('getList')->willReturn($this->makeSearchResults([]));
         $this->adminUserLoader->method('getMultipleUsersData')->willReturn([]);

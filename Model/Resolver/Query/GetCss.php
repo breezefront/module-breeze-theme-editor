@@ -14,6 +14,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
 /**
@@ -33,7 +34,8 @@ class GetCss extends AbstractQueryResolver
         private ValueService $valueService,
         private ConfigProvider $configProvider,
         private ChangelogRepositoryInterface $changelogRepository,
-        private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory
+        private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory,
+        private ScopeFactory $scopeFactory
     ) {}
 
     public function resolve(
@@ -44,11 +46,13 @@ class GetCss extends AbstractQueryResolver
         array $args = null
     ) {
         // 1. Get scope and scopeId
-        $scope = $args['scope']['type'] ?? 'stores';
-        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
+        $scope = $this->scopeFactory->create(
+            $args['scope']['type'] ?? 'stores',
+            (int)($args['scope']['scopeId'] ?? 0)
+        );
 
         // 2. Get theme ID via ThemeResolver
-        $themeId = $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+        $themeId = $this->themeResolver->getThemeIdByScope($scope);
 
         // 3. Get status (default: PUBLISHED)
         $status = $args['status'] ?? 'PUBLISHED';
@@ -65,7 +69,7 @@ class GetCss extends AbstractQueryResolver
             }
             $css = $this->generateCssFromPublication($themeId, $publicationId);
         } else {
-            $css = $this->cssGenerator->generate($themeId, $scope, $scopeId, $status);
+            $css = $this->cssGenerator->generate($themeId, $scope->getType(), $scope->getScopeId(), $status);
         }
 
         // 6. Return structured response

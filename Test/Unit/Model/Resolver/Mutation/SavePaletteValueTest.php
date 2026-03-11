@@ -11,6 +11,8 @@ use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
@@ -22,6 +24,8 @@ class SavePaletteValueTest extends TestCase
     private PaletteResolver|MockObject $paletteResolverMock;
     private ThemeResolver|MockObject $themeResolverMock;
     private UserResolver|MockObject $userResolverMock;
+    private ScopeFactory|MockObject $scopeFactory;
+    private ScopeInterface|MockObject $scopeMock;
     private Field|MockObject $fieldMock;
     private ContextInterface|MockObject $contextMock;
     private ResolveInfo|MockObject $resolveInfoMock;
@@ -32,6 +36,11 @@ class SavePaletteValueTest extends TestCase
         $this->paletteResolverMock = $this->createMock(PaletteResolver::class);
         $this->themeResolverMock = $this->createMock(ThemeResolver::class);
         $this->userResolverMock = $this->createMock(UserResolver::class);
+        $this->scopeFactory = $this->createMock(ScopeFactory::class);
+        $this->scopeMock    = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         $this->fieldMock = $this->createMock(Field::class);
         $this->contextMock = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -44,7 +53,8 @@ class SavePaletteValueTest extends TestCase
             $this->valueRepositoryMock,
             $this->paletteResolverMock,
             $this->themeResolverMock,
-            $this->userResolverMock
+            $this->userResolverMock,
+            $this->scopeFactory
         );
     }
 
@@ -327,7 +337,7 @@ class SavePaletteValueTest extends TestCase
 
         $this->themeResolverMock->expects($this->once())
             ->method('getThemeIdByScope')
-            ->with('stores', 1)
+            ->with($this->isInstanceOf(ScopeInterface::class))
             ->willReturn(20);
 
         $valueMock->expects($this->once())->method('setThemeId')->with(20);

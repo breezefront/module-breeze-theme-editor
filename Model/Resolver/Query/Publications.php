@@ -12,6 +12,7 @@ use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\AdminUserLoader;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
 /**
@@ -27,7 +28,8 @@ class Publications extends AbstractQueryResolver
         private ThemeResolver $themeResolver,
         private SearchCriteriaBuilder $searchCriteriaBuilder,
         private SortOrderBuilder $sortOrderBuilder,
-        private AdminUserLoader $adminUserLoader
+        private AdminUserLoader $adminUserLoader,
+        private ScopeFactory $scopeFactory
     ) {}
 
     public function resolve(
@@ -37,11 +39,13 @@ class Publications extends AbstractQueryResolver
         array $value = null,
         array $args = null
     ) {
-        $scope = $args['scope']['type'] ?? 'stores';
-        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
+        $scope = $this->scopeFactory->create(
+            $args['scope']['type'] ?? 'stores',
+            (int)($args['scope']['scopeId'] ?? 0)
+        );
         $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope);
 
         $pageSize = $args['pageSize'] ?? 20;
         $currentPage = $args['currentPage'] ?? 1;
@@ -49,8 +53,8 @@ class Publications extends AbstractQueryResolver
 
         // Формуємо SearchCriteria замість старого array getList!
         $this->searchCriteriaBuilder->addFilter('theme_id', $themeId);
-        $this->searchCriteriaBuilder->addFilter('scope', $scope);
-        $this->searchCriteriaBuilder->addFilter('store_id', $scopeId);
+        $this->searchCriteriaBuilder->addFilter('scope', $scope->getType());
+        $this->searchCriteriaBuilder->addFilter('store_id', $scope->getScopeId());
 
         if ($search) {
             $this->searchCriteriaBuilder->addFilter('title', "%$search%", 'like');

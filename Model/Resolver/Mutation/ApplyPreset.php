@@ -18,6 +18,7 @@ class ApplyPreset extends AbstractSaveMutation
         protected \Swissup\BreezeThemeEditor\Model\Utility\UserResolver $userResolver,
         protected \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver,
         protected \Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider $configProvider,
+        protected \Swissup\BreezeThemeEditor\Model\Data\ScopeFactory $scopeFactory,
         private PresetService $presetManager
     ) {
         parent::__construct(
@@ -26,7 +27,8 @@ class ApplyPreset extends AbstractSaveMutation
             $statusProvider,
             $userResolver,
             $themeResolver,
-            $configProvider
+            $configProvider,
+            $scopeFactory
         );
     }
 

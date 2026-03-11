@@ -9,6 +9,8 @@ use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Publish;
 use Swissup\BreezeThemeEditor\Model\Service\PublishService;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
@@ -20,6 +22,8 @@ class PublishTest extends TestCase
     private PublishService|MockObject $publishServiceMock;
     private UserResolver|MockObject $userResolverMock;
     private ThemeResolver|MockObject $themeResolverMock;
+    private ScopeFactory|MockObject $scopeFactory;
+    private ScopeInterface|MockObject $scopeMock;
     private Field|MockObject $fieldMock;
     private ContextInterface|MockObject $contextMock;
     private ResolveInfo|MockObject $resolveInfoMock;
@@ -29,6 +33,11 @@ class PublishTest extends TestCase
         $this->publishServiceMock = $this->createMock(PublishService::class);
         $this->userResolverMock = $this->createMock(UserResolver::class);
         $this->themeResolverMock = $this->createMock(ThemeResolver::class);
+        $this->scopeFactory = $this->createMock(ScopeFactory::class);
+        $this->scopeMock    = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         $this->fieldMock = $this->createMock(Field::class);
         $this->contextMock = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -40,7 +49,8 @@ class PublishTest extends TestCase
         $this->publishResolver = new Publish(
             $this->publishServiceMock,
             $this->userResolverMock,
-            $this->themeResolverMock
+            $this->themeResolverMock,
+            $this->scopeFactory
         );
     }
 
@@ -241,7 +251,7 @@ class PublishTest extends TestCase
 
         $this->themeResolverMock->expects($this->once())
             ->method('getThemeIdByScope')
-            ->with('stores', 1)
+            ->with($this->isInstanceOf(ScopeInterface::class))
             ->willReturn(20);
 
         $this->publishServiceMock->expects($this->once())
@@ -297,7 +307,7 @@ class PublishTest extends TestCase
         // ThemeResolver is always called to resolve themeId from scope
         $this->themeResolverMock->expects($this->once())
             ->method('getThemeIdByScope')
-            ->with('stores', 1)
+            ->with($this->isInstanceOf(ScopeInterface::class))
             ->willReturn(15);
 
         $this->publishServiceMock->expects($this->once())

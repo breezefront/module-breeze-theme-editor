@@ -9,6 +9,7 @@ use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
 /**
@@ -25,7 +26,8 @@ abstract class AbstractSaveMutation extends AbstractMutationResolver
         protected StatusProvider $statusProvider,
         protected UserResolver $userResolver,
         protected ThemeResolver $themeResolver,
-        protected ConfigProvider $configProvider
+        protected ConfigProvider $configProvider,
+        protected ScopeFactory $scopeFactory
     ) {}
 
     /**
@@ -36,19 +38,21 @@ abstract class AbstractSaveMutation extends AbstractMutationResolver
         // Отримати userId з токена
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        $scope = $input['scope']['type'] ?? 'stores';
-        $scopeId = (int)($input['scope']['scopeId'] ?? 0);
+        $scope = $this->scopeFactory->create(
+            $input['scope']['type'] ?? 'stores',
+            (int)($input['scope']['scopeId'] ?? 0)
+        );
         $themeId = isset($input['themeId'])
             ? (int)$input['themeId']
-            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope);
 
         $statusCode = $input['status'] ?? 'DRAFT';
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
         return [
             'userId' => $userId,
-            'scope' => $scope,
-            'scopeId' => $scopeId,
+            'scope' => $scope->getType(),
+            'scopeId' => $scope->getScopeId(),
             'themeId' => $themeId,
             'statusCode' => $statusCode,
             'statusId' => $statusId

@@ -19,6 +19,8 @@ use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\Data\ChangelogInterface;
 use Swissup\BreezeThemeEditor\Api\Data\ChangelogSearchResultsInterface;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 /**
  * Unit tests for GetCss GraphQL resolver
@@ -38,6 +40,8 @@ class GetCssTest extends TestCase
     private ConfigProvider $configProviderMock;
     private ChangelogRepositoryInterface $changelogRepositoryMock;
     private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactoryMock;
+    private ScopeFactory $scopeFactory;
+    private ScopeInterface $scopeMock;
     
     private Field $fieldMock;
     private $contextMock;
@@ -54,6 +58,11 @@ class GetCssTest extends TestCase
         $this->configProviderMock = $this->createMock(ConfigProvider::class);
         $this->changelogRepositoryMock = $this->createMock(ChangelogRepositoryInterface::class);
         $this->searchCriteriaBuilderFactoryMock = $this->createMock(SearchCriteriaBuilderFactory::class);
+        $this->scopeFactory = $this->createMock(ScopeFactory::class);
+        $this->scopeMock    = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         
         // Create GraphQL mocks
         $this->fieldMock = $this->createMock(Field::class);
@@ -69,7 +78,8 @@ class GetCssTest extends TestCase
             $this->valueServiceMock,
             $this->configProviderMock,
             $this->changelogRepositoryMock,
-            $this->searchCriteriaBuilderFactoryMock
+            $this->searchCriteriaBuilderFactoryMock,
+            $this->scopeFactory
         );
     }
     
@@ -266,7 +276,7 @@ class GetCssTest extends TestCase
         
         $this->themeResolverMock->expects($this->once())
             ->method('getThemeIdByScope')
-            ->with('stores', 1)
+            ->with($this->isInstanceOf(ScopeInterface::class))
             ->willReturn(5);
         
         $this->cssGeneratorMock->expects($this->once())

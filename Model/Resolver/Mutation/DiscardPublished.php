@@ -8,6 +8,7 @@ use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
 /**
@@ -21,7 +22,8 @@ class DiscardPublished extends AbstractMutationResolver
     public function __construct(
         private ValueService $valueService,
         private StatusProvider $statusProvider,
-        private ThemeResolver $themeResolver
+        private ThemeResolver $themeResolver,
+        private ScopeFactory $scopeFactory
     ) {}
 
     /**
@@ -39,19 +41,21 @@ class DiscardPublished extends AbstractMutationResolver
         array $value = null,
         array $args = null
     ) {
-        $scope = $args['scope']['type'] ?? 'stores';
-        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
+        $scope = $this->scopeFactory->create(
+            $args['scope']['type'] ?? 'stores',
+            (int)($args['scope']['scopeId'] ?? 0)
+        );
         $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope);
 
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
         // Delete all PUBLISHED values (userId=null — published values have no per-user scope)
         $discardedCount = $this->valueService->deleteValues(
             $themeId,
-            $scope,
-            $scopeId,
+            $scope->getType(),
+            $scope->getScopeId(),
             $publishedStatusId,
             null,   // userId — not applicable for PUBLISHED
             null,   // sectionCodes — reset everything

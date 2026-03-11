@@ -14,6 +14,8 @@ use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Resolver\Query\Values;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 /**
  * Unit tests for Values GraphQL resolver
@@ -30,6 +32,8 @@ class ValuesTest extends TestCase
     private ConfigProvider $configProviderMock;
     private UserResolver $userResolverMock;
     private ThemeResolver $themeResolverMock;
+    private ScopeFactory $scopeFactory;
+    private ScopeInterface $scopeMock;
     
     private Field $fieldMock;
     private ContextInterface $contextMock;
@@ -43,6 +47,11 @@ class ValuesTest extends TestCase
         $this->configProviderMock = $this->createMock(ConfigProvider::class);
         $this->userResolverMock = $this->createMock(UserResolver::class);
         $this->themeResolverMock = $this->createMock(ThemeResolver::class);
+        $this->scopeFactory = $this->createMock(ScopeFactory::class);
+        $this->scopeMock    = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         
         // Create GraphQL mocks
         $this->fieldMock = $this->createMock(Field::class);
@@ -59,7 +68,8 @@ class ValuesTest extends TestCase
             $this->statusProviderMock,
             $this->configProviderMock,
             $this->userResolverMock,
-            $this->themeResolverMock
+            $this->themeResolverMock,
+            $this->scopeFactory
         );
     }
     

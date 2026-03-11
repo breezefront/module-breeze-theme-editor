@@ -19,6 +19,7 @@ use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 
 /**
  * Get theme configuration with current values
@@ -38,7 +39,8 @@ class Config extends AbstractConfigResolver
         private StatusProvider $statusProvider,
         private CompareProvider $compareProvider,
         private ThemeResolver $themeResolver,
-        private UserResolver $userResolver
+        private UserResolver $userResolver,
+        private ScopeFactory $scopeFactory
     ) {
         parent::__construct($serializer, $configProvider, $paletteProvider, $fontPaletteProvider, $colorFormatResolver, $colorFormatter);
     }
@@ -54,14 +56,16 @@ class Config extends AbstractConfigResolver
         $userId = $this->userResolver->getCurrentUserId($context);
 
         // 2. Отримати scope / scopeId
-        $scope = $args['scope']['type'] ?? 'stores';
-        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
+        $scope = $this->scopeFactory->create(
+            $args['scope']['type'] ?? 'stores',
+            (int)($args['scope']['scopeId'] ?? 0)
+        );
 
         // 3. Визначити theme ID
         try {
             $themeId = isset($args['themeId'])
                 ? (int)$args['themeId']
-                : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+                : $this->themeResolver->getThemeIdByScope($scope);
         } catch (LocalizedException $e) {
             throw new GraphQlInputException(__($e->getMessage()));
         }
@@ -89,13 +93,13 @@ class Config extends AbstractConfigResolver
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row still display the published value, not the theme default.
         if ($statusCode === 'PUBLISHED') {
-            $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope, $scopeId, $statusId, null);
+            $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope->getType(), $scope->getScopeId(), $statusId, null);
         } else {
             $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
             $savedValues = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
                 $themeId,
-                $scope,
-                $scopeId,
+                $scope->getType(),
+                $scope->getScopeId(),
                 $statusId,
                 $publishedStatusId,
                 $userId
@@ -135,7 +139,7 @@ class Config extends AbstractConfigResolver
 
         // 11. Якщо draft - перевірити зміни
         if ($statusCode === 'DRAFT') {
-            $comparison = $this->compareProvider->compare($themeId, $scope, $scopeId, $userId);
+            $comparison = $this->compareProvider->compare($themeId, $scope->getType(), $scope->getScopeId(), $userId);
             $metadata['hasUnpublishedChanges'] = $comparison['hasChanges'];
             $metadata['draftChangesCount'] = $comparison['changesCount'];
         }

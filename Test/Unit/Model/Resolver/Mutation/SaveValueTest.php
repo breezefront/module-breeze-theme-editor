@@ -15,6 +15,8 @@ use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\SaveValue;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 class SaveValueTest extends TestCase
 {
@@ -25,6 +27,8 @@ class SaveValueTest extends TestCase
     private UserResolver $userResolver;
     private ThemeResolver $themeResolver;
     private ConfigProvider $configProvider;
+    private ScopeFactory $scopeFactory;
+    private ScopeInterface $scopeMock;
     private Field $field;
     private ContextInterface $contextMock;
     private ResolveInfo $resolveInfo;
@@ -37,6 +41,11 @@ class SaveValueTest extends TestCase
         $this->userResolver = $this->createMock(UserResolver::class);
         $this->themeResolver = $this->createMock(ThemeResolver::class);
         $this->configProvider = $this->createMock(ConfigProvider::class);
+        $this->scopeFactory = $this->createMock(ScopeFactory::class);
+        $this->scopeMock    = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         $this->field = $this->createMock(Field::class);
         $this->contextMock = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -51,7 +60,8 @@ class SaveValueTest extends TestCase
             $this->statusProvider,
             $this->userResolver,
             $this->themeResolver,
-            $this->configProvider
+            $this->configProvider,
+            $this->scopeFactory
         );
     }
 
@@ -156,7 +166,7 @@ class SaveValueTest extends TestCase
         $this->statusProvider->method('getStatusId')->willReturn(1);
         $this->themeResolver->expects($this->once())
             ->method('getThemeIdByScope')
-            ->with('stores', 2)
+            ->with($this->isInstanceOf(ScopeInterface::class))
             ->willReturn(10);
 
         $valueMock = $this->createMock(ValueInterface::class);

@@ -10,6 +10,7 @@ use Swissup\BreezeThemeEditor\Model\Service\ImportExportService;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
 /**
@@ -33,7 +34,8 @@ class ExportSettings extends AbstractMutationResolver
         private ImportExportService $importExportService,
         private UserResolver $userResolver,
         private ThemeResolver $themeResolver,
-        private StatusProvider $statusProvider
+        private StatusProvider $statusProvider,
+        private ScopeFactory $scopeFactory
     ) {}
 
     public function resolve(
@@ -46,11 +48,13 @@ class ExportSettings extends AbstractMutationResolver
         // Auth
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        $scope = $args['scope']['type'] ?? 'stores';
-        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
+        $scope = $this->scopeFactory->create(
+            $args['scope']['type'] ?? 'stores',
+            (int)($args['scope']['scopeId'] ?? 0)
+        );
         $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope);
 
         $statusCode = $args['status'] ?? 'PUBLISHED';
         
@@ -64,8 +68,8 @@ class ExportSettings extends AbstractMutationResolver
         // Export
         $result = $this->importExportService->export(
             $themeId,
-            $scope,
-            $scopeId,
+            $scope->getType(),
+            $scope->getScopeId(),
             $statusCode,
             $statusCode === 'DRAFT' ? $userId : null
         );

@@ -20,6 +20,8 @@ use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Resolver\Query\Config;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 /**
  * Tests for the fontPalette field passthrough in
@@ -53,6 +55,8 @@ class AbstractConfigResolverFontPalettePassthroughTest extends TestCase
     private CompareProvider $compareProviderMock;
     private ThemeResolver $themeResolverMock;
     private UserResolver $userResolverMock;
+    private ScopeFactory $scopeFactory;
+    private ScopeInterface $scopeMock;
 
     private Field $fieldMock;
     private ContextInterface $contextMock;
@@ -73,6 +77,11 @@ class AbstractConfigResolverFontPalettePassthroughTest extends TestCase
         $this->compareProviderMock          = $this->createMock(CompareProvider::class);
         $this->themeResolverMock            = $this->createMock(ThemeResolver::class);
         $this->userResolverMock             = $this->createMock(UserResolver::class);
+        $this->scopeFactory = $this->createMock(ScopeFactory::class);
+        $this->scopeMock    = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
 
         $this->fieldMock   = $this->createMock(Field::class);
         $this->contextMock = $this->getMockBuilder(ContextInterface::class)
@@ -97,7 +106,8 @@ class AbstractConfigResolverFontPalettePassthroughTest extends TestCase
             $this->statusProviderMock,
             $this->compareProviderMock,
             $this->themeResolverMock,
-            $this->userResolverMock
+            $this->userResolverMock,
+            $this->scopeFactory
         );
     }
 

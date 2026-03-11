@@ -11,6 +11,7 @@ use Swissup\BreezeThemeEditor\Model\Config\PaletteResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
 /**
@@ -25,7 +26,8 @@ class SavePaletteValue extends AbstractMutationResolver
         private ValueRepositoryInterface $valueRepository,
         private PaletteResolver $paletteResolver,
         private ThemeResolver $themeResolver,
-        private UserResolver $userResolver
+        private UserResolver $userResolver,
+        private ScopeFactory $scopeFactory
     ) {}
 
     public function resolve(
@@ -37,11 +39,13 @@ class SavePaletteValue extends AbstractMutationResolver
     ) {
         $input = $args['input'];
 
-        $scope = $input['scope']['type'] ?? 'stores';
-        $scopeId = (int)($input['scope']['scopeId'] ?? 0);
+        $scope = $this->scopeFactory->create(
+            $input['scope']['type'] ?? 'stores',
+            (int)($input['scope']['scopeId'] ?? 0)
+        );
         $themeId = isset($input['themeId'])
             ? (int)$input['themeId']
-            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope);
 
         $cssVar = $input['property'] ?? $input['cssVar'];
         $colorValue = $input['value'];
@@ -77,8 +81,8 @@ class SavePaletteValue extends AbstractMutationResolver
         /** @var ValueInterface $valueModel */
         $valueModel = $this->valueRepository->create();
         $valueModel->setThemeId($themeId);
-        $valueModel->setScope($scope);
-        $valueModel->setStoreId($scopeId);
+        $valueModel->setScope($scope->getType());
+        $valueModel->setStoreId($scope->getScopeId());
         $valueModel->setStatusId(1); // 1 = PUBLISHED (palette changes are always published)
         $valueModel->setSectionCode('_palette');
         $valueModel->setSettingCode($cssVar);

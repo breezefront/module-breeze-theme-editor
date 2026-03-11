@@ -9,6 +9,7 @@ use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\ImportExportService;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
 /**
@@ -21,7 +22,8 @@ class ImportSettings extends AbstractMutationResolver
     public function __construct(
         private ImportExportService $importExportService,
         private UserResolver $userResolver,
-        private ThemeResolver $themeResolver
+        private ThemeResolver $themeResolver,
+        private ScopeFactory $scopeFactory
     ) {}
 
     public function resolve(
@@ -36,11 +38,13 @@ class ImportSettings extends AbstractMutationResolver
         // Auth
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        $scope = $input['scope']['type'] ?? 'stores';
-        $scopeId = (int)($input['scope']['scopeId'] ?? 0);
+        $scope = $this->scopeFactory->create(
+            $input['scope']['type'] ?? 'stores',
+            (int)($input['scope']['scopeId'] ?? 0)
+        );
         $themeId = isset($input['themeId'])
             ? (int)$input['themeId']
-            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope);
 
         $statusCode = $input['status'] ?? 'DRAFT';
         $jsonData = $input['jsonData'];
@@ -49,8 +53,8 @@ class ImportSettings extends AbstractMutationResolver
         try {
             $result = $this->importExportService->import(
                 $themeId,
-                $scope,
-                $scopeId,
+                $scope->getType(),
+                $scope->getScopeId(),
                 $statusCode,
                 $userId,
                 $jsonData,

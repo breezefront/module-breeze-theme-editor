@@ -37,7 +37,8 @@ class CopyFromStore extends AbstractSaveMutation
         ], $context);
 
         // Визначити themeId для source scope
-        $fromThemeId = $this->themeResolver->getThemeIdByScope($fromScope, $fromScopeId);
+        $fromScopeVO = $this->scopeFactory->create($fromScope, $fromScopeId);
+        $fromThemeId = $this->themeResolver->getThemeIdByScope($fromScopeVO);
 
         // Копіювати published values з source scope через ValueService
         $fromStatusId = $this->statusProvider->getStatusId('PUBLISHED');

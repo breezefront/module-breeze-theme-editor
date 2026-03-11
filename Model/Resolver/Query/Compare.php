@@ -8,6 +8,7 @@ use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
 /**
@@ -20,7 +21,8 @@ class Compare extends AbstractQueryResolver
     public function __construct(
         private CompareProvider $compareProvider,
         private UserResolver $userResolver,
-        private ThemeResolver $themeResolver
+        private ThemeResolver $themeResolver,
+        private ScopeFactory $scopeFactory
     ) {}
 
     public function resolve(
@@ -33,14 +35,16 @@ class Compare extends AbstractQueryResolver
         // Отримати userId з токена
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        $scope = $args['scope']['type'] ?? 'stores';
-        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
+        $scope = $this->scopeFactory->create(
+            $args['scope']['type'] ?? 'stores',
+            (int)($args['scope']['scopeId'] ?? 0)
+        );
 
         // Auto-detect theme
         $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope);
 
-        return $this->compareProvider->compare($themeId, $scope, $scopeId, $userId);
+        return $this->compareProvider->compare($themeId, $scope->getType(), $scope->getScopeId(), $userId);
     }
 }

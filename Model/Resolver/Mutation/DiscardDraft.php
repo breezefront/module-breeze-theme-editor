@@ -9,6 +9,7 @@ use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
 /**
@@ -22,7 +23,8 @@ class DiscardDraft extends AbstractMutationResolver
         private ValueService $valueService,
         private StatusProvider $statusProvider,
         private UserResolver $userResolver,
-        private ThemeResolver $themeResolver
+        private ThemeResolver $themeResolver,
+        private ScopeFactory $scopeFactory
     ) {}
 
     public function resolve(
@@ -32,11 +34,13 @@ class DiscardDraft extends AbstractMutationResolver
         array $value = null,
         array $args = null
     ) {
-        $scope = $args['scope']['type'] ?? 'stores';
-        $scopeId = (int)($args['scope']['scopeId'] ?? 0);
+        $scope = $this->scopeFactory->create(
+            $args['scope']['type'] ?? 'stores',
+            (int)($args['scope']['scopeId'] ?? 0)
+        );
         $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
-            : $this->themeResolver->getThemeIdByScope($scope, $scopeId);
+            : $this->themeResolver->getThemeIdByScope($scope);
 
         $sectionCodes = $args['sectionCodes'] ??  null;
         $fieldCodes   = $args['fieldCodes']   ?? null;
@@ -47,8 +51,8 @@ class DiscardDraft extends AbstractMutationResolver
         // Видалити draft значення через ValueService
         $discardedCount = $this->valueService->deleteValues(
             $themeId,
-            $scope,
-            $scopeId,
+            $scope->getType(),
+            $scope->getScopeId(),
             $draftStatusId,
             $userId,
             $sectionCodes,

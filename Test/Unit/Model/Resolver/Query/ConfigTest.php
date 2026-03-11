@@ -19,6 +19,8 @@ use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Resolver\Query\Config;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 /**
  * Unit tests for Config GraphQL resolver
@@ -41,6 +43,8 @@ class ConfigTest extends TestCase
     private CompareProvider $compareProviderMock;
     private ThemeResolver $themeResolverMock;
     private UserResolver $userResolverMock;
+    private ScopeFactory $scopeFactory;
+    private ScopeInterface $scopeMock;
 
     private Field $fieldMock;
     private ContextInterface $contextMock;
@@ -60,6 +64,11 @@ class ConfigTest extends TestCase
         $this->compareProviderMock = $this->createMock(CompareProvider::class);
         $this->themeResolverMock = $this->createMock(ThemeResolver::class);
         $this->userResolverMock = $this->createMock(UserResolver::class);
+        $this->scopeFactory = $this->createMock(ScopeFactory::class);
+        $this->scopeMock = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
 
         // Create GraphQL mocks
         $this->fieldMock = $this->createMock(Field::class);
@@ -92,7 +101,8 @@ class ConfigTest extends TestCase
             $this->statusProviderMock,
             $this->compareProviderMock,
             $this->themeResolverMock,
-            $this->userResolverMock
+            $this->userResolverMock,
+            $this->scopeFactory
         );
     }
 
@@ -312,7 +322,7 @@ class ConfigTest extends TestCase
 
         $this->themeResolverMock->expects($this->once())
             ->method('getThemeIdByScope')
-            ->with('stores', 1)
+            ->with($this->isInstanceOf(ScopeInterface::class))
             ->willReturn(5);
 
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
@@ -440,7 +450,8 @@ class ConfigTest extends TestCase
             $this->statusProviderMock,
             $this->compareProviderMock,
             $this->themeResolverMock,
-            $this->userResolverMock
+            $this->userResolverMock,
+            $this->scopeFactory
         );
 
         // Setup mocks

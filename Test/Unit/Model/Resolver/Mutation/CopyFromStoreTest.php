@@ -16,6 +16,8 @@ use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\CopyFromStore;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 class CopyFromStoreTest extends TestCase
 {
@@ -26,6 +28,8 @@ class CopyFromStoreTest extends TestCase
     private UserResolver|MockObject $userResolver;
     private ThemeResolver|MockObject $themeResolver;
     private ConfigProvider|MockObject $configProvider;
+    private ScopeFactory|MockObject $scopeFactory;
+    private ScopeInterface|MockObject $scopeMock;
     private Field|MockObject $field;
     private ContextInterface|MockObject $context;
     private ResolveInfo|MockObject $resolveInfo;
@@ -38,6 +42,11 @@ class CopyFromStoreTest extends TestCase
         $this->userResolver    = $this->createMock(UserResolver::class);
         $this->themeResolver   = $this->createMock(ThemeResolver::class);
         $this->configProvider  = $this->createMock(ConfigProvider::class);
+        $this->scopeFactory    = $this->createMock(ScopeFactory::class);
+        $this->scopeMock       = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
         $this->field           = $this->createMock(Field::class);
         $this->context         = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -50,7 +59,8 @@ class CopyFromStoreTest extends TestCase
             $this->statusProvider,
             $this->userResolver,
             $this->themeResolver,
-            $this->configProvider
+            $this->configProvider,
+            $this->scopeFactory
         );
     }
 
@@ -73,7 +83,7 @@ class CopyFromStoreTest extends TestCase
         $this->statusProvider->method('getStatusId')
             ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
         $this->themeResolver->method('getThemeIdByScope')
-            ->willReturnMap([['stores', 1, 10], ['stores', 2, 5]]);
+            ->willReturnOnConsecutiveCalls(10, 5);
         $this->valueService->method('copyValues')->willReturn(3);
         $this->valueService->method('getValuesByTheme')->willReturn([]);
 
@@ -142,7 +152,7 @@ class CopyFromStoreTest extends TestCase
         $this->statusProvider->method('getStatusId')->willReturn(1);
         $this->themeResolver
             ->method('getThemeIdByScope')
-            ->willReturnMap([['stores', 1, 10], ['stores', 2, 7]]);
+            ->willReturnOnConsecutiveCalls(10, 7);
         $this->valueService->method('copyValues')->willReturn(0);
         $this->valueService->method('getValuesByTheme')->willReturn([]);
 
