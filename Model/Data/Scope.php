@@ -12,7 +12,7 @@ use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
  * Type is stored in plural form ('stores', 'websites', 'default') to match
  * the ValueInterface::SCOPE_* constants used throughout this module.
  */
-final class Scope implements ScopeInterface
+class Scope implements ScopeInterface
 {
     public function __construct(
         private readonly string $type,
