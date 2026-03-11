@@ -2135,5 +2135,124 @@ class CssGeneratorTest extends TestCase
             'CSS variable must still be emitted even when no @import is generated'
         );
     }
+
+    /**
+     * Test 44: PUBLISHED CSS must include values inherited from a broader scope.
+     *
+     * Regression test for Issue #015.
+     *
+     * When a value is saved at `default` scope but NOT at `stores/1`,
+     * the PUBLISHED branch must walk the full scope chain (via resolveAllValues)
+     * so the default-scope value appears in the generated CSS.
+     *
+     * With the bug the code calls valueService::getValuesByTheme() — a flat,
+     * scope-exact query that never looks at parent scopes — so the value is
+     * invisible.  After the fix it calls valueInheritanceResolver::resolveAllValues()
+     * which walks default → websites → stores and returns the merged set.
+     */
+    public function testPublishedCssIncludesValuesFromBroaderScope(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        // resolveAllValues() returns the value that lives at the broader (default) scope.
+        // This simulates the inheritance resolver doing its job.
+        $this->valueInheritanceResolverMock
+            ->expects($this->once())
+            ->method('resolveAllValues')
+            ->willReturn([
+                [
+                    'section_code' => 'typography',
+                    'setting_code' => 'font_size',
+                    'value'        => '18px',   // saved at default scope, inherited here
+                ],
+            ]);
+
+        // The old flat-query path must be completely bypassed after the fix.
+        $this->valueServiceMock
+            ->expects($this->never())
+            ->method('getValuesByTheme');
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'typography',
+                    'settings' => [
+                        [
+                            'id'       => 'font_size',
+                            'type'     => 'text',
+                            'property' => '--font-size-base',
+                            'default'  => '16px',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--font-size-base: 18px;',
+            $css,
+            'PUBLISHED CSS must contain a value inherited from a broader (default) scope'
+        );
+    }
+
+    /**
+     * Test 45: PUBLISHED CSS must include values inherited from a parent theme.
+     *
+     * Regression test for Issue #015.
+     *
+     * When a child theme has no saved value for a field but the parent theme does,
+     * the PUBLISHED branch must use resolveAllValues() — which walks the theme
+     * hierarchy — so the parent-theme value appears in the generated CSS.
+     *
+     * With the bug the code calls valueService::getValuesByTheme() for the child
+     * theme only, so the parent-theme value is silently dropped.
+     */
+    public function testPublishedCssIncludesValuesFromParentTheme(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        // resolveAllValues() returns the value that was inherited from the parent theme.
+        $this->valueInheritanceResolverMock
+            ->expects($this->once())
+            ->method('resolveAllValues')
+            ->willReturn([
+                [
+                    'section_code' => 'typography',
+                    'setting_code' => 'font_size',
+                    'value'        => '20px',   // defined in parent theme, not in child
+                ],
+            ]);
+
+        // The old flat-query path must be completely bypassed after the fix.
+        $this->valueServiceMock
+            ->expects($this->never())
+            ->method('getValuesByTheme');
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'typography',
+                    'settings' => [
+                        [
+                            'id'       => 'font_size',
+                            'type'     => 'text',
+                            'property' => '--font-size-base',
+                            'default'  => '16px',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--font-size-base: 20px;',
+            $css,
+            'PUBLISHED CSS must contain a value inherited from a parent theme'
+        );
+    }
 }
 
