@@ -9,6 +9,7 @@ use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 
 /**
  * Generate CSS from saved theme values
@@ -27,12 +28,11 @@ class CssGenerator
      * Generate CSS variables from saved values
      *
      * @param int $themeId
-     * @param string $scope
-     * @param int $scopeId
+     * @param ScopeInterface $scope
      * @param string $status 'PUBLISHED' or 'DRAFT'
      * @return string CSS code with :root { ... }
      */
-    public function generate(int $themeId, string $scope, int $scopeId, string $status = 'PUBLISHED'): string
+    public function generate(int $themeId, ScopeInterface $scope, string $status = 'PUBLISHED'): string
     {
         $statusId = $this->statusProvider->getStatusId($status);
 
@@ -43,13 +43,12 @@ class CssGenerator
             $values = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
                 $themeId,
                 $scope,
-                $scopeId,
                 $statusId,
                 $publishedStatusId,
                 null
             );
         } else {
-            $values = $this->valueService->getValuesByTheme($themeId, $scope, $scopeId, $statusId, null);
+            $values = $this->valueService->getValuesByTheme($themeId, $scope, $statusId, null);
         }
 
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);

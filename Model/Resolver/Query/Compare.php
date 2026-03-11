@@ -45,6 +45,6 @@ class Compare extends AbstractQueryResolver
             ? (int)$args['themeId']
             : $this->themeResolver->getThemeIdByScope($scope);
 
-        return $this->compareProvider->compare($themeId, $scope->getType(), $scope->getScopeId(), $userId);
+        return $this->compareProvider->compare($themeId, $scope, $userId);
     }
 }

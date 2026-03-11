@@ -68,8 +68,7 @@ class ExportSettings extends AbstractMutationResolver
         // Export
         $result = $this->importExportService->export(
             $themeId,
-            $scope->getType(),
-            $scope->getScopeId(),
+            $scope,
             $statusCode,
             $statusCode === 'DRAFT' ? $userId : null
         );

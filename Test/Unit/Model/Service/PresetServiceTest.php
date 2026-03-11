@@ -10,7 +10,9 @@ use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
+use Swissup\BreezeThemeEditor\Model\Data\Scope;
 use Magento\Framework\Exception\LocalizedException;
 
 class PresetServiceTest extends TestCase
@@ -338,7 +340,7 @@ class PresetServiceTest extends TestCase
         // Overwrite existing
         $this->valueServiceMock->expects($this->once())
             ->method('deleteValues')
-            ->with($themeId, 'stores', $storeId, 1, $userId);
+            ->with($themeId, $this->isInstanceOf(ScopeInterface::class), 1, $userId);
 
         $this->valueRepositoryMock->expects($this->once())
             ->method('saveMultiple')
@@ -347,7 +349,7 @@ class PresetServiceTest extends TestCase
             }))
             ->willReturn(2);
 
-        $result = $this->presetService->applyPreset($themeId, 'stores', $storeId, $presetId, $statusCode, $userId, true);
+        $result = $this->presetService->applyPreset($themeId, new Scope('stores', $storeId), $presetId, $statusCode, $userId, true);
 
         $this->assertEquals(2, $result['appliedCount']);
         $this->assertCount(2, $result['values']);
@@ -398,11 +400,11 @@ class PresetServiceTest extends TestCase
         // Verify deleteValues called with userId = 0
         $this->valueServiceMock->expects($this->once())
             ->method('deleteValues')
-            ->with($themeId, 'stores', $storeId, 2, 0);
+            ->with($themeId, $this->isInstanceOf(ScopeInterface::class), 2, 0);
 
         $this->valueRepositoryMock->method('saveMultiple')->willReturn(1);
 
-        $result = $this->presetService->applyPreset($themeId, 'stores', $storeId, $presetId, $statusCode, $userId, true);
+        $result = $this->presetService->applyPreset($themeId, new Scope('stores', $storeId), $presetId, $statusCode, $userId, true);
 
         $this->assertEquals(1, $result['appliedCount']);
     }
@@ -430,7 +432,7 @@ class PresetServiceTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Preset "empty-preset" has no settings');
 
-        $this->presetService->applyPreset($themeId, 'stores', $storeId, $presetId, $statusCode, $userId);
+        $this->presetService->applyPreset($themeId, new Scope('stores', $storeId), $presetId, $statusCode, $userId);
     }
 
     /**
@@ -470,11 +472,11 @@ class PresetServiceTest extends TestCase
         // VERIFY: deleteValues IS called
         $this->valueServiceMock->expects($this->once())
             ->method('deleteValues')
-            ->with($themeId, 'stores', $storeId, 1, $userId);
+            ->with($themeId, $this->isInstanceOf(ScopeInterface::class), 1, $userId);
 
         $this->valueRepositoryMock->method('saveMultiple')->willReturn(1);
 
-        $this->presetService->applyPreset($themeId, 'stores', $storeId, $presetId, $statusCode, $userId, true);
+        $this->presetService->applyPreset($themeId, new Scope('stores', $storeId), $presetId, $statusCode, $userId, true);
     }
 
     /**
@@ -517,6 +519,6 @@ class PresetServiceTest extends TestCase
 
         $this->valueRepositoryMock->method('saveMultiple')->willReturn(1);
 
-        $this->presetService->applyPreset($themeId, 'stores', $storeId, $presetId, $statusCode, $userId, false);
+        $this->presetService->applyPreset($themeId, new Scope('stores', $storeId), $presetId, $statusCode, $userId, false);
     }
 }

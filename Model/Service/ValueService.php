@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Service;
 
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
@@ -28,15 +29,14 @@ class ValueService
      */
     public function getValuesByTheme(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         int $statusId,
         ?int $userId = null
     ): array {
         $criteria = $this->searchCriteriaBuilder
             ->addFilter('theme_id', $themeId)
-            ->addFilter('scope', $scope)
-            ->addFilter('store_id', $scopeId)
+            ->addFilter('scope', $scope->getType())
+            ->addFilter('store_id', $scope->getScopeId())
             ->addFilter('status_id', $statusId);
 
         if ($userId !== null) {
@@ -65,8 +65,7 @@ class ValueService
      */
     public function getSingleValue(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         int $statusId,
         string $sectionCode,
         string $fieldCode,
@@ -74,8 +73,8 @@ class ValueService
     ): ?string {
         $criteria = $this->searchCriteriaBuilder
             ->addFilter('theme_id', $themeId)
-            ->addFilter('scope', $scope)
-            ->addFilter('store_id', $scopeId)
+            ->addFilter('scope', $scope->getType())
+            ->addFilter('store_id', $scope->getScopeId())
             ->addFilter('status_id', $statusId)
             ->addFilter('section_code', $sectionCode)
             ->addFilter('setting_code', $fieldCode)
@@ -104,8 +103,7 @@ class ValueService
      * Replaces: ValueRepository::deleteValues()
      *
      * @param int         $themeId
-     * @param string      $scope
-     * @param int         $scopeId
+     * @param ScopeInterface $scope
      * @param int         $statusId
      * @param int|null    $userId
      * @param array|null  $sectionCodes  Optional section filter
@@ -113,8 +111,7 @@ class ValueService
      */
     public function deleteValues(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         int $statusId,
         ?int $userId = null,
         ?array $sectionCodes = null,
@@ -122,8 +119,8 @@ class ValueService
     ): int {
         $criteria = $this->searchCriteriaBuilder
             ->addFilter('theme_id', $themeId)
-            ->addFilter('scope', $scope)
-            ->addFilter('store_id', $scopeId)
+            ->addFilter('scope', $scope->getType())
+            ->addFilter('store_id', $scope->getScopeId())
             ->addFilter('status_id', $statusId);
 
         if ($userId !== null) {
@@ -160,21 +157,19 @@ class ValueService
      */
     public function copyValues(
         int $fromThemeId,
-        string $fromScope,
-        int $fromScopeId,
+        ScopeInterface $fromScope,
         int $fromStatusId,
         ?int $fromUserId,
         int $toThemeId,
-        string $toScope,
-        int $toScopeId,
+        ScopeInterface $toScope,
         int $toStatusId,
         ?int $toUserId,
         ?array $sectionCodes = null
     ): int {
         $criteria = $this->searchCriteriaBuilder
             ->addFilter('theme_id', $fromThemeId)
-            ->addFilter('scope', $fromScope)
-            ->addFilter('store_id', $fromScopeId)
+            ->addFilter('scope', $fromScope->getType())
+            ->addFilter('store_id', $fromScope->getScopeId())
             ->addFilter('status_id', $fromStatusId);
 
         if ($fromUserId !== null) {
@@ -196,8 +191,8 @@ class ValueService
         foreach ($values as $val) {
             $model = $this->valueRepository->create();
             $model->setThemeId($toThemeId);
-            $model->setScope($toScope);
-            $model->setStoreId($toScopeId);
+            $model->setScope($toScope->getType());
+            $model->setStoreId($toScope->getScopeId());
             $model->setStatusId($toStatusId);
             $model->setUserId($toUserId);
             $model->setSectionCode($val->getSectionCode());

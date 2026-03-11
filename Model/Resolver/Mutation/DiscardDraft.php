@@ -51,8 +51,7 @@ class DiscardDraft extends AbstractMutationResolver
         // Видалити draft значення через ValueService
         $discardedCount = $this->valueService->deleteValues(
             $themeId,
-            $scope->getType(),
-            $scope->getScopeId(),
+            $scope,
             $draftStatusId,
             $userId,
             $sectionCodes,

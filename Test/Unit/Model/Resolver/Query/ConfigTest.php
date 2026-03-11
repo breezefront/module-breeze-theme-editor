@@ -247,7 +247,7 @@ class ConfigTest extends TestCase
 
         $this->valueInheritanceResolverMock->expects($this->once())
             ->method('resolveAllValues')
-            ->with(1, 'stores', 1, 2, null) // userId = null for PUBLISHED
+            ->with(1, $this->isInstanceOf(ScopeInterface::class), 2, null) // userId = null for PUBLISHED
             ->willReturn([]);
 
         $this->configProviderMock->method('getAllDefaults')->willReturn([]);

@@ -5,7 +5,9 @@ namespace Swissup\BreezeThemeEditor\Model\Service;
 
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\LocalizedException;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
@@ -26,18 +28,18 @@ class PublishService
         private PublicationFactory $publicationFactory,
         private ChangelogFactory $changelogFactory,
         private SearchCriteriaBuilder $searchCriteriaBuilder,
-        private ResourceConnection $resourceConnection
+        private ResourceConnection $resourceConnection,
+        private ScopeFactory $scopeFactory
     ) {}
 
     public function publish(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         int $userId,
         string $title,
         ?string $description = null
     ): array {
-        $comparison = $this->compareProvider->compare($themeId, $scope, $scopeId, $userId);
+        $comparison = $this->compareProvider->compare($themeId, $scope, $userId);
 
         if (!$comparison['hasChanges']) {
             throw new LocalizedException(__('No changes to publish'));
@@ -47,13 +49,13 @@ class PublishService
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
         // Load all draft values via ValueService
-        $draftValues = $this->valueService->getValuesByTheme($themeId, $scope, $scopeId, $draftStatusId, $userId);
+        $draftValues = $this->valueService->getValuesByTheme($themeId, $scope, $draftStatusId, $userId);
 
         // Create publication record
         $publication = $this->publicationFactory->create();
         $publication->setThemeId($themeId);
-        $publication->setScope($scope);
-        $publication->setStoreId($scopeId);
+        $publication->setScope($scope->getType());
+        $publication->setStoreId($scope->getScopeId());
         $publication->setTitle($title);
         $publication->setDescription($description);
         $publication->setPublishedBy($userId);
@@ -72,7 +74,6 @@ class PublishService
             $currentPublished = $this->valueService->getValuesByTheme(
                 $themeId,
                 $scope,
-                $scopeId,
                 $publishedStatusId,
                 null // no user_id filter — load ALL published rows regardless of owner
             );
@@ -88,15 +89,15 @@ class PublishService
             }
 
             // Delete ALL existing published rows (removes legacy rows of any user_id)
-            $this->valueService->deleteValues($themeId, $scope, $scopeId, $publishedStatusId, null);
+            $this->valueService->deleteValues($themeId, $scope, $publishedStatusId, null);
 
             // Save clean merged snapshot with the publishing admin's user_id
             $models = [];
             foreach ($mergedMap as $val) {
                 $model = $this->valueRepository->create();
                 $model->setThemeId($themeId);
-                $model->setScope($scope);
-                $model->setStoreId($scopeId);
+                $model->setScope($scope->getType());
+                $model->setStoreId($scope->getScopeId());
                 $model->setStatusId($publishedStatusId);
                 $model->setSectionCode($val['section_code']);
                 $model->setSettingCode($val['setting_code']);
@@ -109,7 +110,7 @@ class PublishService
             }
 
             // Delete draft values
-            $this->valueService->deleteValues($themeId, $scope, $scopeId, $draftStatusId, $userId);
+            $this->valueService->deleteValues($themeId, $scope, $draftStatusId, $userId);
 
             $connection->commit();
         } catch (\Exception $e) {
@@ -120,8 +121,8 @@ class PublishService
         return [
             'publicationId' => $publication->getPublicationId(),
             'themeId' => $themeId,
-            'scope' => $scope,
-            'scopeId' => $scopeId,
+            'scope' => $scope->getType(),
+            'scopeId' => $scope->getScopeId(),
             'title' => $title,
             'description' => $description,
             'publishedAt' => $publication->getPublishedAt(),
@@ -141,8 +142,10 @@ class PublishService
         $oldPublication = $this->publicationRepository->getById($publicationId);
 
         $themeId = $oldPublication->getThemeId();
-        $scope = $oldPublication->getScope() ?: 'stores';
-        $scopeId = (int)$oldPublication->getStoreId();
+        $scope = $this->scopeFactory->create(
+            $oldPublication->getScope() ?: 'stores',
+            (int)$oldPublication->getStoreId()
+        );
 
         // Load changelog entries for the old publication via SearchCriteria
         $criteria = $this->searchCriteriaBuilder
@@ -154,8 +157,8 @@ class PublishService
         // Create new publication record for rollback
         $publication = $this->publicationFactory->create();
         $publication->setThemeId($themeId);
-        $publication->setScope($scope);
-        $publication->setStoreId($scopeId);
+        $publication->setScope($scope->getType());
+        $publication->setStoreId($scope->getScopeId());
         $publication->setTitle($title);
         $publication->setDescription($description);
         $publication->setPublishedBy($userId);
@@ -176,18 +179,18 @@ class PublishService
 
             // Clear current draft before restoring old values
             // (prevents draft from silently surviving rollback)
-            $this->valueService->deleteValues($themeId, $scope, $scopeId, $draftStatusId, $userId);
+            $this->valueService->deleteValues($themeId, $scope, $draftStatusId, $userId);
 
             // Delete ALL existing published rows (removes legacy rows of any user_id)
-            $this->valueService->deleteValues($themeId, $scope, $scopeId, $publishedStatusId, null);
+            $this->valueService->deleteValues($themeId, $scope, $publishedStatusId, null);
 
             // Restore snapshot from changelog with the rolling-back admin's user_id
             $models = [];
             foreach ($oldChanges as $change) {
                 $model = $this->valueRepository->create();
                 $model->setThemeId($themeId);
-                $model->setScope($scope);
-                $model->setStoreId($scopeId);
+                $model->setScope($scope->getType());
+                $model->setStoreId($scope->getScopeId());
                 $model->setStatusId($publishedStatusId);
                 $model->setSectionCode($change->getSectionCode());
                 $model->setSettingCode($change->getSettingCode());
@@ -208,8 +211,8 @@ class PublishService
         return [
             'publicationId' => $publication->getPublicationId(),
             'themeId' => $themeId,
-            'scope' => $scope,
-            'scopeId' => $scopeId,
+            'scope' => $scope->getType(),
+            'scopeId' => $scope->getScopeId(),
             'title' => $title,
             'isRollback' => true,
             'rollbackFrom' => $publicationId,

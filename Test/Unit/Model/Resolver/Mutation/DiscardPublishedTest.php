@@ -68,7 +68,7 @@ class DiscardPublishedTest extends TestCase
 
         $this->valueServiceMock->expects($this->once())
             ->method('deleteValues')
-            ->with(10, 'stores', 1, 2, null, null, null)
+            ->with(10, $this->isInstanceOf(ScopeInterface::class), 2, null, null, null)
             ->willReturn(7);
 
         $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'themeId' => 10];
@@ -102,7 +102,7 @@ class DiscardPublishedTest extends TestCase
 
         $this->valueServiceMock->expects($this->once())
             ->method('deleteValues')
-            ->with(15, 'stores', 3, 2, null, null, null)
+            ->with(15, $this->isInstanceOf(ScopeInterface::class), 2, null, null, null)
             ->willReturn(3);
 
         $args = ['scope' => ['type' => 'stores', 'scopeId' => 3]]; // no themeId
@@ -157,7 +157,6 @@ class DiscardPublishedTest extends TestCase
             ->with(
                 $this->anything(), // themeId
                 $this->anything(), // scope
-                $this->anything(), // scopeId
                 $this->anything(), // statusId
                 null,              // userId MUST be null
                 null,

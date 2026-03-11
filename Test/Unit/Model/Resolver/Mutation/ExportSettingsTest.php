@@ -117,7 +117,7 @@ class ExportSettingsTest extends TestCase
         
         $this->importExportServiceMock->expects($this->once())
             ->method('export')
-            ->with(1, 'stores', 1, 'DRAFT', 5) // themeId, scope, scopeId, statusCode, userId
+            ->with(1, $this->isInstanceOf(ScopeInterface::class), 'DRAFT', 5) // themeId, scope, statusCode, userId
             ->willReturn([
                 'jsonData' => $mockJson,
                 'filename' => 'theme_1_store_1_DRAFT_2024-01-15_10-30-00.json'
@@ -154,7 +154,7 @@ class ExportSettingsTest extends TestCase
         
         $this->importExportServiceMock->expects($this->once())
             ->method('export')
-            ->with(1, 'stores', 1, 'PUBLISHED', null) // userId = null for PUBLISHED
+            ->with(1, $this->isInstanceOf(ScopeInterface::class), 'PUBLISHED', null) // userId = null for PUBLISHED
             ->willReturn([
                 'jsonData' => '{}',
                 'filename' => 'theme_1_store_1_PUBLISHED_2024-01-15_10-30-00.json'

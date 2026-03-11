@@ -7,6 +7,7 @@ use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Swissup\BreezeThemeEditor\Model\Service\CssGenerator;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Helper\Data as HelperData;
 
@@ -17,7 +18,8 @@ class ThemeCssVariables implements ArgumentInterface
         private ThemeResolver $themeResolver,
         private StoreManagerInterface $storeManager,
         private RequestInterface $request,
-        private HelperData $helper
+        private HelperData $helper,
+        private ScopeFactory $scopeFactory
     ) {}
 
     /**
@@ -35,7 +37,8 @@ class ThemeCssVariables implements ArgumentInterface
             $storeId = (int) $this->storeManager->getStore()->getId();
             $themeId = $this->themeResolver->getThemeIdByStoreId($storeId);
 
-            return $this->cssGenerator->generate($themeId, 'stores', $storeId, 'PUBLISHED');
+            $scope = $this->scopeFactory->create('stores', $storeId);
+            return $this->cssGenerator->generate($themeId, $scope, 'PUBLISHED');
         } catch (\Exception $e) {
             return "/* Breeze Theme Editor: Error generating CSS - {$e->getMessage()} */";
         }

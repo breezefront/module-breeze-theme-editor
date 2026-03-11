@@ -117,7 +117,7 @@ class GetCssTest extends TestCase
         
         $this->cssGeneratorMock->expects($this->once())
             ->method('generate')
-            ->with(1, 'stores', 1, 'PUBLISHED')
+            ->with(1, $this->isInstanceOf(ScopeInterface::class), 'PUBLISHED')
             ->willReturn($expectedCss);
         
         $args = [
@@ -153,7 +153,7 @@ class GetCssTest extends TestCase
         
         $this->cssGeneratorMock->expects($this->once())
             ->method('generate')
-            ->with(1, 'stores', 1, 'DRAFT')
+            ->with(1, $this->isInstanceOf(ScopeInterface::class), 'DRAFT')
             ->willReturn($expectedCss);
         
         $args = [
@@ -245,7 +245,7 @@ class GetCssTest extends TestCase
         
         $this->cssGeneratorMock->expects($this->once())
             ->method('generate')
-            ->with(1, 'stores', 1, 'PUBLISHED')
+            ->with(1, $this->isInstanceOf(ScopeInterface::class), 'PUBLISHED')
             ->willReturn($expectedCss);
         
         $args = [
@@ -281,7 +281,7 @@ class GetCssTest extends TestCase
         
         $this->cssGeneratorMock->expects($this->once())
             ->method('generate')
-            ->with(5, 'stores', 1, 'PUBLISHED')
+            ->with(5, $this->isInstanceOf(ScopeInterface::class), 'PUBLISHED')
             ->willReturn($expectedCss);
         
         $args = [

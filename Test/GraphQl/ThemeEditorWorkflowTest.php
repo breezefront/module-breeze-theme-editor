@@ -8,6 +8,7 @@ use Magento\Integration\Api\AdminTokenServiceInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\TestCase\GraphQlAbstract;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 
 /**
@@ -571,11 +572,15 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
             /** @var ThemeResolver $themeResolver */
             $themeResolver = $objectManager->get(ThemeResolver::class);
 
+            /** @var ScopeFactory $scopeFactory */
+            $scopeFactory = $objectManager->get(ScopeFactory::class);
+
             foreach ($storeManager->getStores() as $store) {
                 $storeId = (int) $store->getId();
 
                 try {
-                    $themeId = $themeResolver->getThemeIdByScope('stores', $storeId);
+                    $scope   = $scopeFactory->create('stores', $storeId);
+                    $themeId = $themeResolver->getThemeIdByScope($scope);
                 } catch (LocalizedException) {
                     continue;
                 }

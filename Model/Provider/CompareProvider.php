@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Provider;
 
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
@@ -18,13 +19,13 @@ class CompareProvider
     /**
      * Порівняти draft vs published
      */
-    public function compare(int $themeId, string $scope, int $scopeId, int $userId): array
+    public function compare(int $themeId, ScopeInterface $scope, int $userId): array
     {
         $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
         $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
 
         // Отримати draft через ValueService
-        $draft = $this->valueService->getValuesByTheme($themeId, $scope, $scopeId, $draftStatusId, $userId);
+        $draft = $this->valueService->getValuesByTheme($themeId, $scope, $draftStatusId, $userId);
 
         // Якщо draft порожній - немає змін
         if (empty($draft)) {
@@ -36,7 +37,7 @@ class CompareProvider
         }
 
         // Отримати published через ValueService
-        $published = $this->valueService->getValuesByTheme($themeId, $scope, $scopeId, $publishedStatusId, null);
+        $published = $this->valueService->getValuesByTheme($themeId, $scope, $publishedStatusId, null);
 
         // Створити map для швидкого пошуку
         $publishedMap = [];

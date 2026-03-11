@@ -53,8 +53,7 @@ class ImportSettings extends AbstractMutationResolver
         try {
             $result = $this->importExportService->import(
                 $themeId,
-                $scope->getType(),
-                $scope->getScopeId(),
+                $scope,
                 $statusCode,
                 $userId,
                 $jsonData,

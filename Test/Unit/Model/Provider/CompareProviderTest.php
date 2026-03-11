@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Provider;
 
 use PHPUnit\Framework\TestCase;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
+use Swissup\BreezeThemeEditor\Model\Data\Scope;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
@@ -40,11 +42,11 @@ class CompareProviderTest extends TestCase
 
         $this->valueService->expects($this->once())
             ->method('getValuesByTheme')
-            ->with(5, 'stores', 1, 1, 42)
+            ->with(5, $this->isInstanceOf(ScopeInterface::class), 1, 42)
             ->willReturn([]);
 
         // Act
-        $result = $this->compareProvider->compare(5, 'stores', 1, 42);
+        $result = $this->compareProvider->compare(5, new Scope('stores', 1), 42);
 
         // Assert
         $this->assertFalse($result['hasChanges']);
@@ -67,7 +69,7 @@ class CompareProviderTest extends TestCase
 
         $this->valueService->expects($this->exactly(2))
             ->method('getValuesByTheme')
-            ->willReturnCallback(function ($themeId, $scope, $scopeId, $statusId, $userId) use ($draftValues) {
+            ->willReturnCallback(function ($themeId, $scope, $statusId, $userId) use ($draftValues) {
                 if ($statusId === 1) { // DRAFT
                     return $draftValues;
                 }
@@ -87,7 +89,7 @@ class CompareProviderTest extends TestCase
         ]);
 
         // Act
-        $result = $this->compareProvider->compare(5, 'stores', 1, 42);
+        $result = $this->compareProvider->compare(5, new Scope('stores', 1), 42);
 
         // Assert
         $this->assertTrue($result['hasChanges']);
@@ -119,7 +121,7 @@ class CompareProviderTest extends TestCase
 
         $this->valueService->expects($this->exactly(2))
             ->method('getValuesByTheme')
-            ->willReturnCallback(function ($themeId, $scope, $scopeId, $statusId, $userId) use ($draftValues, $publishedValues) {
+            ->willReturnCallback(function ($themeId, $scope, $statusId, $userId) use ($draftValues, $publishedValues) {
                 if ($statusId === 1) { // DRAFT
                     return $draftValues;
                 }
@@ -139,7 +141,7 @@ class CompareProviderTest extends TestCase
         ]);
 
         // Act
-        $result = $this->compareProvider->compare(5, 'stores', 1, 42);
+        $result = $this->compareProvider->compare(5, new Scope('stores', 1), 42);
 
         // Assert
         $this->assertTrue($result['hasChanges']);
@@ -168,7 +170,7 @@ class CompareProviderTest extends TestCase
 
         $this->valueService->expects($this->exactly(2))
             ->method('getValuesByTheme')
-            ->willReturnCallback(function ($themeId, $scope, $scopeId, $statusId, $userId) use ($draftValues, $publishedValues) {
+            ->willReturnCallback(function ($themeId, $scope, $statusId, $userId) use ($draftValues, $publishedValues) {
                 if ($statusId === 1) {
                     return $draftValues;
                 }
@@ -180,7 +182,7 @@ class CompareProviderTest extends TestCase
         ]);
 
         // Act
-        $result = $this->compareProvider->compare(5, 'stores', 1, 42);
+        $result = $this->compareProvider->compare(5, new Scope('stores', 1), 42);
 
         // Assert
         $this->assertFalse($result['hasChanges']);
@@ -209,7 +211,7 @@ class CompareProviderTest extends TestCase
 
         $this->valueService->expects($this->exactly(2))
             ->method('getValuesByTheme')
-            ->willReturnCallback(function ($themeId, $scope, $scopeId, $statusId, $userId) use ($draftValues, $publishedValues) {
+            ->willReturnCallback(function ($themeId, $scope, $statusId, $userId) use ($draftValues, $publishedValues) {
                 if ($statusId === 1) {
                     return $draftValues;
                 }
@@ -237,7 +239,7 @@ class CompareProviderTest extends TestCase
         ]);
 
         // Act
-        $result = $this->compareProvider->compare(5, 'stores', 1, 42);
+        $result = $this->compareProvider->compare(5, new Scope('stores', 1), 42);
 
         // Assert
         $this->assertTrue($result['hasChanges']);
@@ -260,7 +262,7 @@ class CompareProviderTest extends TestCase
 
         $this->valueService->expects($this->exactly(2))
             ->method('getValuesByTheme')
-            ->willReturnCallback(function ($themeId, $scope, $scopeId, $statusId, $userId) use ($draftValues) {
+            ->willReturnCallback(function ($themeId, $scope, $statusId, $userId) use ($draftValues) {
                 if ($statusId === 1) {
                     return $draftValues;
                 }
@@ -280,7 +282,7 @@ class CompareProviderTest extends TestCase
         ]);
 
         // Act
-        $result = $this->compareProvider->compare(5, 'stores', 1, 42);
+        $result = $this->compareProvider->compare(5, new Scope('stores', 1), 42);
 
         // Assert
         $this->assertEquals('Typography Settings', $result['changes'][0]['sectionLabel']);
@@ -302,7 +304,7 @@ class CompareProviderTest extends TestCase
 
         $this->valueService->expects($this->exactly(2))
             ->method('getValuesByTheme')
-            ->willReturnCallback(function ($themeId, $scope, $scopeId, $statusId, $userId) use ($draftValues) {
+            ->willReturnCallback(function ($themeId, $scope, $statusId, $userId) use ($draftValues) {
                 if ($statusId === 1) {
                     return $draftValues;
                 }
@@ -314,7 +316,7 @@ class CompareProviderTest extends TestCase
         ]);
 
         // Act
-        $result = $this->compareProvider->compare(5, 'stores', 1, 42);
+        $result = $this->compareProvider->compare(5, new Scope('stores', 1), 42);
 
         // Assert
         $this->assertEquals('unknown_section', $result['changes'][0]['sectionLabel']);
@@ -333,21 +335,19 @@ class CompareProviderTest extends TestCase
         $callCount = 0;
         $this->valueService->expects($this->exactly(2))
             ->method('getValuesByTheme')
-            ->willReturnCallback(function ($themeId, $scope, $scopeId, $statusId, $userId) use (&$callCount) {
+            ->willReturnCallback(function ($themeId, $scope, $statusId, $userId) use (&$callCount) {
                 $callCount++;
                 if ($callCount === 1) {
                     // First call: DRAFT with userId
                     $this->assertEquals(10, $themeId);
-                    $this->assertEquals('stores', $scope);
-                    $this->assertEquals(3, $scopeId);
+                    $this->assertInstanceOf(ScopeInterface::class, $scope);
                     $this->assertEquals(1, $statusId);
                     $this->assertEquals(99, $userId);
                     return [['section_code' => 'test', 'setting_code' => 'field', 'value' => 'value']];
                 } elseif ($callCount === 2) {
                     // Second call: PUBLISHED without userId
                     $this->assertEquals(10, $themeId);
-                    $this->assertEquals('stores', $scope);
-                    $this->assertEquals(3, $scopeId);
+                    $this->assertInstanceOf(ScopeInterface::class, $scope);
                     $this->assertEquals(2, $statusId);
                     $this->assertNull($userId);
                     return [];
@@ -358,7 +358,7 @@ class CompareProviderTest extends TestCase
         $this->configProvider->method('getConfigurationWithInheritance')->willReturn(['sections' => []]);
 
         // Act
-        $this->compareProvider->compare(10, 'stores', 3, 99);
+        $this->compareProvider->compare(10, new Scope('stores', 3), 99);
     }
 
     public function testHandlesComplexSectionStructure(): void
@@ -377,7 +377,7 @@ class CompareProviderTest extends TestCase
 
         $this->valueService->expects($this->exactly(2))
             ->method('getValuesByTheme')
-            ->willReturnCallback(function ($themeId, $scope, $scopeId, $statusId, $userId) use ($draftValues) {
+            ->willReturnCallback(function ($themeId, $scope, $statusId, $userId) use ($draftValues) {
                 if ($statusId === 1) {
                     return $draftValues;
                 }
@@ -398,7 +398,7 @@ class CompareProviderTest extends TestCase
         ]);
 
         // Act
-        $result = $this->compareProvider->compare(5, 'stores', 1, 42);
+        $result = $this->compareProvider->compare(5, new Scope('stores', 1), 42);
 
         // Assert
         $this->assertEquals(2, $result['changesCount']);
@@ -421,7 +421,7 @@ class CompareProviderTest extends TestCase
 
         $this->valueService->expects($this->exactly(2))
             ->method('getValuesByTheme')
-            ->willReturnCallback(function ($themeId, $scope, $scopeId, $statusId, $userId) use ($draftValues) {
+            ->willReturnCallback(function ($themeId, $scope, $statusId, $userId) use ($draftValues) {
                 if ($statusId === 1) {
                     return $draftValues;
                 }
@@ -439,7 +439,7 @@ class CompareProviderTest extends TestCase
         ]);
 
         // Act
-        $result = $this->compareProvider->compare(5, 'stores', 1, 42);
+        $result = $this->compareProvider->compare(5, new Scope('stores', 1), 42);
 
         // Assert
         $this->assertTrue($result['hasChanges']);
@@ -465,7 +465,7 @@ class CompareProviderTest extends TestCase
 
         $this->valueService->expects($this->exactly(2))
             ->method('getValuesByTheme')
-            ->willReturnCallback(function ($themeId, $scope, $scopeId, $statusId, $userId) use ($draftValues, $publishedValues) {
+            ->willReturnCallback(function ($themeId, $scope, $statusId, $userId) use ($draftValues, $publishedValues) {
                 return $statusId === 1 ? $draftValues : $publishedValues;
             });
 
@@ -480,7 +480,7 @@ class CompareProviderTest extends TestCase
         ]);
 
         // Act
-        $result = $this->compareProvider->compare(5, 'stores', 1, 42);
+        $result = $this->compareProvider->compare(5, new Scope('stores', 1), 42);
 
         // Assert
         $change = $result['changes'][0];

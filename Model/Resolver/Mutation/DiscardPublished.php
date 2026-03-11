@@ -54,8 +54,7 @@ class DiscardPublished extends AbstractMutationResolver
         // Delete all PUBLISHED values (userId=null — published values have no per-user scope)
         $discardedCount = $this->valueService->deleteValues(
             $themeId,
-            $scope->getType(),
-            $scope->getScopeId(),
+            $scope,
             $publishedStatusId,
             null,   // userId — not applicable for PUBLISHED
             null,   // sectionCodes — reset everything

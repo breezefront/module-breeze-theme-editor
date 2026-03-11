@@ -9,6 +9,7 @@ use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
@@ -51,8 +52,7 @@ abstract class AbstractSaveMutation extends AbstractMutationResolver
 
         return [
             'userId' => $userId,
-            'scope' => $scope->getType(),
-            'scopeId' => $scope->getScopeId(),
+            'scope' => $scope,
             'themeId' => $themeId,
             'statusCode' => $statusCode,
             'statusId' => $statusId

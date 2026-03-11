@@ -69,7 +69,7 @@ class GetCss extends AbstractQueryResolver
             }
             $css = $this->generateCssFromPublication($themeId, $publicationId);
         } else {
-            $css = $this->cssGenerator->generate($themeId, $scope->getType(), $scope->getScopeId(), $status);
+            $css = $this->cssGenerator->generate($themeId, $scope, $status);
         }
 
         // 6. Return structured response

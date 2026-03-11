@@ -4,16 +4,19 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Service;
 
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 
 class ValueInheritanceResolver
 {
     public function __construct(
         private ValueService $valueService,
         private ThemeResolver $themeResolver,
-        private ConfigProvider $configProvider
+        private ConfigProvider $configProvider,
+        private ScopeFactory $scopeFactory
     ) {}
 
     // ========================================================================
@@ -21,35 +24,35 @@ class ValueInheritanceResolver
     // ========================================================================
 
     /**
-     * Build the scope lookup chain for a given scope/scopeId.
+     * Build the scope lookup chain for a given scope.
      *
      * For reading we walk from the most-specific scope toward default:
-     *   stores/3   → [['default',0], ['websites',W], ['stores',3]]
-     *   websites/1 → [['default',0], ['websites',1]]
-     *   default/0  → [['default',0]]
+     *   stores/3   → [default/0, websites/W, stores/3]
+     *   websites/1 → [default/0, websites/1]
+     *   default/0  → [default/0]
      *
      * We return them in ascending specificity order so that later entries
      * (more specific) can override earlier ones during merge.
      *
-     * @return array<array{scope:string, scopeId:int}>
+     * @return ScopeInterface[]
      */
-    public function buildScopeChain(string $scope, int $scopeId, int $websiteId = 0): array
+    public function buildScopeChain(ScopeInterface $scope, int $websiteId = 0): array
     {
         // If scope is 'default', or no website context is known, use a single-entry chain.
         // Full scope chain (default → websites → stores) requires a valid websiteId.
-        if ($scope === ValueInterface::SCOPE_DEFAULT || $websiteId === 0) {
-            return [['scope' => $scope, 'scopeId' => $scopeId]];
+        if ($scope->getType() === ValueInterface::SCOPE_DEFAULT || $websiteId === 0) {
+            return [$scope];
         }
 
         $chain = [
-            ['scope' => ValueInterface::SCOPE_DEFAULT, 'scopeId' => 0],
+            $this->scopeFactory->create(ValueInterface::SCOPE_DEFAULT, 0),
         ];
 
-        if ($scope === ValueInterface::SCOPE_WEBSITES) {
-            $chain[] = ['scope' => ValueInterface::SCOPE_WEBSITES, 'scopeId' => $scopeId];
-        } elseif ($scope === ValueInterface::SCOPE_STORES) {
-            $chain[] = ['scope' => ValueInterface::SCOPE_WEBSITES, 'scopeId' => $websiteId];
-            $chain[] = ['scope' => ValueInterface::SCOPE_STORES, 'scopeId' => $scopeId];
+        if ($scope->getType() === ValueInterface::SCOPE_WEBSITES) {
+            $chain[] = $scope;
+        } elseif ($scope->getType() === ValueInterface::SCOPE_STORES) {
+            $chain[] = $this->scopeFactory->create(ValueInterface::SCOPE_WEBSITES, $websiteId);
+            $chain[] = $scope;
         }
 
         return $chain;
@@ -63,21 +66,19 @@ class ValueInheritanceResolver
      * Отримати всі values з inheritance (theme hierarchy) та scope chain.
      *
      * @param int      $themeId
-     * @param string   $scope     Requested scope ('default'|'websites'|'stores')
-     * @param int      $scopeId   Requested scope ID
+     * @param ScopeInterface $scope
      * @param int      $statusId
      * @param int|null $userId
      * @param int      $websiteId Website ID (needed to build websites leg when scope=stores)
      */
     public function resolveAllValues(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         int $statusId,
         ?int $userId = null,
         int $websiteId = 0
     ): array {
-        $scopeChain = $this->buildScopeChain($scope, $scopeId, $websiteId);
+        $scopeChain = $this->buildScopeChain($scope, $websiteId);
 
         if (!$this->shouldInheritParent($themeId)) {
             return $this->resolveAllValuesByScopeChain($themeId, $scopeChain, $statusId, $userId);
@@ -112,18 +113,17 @@ class ValueInheritanceResolver
      */
     public function resolveAllValuesWithFallback(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         int $statusId,
         int $fallbackStatusId,
         ?int $userId = null,
         int $websiteId = 0
     ): array {
         // Load fallback (published) values as the base layer
-        $baseValues = $this->resolveAllValues($themeId, $scope, $scopeId, $fallbackStatusId, null, $websiteId);
+        $baseValues = $this->resolveAllValues($themeId, $scope, $fallbackStatusId, null, $websiteId);
 
         // Load primary (draft) values as the override layer
-        $overrideValues = $this->resolveAllValues($themeId, $scope, $scopeId, $statusId, $userId, $websiteId);
+        $overrideValues = $this->resolveAllValues($themeId, $scope, $statusId, $userId, $websiteId);
 
         // Build a map from the base layer, then overwrite with draft entries
         $mergedMap = [];
@@ -144,15 +144,14 @@ class ValueInheritanceResolver
      */
     public function resolveSingleValue(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         int $statusId,
         string $sectionCode,
         string $fieldCode,
         ?int $userId = null,
         int $websiteId = 0
     ): array {
-        $scopeChain = $this->buildScopeChain($scope, $scopeId, $websiteId);
+        $scopeChain = $this->buildScopeChain($scope, $websiteId);
 
         $hierarchy = $this->shouldInheritParent($themeId)
             ? $this->themeResolver->getThemeHierarchy($themeId)
@@ -163,8 +162,7 @@ class ValueInheritanceResolver
             foreach (array_reverse($scopeChain) as $scopeEntry) {
                 $value = $this->valueService->getSingleValue(
                     $themeInfo['theme_id'],
-                    $scopeEntry['scope'],
-                    $scopeEntry['scopeId'],
+                    $scopeEntry,
                     $statusId,
                     $sectionCode,
                     $fieldCode,
@@ -198,8 +196,7 @@ class ValueInheritanceResolver
      */
     public function isValueInherited(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         int $statusId,
         string $sectionCode,
         string $fieldCode,
@@ -209,7 +206,6 @@ class ValueInheritanceResolver
         $result = $this->resolveSingleValue(
             $themeId,
             $scope,
-            $scopeId,
             $statusId,
             $sectionCode,
             $fieldCode,
@@ -238,8 +234,7 @@ class ValueInheritanceResolver
      */
     public function getInheritedFromTheme(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         int $statusId,
         string $sectionCode,
         string $fieldCode,
@@ -249,7 +244,6 @@ class ValueInheritanceResolver
         $result = $this->resolveSingleValue(
             $themeId,
             $scope,
-            $scopeId,
             $statusId,
             $sectionCode,
             $fieldCode,
@@ -279,8 +273,7 @@ class ValueInheritanceResolver
         foreach ($scopeChain as $scopeEntry) {
             $values = $this->valueService->getValuesByTheme(
                 $themeId,
-                $scopeEntry['scope'],
-                $scopeEntry['scopeId'],
+                $scopeEntry,
                 $statusId,
                 $userId
             );

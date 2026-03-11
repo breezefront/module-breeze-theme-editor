@@ -20,11 +20,11 @@ class CopyFromStore extends AbstractSaveMutation
 
         $fromScope   = $input['from']['type']    ?? 'stores';
         $fromScopeId = (int)($input['from']['scopeId'] ?? 0);
-        $toScope     = $input['to']['type']      ?? 'stores';
+        $toScopeType = $input['to']['type']      ?? 'stores';
         $toScopeId   = (int)($input['to']['scopeId']   ?? 0);
         $sectionCodes = $input['sectionCodes'] ?? null;
 
-        if ($fromScope === $toScope && $fromScopeId === $toScopeId) {
+        if ($fromScope === $toScopeType && $fromScopeId === $toScopeId) {
             throw new GraphQlInputException(
                 __('Cannot copy from the same scope/scopeId')
             );
@@ -32,7 +32,7 @@ class CopyFromStore extends AbstractSaveMutation
 
         // Використати базовий метод для target scope
         $params = $this->prepareBaseParams([
-            'scope'   => ['type' => $toScope, 'scopeId' => $toScopeId],
+            'scope'   => ['type' => $toScopeType, 'scopeId' => $toScopeId],
             'status'  => $input['status'] ?? 'DRAFT'
         ], $context);
 
@@ -45,13 +45,11 @@ class CopyFromStore extends AbstractSaveMutation
 
         $copiedCount = $this->valueService->copyValues(
             $fromThemeId,
-            $fromScope,
-            $fromScopeId,
+            $fromScopeVO,
             $fromStatusId,
             null, // Published values не мають userId
             $params['themeId'],
-            $toScope,
-            $toScopeId,
+            $params['scope'],
             $params['statusId'],
             $params['statusCode'] === 'DRAFT' ? $params['userId'] : 0,
             $sectionCodes
@@ -60,8 +58,7 @@ class CopyFromStore extends AbstractSaveMutation
         // Отримати скопійовані values через ValueService
         $values = $this->valueService->getValuesByTheme(
             $params['themeId'],
-            $toScope,
-            $toScopeId,
+            $params['scope'],
             $params['statusId'],
             $params['statusCode'] === 'DRAFT' ? $params['userId'] : null
         );
@@ -83,7 +80,7 @@ class CopyFromStore extends AbstractSaveMutation
 
         return [
             'success' => true,
-            'message' => __('Successfully copied settings from %1/%2 to %3/%4', $fromScope, $fromScopeId, $toScope, $toScopeId),
+            'message' => __('Successfully copied settings from %1/%2 to %3/%4', $fromScope, $fromScopeId, $toScopeType, $toScopeId),
             'values' => $copiedValues,
             'copiedCount' => $copiedCount
         ];

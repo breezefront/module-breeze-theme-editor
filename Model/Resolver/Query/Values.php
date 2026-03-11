@@ -70,13 +70,12 @@ class Values extends AbstractQueryResolver
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row still return the published value, not the theme default.
         if ($statusCode === 'PUBLISHED') {
-            $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope->getType(), $scope->getScopeId(), $statusId, null);
+            $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope, $statusId, null);
         } else {
             $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
             $values = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
                 $themeId,
-                $scope->getType(),
-                $scope->getScopeId(),
+                $scope,
                 $statusId,
                 $publishedStatusId,
                 $userId

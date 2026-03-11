@@ -58,7 +58,7 @@ class CompareTest extends TestCase
         $this->compareProvider
             ->expects($this->once())
             ->method('compare')
-            ->with(5, 'stores', 1, 42)
+            ->with(5, $this->isInstanceOf(ScopeInterface::class), 42)
             ->willReturn($expected);
 
         $result = $this->resolver->resolve(
@@ -80,7 +80,7 @@ class CompareTest extends TestCase
         $this->compareProvider
             ->expects($this->once())
             ->method('compare')
-            ->with(10, 'stores', 2, 1)
+            ->with(10, $this->isInstanceOf(ScopeInterface::class), 1)
             ->willReturn([]);
 
         $this->resolver->resolve(
@@ -96,7 +96,7 @@ class CompareTest extends TestCase
         $this->compareProvider
             ->expects($this->once())
             ->method('compare')
-            ->with(7, 'stores', 1, 1)
+            ->with(7, $this->isInstanceOf(ScopeInterface::class), 1)
             ->willReturn([]);
 
         $this->resolver->resolve(

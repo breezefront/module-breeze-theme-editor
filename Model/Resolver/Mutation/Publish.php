@@ -65,8 +65,7 @@ class Publish extends AbstractMutationResolver
         // Опублікувати через PublishManager
         $result = $this->publishManager->publish(
             $themeId,
-            $scope->getType(),
-            $scope->getScopeId(),
+            $scope,
             $userId,
             $title,
             $description

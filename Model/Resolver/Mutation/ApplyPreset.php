@@ -63,7 +63,6 @@ class ApplyPreset extends AbstractSaveMutation
             $existing = $this->valueService->getValuesByTheme(
                 $params['themeId'],
                 $params['scope'],
-                $params['scopeId'],
                 $params['statusId'],
                 $params['statusCode'] === 'DRAFT' ?  $params['userId'] : null
             );
@@ -85,8 +84,8 @@ class ApplyPreset extends AbstractSaveMutation
         foreach ($presetValues as $val) {
             $valueModel = $this->valueRepository->create();
             $valueModel->setThemeId($params['themeId']);
-            $valueModel->setScope($params['scope']);
-            $valueModel->setStoreId($params['scopeId']);
+            $valueModel->setScope($params['scope']->getType());
+            $valueModel->setStoreId($params['scope']->getScopeId());
             $valueModel->setStatusId($params['statusId']);
             $valueModel->setSectionCode($val['sectionCode']);
             $valueModel->setSettingCode($val['fieldCode']);
@@ -102,7 +101,6 @@ class ApplyPreset extends AbstractSaveMutation
         $values = $this->valueService->getValuesByTheme(
             $params['themeId'],
             $params['scope'],
-            $params['scopeId'],
             $params['statusId'],
             $params['statusCode'] === 'DRAFT' ? $params['userId'] : null
         );

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Service;
 
 use Magento\Framework\Exception\LocalizedException;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
@@ -79,8 +80,7 @@ class PresetService
      */
     public function applyPreset(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         string $presetId,
         string $statusCode,
         int $userId,
@@ -101,8 +101,8 @@ class PresetService
         foreach ($presetValues as $item) {
             $model = $this->valueRepository->create();
             $model->setThemeId($themeId);
-            $model->setScope($scope);
-            $model->setStoreId($scopeId);
+            $model->setScope($scope->getType());
+            $model->setStoreId($scope->getScopeId());
             $model->setStatusId($statusId);
             $model->setUserId($userIdForSave);
             $model->setSectionCode($item['sectionCode']);
@@ -116,7 +116,6 @@ class PresetService
             $this->valueService->deleteValues(
                 $themeId,
                 $scope,
-                $scopeId,
                 $statusId,
                 $userIdForSave
             );

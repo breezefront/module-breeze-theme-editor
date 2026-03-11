@@ -13,6 +13,9 @@ use Magento\Framework\DB\Adapter\AdapterInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
+use Swissup\BreezeThemeEditor\Model\Data\Scope;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Model\Service\PublishService;
@@ -38,6 +41,7 @@ class PublishServiceTest extends TestCase
     private SearchCriteriaBuilder|MockObject $searchCriteriaBuilderMock;
     private ResourceConnection|MockObject $resourceConnectionMock;
     private AdapterInterface|MockObject $connectionMock;
+    private ScopeFactory|MockObject $scopeFactoryMock;
 
     protected function setUp(): void
     {
@@ -50,6 +54,9 @@ class PublishServiceTest extends TestCase
         $this->publicationFactoryMock = $this->createMock(PublicationFactory::class);
         $this->changelogFactoryMock = $this->createMock(ChangelogFactory::class);
         $this->searchCriteriaBuilderMock = $this->createMock(SearchCriteriaBuilder::class);
+        $this->scopeFactoryMock = $this->createMock(ScopeFactory::class);
+        $this->scopeFactoryMock->method('create')
+            ->willReturnCallback(fn(string $type, int $id) => new Scope($type, $id));
 
         $this->connectionMock = $this->createMock(AdapterInterface::class);
         $this->connectionMock->method('beginTransaction')->willReturnSelf();
@@ -69,7 +76,8 @@ class PublishServiceTest extends TestCase
             $this->publicationFactoryMock,
             $this->changelogFactoryMock,
             $this->searchCriteriaBuilderMock,
-            $this->resourceConnectionMock
+            $this->resourceConnectionMock,
+            $this->scopeFactoryMock
         );
     }
 
@@ -99,7 +107,7 @@ class PublishServiceTest extends TestCase
         ];
 
         $this->compareProviderMock->method('compare')
-            ->with($themeId, 'stores', $storeId, $userId)
+            ->with($themeId, $this->isInstanceOf(ScopeInterface::class), $userId)
             ->willReturn($comparison);
 
         $this->statusProviderMock->method('getStatusId')
@@ -115,10 +123,14 @@ class PublishServiceTest extends TestCase
         ];
 
         $this->valueServiceMock->method('getValuesByTheme')
-            ->willReturnMap([
-                [$themeId, 'stores', $storeId, 1, $userId, $draftValues],
-                [$themeId, 'stores', $storeId, 2, null, []],
-            ]);
+            ->willReturnCallback(
+                function (int $tId, ScopeInterface $scope, int $statusId, ?int $uId = null) use ($themeId, $storeId, $userId, $draftValues): array {
+                    if ($statusId === 1 && $uId === $userId) {
+                        return $draftValues;
+                    }
+                    return [];
+                }
+            );
 
         // Mock publication creation
         $publicationMock = $this->createMock(Publication::class);
@@ -149,7 +161,7 @@ class PublishServiceTest extends TestCase
         // deleteValues is called twice: once for published cleanup, once for draft
         $this->valueServiceMock->expects($this->exactly(2))->method('deleteValues');
 
-        $result = $this->publishService->publish($themeId, 'stores', $storeId, $userId, $title, $description);
+        $result = $this->publishService->publish($themeId, new Scope('stores', $storeId), $userId, $title, $description);
 
         $this->assertEquals(100, $result['publicationId']);
         $this->assertEquals($themeId, $result['themeId']);
@@ -176,7 +188,7 @@ class PublishServiceTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('No changes to publish');
 
-        $this->publishService->publish(1, 'stores', 1, 5, 'Test');
+        $this->publishService->publish(1, new Scope('stores', 1), 5, 'Test');
     }
 
     /**
@@ -208,7 +220,7 @@ class PublishServiceTest extends TestCase
         // Verify 3 changelog entries are saved
         $this->changelogRepositoryMock->expects($this->exactly(3))->method('save');
 
-        $this->publishService->publish(1, 'stores', 1, 5, 'Test');
+        $this->publishService->publish(1, new Scope('stores', 1), 5, 'Test');
     }
 
     /**
@@ -243,7 +255,7 @@ class PublishServiceTest extends TestCase
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);
         $this->valueRepositoryMock->expects($this->once())->method('saveMultiple');
 
-        $this->publishService->publish(1, 'stores', 1, 5, 'Test');
+        $this->publishService->publish(1, new Scope('stores', 1), 5, 'Test');
     }
 
     /**
@@ -274,17 +286,17 @@ class PublishServiceTest extends TestCase
         $changelogMock = $this->createMock(Changelog::class);
         $this->changelogFactoryMock->method('create')->willReturn($changelogMock);
 
-        // Capture all deleteValues calls via explicit params (func_get_args() is unreliable in closures)
+        // Capture all deleteValues calls
         $deletedArgs = [];
         $this->valueServiceMock->method('deleteValues')
             ->willReturnCallback(
-                function (int $tId, string $scope, int $sId, int $statusId, ?int $uId = null) use (&$deletedArgs): int {
-                    $deletedArgs[] = [$tId, $scope, $sId, $statusId, $uId];
+                function (int $tId, ScopeInterface $scope, int $statusId, ?int $uId = null) use (&$deletedArgs): int {
+                    $deletedArgs[] = [$tId, $scope->getType(), $scope->getScopeId(), $statusId, $uId];
                     return 0;
                 }
             );
 
-        $this->publishService->publish($themeId, 'stores', $storeId, $userId, 'Test');
+        $this->publishService->publish($themeId, new Scope('stores', $storeId), $userId, 'Test');
 
         // Published cleanup must happen (any user_id)
         $this->assertContains(
@@ -318,10 +330,14 @@ class PublishServiceTest extends TestCase
         $this->statusProviderMock->method('getStatusId')
             ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
         $this->valueServiceMock->method('getValuesByTheme')
-            ->willReturnMap([
-                [1, 'stores', 1, 1, $userId, [['section_code' => 'colors', 'setting_code' => 'base-color', 'value' => '#4FC13C']]],
-                [1, 'stores', 1, 2, null, []],
-            ]);
+            ->willReturnCallback(
+                function (int $tId, ScopeInterface $scope, int $statusId, ?int $uId = null) use ($userId): array {
+                    if ($statusId === 1 && $uId === $userId) {
+                        return [['section_code' => 'colors', 'setting_code' => 'base-color', 'value' => '#4FC13C']];
+                    }
+                    return [];
+                }
+            );
 
         $publicationMock = $this->createMock(Publication::class);
         $publicationMock->method('getPublicationId')->willReturn(100);
@@ -337,7 +353,7 @@ class PublishServiceTest extends TestCase
 
         $this->valueRepositoryMock->method('create')->willReturn($valueMock);
 
-        $this->publishService->publish(1, 'stores', 1, $userId, 'Test');
+        $this->publishService->publish(1, new Scope('stores', 1), $userId, 'Test');
     }
 
     /**
@@ -364,7 +380,7 @@ class PublishServiceTest extends TestCase
         // When no draft values, saveMultiple should NOT be called
         $this->valueRepositoryMock->expects($this->never())->method('saveMultiple');
 
-        $result = $this->publishService->publish(1, 'stores', 1, 5, 'Test');
+        $result = $this->publishService->publish(1, new Scope('stores', 1), 5, 'Test');
         $this->assertIsArray($result);
     }
 
@@ -651,10 +667,17 @@ class PublishServiceTest extends TestCase
         ];
 
         $this->valueServiceMock->method('getValuesByTheme')
-            ->willReturnMap([
-                [$themeId, 'stores', $storeId, 1, $userId, $draftValues],
-                [$themeId, 'stores', $storeId, 2, null,    $currentPublished],
-            ]);
+            ->willReturnCallback(
+                function (int $tId, ScopeInterface $scope, int $statusId, ?int $uId = null) use ($userId, $draftValues, $currentPublished): array {
+                    if ($statusId === 1 && $uId === $userId) {
+                        return $draftValues;
+                    }
+                    if ($statusId === 2 && $uId === null) {
+                        return $currentPublished;
+                    }
+                    return [];
+                }
+            );
 
         $publicationMock = $this->createMock(Publication::class);
         $publicationMock->method('getPublicationId')->willReturn(100);
@@ -676,7 +699,7 @@ class PublishServiceTest extends TestCase
         $this->valueRepositoryMock->expects($this->once())->method('saveMultiple');
         $this->valueRepositoryMock->expects($this->exactly(2))->method('create');
 
-        $this->publishService->publish($themeId, 'stores', $storeId, $userId, 'Test');
+        $this->publishService->publish($themeId, new Scope('stores', $storeId), $userId, 'Test');
 
         $this->assertContains('#ff0000', $savedValues, 'Draft value must override published');
         $this->assertContains('Arial',   $savedValues, 'Published value not in draft must be preserved in new snapshot');
@@ -713,7 +736,7 @@ class PublishServiceTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('DB error');
 
-        $this->publishService->publish(1, 'stores', 1, 5, 'Test');
+        $this->publishService->publish(1, new Scope('stores', 1), 5, 'Test');
     }
 
     /**
@@ -759,12 +782,12 @@ class PublishServiceTest extends TestCase
         $changelogMock = $this->createMock(Changelog::class);
         $this->changelogFactoryMock->method('create')->willReturn($changelogMock);
 
-        // Capture all deleteValues calls via explicit params (func_get_args() is unreliable in closures)
+        // Capture all deleteValues calls
         $deletedArgs = [];
         $this->valueServiceMock->method('deleteValues')
             ->willReturnCallback(
-                function (int $tId, string $scope, int $sId, int $statusId, ?int $uId = null) use (&$deletedArgs): int {
-                    $deletedArgs[] = [$tId, $scope, $sId, $statusId, $uId];
+                function (int $tId, ScopeInterface $scope, int $statusId, ?int $uId = null) use (&$deletedArgs): int {
+                    $deletedArgs[] = [$tId, $scope->getType(), $scope->getScopeId(), $statusId, $uId];
                     return 0;
                 }
             );

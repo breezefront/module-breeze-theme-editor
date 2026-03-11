@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Config;
 
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
@@ -23,12 +24,11 @@ class PaletteResolver
      * Resolve a color value (either custom hex or palette reference)
      * 
      * @param string $value The value to resolve (e.g., "var(--color-brand-primary)" or "#ff0000")
-     * @param string $scope Scope: 'default', 'websites', 'stores'
-     * @param int $scopeId Scope ID (0 for default, website_id or store_view_id)
+     * @param ScopeInterface $scope
      * @param int $themeId Theme ID
      * @return string Resolved HEX value (e.g., "#1979c3") or original value
      */
-    public function resolve(string $value, string $scope, int $scopeId, int $themeId): string
+    public function resolve(string $value, ScopeInterface $scope, int $themeId): string
     {
         // If it's not a CSS variable reference, return as-is
         if (!str_starts_with($value, 'var(--color-')) {
@@ -43,7 +43,7 @@ class PaletteResolver
         $cssVar = $matches[1];
 
         // Try to get custom value from database (section: _palette)
-        $customValue = $this->getCustomPaletteValue($cssVar, $scope, $scopeId, $themeId);
+        $customValue = $this->getCustomPaletteValue($cssVar, $scope, $themeId);
         if ($customValue !== null) {
             return $customValue;
         }
@@ -58,19 +58,17 @@ class PaletteResolver
      * Returns HEX format, converts legacy RGB if needed.
      * 
      * @param string $cssVar CSS variable name (e.g., "--color-brand-primary")
-     * @param string $scope
-     * @param int $scopeId
+     * @param ScopeInterface $scope
      * @param int $themeId
      * @return string|null HEX value or null if not found
      */
-    private function getCustomPaletteValue(string $cssVar, string $scope, int $scopeId, int $themeId): ?string
+    private function getCustomPaletteValue(string $cssVar, ScopeInterface $scope, int $themeId): ?string
     {
         // Palette values are stored in section "_palette"
         // Setting code is the CSS variable name (e.g., "--color-brand-primary")
         $result = $this->valueInheritanceResolver->resolveSingleValue(
             $themeId,
             $scope,
-            $scopeId,
             1, // statusId = 1 (PUBLISHED)
             '_palette',
             $cssVar,

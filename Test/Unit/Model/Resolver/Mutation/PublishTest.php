@@ -108,7 +108,7 @@ class PublishTest extends TestCase
 
         $this->publishServiceMock->expects($this->once())
             ->method('publish')
-            ->with(10, 'stores', 1, 5, 'v1.0 Release', 'Initial release')
+            ->with(10, $this->isInstanceOf(ScopeInterface::class), 5, 'v1.0 Release', 'Initial release')
             ->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -167,7 +167,7 @@ class PublishTest extends TestCase
 
         $this->publishServiceMock->expects($this->once())
             ->method('publish')
-            ->with(10, 'stores', 1, 5, 'Quick Fix', null)
+            ->with(10, $this->isInstanceOf(ScopeInterface::class), 5, 'Quick Fix', null)
             ->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -256,7 +256,7 @@ class PublishTest extends TestCase
 
         $this->publishServiceMock->expects($this->once())
             ->method('publish')
-            ->with(20, 'stores', 1, 5, 'Auto Theme', null)
+            ->with(20, $this->isInstanceOf(ScopeInterface::class), 5, 'Auto Theme', null)
             ->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(
@@ -312,7 +312,7 @@ class PublishTest extends TestCase
 
         $this->publishServiceMock->expects($this->once())
             ->method('publish')
-            ->with(15, 'stores', 1, 5, 'Custom Theme', null)
+            ->with(15, $this->isInstanceOf(ScopeInterface::class), 5, 'Custom Theme', null)
             ->willReturn($serviceResult);
 
         $result = $this->publishResolver->resolve(

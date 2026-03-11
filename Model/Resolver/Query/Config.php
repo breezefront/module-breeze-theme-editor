@@ -93,13 +93,12 @@ class Config extends AbstractConfigResolver
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row still display the published value, not the theme default.
         if ($statusCode === 'PUBLISHED') {
-            $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope->getType(), $scope->getScopeId(), $statusId, null);
+            $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope, $statusId, null);
         } else {
             $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
             $savedValues = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
                 $themeId,
-                $scope->getType(),
-                $scope->getScopeId(),
+                $scope,
                 $statusId,
                 $publishedStatusId,
                 $userId
@@ -139,7 +138,7 @@ class Config extends AbstractConfigResolver
 
         // 11. Якщо draft - перевірити зміни
         if ($statusCode === 'DRAFT') {
-            $comparison = $this->compareProvider->compare($themeId, $scope->getType(), $scope->getScopeId(), $userId);
+            $comparison = $this->compareProvider->compare($themeId, $scope, $userId);
             $metadata['hasUnpublishedChanges'] = $comparison['hasChanges'];
             $metadata['draftChangesCount'] = $comparison['changesCount'];
         }

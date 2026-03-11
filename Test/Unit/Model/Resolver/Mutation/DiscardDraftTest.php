@@ -62,7 +62,7 @@ class DiscardDraftTest extends TestCase
         $this->valueService
             ->expects($this->once())
             ->method('deleteValues')
-            ->with(5, 'stores', 1, 1, 42, null, null)
+            ->with(5, $this->isInstanceOf(ScopeInterface::class), 1, 42, null, null)
             ->willReturn(7);
 
         $result = $this->mutation->resolve(
@@ -100,7 +100,7 @@ class DiscardDraftTest extends TestCase
         $this->valueService
             ->expects($this->once())
             ->method('deleteValues')
-            ->with(5, 'stores', 1, 1, 1, ['colors', 'typography'], ['primary', 'font_size'])
+            ->with(5, $this->isInstanceOf(ScopeInterface::class), 1, 1, ['colors', 'typography'], ['primary', 'font_size'])
             ->willReturn(2);
 
         $this->mutation->resolve(

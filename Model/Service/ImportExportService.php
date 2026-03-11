@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Model\Service;
 
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Serialize\SerializerInterface;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValidationService;
@@ -25,18 +26,17 @@ class ImportExportService
      */
     public function export(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         string $statusCode,
-        ?  int $userId = null
+        ?int $userId = null
     ): array {
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
         // Використати ValueService для отримання значень
         if ($statusCode === 'PUBLISHED') {
-            $values = $this->valueService->getValuesByTheme($themeId, $scope, $scopeId, $statusId, null);
+            $values = $this->valueService->getValuesByTheme($themeId, $scope, $statusId, null);
         } else {
-            $values = $this->valueService->getValuesByTheme($themeId, $scope, $scopeId, $statusId, $userId);
+            $values = $this->valueService->getValuesByTheme($themeId, $scope, $statusId, $userId);
         }
 
         // Форматувати для експорту
@@ -50,8 +50,8 @@ class ImportExportService
         $filename = sprintf(
             'theme_%d_%s_%d_%s_%s.json',
             $themeId,
-            $scope,
-            $scopeId,
+            $scope->getType(),
+            $scope->getScopeId(),
             $statusCode,
             date('Y-m-d_H-i-s')
         );
@@ -64,8 +64,7 @@ class ImportExportService
 
     /**
      * @param int $themeId
-     * @param string $scope
-     * @param int $scopeId
+     * @param ScopeInterface $scope
      * @param string $statusCode
      * @param int $userId
      * @param string $jsonData
@@ -77,8 +76,7 @@ class ImportExportService
      */
     public function import(
         int $themeId,
-        string $scope,
-        int $scopeId,
+        ScopeInterface $scope,
         string $statusCode,
         int $userId,
         string $jsonData,
@@ -111,8 +109,8 @@ class ImportExportService
 
             $model = $this->valueRepository->create();
             $model->setThemeId($themeId);
-            $model->setScope($scope);
-            $model->setStoreId($scopeId);
+            $model->setScope($scope->getType());
+            $model->setStoreId($scope->getScopeId());
             $model->setStatusId($statusId);
             $model->setUserId($userIdForSave);
             $model->setSectionCode($sectionCode);
@@ -139,7 +137,6 @@ class ImportExportService
                 $this->valueService->deleteValues(
                     $themeId,
                     $scope,
-                    $scopeId,
                     $statusId,
                     $userIdForSave
                 );
