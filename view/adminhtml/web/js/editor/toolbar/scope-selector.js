@@ -20,7 +20,7 @@ define([
     $.widget('swissup.breezeScopeSelector', {
         options: {
             websites: [],            // Hierarchical store data from StoreDataProvider::getHierarchicalStores()
-            currentScope: 'stores',  // Active scope: 'default' | 'websites' | 'stores'
+            currentScope: 'default',  // Active scope: 'default' | 'websites' | 'stores'
             currentScopeId: null,    // Active scope ID
             iframeSelector: '#bte-iframe',
             pageSelectorElement: '#bte-page-selector',

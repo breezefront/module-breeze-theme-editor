@@ -195,7 +195,7 @@ class AdminToolbar implements ArgumentInterface
      * Priority:
      * 1. URL parameter ?scope=X
      * 2. BackendSession last used scope
-     * 3. Fallback: 'stores'
+     * 3. Fallback: 'default'
      *
      * @return string
      */
@@ -213,7 +213,7 @@ class AdminToolbar implements ArgumentInterface
             return $lastScope;
         }
 
-        return 'stores';
+        return 'default';
     }
 
     /**
