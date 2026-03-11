@@ -38,7 +38,6 @@ class CssGeneratorTest extends TestCase
         $this->scope = $this->createMock(ScopeInterface::class);
         
         $this->cssGenerator = new CssGenerator(
-            $this->valueServiceMock,
             $this->valueInheritanceResolverMock,
             $this->statusProviderMock,
             $this->configProviderMock,
@@ -54,7 +53,7 @@ class CssGeneratorTest extends TestCase
         // Setup: Mock palette color values
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => '_palette',
                 'setting_code' => '--color-brand-amber-dark',
@@ -100,7 +99,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => '_palette',
                 'setting_code' => '--color-brand-primary',
@@ -140,7 +139,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => '_palette',
                 'setting_code' => '--color-brand-primary',
@@ -189,7 +188,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => '_palette',
                 'setting_code' => '--color-brand-primary',
@@ -242,7 +241,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => '_palette',
                 'setting_code' => '--color-brand-primary',
@@ -302,7 +301,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => '_palette',
                 'setting_code' => '--color-brand-primary',
@@ -355,7 +354,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'buttons',
                 'setting_code' => 'button_custom_bg',
@@ -397,7 +396,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => '_palette',
                 'setting_code' => '--color-brand-primary',
@@ -463,7 +462,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
         
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => '_palette',
                 'setting_code' => '--color-brand-primary',
@@ -510,7 +509,7 @@ class CssGeneratorTest extends TestCase
     public function testReturnsEmptyCssBlockWhenNoValues(): void
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([]);
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn(['sections' => []]);
         
         $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
@@ -545,7 +544,7 @@ class CssGeneratorTest extends TestCase
                 'value' => '--color-brand-amber-dark'  // Palette reference (HEX version)
             ]
         ];
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn($draftData);
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn($draftData);
         $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($draftData);
         
         // Mock config: field with RGB default but NO explicit format field
@@ -614,7 +613,7 @@ class CssGeneratorTest extends TestCase
                 'value' => '--color-brand-primary'  // Palette reference
             ]
         ];
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn($draftData);
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn($draftData);
         $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($draftData);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -676,7 +675,7 @@ class CssGeneratorTest extends TestCase
                 'value' => '#c87604'  // HEX color value
             ]
         ];
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn($draftData);
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn($draftData);
         $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($draftData);
         
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -743,7 +742,7 @@ class CssGeneratorTest extends TestCase
                 'value' => '#a16207'  // Same as default
             ]
         ];
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn($draftData);
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn($draftData);
         $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($draftData);
 
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -835,7 +834,7 @@ class CssGeneratorTest extends TestCase
                 'value' => '--color-brand-amber-dark'  // palette reference, not a hex
             ]
         ];
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn($draftData);
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn($draftData);
         $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($draftData);
 
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
@@ -963,7 +962,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'layout',
                 'setting_code' => 'max_width',
@@ -1014,7 +1013,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'layout',
                 'setting_code' => 'max_width',
@@ -1072,7 +1071,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'layout',
                 'setting_code' => 'max_width',
@@ -1107,7 +1106,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'font_size',
@@ -1144,7 +1143,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'font_size',
@@ -1179,7 +1178,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'layout',
                 'setting_code' => 'max_width',
@@ -1229,7 +1228,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'globals',
                 'setting_code' => 'overlay_color',
@@ -1272,7 +1271,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'globals',
                 'setting_code' => 'overlay_color',
@@ -1314,7 +1313,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'globals',
                 'setting_code' => 'brand_color',
@@ -1385,7 +1384,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',
@@ -1422,7 +1421,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',
@@ -1450,7 +1449,7 @@ class CssGeneratorTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
         // Value equals the field default
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',
@@ -1483,7 +1482,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',
@@ -1547,7 +1546,7 @@ class CssGeneratorTest extends TestCase
 
         $sharedUrl = 'https://fonts.googleapis.com/css2?family=Roboto';
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',
@@ -1629,7 +1628,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',
@@ -1669,7 +1668,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',
@@ -1709,7 +1708,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',
@@ -1749,7 +1748,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',
@@ -1791,7 +1790,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',
@@ -1836,7 +1835,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'heading_font',
@@ -1885,7 +1884,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'primary_font_role',
@@ -1939,7 +1938,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',
@@ -1988,7 +1987,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'primary_font_role',
@@ -2039,7 +2038,7 @@ class CssGeneratorTest extends TestCase
 
         $sharedUrl = 'https://fonts.googleapis.com/css2?family=Roboto';
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'primary_font_role',
@@ -2107,7 +2106,7 @@ class CssGeneratorTest extends TestCase
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
-        $this->valueServiceMock->method('getValuesByTheme')->willReturn([
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
             [
                 'section_code' => 'typography',
                 'setting_code' => 'base_font',

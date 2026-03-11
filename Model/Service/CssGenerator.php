@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Service;
 
-use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
@@ -17,7 +16,6 @@ use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 class CssGenerator
 {
     public function __construct(
-        private ValueService $valueService,
         private ValueInheritanceResolver $valueInheritanceResolver,
         private StatusProvider $statusProvider,
         private ConfigProvider $configProvider,
@@ -48,7 +46,7 @@ class CssGenerator
                 null
             );
         } else {
-            $values = $this->valueService->getValuesByTheme($themeId, $scope, $statusId, null);
+            $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope, $statusId, null);
         }
 
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
