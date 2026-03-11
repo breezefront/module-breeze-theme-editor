@@ -13,6 +13,7 @@ use Magento\Theme\Model\ResourceModel\Theme\Collection as ThemeCollection;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory as ThemeCollectionFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Swissup\BreezeThemeEditor\Model\Data\Scope;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 
 class ThemeResolverTest extends TestCase
@@ -142,6 +143,70 @@ class ThemeResolverTest extends TestCase
         $this->assertSame(5, $result['theme_id']);
         $this->assertSame('Vendor/theme', $result['theme_code']);
         $this->assertNull($result['parent_id']);
+    }
+
+    // =========================================================================
+    // hasParentTheme / getParentThemeId
+    // =========================================================================
+
+    // =========================================================================
+    // getThemeIdByScope — tests N–Q
+    // =========================================================================
+
+    /**
+     * Test N: getThemeIdByScope for default scope reads from default config (no scope args).
+     */
+    public function testGetThemeIdByScopeForDefaultScope(): void
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->with(DesignInterface::XML_PATH_THEME_ID)
+            ->willReturn('5');
+
+        $result = $this->resolver->getThemeIdByScope(new Scope('default', 0));
+
+        $this->assertSame(5, $result);
+    }
+
+    /**
+     * Test O: getThemeIdByScope for websites/1 reads from website scope.
+     */
+    public function testGetThemeIdByScopeForWebsiteScope(): void
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->with(DesignInterface::XML_PATH_THEME_ID, ScopeInterface::SCOPE_WEBSITE, 1)
+            ->willReturn('7');
+
+        $result = $this->resolver->getThemeIdByScope(new Scope('websites', 1));
+
+        $this->assertSame(7, $result);
+    }
+
+    /**
+     * Test P: getThemeIdByScope for stores/3 reads from store scope.
+     */
+    public function testGetThemeIdByScopeForStoreScope(): void
+    {
+        $this->scopeConfig->expects($this->once())
+            ->method('getValue')
+            ->with(DesignInterface::XML_PATH_THEME_ID, ScopeInterface::SCOPE_STORE, 3)
+            ->willReturn('9');
+
+        $result = $this->resolver->getThemeIdByScope(new Scope('stores', 3));
+
+        $this->assertSame(9, $result);
+    }
+
+    /**
+     * Test Q: getThemeIdByScope throws LocalizedException when scopeConfig returns null.
+     */
+    public function testGetThemeIdByScopeThrowsWhenThemeNotConfigured(): void
+    {
+        $this->scopeConfig->method('getValue')->willReturn(null);
+
+        $this->expectException(LocalizedException::class);
+        $this->resolver->getThemeIdByScope(new Scope('stores', 99));
     }
 
     // =========================================================================

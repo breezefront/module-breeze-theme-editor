@@ -942,6 +942,241 @@ class ValueInheritanceResolverTest extends TestCase
         $this->assertEquals('green', $result[0]['value']);
     }
 
+    // ========================================================================
+    // MIXED SCOPE × THEME HIERARCHY (2D matrix — tests I–S)
+    // ========================================================================
+
+    /**
+     * Helper: build a resolver with a StoreManager that maps $storeId → $websiteId.
+     */
+    private function createResolverWithStoreManager(int $storeId, int $websiteId): ValueInheritanceResolver
+    {
+        $storeMock = $this->createMock(StoreInterface::class);
+        $storeMock->method('getWebsiteId')->willReturn($websiteId);
+
+        $storeManagerMock = $this->createMock(StoreManagerInterface::class);
+        $storeManagerMock->method('getStore')->with($storeId)->willReturn($storeMock);
+
+        return new ValueInheritanceResolver(
+            $this->valueServiceMock,
+            $this->themeResolverMock,
+            $this->configProviderMock,
+            $this->scopeFactoryMock,
+            $storeManagerMock
+        );
+    }
+
+    /**
+     * Helper: two-level theme hierarchy — themeId=6 (child) → themeId=5 (parent).
+     */
+    private function twoLevelHierarchy(): array
+    {
+        return [
+            ['theme_id' => 6, 'theme_code' => 'child',  'level' => 0],
+            ['theme_id' => 5, 'theme_code' => 'parent', 'level' => 1],
+        ];
+    }
+
+    /**
+     * Test I: 2D matrix — value at default/0 for parent theme (5) is found
+     * when reading for stores/3 with child theme (6).
+     *
+     * Matrix cell: themeId=5 × default/0 → value exists
+     */
+    public function testResolveAllValuesCrossesThemeHierarchyAndScopeChain(): void
+    {
+        $resolver = $this->createResolverWithStoreManager(3, 2);
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($this->twoLevelHierarchy());
+
+        $this->valueServiceMock->method('getValuesByTheme')
+            ->willReturnCallback(function (int $themeId, ScopeInterface $scope) {
+                if ($themeId === 5 && $scope->getType() === 'default') {
+                    return [['section_code' => 'colors', 'setting_code' => 'bg', 'value' => 'deep_default']];
+                }
+                return [];
+            });
+
+        $result = $resolver->resolveAllValues(6, new Scope('stores', 3), 2);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('deep_default', $result[0]['value']);
+    }
+
+    /**
+     * Test J: 2D matrix — value at websites/2 for parent theme (5) is found
+     * when reading for stores/3 with child theme (6).
+     *
+     * Matrix cell: themeId=5 × websites/2 → value exists
+     */
+    public function testResolveAllValuesFindsParentThemeValueAtWebsiteScope(): void
+    {
+        $resolver = $this->createResolverWithStoreManager(3, 2);
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($this->twoLevelHierarchy());
+
+        $this->valueServiceMock->method('getValuesByTheme')
+            ->willReturnCallback(function (int $themeId, ScopeInterface $scope) {
+                if ($themeId === 5 && $scope->getType() === 'websites' && $scope->getScopeId() === 2) {
+                    return [['section_code' => 'header', 'setting_code' => 'logo', 'value' => 'parent_at_website']];
+                }
+                return [];
+            });
+
+        $result = $resolver->resolveAllValues(6, new Scope('stores', 3), 2);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('parent_at_website', $result[0]['value']);
+    }
+
+    /**
+     * Test K: 2D matrix — child theme's stores/3 value overrides parent theme's default/0 value
+     * for the same setting key.
+     *
+     * Iteration order (grandparent→child, default→stores) means:
+     *   themeId=5/default writes 'parent_default'
+     *   themeId=6/stores  writes 'child_store'  ← wins
+     */
+    public function testChildStoreValueOverridesParentDefaultInMatrix(): void
+    {
+        $resolver = $this->createResolverWithStoreManager(3, 2);
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($this->twoLevelHierarchy());
+
+        $this->valueServiceMock->method('getValuesByTheme')
+            ->willReturnCallback(function (int $themeId, ScopeInterface $scope) {
+                $map = [
+                    '5/default' => 'parent_default',
+                    '6/stores'  => 'child_store',
+                ];
+                $val = $map[$themeId . '/' . $scope->getType()] ?? null;
+                return $val
+                    ? [['section_code' => 'colors', 'setting_code' => 'bg', 'value' => $val]]
+                    : [];
+            });
+
+        $result = $resolver->resolveAllValues(6, new Scope('stores', 3), 2);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('child_store', $result[0]['value']);
+    }
+
+    /**
+     * Test L: 2D matrix — child theme's stores/3 value overrides parent theme's websites/2 value
+     * for the same setting key.
+     *
+     * Iteration order means:
+     *   themeId=5/websites writes 'parent_website'
+     *   themeId=6/stores   writes 'child_store'   ← wins
+     */
+    public function testChildStoreValueOverridesParentWebsiteInMatrix(): void
+    {
+        $resolver = $this->createResolverWithStoreManager(3, 2);
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($this->twoLevelHierarchy());
+
+        $this->valueServiceMock->method('getValuesByTheme')
+            ->willReturnCallback(function (int $themeId, ScopeInterface $scope) {
+                $map = [
+                    '5/websites' => 'parent_website',
+                    '6/stores'   => 'child_store',
+                ];
+                $val = $map[$themeId . '/' . $scope->getType()] ?? null;
+                return $val
+                    ? [['section_code' => 'colors', 'setting_code' => 'bg', 'value' => $val]]
+                    : [];
+            });
+
+        $result = $resolver->resolveAllValues(6, new Scope('stores', 3), 2);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('child_store', $result[0]['value']);
+    }
+
+    /**
+     * Test M: End-to-end save/read scenario — value saved at websites/1 for parent themeId=5
+     * is found when reading for stores/3 (themeId=6, child of 5).
+     *
+     * Mirrors the real flow:
+     *   Save side:  scope=websites/1 → getThemeIdByScope returns 5 (ScopeConfig fallback from default)
+     *               → row inserted: theme_id=5, scope=websites, store_id=1
+     *   Read side:  scope=stores/3, themeId=6 → chain=[default/0, websites/1, stores/3]
+     *               → 2D scan reaches cell (themeId=5, websites/1) ✓
+     */
+    public function testReadFindsValueSavedAtParentThemeAndWebsiteScope(): void
+    {
+        // Store 3 belongs to website 1
+        $resolver = $this->createResolverWithStoreManager(3, 1);
+        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($this->twoLevelHierarchy());
+
+        $savedValue = ['section_code' => 'typography', 'setting_code' => 'font', 'value' => 'Roboto'];
+        $this->valueServiceMock->method('getValuesByTheme')
+            ->willReturnCallback(function (int $themeId, ScopeInterface $scope) use ($savedValue) {
+                return ($themeId === 5 && $scope->getType() === 'websites' && $scope->getScopeId() === 1)
+                    ? [$savedValue]
+                    : [];
+            });
+
+        $result = $resolver->resolveAllValues(6, new Scope('stores', 3), 2);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('Roboto', $result[0]['value']);
+    }
+
+    /**
+     * Test R: buildScopeChain(default/0) always returns a single-entry chain [default/0]
+     * regardless of whether StoreManager is injected — default has no website or store leg.
+     */
+    public function testBuildScopeChainForDefaultAlwaysReturnsSingleEntry(): void
+    {
+        // Without StoreManager
+        $chain = $this->resolver->buildScopeChain(new Scope('default', 0));
+        $this->assertCount(1, $chain);
+        $this->assertEquals('default', $chain[0]->getType());
+        $this->assertEquals(0, $chain[0]->getScopeId());
+
+        // With StoreManager injected — must not call getStore and still return single entry
+        $storeManagerMock = $this->createMock(StoreManagerInterface::class);
+        $storeManagerMock->expects($this->never())->method('getStore');
+
+        $resolver = new ValueInheritanceResolver(
+            $this->valueServiceMock,
+            $this->themeResolverMock,
+            $this->configProviderMock,
+            $this->scopeFactoryMock,
+            $storeManagerMock
+        );
+
+        $chain2 = $resolver->buildScopeChain(new Scope('default', 0));
+        $this->assertCount(1, $chain2);
+        $this->assertEquals('default', $chain2[0]->getType());
+    }
+
+    /**
+     * Test S: buildScopeChain(stores/N) gracefully degrades to [stores/N] when
+     * StoreManager throws an exception (e.g. invalid store_id in test data).
+     */
+    public function testBuildScopeChainDegradesToSingleEntryWhenStoreManagerThrows(): void
+    {
+        $storeManagerMock = $this->createMock(StoreManagerInterface::class);
+        $storeManagerMock->method('getStore')
+            ->willThrowException(new \Exception('Store not found'));
+
+        $resolver = new ValueInheritanceResolver(
+            $this->valueServiceMock,
+            $this->themeResolverMock,
+            $this->configProviderMock,
+            $this->scopeFactoryMock,
+            $storeManagerMock
+        );
+
+        $chain = $resolver->buildScopeChain(new Scope('stores', 7));
+
+        $this->assertCount(1, $chain, 'Must degrade gracefully when StoreManager throws');
+        $this->assertEquals('stores', $chain[0]->getType());
+        $this->assertEquals(7, $chain[0]->getScopeId());
+    }
+
+    // ========================================================================
+    // (existing test 20 follows)
+    // ========================================================================
+
     /**
      * Test 20: Correct merge order (parent values applied before child)
      */
