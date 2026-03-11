@@ -85,7 +85,8 @@ class Publication extends AbstractQueryResolver
         return [
             'publicationId'   => $publication->getPublicationId(),
             'themeId'         => $publication->getThemeId(),
-            'storeId'         => $publication->getStoreId(),
+            'scope'           => $publication->getScope(),
+            'scopeId'         => $publication->getStoreId(),
             'title'           => $publication->getTitle(),
             'description'     => $publication->getDescription(),
             'publishedAt'     => $publication->getPublishedAt(),

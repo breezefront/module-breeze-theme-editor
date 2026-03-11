@@ -74,7 +74,8 @@ class Rollback extends AbstractMutationResolver
             'publication' => [
                 'publicationId' => $newPublication->getPublicationId(),
                 'themeId' => $newPublication->getThemeId(),
-                'storeId' => $newPublication->getStoreId(),
+                'scope' => $newPublication->getScope(),
+                'scopeId' => $newPublication->getStoreId(),
                 'title' => $newPublication->getTitle(),
                 'description' => $newPublication->getDescription(),
                 'publishedAt' => $newPublication->getPublishedAt(),

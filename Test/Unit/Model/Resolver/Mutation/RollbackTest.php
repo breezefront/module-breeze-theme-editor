@@ -245,7 +245,7 @@ class RollbackTest extends TestCase
         // Verify all required fields are present
         $this->assertArrayHasKey('publicationId', $publication);
         $this->assertArrayHasKey('themeId', $publication);
-        $this->assertArrayHasKey('storeId', $publication);
+        $this->assertArrayHasKey('scopeId', $publication);
         $this->assertArrayHasKey('title', $publication);
         $this->assertArrayHasKey('description', $publication);
         $this->assertArrayHasKey('publishedAt', $publication);
@@ -261,7 +261,7 @@ class RollbackTest extends TestCase
         // Verify specific values
         $this->assertEquals(103, $publication['publicationId']);
         $this->assertEquals(15, $publication['themeId']);
-        $this->assertEquals(2, $publication['storeId']);
+        $this->assertEquals(2, $publication['scopeId']);
         $this->assertEquals('Full Rollback Test', $publication['title']);
         $this->assertTrue($publication['isRollback']);
         $this->assertEquals(50, $publication['rollbackFrom']);

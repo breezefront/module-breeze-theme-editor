@@ -16,6 +16,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 
 /**
  * Get theme configuration from specific publication
@@ -36,7 +37,8 @@ class ConfigFromPublication extends AbstractConfigResolver
         private ThemeResolver $themeResolver,
         private PublicationRepositoryInterface $publicationRepository,
         private ChangelogRepositoryInterface $changelogRepository,
-        private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory
+        private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory,
+        private ScopeFactory $scopeFactory
     ) {
         parent::__construct($serializer, $configProvider, $paletteProvider, $fontPaletteProvider, $colorFormatResolver, $colorFormatter);
     }
@@ -66,8 +68,11 @@ class ConfigFromPublication extends AbstractConfigResolver
 
         $themeId = $publication->getThemeId();
         if (!$themeId) {
-            $scopeId = (int)($args['scopeId'] ?? $args['storeId'] ?? 0);
-            $themeId = $this->themeResolver->getThemeIdByStoreId($scopeId);
+            $scope = $this->scopeFactory->create(
+                $publication->getScope() ?: 'stores',
+                (int)$publication->getStoreId()
+            );
+            $themeId = $this->themeResolver->getThemeIdByScope($scope);
         }
 
         // 3. Отримати базовий конфіг теми

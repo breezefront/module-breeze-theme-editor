@@ -23,6 +23,8 @@ use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Resolver\Query\ConfigFromPublication;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
+use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 
 class ConfigFromPublicationTest extends TestCase
@@ -38,6 +40,7 @@ class ConfigFromPublicationTest extends TestCase
     private PublicationRepositoryInterface|MockObject $publicationRepository;
     private ChangelogRepositoryInterface|MockObject $changelogRepository;
     private SearchCriteriaBuilderFactory|MockObject $searchCriteriaBuilderFactory;
+    private ScopeFactory|MockObject $scopeFactory;
     private Field|MockObject $field;
     private ContextInterface|MockObject $context;
     private ResolveInfo|MockObject $resolveInfo;
@@ -77,6 +80,8 @@ class ConfigFromPublicationTest extends TestCase
         $emptyResults->method('getItems')->willReturn([]);
         $this->changelogRepository->method('getList')->willReturn($emptyResults);
 
+        $this->scopeFactory = $this->createMock(ScopeFactory::class);
+
         $this->resolver = new ConfigFromPublication(
             $this->serializer,
             $this->configProvider,
@@ -87,7 +92,8 @@ class ConfigFromPublicationTest extends TestCase
             $this->themeResolver,
             $this->publicationRepository,
             $this->changelogRepository,
-            $this->searchCriteriaBuilderFactory
+            $this->searchCriteriaBuilderFactory,
+            $this->scopeFactory
         );
     }
 
@@ -119,12 +125,21 @@ class ConfigFromPublicationTest extends TestCase
     {
         $pub = $this->createMock(PublicationInterface::class);
         $pub->method('getPublishedAt')->willReturn('2024-01-01');
+        $pub->method('getScope')->willReturn('stores');
+        $pub->method('getStoreId')->willReturn(3);
         $this->publicationRepository->method('getById')->willReturn($pub);
+
+        $scopeMock = $this->createMock(ScopeInterface::class);
+        $this->scopeFactory
+            ->expects($this->once())
+            ->method('create')
+            ->with('stores', 3)
+            ->willReturn($scopeMock);
 
         $this->themeResolver
             ->expects($this->once())
-            ->method('getThemeIdByStoreId')
-            ->with(3)
+            ->method('getThemeIdByScope')
+            ->with($scopeMock)
             ->willReturn(10);
 
         $this->configProvider->method('getConfigurationWithInheritance')->willReturn(['sections' => [], 'version' => '1.0', 'presets' => []]);

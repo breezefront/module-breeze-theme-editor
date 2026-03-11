@@ -152,7 +152,7 @@ class PublicationTest extends TestCase
             ['publicationId' => 10]
         );
 
-        foreach (['publicationId', 'themeId', 'storeId', 'title', 'publishedAt', 'publishedBy', 'changesCount', 'changes', 'canRollback'] as $key) {
+        foreach (['publicationId', 'themeId', 'scopeId', 'title', 'publishedAt', 'publishedBy', 'changesCount', 'changes', 'canRollback'] as $key) {
             $this->assertArrayHasKey($key, $result);
         }
     }
