@@ -290,6 +290,23 @@ class ConfigProvider
     }
 
     /**
+     * Build a map of themeId => true for all themes that have a settings.json.
+     * Loads the full theme collection once; caller should memoize the result.
+     *
+     * @return array<int, true>
+     */
+    public function getThemeIdsWithConfigFile(): array
+    {
+        $result = [];
+        foreach ($this->themeCollectionFactory->create() as $theme) {
+            if ($this->findConfigFile($theme) !== null) {
+                $result[(int)$theme->getId()] = true;
+            }
+        }
+        return $result;
+    }
+
+    /**
      * Отримати theme object
      */
     private function getTheme(int $themeId)

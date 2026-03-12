@@ -886,4 +886,75 @@ class ConfigProviderTest extends TestCase
         // Total: 3 sections
         $this->assertCount(3, $finalResult['sections']);
     }
+
+    // =========================================================================
+    // getThemeIdsWithConfigFile
+    // =========================================================================
+
+    /**
+     * Test: returns only the IDs of themes that actually have settings.json.
+     *
+     * Three themes in the collection:
+     *   - theme 1 (id=1): has settings.json  → included
+     *   - theme 2 (id=2): no settings.json   → excluded
+     *   - theme 3 (id=3): has settings.json  → included
+     */
+    public function testGetThemeIdsWithConfigFile_returnsOnlyThemesWithFile(): void
+    {
+        // Arrange — temp directory with a real settings.json
+        $tmpDir = sys_get_temp_dir() . '/bte_test_' . uniqid('', true);
+        $configDir = $tmpDir . '/etc/theme_editor';
+        mkdir($configDir, 0777, true);
+        file_put_contents($configDir . '/settings.json', '{}');
+
+        $makeTheme = function (int $id, string $path) {
+            $theme = $this->createMock(\Magento\Theme\Model\Theme::class);
+            $theme->method('getId')->willReturn($id);
+            $theme->method('getFullPath')->willReturn($path);
+            return $theme;
+        };
+
+        $theme1 = $makeTheme(1, 'frontend/Vendor/ThemeWithConfig');
+        $theme2 = $makeTheme(2, 'frontend/Vendor/ThemeNoConfig');
+        $theme3 = $makeTheme(3, 'frontend/Vendor/AnotherThemeWithConfig');
+
+        $this->themeCollectionFactoryMock
+            ->method('create')
+            ->willReturn(new \ArrayObject([$theme1, $theme2, $theme3]));
+
+        // ComponentRegistrar returns the temp dir for themes 1 & 3, null for theme 2
+        $this->componentRegistrarMock
+            ->method('getPath')
+            ->willReturnCallback(function (string $type, string $code) use ($tmpDir): ?string {
+                return in_array($code, ['frontend/Vendor/ThemeWithConfig', 'frontend/Vendor/AnotherThemeWithConfig'], true)
+                    ? $tmpDir
+                    : null;
+            });
+
+        // Act
+        $result = $this->configProvider->getThemeIdsWithConfigFile();
+
+        // Assert
+        $this->assertSame([1 => true, 3 => true], $result);
+
+        // Cleanup
+        unlink($configDir . '/settings.json');
+        rmdir($configDir);
+        rmdir($tmpDir . '/etc');
+        rmdir($tmpDir);
+    }
+
+    /**
+     * Test: returns an empty array when the theme collection is empty.
+     */
+    public function testGetThemeIdsWithConfigFile_emptyCollection_returnsEmptyArray(): void
+    {
+        $this->themeCollectionFactoryMock
+            ->method('create')
+            ->willReturn(new \ArrayObject([]));
+
+        $result = $this->configProvider->getThemeIdsWithConfigFile();
+
+        $this->assertSame([], $result);
+    }
 }

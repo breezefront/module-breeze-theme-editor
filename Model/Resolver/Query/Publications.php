@@ -22,6 +22,8 @@ use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
  */
 class Publications extends AbstractQueryResolver
 {
+    use PublicationDataTrait;
+
     public function __construct(
         private PublicationRepositoryInterface $publicationRepository,
         private UserResolver $userResolver,
@@ -85,26 +87,9 @@ class Publications extends AbstractQueryResolver
 
         $items = [];
         foreach ($searchResults->getItems() as $publication) {
-            $publishedBy = $publication->getPublishedBy();
-            $userData = $usersData[$publishedBy] ?? null;
-            
-            $items[] = [
-                'publicationId' => $publication->getPublicationId(),
-                'themeId' => $publication->getThemeId(),
-                'scope' => $publication->getScope(),
-                'scopeId' => $publication->getStoreId(),
-                'title' => $publication->getTitle(),
-                'description' => $publication->getDescription(),
-                'publishedAt' => $publication->getPublishedAt(),
-                'publishedBy' => $publishedBy,
-                'publishedByName' => $userData['fullname'] ?? $userData['username'] ?? null,
-                'publishedByEmail' => $userData['email'] ?? null,
-                'isRollback' => (bool)$publication->getIsRollback(),
-                'rollbackFrom' => $publication->getRollbackFrom(),
-                'changesCount' => $publication->getChangesCount(),
-                'changes' => null, // Не завантажувати тут (окремий query)
-                'canRollback' => true
-            ];
+            $userData = $usersData[$publication->getPublishedBy()] ?? null;
+
+            $items[] = $this->formatPublicationData($publication, $userData ?? []);
         }
 
         return [

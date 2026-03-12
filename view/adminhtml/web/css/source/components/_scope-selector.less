@@ -228,6 +228,27 @@
                 padding-left: 56px; // Indent: 12px + 16px + 16px + 12px
             }
         }
+
+        // Indicator: scope's theme has Theme Editor settings.json
+        .scope-has-settings {
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+            margin-left: auto;
+            padding-left: 6px;
+            color: @bte-toolbar-text-muted;
+            opacity: 0.5;
+
+            svg {
+                display: block;
+            }
+        }
+
+        .scope-store.active .scope-has-settings,
+        .scope-website-item.active .scope-has-settings {
+            color: @bte-toolbar-icon;
+            opacity: 1;
+        }
         
         // Containers
         .scope-groups,

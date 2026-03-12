@@ -18,15 +18,23 @@ class StoreDataProvider
     private $urlBuilder;
 
     /**
-     * @param StoreManagerInterface $storeManager
-     * @param UrlInterface $urlBuilder
+     * @var ThemeAvailabilityProvider
+     */
+    private $themeAvailability;
+
+    /**
+     * @param StoreManagerInterface     $storeManager
+     * @param UrlInterface              $urlBuilder
+     * @param ThemeAvailabilityProvider $themeAvailability
      */
     public function __construct(
-        StoreManagerInterface $storeManager,
-        UrlInterface $urlBuilder
+        StoreManagerInterface     $storeManager,
+        UrlInterface              $urlBuilder,
+        ThemeAvailabilityProvider $themeAvailability
     ) {
-        $this->storeManager = $storeManager;
-        $this->urlBuilder = $urlBuilder;
+        $this->storeManager      = $storeManager;
+        $this->urlBuilder        = $urlBuilder;
+        $this->themeAvailability = $themeAvailability;
     }
 
     /**
@@ -180,6 +188,7 @@ class StoreDataProvider
                 'code'          => $website->getCode(),
                 'name'          => $website->getName(),
                 'previewStoreId'=> 0,
+                'hasSettings'   => $this->themeAvailability->hasSettings('websites', (int)$website->getId()),
                 'groups'        => []
             ];
 
@@ -208,14 +217,15 @@ class StoreDataProvider
                     }
 
                     $groupData['stores'][] = [
-                        'type'    => 'store',
-                        'scope'   => 'stores',
-                        'scopeId' => $storeId,
-                        'id'      => $storeId,
-                        'code'    => $store->getCode(),
-                        'name'    => $store->getName(),
-                        'url'     => $this->getStoreUrl($store),
-                        'active'  => (int)$store->getId() === (int)$currentStoreId
+                        'type'        => 'store',
+                        'scope'       => 'stores',
+                        'scopeId'     => $storeId,
+                        'id'          => $storeId,
+                        'code'        => $store->getCode(),
+                        'name'        => $store->getName(),
+                        'url'         => $this->getStoreUrl($store),
+                        'active'      => (int)$store->getId() === (int)$currentStoreId,
+                        'hasSettings' => $this->themeAvailability->hasSettings('stores', $storeId),
                     ];
                 }
 
@@ -245,6 +255,7 @@ class StoreDataProvider
             'scopeId'       => 0,
             'name'          => (string)__('All Store Views'),
             'previewStoreId'=> $firstActiveStoreId,
+            'hasSettings'   => $this->themeAvailability->hasSettings('default', 0),
         ];
 
         foreach ($websiteEntries as $websiteData) {

@@ -20,6 +20,8 @@ use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
  */
 class Publication extends AbstractQueryResolver
 {
+    use PublicationDataTrait;
+
     public function __construct(
         private PublicationRepositoryInterface $publicationRepository,
         private ChangelogRepositoryInterface $changelogRepository,
@@ -82,23 +84,7 @@ class Publication extends AbstractQueryResolver
         $publishedBy = $publication->getPublishedBy();
         $userData = $this->adminUserLoader->getUserData($publishedBy);
 
-        return [
-            'publicationId'   => $publication->getPublicationId(),
-            'themeId'         => $publication->getThemeId(),
-            'scope'           => $publication->getScope(),
-            'scopeId'         => $publication->getStoreId(),
-            'title'           => $publication->getTitle(),
-            'description'     => $publication->getDescription(),
-            'publishedAt'     => $publication->getPublishedAt(),
-            'publishedBy'     => $publishedBy,
-            'publishedByName' => $userData['fullname'] ?? $userData['username'] ?? null,
-            'publishedByEmail'=> $userData['email'] ?? null,
-            'isRollback'      => (bool)$publication->getIsRollback(),
-            'rollbackFrom'    => $publication->getRollbackFrom(),
-            'changesCount'    => $publication->getChangesCount(),
-            'changes'         => $changes,
-            'canRollback'     => true
-        ];
+        return $this->formatPublicationData($publication, $userData, $changes);
     }
 
     private function extractLabels(array $config): array
