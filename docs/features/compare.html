@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Icon Comparison: Custom SVG vs Phosphor Icons</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f4f4f4;
+    --text: #111111;
+    --text2: #666666;
+    --border: #e0e0e0;
+    --green: #16a34a;
+    --yellow: #b45309;
+    --red: #dc2626;
+    --badge-green-bg: #dcfce7;
+    --badge-yellow-bg: #fef3c7;
+    --badge-red-bg: #fee2e2;
+  }
+  .dark {
+    --bg: #1a1a1a;
+    --bg2: #252525;
+    --text: #f0f0f0;
+    --text2: #999999;
+    --border: #333333;
+    --badge-green-bg: #14532d;
+    --badge-yellow-bg: #78350f;
+    --badge-red-bg: #7f1d1d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px;
+    transition: background 0.2s, color 0.2s;
+    font-size: 13px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  h1 { font-size: 20px; font-weight: 700; }
+  h1 small { color: var(--text2); font-size: 13px; font-weight: 400; margin-left: 8px; }
+
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  button {
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+  button.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    background: var(--bg2);
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text2);
+    border-bottom: 2px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:hover { background: var(--bg2); }
+
+  tr.group-row td {
+    background: var(--bg2);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text2);
+    padding: 5px 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  td { padding: 14px 12px; vertical-align: middle; }
+
+  .td-num  { width: 32px; color: var(--text2); font-size: 11px; text-align: center; }
+  .td-name { width: 170px; }
+  .td-icon { width: 180px; }
+  .td-badge { width: 110px; }
+
+  .icon-name { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  .icon-loc  { color: var(--text2); font-size: 10px; font-family: monospace; line-height: 1.5; }
+
+  /* icon cell */
+  .icon-cell { display: flex; align-items: center; gap: 10px; }
+
+  .icon-box {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .icon-box svg, .icon-box i { display: block; }
+  .icon-box i { font-size: 20px; line-height: 1; }
+
+  .icon-info { min-width: 0; }
+  .icon-code { font-family: monospace; font-size: 10px; color: var(--text2); line-height: 1.5; }
+
+  /* badge */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 12px;
+    font-size: 11px; font-weight: 600;
+  }
+  .b-same { background: var(--badge-green-bg); color: var(--green); }
+  .b-sim  { background: var(--badge-yellow-bg); color: var(--yellow); }
+  .b-keep { background: var(--badge-red-bg); color: var(--red); }
+
+  .notes { color: var(--text2); font-size: 12px; line-height: 1.5; }
+  .notes strong { color: var(--text); }
+
+  /* size variants */
+  body.sz-sm .icon-box svg { width: 12px !important; height: 12px !important; }
+  body.sz-sm .icon-box i   { font-size: 12px !important; }
+  body.sz-md .icon-box svg { width: 20px !important; height: 20px !important; }
+  body.sz-md .icon-box i   { font-size: 20px !important; }
+  body.sz-lg .icon-box svg { width: 32px !important; height: 32px !important; }
+  body.sz-lg .icon-box i   { font-size: 32px !important; }
+
+  /* legend */
+  .legend {
+    margin-top: 28px;
+    padding: 14px 18px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
+  }
+  .legend-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text2); }
+  .legend-item  { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">
+</head>
+<body class="sz-md">
+
+<header>
+  <div>
+    <h1>Icon Comparison <small>Custom SVG &rarr; Phosphor Icons (Regular)</small></h1>
+  </div>
+  <div class="controls">
+    <span style="font-size:11px;color:var(--text2);font-weight:600;">SIZE:</span>
+    <button onclick="setSize('sm')" id="btn-sm">12px</button>
+    <button onclick="setSize('md')" id="btn-md" class="active">20px</button>
+    <button onclick="setSize('lg')" id="btn-lg">32px</button>
+    <button onclick="document.body.classList.toggle('dark')" style="margin-left:8px;">&#9788; Dark / Light</button>
+  </div>
+</header>
+
+<table>
+  <thead>
+    <tr>
+      <th class="td-num">#</th>
+      <th class="td-name">Icon / File</th>
+      <th class="td-icon">Current SVG</th>
+      <th class="td-icon">Phosphor Equivalent</th>
+      <th class="td-badge">Match</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <tr class="group-row"><td colspan="6">Toolbar — dropdown arrows</td></tr>
+
+    <!-- 1. Chevron -->
+    <tr>
+      <td class="td-num">1</td>
+      <td class="td-name">
+        <div class="icon-name">Chevron Down</div>
+        <div class="icon-loc">page-selector.html<br>scope-selector.html<br>publication-selector.html</div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 7 5" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M3.35355 2.64645L6.00003 0L6.70713 0.70711L3.35355 4.06062L0 0.70711L0.70711 0L3.35355 2.64645Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="icon-info"><div class="icon-code">7×5 fill<br>custom path</div></div>
+        </div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box"><i class="ph ph-caret-down"></i></div>
+          <div class="icon-info"><div class="icon-code">ph-caret-down<br>256vb fill</div></div>
+        </div>
+      </td>
+      <td class="td-badge"><span class="badge b-sim">~ Similar</span></td>
+      <td class="notes">Обидва V-подібні. Phosphor трохи округліший, кастомний — плоский і широкий.</td>
+    </tr>
+
+    <tr class="group-row"><td colspan="6">Settings Panel — panel/settings-editor.html</td></tr>
+
+    <!-- 2. Pencil -->
+    <tr>
+      <td class="td-num">2</td>
+      <td class="td-name">
+        <div class="icon-name">Pencil / Edit</div>
+        <div class="icon-loc">settings-editor.html:6<br>AdminToolbar.php:565</div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7.45997 1.87738L8.44664 0.890715C8.57046 0.766847 8.71747 0.668586 8.87927 0.601546C9.04107 0.534506 9.2145 0.5 9.38964 0.5C9.56478 0.5 9.73821 0.534506 9.90001 0.601546C10.0618 0.668586 10.2088 0.766847 10.3326 0.890715L11.2753 1.83338C11.5253 2.08342 11.6657 2.4225 11.6657 2.77605C11.6657 3.1296 11.5253 3.46868 11.2753 3.71872L10.2886 4.70538M7.45997 1.87738L1.04931 8.28738C0.82796 8.50873 0.69155 8.8009 0.663972 9.11272L0.502638 10.9394C0.493974 11.0365 0.506712 11.1343 0.539956 11.226C0.5732 11.3176 0.62614 11.4009 0.695045 11.4698C0.76395 11.5388 0.847143 11.5918 0.938761 11.6251C1.03038 11.6585 1.12819 11.6713 1.22531 11.6627L3.05197 11.5014C3.36426 11.4741 3.65695 11.3377 3.87864 11.116L10.2886 4.70538M7.45997 1.87738L10.2886 4.70538" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="icon-info"><div class="icon-code">13×13 stroke<br>custom path</div></div>
+        </div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box"><i class="ph ph-pencil-simple"></i></div>
+          <div class="icon-info"><div class="icon-code">ph-pencil-simple<br>256vb fill</div></div>
+        </div>
+      </td>
+      <td class="td-badge"><span class="badge b-sim">~ Similar</span></td>
+      <td class="notes">Той самий нахил ~45°. Кастомний — тонкий stroke; Phosphor — filled. Форма олівця ідентична.</td>
+    </tr>
+
+    <!-- 3. Moon -->
+    <tr>
+      <td class="td-num">3</td>
+      <td class="td-name">
+        <div class="icon-name">Moon</div>
+        <div class="icon-loc">settings-editor.html:11<br>.bte-theme-icon-moon</div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6.002 6.002 0 1 0 8 8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="icon-info"><div class="icon-code">16×16 stroke<br>crescent arc</div></div>
+        </div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box"><i class="ph ph-moon"></i></div>
+          <div class="icon-info"><div class="icon-code">ph-moon<br>256vb fill</div></div>
+        </div>
+      </td>
+      <td class="td-badge"><span class="badge b-sim">~ Similar</span></td>
+      <td class="notes">Та сама crescent форма. Кастомний — мінімалістичний stroke; Phosphor — заповнений.</td>
+    </tr>
+
+    <!-- 4. Sun -->
+    <tr>
+      <td class="td-num">4</td>
+      <td class="td-name">
+        <div class="icon-name">Sun</div>
+        <div class="icon-loc">settings-editor.html:15<br>.bte-theme-icon-sun</div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M11.89 4.11l1.06-1.06M3.05 12.95l1.06-1.06" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="icon-info"><div class="icon-code">16×16 stroke<br>circle + 8 rays</div></div>
+        </div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box"><i class="ph ph-sun"></i></div>
+          <div class="icon-info"><div class="icon-code">ph-sun<br>256vb fill</div></div>
+        </div>
+      </td>
+      <td class="td-badge"><span class="badge b-sim">~ Similar</span></td>
+      <td class="notes">Коло + 8 промінів у тих самих позиціях. Phosphor промені прямокутні; кастомні — лінії. Дуже близько.</td>
+    </tr>
+
+    <!-- 5. Search -->
+    <tr>
+      <td class="td-num">5</td>
+      <td class="td-name">
+        <div class="icon-name">Search</div>
+        <div class="icon-loc">settings-editor.html:28<br>.bte-search-icon</div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M9.5 9.5L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="icon-info"><div class="icon-code">14×14 stroke<br>circle + handle</div></div>
+        </div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box"><i class="ph ph-magnifying-glass"></i></div>
+          <div class="icon-info"><div class="icon-code">ph-magnifying-glass<br>256vb fill</div></div>
+        </div>
+      </td>
+      <td class="td-badge"><span class="badge b-same">✓ Identical</span></td>
+      <td class="notes">Практично одне й те саме. Коло-лінза + ручка під кутом. Phosphor — filled ring, кастомний — stroke. Візуально еквівалентні.</td>
+    </tr>
+
+    <tr class="group-row"><td colspan="6">Toolbar — кнопки дій</td></tr>
+
+    <!-- 6. Exit -->
+    <tr>
+      <td class="td-num">6</td>
+      <td class="td-name">
+        <div class="icon-name">Exit / Sign Out</div>
+        <div class="icon-loc">exit-button.html:3</div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 15 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3.66675 5.16659H10.3334M10.3334 5.16659L8.50008 6.99992M10.3334 5.16659L8.50008 3.33325" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M0.5 7.16667V3.16667C0.5 2.45942 0.780952 1.78115 1.28105 1.28105C1.78115 0.780951 2.45942 0.5 3.16667 0.5H11.1667C11.8739 0.5 12.5522 0.780951 13.0523 1.28105C13.5524 1.78115 13.8333 2.45942 13.8333 3.16667V7.16667C13.8333 7.87391 13.5524 8.55219 13.0523 9.05228C12.5522 9.55238 11.8739 9.83333 11.1667 9.83333H3.16667C2.45942 9.83333 1.78115 9.55238 1.28105 9.05228C0.780952 8.55219 0.5 7.87391 0.5 7.16667Z" stroke="currentColor"/>
+            </svg>
+          </div>
+          <div class="icon-info"><div class="icon-code">15×11 stroke<br>rect + arrow</div></div>
+        </div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box"><i class="ph ph-sign-out"></i></div>
+          <div class="icon-info"><div class="icon-code">ph-sign-out<br>256vb fill</div></div>
+        </div>
+      </td>
+      <td class="td-badge"><span class="badge b-sim">~ Similar</span></td>
+      <td class="notes">Кастомний: стрілка всередині прямокутника (горизонтально). Phosphor: стрілка виходить з дверей. Та сама ідея, різна композиція.</td>
+    </tr>
+
+    <!-- 7. Eye-slash -->
+    <tr>
+      <td class="td-num">7</td>
+      <td class="td-name">
+        <div class="icon-name">Eye-Slash</div>
+        <div class="icon-loc">toolbar-toggle.html:3</div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0.5 0.5L12.5 12.5M5.5 5.618C5.27537 5.87234 5.15617 6.20275 5.16668 6.54192C5.17719 6.88109 5.31663 7.20349 5.55657 7.44343C5.79651 7.68337 6.11891 7.82281 6.45808 7.83332C6.79725 7.84383 7.12766 7.72463 7.382 7.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3.408 3.54067C2.28667 4.32667 1.35267 5.44667 0.5 6.5C1.75933 8.494 4.02133 10.5 6.5 10.5C7.53333 10.5 8.52867 10.1513 9.43 9.6M6.5 2.5C9.172 2.5 10.9673 4.60533 12.5 6.5C12.2803 6.84718 12.0404 7.1811 11.7813 7.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="icon-info"><div class="icon-code">13×13 stroke<br>eye + slash</div></div>
+        </div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box"><i class="ph ph-eye-slash"></i></div>
+          <div class="icon-info"><div class="icon-code">ph-eye-slash<br>256vb fill</div></div>
+        </div>
+      </td>
+      <td class="td-badge"><span class="badge b-sim">~ Similar</span></td>
+      <td class="notes">Обидва: око перекреслене діагональною лінією. Кастомний — мінімальний stroke; Phosphor — детальніший.</td>
+    </tr>
+
+    <!-- 8. Cursor -->
+    <tr>
+      <td class="td-num">8</td>
+      <td class="td-name">
+        <div class="icon-name">Cursor / Pointer</div>
+        <div class="icon-loc">highlight-toggle.html:3</div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10.4045 4.0803C11.2072 4.4063 11.1458 5.56297 10.3132 5.8023L6.10916 7.01097L4.18916 10.941C3.80916 11.7196 2.65916 11.579 2.47716 10.7316L0.52049 1.60497C0.485524 1.44275 0.49545 1.27406 0.5492 1.11706C0.60295 0.960055 0.698489 0.820679 0.825541 0.713923C0.952592 0.607167 1.10635 0.537072 1.27026 0.511179C1.43418 0.485285 1.60205 0.504574 1.75582 0.566969L10.4045 4.0803Z" stroke="currentColor"/>
+            </svg>
+          </div>
+          <div class="icon-info"><div class="icon-code">12×12 stroke<br>arrow pointer</div></div>
+        </div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box"><i class="ph ph-cursor"></i></div>
+          <div class="icon-info"><div class="icon-code">ph-cursor<br>256vb fill</div></div>
+        </div>
+      </td>
+      <td class="td-badge"><span class="badge b-sim">~ Similar</span></td>
+      <td class="notes">Обидва — стрілка/курсор. Кастомний — тонкий stroke без деталей; Phosphor має внутрішній контур.</td>
+    </tr>
+
+    <tr class="group-row"><td colspan="6">Scope Selector — scope-selector.html</td></tr>
+
+    <!-- 9. Gear -->
+    <tr>
+      <td class="td-num">9</td>
+      <td class="td-name">
+        <div class="icon-name">Gear / Settings</div>
+        <div class="icon-loc">scope-selector.html:28,47,78<br>.scope-has-settings</div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.6,107.6,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.29,107.29,0,0,0-26.25-10.86,8,8,0,0,0-7.06,1.48L130.16,40q-2.16-.06-4.32,0L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84q-.06,2.16,0,4.32L25.11,148.8a8,8,0,0,0-1.48,7.06,107.6,107.6,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.48l18.64-14.92q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3l23.72-2.64a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.48-7.06Z"/>
+            </svg>
+          </div>
+          <div class="icon-info"><div class="icon-code">12×12 @256vb fill<br>⚠️ вже Phosphor path</div></div>
+        </div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box"><i class="ph ph-gear"></i></div>
+          <div class="icon-info"><div class="icon-code">ph-gear<br>256vb fill</div></div>
+        </div>
+      </td>
+      <td class="td-badge"><span class="badge b-same">✓ Identical</span></td>
+      <td class="notes"><strong>Gear SVG у коді — це вже Phosphor <code>ph-gear</code> path, скопійований вручну.</strong> Можна просто замінити на <code>&lt;i class="ph ph-gear"&gt;</code>.</td>
+    </tr>
+
+    <tr class="group-row"><td colspan="6">Без заміни — бренд / standalone</td></tr>
+
+    <!-- 10. Magento logo -->
+    <tr>
+      <td class="td-num">10</td>
+      <td class="td-name">
+        <div class="icon-name">Magento Logo</div>
+        <div class="icon-loc">admin-link.html:3</div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="24" viewBox="-0.154 0 54 62">
+              <g fill="currentColor">
+                <path d="M26.845 8.857"/>
+                <path d="M53.692 15.5v31l-7.67 4.43v-31L26.844 8.856 7.67 19.926V50.93L0 46.5v-31L26.845 0zM26.847 62L15.34 55.355V24.357l7.67-4.43V50.93l3.835 2.327 3.837-2.327v-31l7.67 4.427v30.998z"/>
+              </g>
+            </svg>
+          </div>
+          <div class="icon-info"><div class="icon-code">20×24 fill<br>brand logo</div></div>
+        </div>
+      </td>
+      <td class="td-icon">
+        <div class="icon-cell">
+          <div class="icon-box" style="color:var(--text2);">
+            <span style="font-size:10px;text-align:center;line-height:1.3">No<br>equiv</span>
+          </div>
+          <div class="icon-info"><div class="icon-code">—<br>залишити</div></div>
+        </div>
+      </td>
+      <td class="td-badge"><span class="badge b-keep">✗ Keep SVG</span></td>
+      <td class="notes">Бренд-іконка Magento. Phosphor-еквіваленту немає. Залишити inline SVG.</td>
+    </tr>
+
+  </tbody>
+</table>
+
+<div class="legend">
+  <span class="legend-label">Legend</span>
+  <span class="legend-item"><span class="badge b-same">✓ Identical</span> — та сама або пікселі в піксель, безпечно міняти</span>
+  <span class="legend-item"><span class="badge b-sim">~ Similar</span> — та сама концепція, різниця stroke vs fill</span>
+  <span class="legend-item"><span class="badge b-keep">✗ Keep SVG</span> — немає підходящого Phosphor-еквіваленту</span>
+</div>
+
+<script>
+function setSize(s) {
+  document.body.classList.remove('sz-sm','sz-md','sz-lg');
+  document.body.classList.add('sz-' + s);
+  ['sm','md','lg'].forEach(function(x) {
+    document.getElementById('btn-' + x).classList.toggle('active', x === s);
+  });
+}
+</script>
+</body>
+</html>
