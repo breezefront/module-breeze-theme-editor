@@ -36,32 +36,25 @@
 ### Color Palette System
 📄 [color-palette-system.md](color-palette-system.md)
 
-**Статус:** 💡 Планування  
-**Опис:** Двохрівнева система управління кольорами
+**Статус:** ✅ Завершено
 
-**Основні компоненти:**
-1. **Palette Management** - Створення та управління наборами кольорів
-2. **Enhanced Color Picker** - Покращений picker з підтримкою палітр
-3. **GraphQL API** - API для CRUD операцій з палітрами
-4. **UI/UX** - Інтерфейс для роботи з палітрами
-
-**Переваги:**
-- Швидке створення цілісних кольорових схем
-- Повторне використання кольорів
-- Організація кольорів по категоріям
-- Експорт/імпорт палітр
-
-**Документація:**
-- [color-palette-system.md](color-palette-system.md) - Повний план з діаграмами
+**Що реалізовано:**
+- `PaletteProvider` / `PaletteResolver` — резолвинг палітр з конфігу теми
+- `FontPaletteProvider` — підтримка font palette
+- GraphQL mutation `saveBreezeThemeEditorPaletteValue` + типи `BreezeThemeEditorPalette`, `BreezeThemeEditorPaletteGroup`, `BreezeThemeEditorPaletteColor`, `BreezeThemeEditorFontPalette`
+- `palette-manager.js` / `font-palette-manager.js` — JS-менеджери у правій панелі
+- `palette-section-renderer.js` / `font-palette-section-renderer.js` — рендеринг секцій
+- `save-palette-value.js` — GraphQL mutation на JS стороні
+- HTML templates: `palette-section.html`, `palette-grid.html`, badges
+- LESS стилі: `_palette-section.less`
+- Pickr з підтримкою opacity (`#rrggbbaa`) — реалізовано окремо (2026-03-09)
+- 33 файли загалом (PHP, JS, templates, тести)
 
 ---
 
 ## 📊 Пріоритети
 
-Поточні пріоритети сфокусовані на завершенні Admin Migration.  
-Features будуть розглядатися після завершення Phases 1-5.
-
-**Орієнтовний час початку:** Після Phase 5 (Q2 2026)
+Поточні пріоритети сфокусовані на завершенні задачі 006 (light design side columns) та Phase 5 (E2E тестування + release prep).
 
 ---
 
