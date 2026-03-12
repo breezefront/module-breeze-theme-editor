@@ -181,47 +181,51 @@
             }
         }
         
-        // Store views (clickable items)
+        // Store views (clickable items) — shared styles for all .scope-store elements
+        .scope-store {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            color: @bte-toolbar-text;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .item-text {
+                font-size: @bte-toolbar-font-size;
+                color: @bte-toolbar-text;
+            }
+
+            .item-check {
+                color: #EC6737; // Orange primary color
+                font-size: 14px;
+                font-weight: bold;
+            }
+
+            &:hover {
+                background: @dropdown-item-hover-bg;
+            }
+
+            &.active {
+                background: @dropdown-item-active-bg;
+
+                .item-text {
+                    color: @dropdown-item-active-color;
+                    font-weight: 600;
+                }
+            }
+        }
+
+        // Store views nested inside groups — extra left indent
         .scope-stores {
             .scope-store {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 10px 12px;
                 padding-left: 56px; // Indent: 12px + 16px + 16px + 12px
-                color: @bte-toolbar-text;
-                text-decoration: none;
-                cursor: pointer;
-                transition: background 0.15s ease;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                
-                &:last-child {
-                    border-bottom: none;
-                }
-                
-                .item-text {
-                    font-size: @bte-toolbar-font-size;
-                    color: @bte-toolbar-text;
-                }
-                
-                .item-check {
-                    color: #EC6737; // Orange primary color
-                    font-size: 14px;
-                    font-weight: bold;
-                }
-                
-                &:hover {
-                    background: @dropdown-item-hover-bg;
-                }
-                
-                &.active {
-                    background: @dropdown-item-active-bg;
-                    
-                    .item-text {
-                        color: @dropdown-item-active-color;
-                        font-weight: 600;
-                    }
-                }
             }
         }
         
