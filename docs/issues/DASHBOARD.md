@@ -1,6 +1,6 @@
 # Issues Dashboard
 
-**Updated:** 2026-03-09
+**Updated:** 2026-03-12
 
 ---
 
@@ -8,11 +8,11 @@
 
 | | Count |
 |---|---|
-| Total issues | 13 |
-| Fixed / Closed | 12 |
+| Total issues | 16 |
+| Fixed / Closed | 15 |
 | Pending | 1 |
-| Bugs | 10 |
-| Tasks | 4 (3 done, 1 pending) |
+| Bugs | 12 (all closed) |
+| Tasks | 5 (4 done, 1 pending) |
 
 ---
 
@@ -30,6 +30,8 @@
 | [012](012-draft-does-not-inherit-published-values.md) | DRAFT values do not inherit PUBLISHED as base layer | `a5c7934` | **Closed** |
 | [013](013-store-view-resets-after-reload.md) | Selected store view resets to default after page reload | `4ed0708` | **Closed** |
 | — | Palette sections ignore stored `false` state on reload | `16de0a3` | **Closed** |
+| [014](014-scope-chain-website-id-not-resolved.md) | Scope chain never includes website leg — `websiteId` never passed | `445d55d` | **Closed** |
+| [015](015-css-generator-published-bypasses-scope-chain.md) | `CssGenerator` PUBLISHED branch bypasses scope chain and theme hierarchy | `7013886` | **Closed** |
 
 ---
 
@@ -41,6 +43,7 @@
 | [007](007-config-groups-closed-by-default.md) | All config groups closed by default | Medium | **Done** — `b134b6b` |
 | [008](008-icons-for-config-sections.md) | Add icons to config sections | Medium | **Done** — `689c6e3` |
 | [009](009-delete-publication-versions.md) | Delete button for saved publication versions | Medium | **Done** — `71c9351` |
+| [016](016-editor-defaults-to-stores-scope-not-default.md) | Editor opens in `stores` scope instead of `default` | Low | **Done** — `8071f79` |
 
 ---
 
