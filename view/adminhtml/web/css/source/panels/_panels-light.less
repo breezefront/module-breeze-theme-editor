@@ -1,0 +1,733 @@
+//
+// Breeze Theme Editor - Panel Light Theme
+// Applied via .bte-panel--light modifier class (toggled by JS, default ON)
+// All dark-mode styles remain unchanged; this block overrides them.
+// _____________________________________________
+
+.bte-panel--light {
+
+    // ============================================================================
+    // PANEL CONTAINER
+    // ============================================================================
+
+    &.bte-panel {
+        background: @bte-panel-bg;
+        box-shadow: @bte-panel-shadow;
+        border-right: 1px solid @bte-panel-border;
+    }
+
+    // ============================================================================
+    // THEME EDITOR PANEL SHELL
+    // ============================================================================
+
+    .bte-theme-editor-panel {
+        background: @bte-panel-bg;
+        color: @bte-panel-text;
+    }
+
+    // ============================================================================
+    // HEADER
+    // ============================================================================
+
+    .bte-panel-header {
+        border-bottom-color: @bte-panel-divider;
+    }
+
+    .bte-panel-title {
+        color: @bte-panel-text-muted;
+    }
+
+    .bte-panel-icon {
+        color: @bte-panel-text-muted;
+    }
+
+    .bte-panel-close {
+        color: @bte-panel-text-muted;
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: @bte-panel-text;
+        }
+    }
+
+    // Theme toggle button (sun/moon)
+    .bte-panel-theme-toggle {
+        color: @bte-panel-text-muted;
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: @bte-panel-text;
+        }
+    }
+
+    // ============================================================================
+    // SCROLLBAR
+    // ============================================================================
+
+    .bte-panel-content {
+        &::-webkit-scrollbar-track {
+            background: @bte-panel-bg;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: @bte-panel-divider;
+
+            &:hover {
+                background: darken(@bte-panel-divider, 10%);
+            }
+        }
+    }
+
+    // ============================================================================
+    // LOADER
+    // ============================================================================
+
+    .bte-loader-spinner {
+        border-color: @bte-panel-divider;
+        border-top-color: #1979c3;
+    }
+
+    .bte-loader-text {
+        color: @bte-panel-text-muted;
+    }
+
+    // ============================================================================
+    // ERROR STATE
+    // ============================================================================
+
+    .bte-error-title {
+        color: @bte-panel-text;
+    }
+
+    .bte-error-message {
+        color: @bte-panel-text-muted;
+    }
+
+    .bte-error-toggle {
+        border-color: @bte-panel-input-border;
+        color: @bte-panel-text-muted;
+
+        &:hover {
+            border-color: darken(@bte-panel-input-border, 10%);
+            color: @bte-panel-text;
+        }
+    }
+
+    .bte-error-stack {
+        background: #fff;
+        border-color: @bte-panel-input-border;
+        color: #c0392b;
+    }
+
+    // ============================================================================
+    // SEARCH
+    // ============================================================================
+
+    .bte-panel-search {
+        border-bottom: none;
+        background: @bte-panel-bg;
+        padding: 10px 28px 10px 20px;
+    }
+
+    .bte-search-icon {
+        color: @bte-panel-text-muted;
+    }
+
+    .bte-search-input {
+        background: @bte-panel-input-bg;
+        border-color: @bte-panel-input-border;
+        color: @bte-panel-input-text;
+        border-radius: @bte-panel-input-radius;
+
+        &::placeholder {
+            color: @bte-panel-text-muted;
+        }
+
+        &:focus {
+            border-color: darken(@bte-panel-input-border, 15%);
+        }
+    }
+
+    .bte-search-clear {
+        color: @bte-panel-text-muted;
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: @bte-panel-text;
+        }
+    }
+
+    .bte-search-no-results {
+        color: @bte-panel-text-muted;
+    }
+
+    // ============================================================================
+    // ACCORDION SECTIONS
+    // ============================================================================
+
+    .bte-accordion-section {
+        border-color: @bte-panel-section-border;
+        border-radius: @bte-panel-section-radius;
+    }
+
+    .bte-accordion-header {
+        background: @bte-panel-section-bg;
+        color: @bte-panel-text;
+
+        &:hover {
+            background: darken(@bte-panel-section-bg, 2%);
+        }
+
+        &.active {
+            background: @bte-panel-section-bg;
+            border-bottom: 1px solid @bte-panel-section-border;
+
+            .bte-accordion-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    }
+
+    .bte-section-icon {
+        color: @bte-panel-text-muted;
+    }
+
+    .bte-accordion-arrow {
+        color: @bte-panel-text-muted;
+    }
+
+    .bte-accordion-content {
+        background: lighten(@bte-panel-bg, 1%);
+    }
+
+    // ============================================================================
+    // FOOTER
+    // ============================================================================
+
+    .bte-panel-footer {
+        border-top-color: @bte-panel-divider;
+        background: @bte-panel-bg;
+    }
+
+    .bte-button-secondary {
+        background: @bte-panel-section-bg;
+        color: @bte-panel-text;
+        border: 1px solid @bte-panel-input-border;
+
+        &:not(:disabled):hover {
+            background: darken(@bte-panel-section-bg, 3%);
+        }
+
+        &:not(:disabled):active {
+            background: darken(@bte-panel-section-bg, 6%);
+        }
+    }
+
+    // ============================================================================
+    // FIELD STRUCTURE
+    // ============================================================================
+
+    .bte-field-label {
+        color: @bte-panel-text;
+    }
+
+    .bte-field-description {
+        color: @bte-panel-text-muted;
+    }
+
+    .bte-field-help {
+        color: @bte-panel-text-muted;
+    }
+
+    .bte-field-reset-btn {
+        color: @bte-panel-text-muted;
+
+        &:hover {
+            color: @bte-panel-text;
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        &:focus {
+            outline-color: @bte-panel-input-border;
+        }
+    }
+
+    .bte-field-restore-btn {
+        color: @bte-panel-text-muted;
+
+        &:hover {
+            color: #c0392b;
+            background: rgba(192, 57, 43, 0.08);
+        }
+    }
+
+    // ============================================================================
+    // COLOR PICKER FIELD
+    // ============================================================================
+
+    .bte-field-color {
+        .bte-color-trigger {
+            border-color: @bte-panel-input-border;
+            background: @bte-panel-input-bg;
+            border-radius: @bte-panel-input-radius;
+
+            &:hover {
+                border-color: darken(@bte-panel-input-border, 10%);
+            }
+        }
+
+        .bte-color-input {
+            background: @bte-panel-input-bg;
+            border-color: @bte-panel-input-border;
+            color: @bte-panel-input-text;
+            border-radius: @bte-panel-input-radius;
+
+            &:hover {
+                border-color: darken(@bte-panel-input-border, 10%);
+            }
+
+            &:focus {
+                border-color: #1979c3;
+            }
+
+            &::placeholder {
+                color: @bte-panel-text-muted;
+            }
+        }
+    }
+
+    // ============================================================================
+    // RANGE SLIDER FIELD
+    // ============================================================================
+
+    .bte-field-range {
+        .bte-range-slider {
+            height: 4px;
+            border-radius: 20px;
+            // Filled portion (left of thumb) driven by --range-fill set via JS
+            background: linear-gradient(
+                to right,
+                #804EDE 0%,
+                #804EDE var(--range-fill, 0%),
+                @bte-panel-input-border var(--range-fill, 0%),
+                @bte-panel-input-border 100%
+            );
+
+            &::-webkit-slider-thumb {
+                width: 12px;
+                height: 12px;
+                border-radius: 32px;
+                background: #804EDE;
+                box-shadow: 0px 0px 7px rgba(149, 149, 189, 0.24),
+                            0px 1px 9px rgba(12, 12, 13, 0.05);
+            }
+
+            &::-moz-range-thumb {
+                width: 12px;
+                height: 12px;
+                border-radius: 32px;
+                background: #804EDE;
+                border: none;
+                box-shadow: 0px 0px 7px rgba(149, 149, 189, 0.24),
+                            0px 1px 9px rgba(12, 12, 13, 0.05);
+            }
+        }
+
+        .bte-range-value {
+            background: #EFF3FA;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 400;
+            font-family: inherit;
+            color: #0B0B0B;
+            min-width: auto;
+            text-align: center;
+        }
+    }
+
+    // ============================================================================
+    // SELECT FIELD
+    // ============================================================================
+
+    .bte-field-select {
+        .bte-select {
+            background: @bte-panel-input-bg;
+            border-color: @bte-panel-input-border;
+            color: @bte-panel-input-text;
+            border-radius: @bte-panel-input-radius;
+
+            &:hover {
+                border-color: darken(@bte-panel-input-border, 10%);
+            }
+
+            &:focus {
+                border-color: #1979c3;
+            }
+
+            option {
+                background: @bte-panel-input-bg;
+                color: @bte-panel-input-text;
+            }
+        }
+    }
+
+    // ============================================================================
+    // TEXT INPUT FIELD
+    // ============================================================================
+
+    .bte-field-text {
+        .bte-text-input {
+            background: @bte-panel-input-bg;
+            border-color: @bte-panel-input-border;
+            color: @bte-panel-input-text;
+            border-radius: @bte-panel-input-radius;
+
+            &:hover {
+                border-color: darken(@bte-panel-input-border, 10%);
+            }
+
+            &:focus {
+                border-color: #1979c3;
+            }
+
+            &::placeholder {
+                color: @bte-panel-text-muted;
+            }
+        }
+    }
+
+    // ============================================================================
+    // TEXTAREA FIELD
+    // ============================================================================
+
+    .bte-field-textarea {
+        .bte-textarea {
+            background: @bte-panel-input-bg;
+            border-color: @bte-panel-input-border;
+            color: @bte-panel-input-text;
+            border-radius: @bte-panel-input-radius;
+
+            &:hover {
+                border-color: darken(@bte-panel-input-border, 10%);
+            }
+
+            &:focus {
+                border-color: #1979c3;
+            }
+
+            &::placeholder {
+                color: @bte-panel-text-muted;
+            }
+        }
+
+        .bte-field-counter {
+            color: @bte-panel-text-muted;
+
+            .bte-counter-current {
+                color: @bte-panel-text;
+            }
+        }
+    }
+
+    // ============================================================================
+    // TOGGLE SWITCH FIELD
+    // ============================================================================
+
+    .bte-field-toggle {
+        .bte-toggle-slider {
+            background: @bte-panel-divider;
+
+            &:hover {
+                background: darken(@bte-panel-divider, 8%);
+            }
+        }
+    }
+
+    // ============================================================================
+    // HEADING FIELD (section divider)
+    // ============================================================================
+
+    .bte-field-heading {
+        border-bottom-color: @bte-panel-divider;
+
+        .bte-field-heading-label {
+            color: @bte-panel-text-muted;
+        }
+
+        .bte-field-heading-description {
+            color: @bte-panel-text-muted;
+        }
+    }
+
+    // ============================================================================
+    // NUMBER FIELD
+    // ============================================================================
+
+    .bte-field-number {
+        .bte-number-input {
+            background: @bte-panel-input-bg;
+            border-color: @bte-panel-input-border;
+            color: @bte-panel-input-text;
+            border-radius: @bte-panel-input-radius;
+
+            &:hover {
+                border-color: darken(@bte-panel-input-border, 10%);
+            }
+
+            &:focus {
+                border-color: #1979c3;
+            }
+        }
+
+        .bte-number-unit {
+            color: @bte-panel-text-muted;
+        }
+    }
+
+    // ============================================================================
+    // CODE EDITOR FIELD
+    // ============================================================================
+
+    .bte-code-editor {
+        background: @bte-panel-section-bg;
+        border-color: @bte-panel-input-border;
+        color: @bte-panel-input-text;
+        border-radius: @bte-panel-input-radius;
+
+        &:focus {
+            border-color: #1979c3;
+        }
+    }
+
+    // ============================================================================
+    // LEGACY CONTROLS (control-group)
+    // ============================================================================
+
+    .bte-control-group {
+        label {
+            color: @bte-panel-text;
+        }
+    }
+
+    .bte-color-picker {
+        border-color: @bte-panel-input-border;
+        background: @bte-panel-input-bg;
+
+        &:hover {
+            border-color: darken(@bte-panel-input-border, 10%);
+        }
+    }
+
+    .bte-font-picker,
+    select.bte-control {
+        background: @bte-panel-input-bg;
+        border-color: @bte-panel-input-border;
+        color: @bte-panel-input-text;
+        border-radius: @bte-panel-input-radius;
+    }
+
+    .bte-range-value {
+        color: @bte-panel-text-muted;
+    }
+}
+
+// ============================================================================
+// THEME TOGGLE BUTTON (base styles, theme-independent)
+// ============================================================================
+
+.bte-panel-theme-toggle {
+    background: transparent;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+    color: rgba(255, 255, 255, 0.6); // dark mode default
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    // Show/hide icons based on current theme
+    .bte-theme-icon-moon { display: block; }  // shown in dark mode
+    .bte-theme-icon-sun  { display: none; }   // shown in light mode
+}
+
+.bte-panel--light .bte-panel-theme-toggle {
+    .bte-theme-icon-moon { display: none; }   // hidden in light mode
+    .bte-theme-icon-sun  { display: block; }  // shown in light mode
+}
+
+// ============================================================================
+// PALETTE SECTION — light mode overrides
+// Overrides _palette-section.less which is hard-coded to dark rgba() values
+// ============================================================================
+
+.bte-panel--light {
+
+    .bte-palette-section {
+        background: @bte-panel-section-bg;
+        border-top-color: @bte-panel-section-border;
+        border-bottom-color: @bte-panel-section-border;
+
+        .bte-palette-header {
+            &:hover {
+                background: darken(@bte-panel-section-bg, 3%);
+            }
+
+            .bte-palette-title {
+                color: @bte-panel-text;
+            }
+
+            .bte-palette-reset-btn {
+                color: @bte-panel-text-muted;
+
+                &:hover {
+                    color: @bte-panel-text;
+                    background: @bte-panel-divider;
+                }
+
+                &:active {
+                    background: darken(@bte-panel-divider, 5%);
+                }
+            }
+
+            .bte-palette-arrow {
+                color: @bte-panel-text-muted;
+            }
+        }
+
+        .bte-palette-group-separator {
+            background: @bte-panel-divider;
+        }
+
+        .bte-palette-group-label {
+            color: @bte-panel-text-muted;
+        }
+
+        .bte-palette-swatch {
+            border-color: @bte-panel-input-border;
+
+            &:hover {
+                border-color: darken(@bte-panel-input-border, 15%);
+                box-shadow: 0 2px 8px rgba(25, 36, 51, 0.15);
+            }
+        }
+
+        .bte-no-palettes {
+            color: @bte-panel-text-muted;
+        }
+    }
+
+    // ============================================================================
+    // FONT PALETTE CONTAINER — light mode overrides
+    // Overrides _font-picker.less which is hard-coded to dark rgba() values
+    // ============================================================================
+
+    .bte-font-palette-container {
+        background: @bte-panel-section-bg;
+        border-color: @bte-panel-section-border;
+
+        .bte-palette-reset-btn {
+            color: @bte-panel-text-muted;
+
+            &:hover {
+                color: @bte-panel-text;
+                background: @bte-panel-divider;
+            }
+
+            &:active {
+                background: darken(@bte-panel-divider, 5%);
+            }
+        }
+    }
+
+    .bte-font-palette-header {
+        &:hover {
+            background: darken(@bte-panel-section-bg, 3%);
+        }
+    }
+
+    .bte-font-palette-title {
+        color: @bte-panel-text;
+    }
+
+    // ============================================================================
+    // FONT PICKER WIDGET — light mode overrides
+    // Overrides _font-picker.less trigger/dropdown hard-coded dark values
+    // ============================================================================
+
+    .bte-font-picker-trigger {
+        background: @bte-panel-input-bg;
+        border-color: @bte-panel-input-border;
+        color: @bte-panel-input-text;
+
+        &:hover {
+            background: darken(@bte-panel-input-bg, 3%);
+            border-color: darken(@bte-panel-input-border, 10%);
+        }
+
+        &[aria-expanded="true"] {
+            border-color: @bte-panel-text-muted;
+            background: @bte-panel-input-bg;
+        }
+    }
+
+    .bte-font-picker-trigger-arrow {
+        // Replace white-stroke SVG arrow with a dark-stroke version
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2393A5B7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    }
+
+    .bte-font-picker-dropdown {
+        background: @bte-panel-section-bg;
+        border-color: @bte-panel-section-border;
+        box-shadow: @bte-panel-shadow;
+
+        &::-webkit-scrollbar-thumb {
+            background: @bte-panel-input-border;
+        }
+    }
+
+    .bte-font-picker-option {
+        color: @bte-panel-input-text;
+
+        &:hover {
+            background: darken(@bte-panel-section-bg, 4%);
+        }
+
+        &.is-selected {
+            background: @bte-panel-divider;
+            color: @bte-panel-text;
+        }
+    }
+
+    .bte-font-picker-role-swatch {
+        color: @bte-panel-input-text;
+
+        &:hover {
+            background: darken(@bte-panel-section-bg, 4%);
+        }
+
+        &.is-selected {
+            background: @bte-panel-divider;
+            color: @bte-panel-text;
+        }
+    }
+
+    .bte-font-picker-divider {
+        background: @bte-panel-divider;
+    }
+
+    .bte-font-role-label {
+        color: @bte-panel-text-muted;
+        opacity: 1; // opacity: 0.65 on dark is roughly the same visual weight as @bte-panel-text-muted on light
+    }
+}

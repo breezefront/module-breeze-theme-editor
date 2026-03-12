@@ -22,8 +22,10 @@
 
 .bte-panel-title {
     margin: 0;
-    font-size: 18px;
+    font-size: 12px;
     font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -54,6 +56,7 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    scrollbar-gutter: stable; // reserve scrollbar space so content stays at padding: 20px on both sides
     padding: 20px;
 
     // Custom scrollbar
@@ -391,7 +394,7 @@ select.bte-control {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 20px;
+    padding: 10px 28px 10px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     flex-shrink: 0;
 }
