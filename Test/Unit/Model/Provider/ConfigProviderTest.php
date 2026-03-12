@@ -10,6 +10,7 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory as ThemeCollectionFactory;
 use Magento\Framework\Component\ComponentRegistrar;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
+use Swissup\BreezeThemeEditor\Test\Unit\Model\Provider\Stub\ArrayObjectStub;
 use Magento\Framework\Exception\LocalizedException;
 
 /**
@@ -920,7 +921,7 @@ class ConfigProviderTest extends TestCase
 
         $this->themeCollectionFactoryMock
             ->method('create')
-            ->willReturn(new \ArrayObject([$theme1, $theme2, $theme3]));
+            ->willReturn(new ArrayObjectStub([$theme1, $theme2, $theme3]));
 
         // ComponentRegistrar returns the temp dir for themes 1 & 3, null for theme 2
         $this->componentRegistrarMock
@@ -951,7 +952,7 @@ class ConfigProviderTest extends TestCase
     {
         $this->themeCollectionFactoryMock
             ->method('create')
-            ->willReturn(new \ArrayObject([]));
+            ->willReturn(new ArrayObjectStub([]));
 
         $result = $this->configProvider->getThemeIdsWithConfigFile();
 
