@@ -528,6 +528,21 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
+     * Get store code for the current preview store (used by JS link interceptor,
+     * page-selector and StorageHelper). Falls back to 'default' on error.
+     *
+     * @return string
+     */
+    private function getStoreCode(): string
+    {
+        try {
+            return $this->storeManager->getStore($this->getStoreId())->getCode();
+        } catch (\Exception $e) {
+            return 'default';
+        }
+    }
+
+    /**
      * Get toolbar configuration array for JavaScript initialization
      *
      * @return array
@@ -538,6 +553,8 @@ class AdminToolbar implements ArgumentInterface
             // ===== Core parameters =====
             'scope'            => $this->getScope(),
             'scopeId'          => $this->getScopeId(),
+            'storeId'          => $this->getStoreId(),
+            'storeCode'        => $this->getStoreCode(),
             'token'            => $this->getToken(),
             'themeId'          => $this->getThemeId(),
             'jstest'           => $this->isJstestMode(),
