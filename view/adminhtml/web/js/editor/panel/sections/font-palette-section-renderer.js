@@ -7,7 +7,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry'
+    'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
+    'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-section-renderer'
 ], function ($, widget, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer, Logger, StorageHelper, IconRegistry) {
     'use strict';
 
@@ -46,13 +47,15 @@ define([
      *     discardDraft() mutation → markFieldAsSaved() → themeEditorDraftSaved
      *     event → _updateHeaderBadges() here.
      */
-    $.widget('swissup.fontPaletteSection', {
+    $.widget('swissup.fontPaletteSection', $.swissup.baseSectionRenderer, {
         options: {
             fontPalettes: [], // Array from config.fontPalettes
             sections: []      // config.sections (to locate role field sectionCode + fieldCode)
         },
 
         _create: function () {
+            this._super(); // binds bte:editabilityChanged via baseSectionRenderer
+
             log.info('Initializing Font Palette Section');
             this._buildRoleMap();
             this._render();

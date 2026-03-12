@@ -6,7 +6,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry'
+    'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
+    'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-section-renderer'
 ], function (
     $,
     widget,
@@ -16,6 +17,7 @@ define([
     Logger,
     StorageHelper,
     IconRegistry
+    // base-section-renderer registers $.swissup.baseSectionRenderer — no var needed
 ) {
     'use strict';
 
@@ -28,7 +30,7 @@ define([
      * - Pickr color picker on click (with opacity/alpha support)
      * - Debounced save (500ms)
      */
-    $.widget('swissup.paletteSection', {
+    $.widget('swissup.paletteSection', $.swissup.baseSectionRenderer, {
         options: {
             palettes: [],
             scope: 'stores',
@@ -37,6 +39,8 @@ define([
         },
 
         _create: function () {
+            this._super(); // binds bte:editabilityChanged via baseSectionRenderer
+
             Logger.info('palette-section', 'Initializing');
 
             // PaletteManager is always initialized by settings-editor before

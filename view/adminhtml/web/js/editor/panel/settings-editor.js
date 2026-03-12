@@ -90,6 +90,7 @@ define([
             this._render();
             this._bind();
             this._initPreview();
+            this._initPanelTheme();
             
             // Read current mode from localStorage
             var currentStatus = StorageHelper.getCurrentStatus();
@@ -126,6 +127,7 @@ define([
             this.element.html(html);
 
             this.$closeButton = this.element.find('.bte-panel-close');
+            this.$themeToggle = this.element.find('.bte-panel-theme-toggle');
             this.$resetButton = this.element.find('.bte-reset-button');
             this.$saveButton = this.element.find('.bte-save-button');
             this.$sectionsContainer = this.element.find('.bte-sections-container');
@@ -145,6 +147,7 @@ define([
 
             // Panel controls
             this.$closeButton.on('click', $.proxy(this._close, this));
+            this.$themeToggle.on('click', $.proxy(this._togglePanelTheme, this));
             this.$resetButton.on('click', $.proxy(this._reset, this));
             this.$saveButton.on('click', $.proxy(this._save, this));
 
@@ -588,16 +591,19 @@ define([
             }
 
             log.info('Rendered ' + sections.length + ' sections');
-            
-            // Disable fields if in read-only mode (PUBLISHED or PUBLICATION)
-            this._updateFieldsEditability();
-            
-            // Initialize color palettes (open/closed state persisted in storage)
+
+            // Initialize color palettes before updating editability so the widgets
+            // are already bound to bte:editabilityChanged when it fires below.
             this._initPaletteSection();
 
-            // Initialize font palettes (open/closed state persisted in storage)
+            // Initialize font palettes (same reason — bind before event fires)
             this._initFontPaletteSection();
-            
+
+            // Disable fields if in read-only mode (PUBLISHED or PUBLICATION).
+            // Must come AFTER palette/font-palette init so their bte:editabilityChanged
+            // listeners are already registered.
+            this._updateFieldsEditability();
+
             // Initialize preset selector
             this._initPresetSelector();
 
@@ -646,9 +652,13 @@ define([
             // Check editability based on local status instead of CssManager.isEditable()
             // CSS Manager may not be initialized yet on first load
             var isEditable = (status === 'DRAFT');
-            
+
             log.debug('Updating fields editability: status=' + status + ' isEditable=' + isEditable);
-            
+
+            // Notify palette/font-palette section widgets so they manage their own state.
+            // baseSectionRenderer._bindEditability() subscribes each widget to this event.
+            $(document).trigger('bte:editabilityChanged', { isEditable: isEditable });
+
             if (isEditable) {
                 // Enable all fields (DRAFT mode)
                 this._enableAllFields();
@@ -675,16 +685,12 @@ define([
             
             // Remove disabled visual state from fields
             this.$sectionsContainer.find('.bte-field-wrapper').removeClass('bte-field-disabled');
-            
-            // ✅ Enable palette container
-            this.$paletteContainer.removeClass('bte-field-disabled');
-            this.$paletteContainer.find('input, button').prop('disabled', false);
-            
+
             // ✅ Enable preset container
             this.$presetContainer.removeClass('bte-field-disabled');
             this.$presetContainer.find('input, select, button').prop('disabled', false);
-            
-            log.info('All fields enabled (including palette and preset)');
+
+            log.info('All fields enabled (palette/font-palette handled via bte:editabilityChanged)');
         },
         
         /**
@@ -696,16 +702,12 @@ define([
             
             // Add disabled visual state to fields
             this.$sectionsContainer.find('.bte-field-wrapper').addClass('bte-field-disabled');
-            
-            // ✅ Disable palette container
-            this.$paletteContainer.addClass('bte-field-disabled');
-            this.$paletteContainer.find('input, button').prop('disabled', true);
-            
+
             // ✅ Disable preset container
             this.$presetContainer.addClass('bte-field-disabled');
             this.$presetContainer.find('input, select, button').prop('disabled', true);
-            
-            log.info('All fields disabled (including palette and preset)');
+
+            log.info('All fields disabled (palette/font-palette handled via bte:editabilityChanged)');
         },
 
         /**
@@ -910,6 +912,40 @@ define([
             this.$resetButton.prop('disabled', totalChanges === 0);
             
             log.debug('Changes count updated: ' + fieldChanges + ' fields + ' + paletteChanges + ' palette = ' + totalChanges);
+        },
+
+        /**
+         * Initialize panel theme from localStorage (default: light)
+         */
+        _initPanelTheme: function () {
+            var saved = StorageHelper.getItem('panel_theme') || 'light';
+            var $panel = this.element.closest('.bte-panel');
+
+            if (saved === 'light') {
+                $panel.addClass('bte-panel--light');
+            } else {
+                $panel.removeClass('bte-panel--light');
+            }
+
+            log.info('Panel theme initialized: ' + saved);
+        },
+
+        /**
+         * Toggle panel between light and dark theme, persist to localStorage
+         */
+        _togglePanelTheme: function () {
+            var $panel = this.element.closest('.bte-panel');
+            var isLight = $panel.hasClass('bte-panel--light');
+
+            if (isLight) {
+                $panel.removeClass('bte-panel--light');
+                StorageHelper.setItem('panel_theme', 'dark');
+                log.info('Panel theme → dark');
+            } else {
+                $panel.addClass('bte-panel--light');
+                StorageHelper.setItem('panel_theme', 'light');
+                log.info('Panel theme → light');
+            }
         },
 
         /**
