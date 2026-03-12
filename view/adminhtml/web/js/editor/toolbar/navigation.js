@@ -13,8 +13,9 @@ define([
     'jquery-ui-modules/widget',
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/editor/navigation.html',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, widget, mageTemplate, navigationTemplate, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry'
+], function ($, widget, mageTemplate, navigationTemplate, Logger, iconRegistry) {
     'use strict';
 
     var log = Logger.for('toolbar/navigation');
@@ -41,9 +42,15 @@ define([
          * Render navigation buttons from template
          */
         _render: function () {
+            var items = this.options.items.map(function (item) {
+                return $.extend({}, item, {
+                    iconHtml: iconRegistry.render(item.icon)
+                });
+            });
+
             var html = this.template({
                 data: {
-                    items: this.options.items
+                    items: items
                 }
             });
 
