@@ -25,6 +25,9 @@ define([
             $element.on('input', '.bte-range-slider', function(e) {
                 var $slider = $(e.currentTarget);
 
+                // Update fill gradient
+                self.updateFill($slider);
+
                 // Update output
                 self.updateOutput($slider);
 
@@ -38,7 +41,27 @@ define([
                 });
             });
 
+            // Set initial fill for all sliders already rendered in the panel
+            $element.find('.bte-range-slider').each(function() {
+                self.updateFill($(this));
+            });
+
             log.info('Range field handler initialized');
+        },
+
+        /**
+         * Update --range-fill CSS custom property on the slider element.
+         * Used by the light-theme linear-gradient track to show filled portion.
+         *
+         * @param {jQuery} $slider
+         */
+        updateFill: function($slider) {
+            var min = parseFloat($slider.attr('min')) || 0;
+            var max = parseFloat($slider.attr('max')) || 100;
+            var val = parseFloat($slider.val()) || 0;
+            var pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+
+            $slider[0].style.setProperty('--range-fill', pct.toFixed(2) + '%');
         },
 
         /**
