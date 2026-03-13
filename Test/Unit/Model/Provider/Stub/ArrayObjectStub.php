@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Provider\Stub;
 
+// phpcs:ignore Magento2.Classes.DiscouragedDependencies.DiscouragedDependencies
 class ArrayObjectStub extends \ArrayObject
 {
     /**
@@ -10,7 +11,7 @@ class ArrayObjectStub extends \ArrayObject
      */
     public function serialize(): string
     {
-        return serialize($this->getArrayCopy());
+        return (string) json_encode($this->getArrayCopy());
     }
 
     /**
@@ -19,6 +20,6 @@ class ArrayObjectStub extends \ArrayObject
      */
     public function unserialize($data): void
     {
-        $this->exchangeArray(unserialize($data));
+        $this->exchangeArray((array) json_decode($data, true));
     }
 }
