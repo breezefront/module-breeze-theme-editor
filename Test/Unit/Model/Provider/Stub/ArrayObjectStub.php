@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Provider\Stub;
 
-// phpcs:ignore Magento2.Classes.DiscouragedDependencies.DiscouragedDependencies
+// phpcs:ignore Magento2.Legacy.RestrictedCode.ArrayObjectIsRestricted
 class ArrayObjectStub extends \ArrayObject
 {
     /**
