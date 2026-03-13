@@ -193,20 +193,14 @@ class AdminToolbar implements ArgumentInterface
      * Get current scope ('default'|'websites'|'stores')
      *
      * Priority:
-     * 1. URL parameter ?scope=X
-     * 2. BackendSession last used scope
-     * 3. Fallback: 'default'
+     * 1. BackendSession last used scope (cookie)
+     * 2. Fallback: 'default'
      *
      * @return string
      */
     public function getScope(): string
     {
         $valid = ['default', 'websites', 'stores'];
-
-        $scope = (string)$this->request->getParam('scope', '');
-        if (in_array($scope, $valid, true)) {
-            return $scope;
-        }
 
         $lastScope = (string)$this->backendSession->getScopeType();
         if (in_array($lastScope, $valid, true)) {
@@ -220,8 +214,8 @@ class AdminToolbar implements ArgumentInterface
      * Get current scope ID.
      *
      * For scope='default'  → 0
-     * For scope='websites' → website_id from URL param or session
-     * For scope='stores'   → store_view_id (same logic as old getStoreId())
+     * For scope='websites' → website_id from session
+     * For scope='stores'   → store_view_id from session
      *
      * @return int
      */
@@ -233,19 +227,13 @@ class AdminToolbar implements ArgumentInterface
             return 0;
         }
 
-        // Priority 1: URL parameter
-        $scopeId = (int)$this->request->getParam('scopeId', 0);
-        if ($scopeId > 0) {
-            return $scopeId;
-        }
-
-        // Priority 2: session
+        // Priority 1: session (cookie)
         $lastScopeId = (int)$this->backendSession->getScopeId();
         if ($lastScopeId > 0) {
             return $lastScopeId;
         }
 
-        // Priority 3: fallback — current store
+        // Fallback — current store
         if ($scope === 'stores') {
             try {
                 return (int)$this->storeManager->getStore()->getId();

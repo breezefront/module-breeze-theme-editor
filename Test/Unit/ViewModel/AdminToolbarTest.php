@@ -22,10 +22,11 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\ViewModel\AdminToolbar;
 
 /**
- * Unit tests for AdminToolbar::getScope()
+ * Unit tests for AdminToolbar::getScope() and getScopeId()
  *
- * Covers issue #016: editor falls back to 'stores' scope instead of 'default'
- * when no URL param and no session cookie are present.
+ * Scope state is persisted via cookies (BackendSession) only.
+ * URL parameters ?scope= and ?scopeId= are intentionally NOT supported
+ * to avoid conflicts with Magento's own admin URL parameters.
  */
 class AdminToolbarTest extends TestCase
 {
@@ -58,79 +59,37 @@ class AdminToolbarTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // Issue #016 — regression test: fresh install, no URL param, no cookie
+    // getScope() — no cookie (fresh install / first visit)
     // -------------------------------------------------------------------------
 
     /**
      * @test
      *
-     * Reproduces issue #016:
-     * When no ?scope= URL param is present AND no session cookie exists,
-     * getScope() returns 'stores' (bug) instead of 'default' (expected).
+     * Regression test for issue #016:
+     * When no session cookie exists, getScope() must return 'default'.
      */
     public function testFreshInstallReturnsDefaultScope(): void
     {
-        // No URL param
-        $this->request->method('getParam')
-            ->with('scope', '')
-            ->willReturn('');
-
-        // No session cookie
         $this->backendSession->method('getScopeType')
             ->willReturn(null);
 
-        $scope = $this->viewModel->getScope();
-
-        // Issue #016: this assertion currently FAILS because the fallback is 'stores'
         $this->assertSame(
             'default',
-            $scope,
-            'Issue #016: Fresh install should default to "default" scope, not "stores".'
+            $this->viewModel->getScope(),
+            'Fresh install should default to "default" scope.'
         );
     }
 
     // -------------------------------------------------------------------------
-    // Happy-path tests (should pass regardless of the fix)
+    // getScope() — session cookie present
     // -------------------------------------------------------------------------
-
-    /**
-     * @test
-     * @dataProvider validScopeUrlParamProvider
-     */
-    public function testUrlParamTakesPriority(string $urlScope): void
-    {
-        $this->request->method('getParam')
-            ->with('scope', '')
-            ->willReturn($urlScope);
-
-        // Session has a different value — URL param must win
-        $this->backendSession->method('getScopeType')
-            ->willReturn('stores');
-
-        $this->assertSame($urlScope, $this->viewModel->getScope());
-    }
-
-    public static function validScopeUrlParamProvider(): array
-    {
-        return [
-            'default via URL' => ['default'],
-            'websites via URL' => ['websites'],
-            'stores via URL' => ['stores'],
-        ];
-    }
 
     /**
      * @test
      * @dataProvider validScopeSessionProvider
      */
-    public function testSessionTakesPriorityOverFallback(string $sessionScope): void
+    public function testSessionValueIsReturned(string $sessionScope): void
     {
-        // No URL param
-        $this->request->method('getParam')
-            ->with('scope', '')
-            ->willReturn('');
-
-        // Session has a value
         $this->backendSession->method('getScopeType')
             ->willReturn($sessionScope);
 
@@ -146,37 +105,29 @@ class AdminToolbarTest extends TestCase
         ];
     }
 
+    // -------------------------------------------------------------------------
+    // getScope() — invalid / empty cookie falls back to 'default'
+    // -------------------------------------------------------------------------
+
     /**
      * @test
      */
-    public function testInvalidUrlParamIsFallsBackToSession(): void
+    public function testEmptySessionFallsBackToDefault(): void
     {
-        $this->request->method('getParam')
-            ->with('scope', '')
-            ->willReturn('invalid_scope');
-
         $this->backendSession->method('getScopeType')
-            ->willReturn('websites');
+            ->willReturn('');
 
-        $this->assertSame('websites', $this->viewModel->getScope());
+        $this->assertSame('default', $this->viewModel->getScope());
     }
 
     /**
      * @test
      */
-    public function testInvalidUrlParamAndEmptySessionFallsBack(): void
+    public function testInvalidSessionValueFallsBackToDefault(): void
     {
-        $this->request->method('getParam')
-            ->with('scope', '')
-            ->willReturn('bogus');
-
         $this->backendSession->method('getScopeType')
-            ->willReturn('');
+            ->willReturn('bogus_scope');
 
-        // Whatever the current fallback is — test documents the actual behaviour.
-        // After fix (issue #016) this must equal 'default'.
-        $scope = $this->viewModel->getScope();
-        $this->assertContains($scope, ['default', 'stores'],
-            'Fallback must be one of the valid scope values.');
+        $this->assertSame('default', $this->viewModel->getScope());
     }
 }
