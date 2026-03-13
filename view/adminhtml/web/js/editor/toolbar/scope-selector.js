@@ -218,7 +218,7 @@ define([
             // Select Default scope
             this.element.on('click', '.scope-default', function (e) {
                 e.preventDefault();
-                var name = $(this).find('.item-text').text();
+                var name = $(this).find('.item-name').text();
                 self._selectScope('default', 0, self._findStoreCode('default', 0), name);
             });
 
@@ -226,7 +226,7 @@ define([
             this.element.on('click', '.scope-website-item', function (e) {
                 e.preventDefault();
                 var scopeId = parseInt($(this).data('scope-id'), 10);
-                var name    = $(this).find('.item-text').text();
+                var name    = $(this).find('.item-name').text();
                 var code    = self._findStoreCode('websites', scopeId);
                 self._selectScope('websites', scopeId, code, name);
             });
@@ -254,7 +254,7 @@ define([
                 e.preventDefault();
                 var scopeId   = parseInt($(this).data('scope-id'), 10);
                 var storeCode = $(this).data('store-code');
-                var name      = $(this).find('.item-text').text();
+                var name      = $(this).find('.item-name').text();
                 self._selectScope('stores', scopeId, storeCode, name);
             });
 

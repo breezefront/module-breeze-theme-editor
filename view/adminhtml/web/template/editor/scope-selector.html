@@ -20,7 +20,7 @@
                        data-scope="default"
                        data-scope-id="0"
                        data-store-code="">
-                        <span class="item-text"><%- entry.name %></span>
+                        <span class="item-name"><%- entry.name %></span>
                         <% if (entry.hasSettings) { %>
                             <span class="scope-has-settings" title="Theme Editor available">
                                 <i class="ph ph-gear" aria-hidden="true"></i>
@@ -39,7 +39,7 @@
                                data-scope="websites"
                                data-scope-id="<%- entry.scopeId %>"
                                data-store-code="<%- entry.code %>">
-                                <span class="scope-name"><%- entry.name %></span>
+                                 <span class="item-name"><%- entry.name %></span>
                                 <% if (entry.hasSettings) { %>
                                     <span class="scope-has-settings" title="Theme Editor available">
                                         <i class="ph ph-gear" aria-hidden="true"></i>
@@ -70,7 +70,7 @@
                                                data-scope="stores"
                                                data-scope-id="<%- store.scopeId %>"
                                                data-store-code="<%- store.code %>">
-                                                <span class="item-text"><%- store.name %></span>
+                                                <span class="item-name"><%- store.name %></span>
                                                 <% if (store.hasSettings) { %>
                                                     <span class="scope-has-settings" title="Theme Editor available">
                                                         <i class="ph ph-gear" aria-hidden="true"></i>
