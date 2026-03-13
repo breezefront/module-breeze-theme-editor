@@ -377,8 +377,23 @@ define([
                 path: '/', maxAge: 86400, sameSite: 'Lax'
             });
 
-            // Update iframe src (triggers reload with new store + homepage)
-            $iframe.attr('src', newSrc);
+            // Update iframe src and navigate to the new URL.
+            // When the constructed URL is identical to the current src (e.g. "All Store Views"
+            // resolves to the same preview store that is already loaded), setting the src
+            // attribute to the same value is a browser no-op — the iframe won't reload.
+            // In that case we navigate contentWindow directly, which always re-issues the
+            // request regardless of whether the URL changed.
+            if (newSrc !== currentSrc) {
+                $iframe.attr('src', newSrc);
+            } else {
+                log.info('Forcing iframe reload — URL unchanged after scope switch');
+                try {
+                    $iframe[0].contentWindow.location.href = newSrc;
+                } catch (e) {
+                    // Cross-origin guard (should not happen in practice)
+                    $iframe.attr('src', newSrc);
+                }
+            }
 
             // Update UI
             this._render();
