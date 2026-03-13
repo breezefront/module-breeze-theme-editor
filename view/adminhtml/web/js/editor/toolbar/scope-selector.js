@@ -216,7 +216,7 @@ define([
             });
 
             // Select Default scope
-            this.element.on('click', '.scope-default', function (e) {
+            this.element.on('click', '.scope-default-item', function (e) {
                 e.preventDefault();
                 var name = $(this).find('.item-name').text();
                 self._selectScope('default', 0, self._findStoreCode('default', 0), name);
