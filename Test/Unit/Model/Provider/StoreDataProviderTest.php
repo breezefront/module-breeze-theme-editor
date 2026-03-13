@@ -73,31 +73,43 @@ class StoreDataProviderTest extends TestCase
      * @param array  $stores
      * @return MockObject
      */
-    private function makeGroup(int $id, string $name, array $stores): MockObject
-    {
+    private function makeGroup(
+        int $id,
+        string $name,
+        array $stores,
+        ?MockObject $defaultStore = null
+    ): MockObject {
         $group = $this->createMock(\Magento\Store\Model\Group::class);
         $group->method('getId')->willReturn($id);
         $group->method('getName')->willReturn($name);
         $group->method('getStores')->willReturn($stores);
+        $group->method('getDefaultStore')->willReturn($defaultStore ?? ($stores[0] ?? null));
         return $group;
     }
 
     /**
      * Build a minimal website mock.
      *
-     * @param int    $id
-     * @param string $name
-     * @param string $code
-     * @param array  $groups
+     * @param int             $id
+     * @param string          $name
+     * @param string          $code
+     * @param array           $groups
+     * @param MockObject|null $defaultGroup
      * @return MockObject
      */
-    private function makeWebsite(int $id, string $name, string $code, array $groups): MockObject
-    {
+    private function makeWebsite(
+        int $id,
+        string $name,
+        string $code,
+        array $groups,
+        ?MockObject $defaultGroup = null
+    ): MockObject {
         $website = $this->createMock(\Magento\Store\Model\Website::class);
         $website->method('getId')->willReturn($id);
         $website->method('getName')->willReturn($name);
         $website->method('getCode')->willReturn($code);
         $website->method('getGroups')->willReturn($groups);
+        $website->method('getDefaultGroup')->willReturn($defaultGroup ?? ($groups[0] ?? null));
         return $website;
     }
 
@@ -118,6 +130,10 @@ class StoreDataProviderTest extends TestCase
         $currentStoreMock->method('getId')->willReturn(1);
         $this->storeManagerMock->method('getStore')->willReturn($currentStoreMock);
         $this->storeManagerMock->method('getWebsites')->willReturn([$website]);
+        $this->storeManagerMock->method('getWebsite')->willReturnMap([
+            [true, $website],
+            [1,    $website],
+        ]);
 
         // All scopes return true
         $this->themeAvailabilityMock
@@ -150,6 +166,10 @@ class StoreDataProviderTest extends TestCase
         $currentStoreMock->method('getId')->willReturn(1);
         $this->storeManagerMock->method('getStore')->willReturn($currentStoreMock);
         $this->storeManagerMock->method('getWebsites')->willReturn([$website]);
+        $this->storeManagerMock->method('getWebsite')->willReturnMap([
+            [true, $website],
+            [1,    $website],
+        ]);
 
         // All scopes return false
         $this->themeAvailabilityMock
@@ -178,6 +198,10 @@ class StoreDataProviderTest extends TestCase
         $currentStoreMock->method('getId')->willReturn(99); // active store is different
         $this->storeManagerMock->method('getStore')->willReturn($currentStoreMock);
         $this->storeManagerMock->method('getWebsites')->willReturn([$website]);
+        $this->storeManagerMock->method('getWebsite')->willReturnMap([
+            [true, $website],
+            [1,    $website],
+        ]);
 
         // Return different values based on (scope, scopeId)
         $this->themeAvailabilityMock
