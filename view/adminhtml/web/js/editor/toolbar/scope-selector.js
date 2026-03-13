@@ -377,6 +377,20 @@ define([
                 path: '/', maxAge: 86400, sameSite: 'Lax'
             });
 
+            // Persist scope in admin URL so F5 restores the correct selector state.
+            // URL query params have higher priority than cookies in AdminToolbar::getScope(),
+            // so without this, pressing F5 after switching scope would reload the old URL
+            // params and revert the selector to the previously selected store view.
+            try {
+                var adminUrl = new URL(window.location.href);
+                adminUrl.searchParams.set('scope', scope);
+                adminUrl.searchParams.set('scopeId', String(scopeId));
+                window.history.replaceState(null, '', adminUrl.toString());
+                log.info('Persisted scope in URL: scope=' + scope + ', scopeId=' + scopeId);
+            } catch (e) {
+                log.warn('Failed to persist scope in URL: ' + e);
+            }
+
             // Update iframe src and navigate to the new URL.
             // When the constructed URL is identical to the current src (e.g. "All Store Views"
             // resolves to the same preview store that is already loaded), setting the src
