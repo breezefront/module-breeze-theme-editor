@@ -141,7 +141,7 @@ class StoreDataProvider
      *
      * Structure:
      * [
-     *   ['type'=>'default', 'scope'=>'default', 'scopeId'=>0,  'name'=>'All Store Views', 'previewStoreId'=>1],
+     *   ['type'=>'default', 'scope'=>'default', 'scopeId'=>0,  'name'=>'All Store Views', 'defaultStoreId'=>1],
      *   [
      *     'type' => 'website',
      *     'scope' => 'websites',
@@ -149,7 +149,7 @@ class StoreDataProvider
      *     'id' => 1,
      *     'name' => 'Main Website',
      *     'code' => 'base',
-     *     'previewStoreId' => 1,
+     *     'defaultStoreId' => 1,
      *     'groups' => [
      *       [
      *         'type' => 'group',
@@ -187,7 +187,7 @@ class StoreDataProvider
                 'id'            => (int)$website->getId(),
                 'code'          => $website->getCode(),
                 'name'          => $website->getName(),
-                'previewStoreId'=> 0,
+                'defaultStoreId' => 0,
                 'hasSettings'   => $this->themeAvailability->hasSettings('websites', (int)$website->getId()),
                 'groups'        => []
             ];
@@ -240,7 +240,7 @@ class StoreDataProvider
                 }
             }
 
-            $websiteData['previewStoreId'] = $websiteFirstStoreId;
+            $websiteData['defaultStoreId'] = $this->getDefaultStoreId((int)$website->getId(), $websiteFirstStoreId);
 
             // Only add websites with groups that have stores
             if (!empty($websiteData['groups'])) {
@@ -248,13 +248,17 @@ class StoreDataProvider
             }
         }
 
-        // Prepend "All Store Views" (Default scope) entry
+        // Prepend "All Store Views" (Default scope) entry.
+        // Use the default website → default group → default store as preview.
+        $defaultWebsite = $this->storeManager->getWebsite(true);
+        $defaultPreviewId = $this->getDefaultStoreId((int)$defaultWebsite->getId(), $firstActiveStoreId);
+
         $result[] = [
             'type'          => 'default',
             'scope'         => 'default',
             'scopeId'       => 0,
             'name'          => (string)__('All Store Views'),
-            'previewStoreId'=> $firstActiveStoreId,
+            'defaultStoreId'=> $defaultPreviewId,
             'hasSettings'   => $this->themeAvailability->hasSettings('default', 0),
         ];
 
@@ -287,6 +291,30 @@ class StoreDataProvider
                 'store_id' => 0
             ];
         }
+    }
+
+    /**
+     * Get the default store view ID for a given website.
+     * Resolves via website → default group → default store.
+     * Falls back to $fallback if the default store is missing or inactive.
+     *
+     * @param int $websiteId
+     * @param int $fallback
+     * @return int
+     */
+    private function getDefaultStoreId(int $websiteId, int $fallback): int
+    {
+        try {
+            $website = $this->storeManager->getWebsite($websiteId);
+            $group   = $website ? $website->getDefaultGroup() : null;
+            $store   = $group ? $group->getDefaultStore() : null;
+            if ($store && $store->isActive()) {
+                return (int)$store->getId();
+            }
+        } catch (\Exception $e) {
+            // fall through to fallback
+        }
+        return $fallback;
     }
 
 }

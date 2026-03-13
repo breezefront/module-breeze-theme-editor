@@ -98,7 +98,9 @@ define([
         },
 
         /**
-         * Find first store code for a given scope entry (for iframe / cookie)
+         * Find store code for a given scope entry (for iframe / cookie).
+         * For 'stores' scope — returns the store's own code.
+         * For 'websites' and 'default' scopes — resolves via defaultStoreId.
          * @param {string} scope
          * @param {number} scopeId
          * @returns {string}
@@ -106,74 +108,42 @@ define([
          */
         _findStoreCode: function (scope, scopeId) {
             var code = null;
+            var defaultStoreId = this._findDefaultStoreId(scope, scopeId);
 
             this.options.websites.forEach(function (entry) {
-                if (entry.type === 'default' && scope === 'default') {
-                    // Use previewStoreId — find its code
-                    if (code !== null) { return; }
-                    var previewId = entry.previewStoreId;
-                    // walk all stores to find matching code
-                }
                 if (entry.type === 'website') {
-                    if (scope === 'websites' && entry.scopeId == scopeId) {
-                        // Use first store of this website
-                        if (code === null && entry.groups.length && entry.groups[0].stores.length) {
-                            code = entry.groups[0].stores[0].code;
-                        }
-                    }
                     entry.groups.forEach(function (group) {
                         group.stores.forEach(function (store) {
                             if (scope === 'stores' && store.scopeId == scopeId) {
                                 code = store.code;
                             }
-                            // For default scope — find by previewStoreId
-                            if (scope === 'default' && code === null) {
-                                // will be set below
+                            if ((scope === 'default' || scope === 'websites') &&
+                                store.scopeId == defaultStoreId && code === null) {
+                                code = store.code;
                             }
                         });
                     });
                 }
             });
 
-            // Default scope: use previewStoreId → find store code
-            if (scope === 'default' && code === null) {
-                var previewId = 0;
-                this.options.websites.forEach(function (entry) {
-                    if (entry.type === 'default') {
-                        previewId = entry.previewStoreId;
-                    }
-                });
-                this.options.websites.forEach(function (entry) {
-                    if (entry.type === 'website') {
-                        entry.groups.forEach(function (group) {
-                            group.stores.forEach(function (store) {
-                                if (store.scopeId == previewId && code === null) {
-                                    code = store.code;
-                                }
-                            });
-                        });
-                    }
-                });
-            }
-
             return code || 'default';
         },
 
         /**
-         * Find previewStoreId for iframe URL construction
+         * Find defaultStoreId for iframe URL construction
          * @param {string} scope
          * @param {number} scopeId
          * @returns {number}
          * @private
          */
-        _findPreviewStoreId: function (scope, scopeId) {
+        _findDefaultStoreId: function (scope, scopeId) {
             var id = 0;
             this.options.websites.forEach(function (entry) {
                 if (entry.type === 'default' && scope === 'default') {
-                    id = entry.previewStoreId || 0;
+                    id = entry.defaultStoreId || 0;
                 }
                 if (entry.type === 'website' && scope === 'websites' && entry.scopeId == scopeId) {
-                    id = entry.previewStoreId || 0;
+                    id = entry.defaultStoreId || 0;
                 }
                 if (entry.type === 'website') {
                     entry.groups.forEach(function (group) {
@@ -351,7 +321,7 @@ define([
             this.currentScopeName       = name;
 
             // Determine which store view to show in iframe
-            var previewStoreId = this._findPreviewStoreId(scope, scopeId);
+            var defaultStoreId = this._findDefaultStoreId(scope, scopeId);
 
             var $iframe    = $(this.options.iframeSelector);
             var currentSrc = $iframe.attr('src');
@@ -359,7 +329,7 @@ define([
             // Replace /store/OLD_ID/ with /store/NEW_ID/
             // Also reset URL to homepage
             var newSrc = currentSrc
-                .replace(/\/store\/\d+\//, '/store/' + previewStoreId + '/')
+                .replace(/\/store\/\d+\//, '/store/' + defaultStoreId + '/')
                 .replace(/\/url\/[^\/]*\//, '/url/%2F/');
 
             log.info('Updating iframe src');
