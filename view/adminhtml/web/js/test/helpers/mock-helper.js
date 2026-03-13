@@ -89,8 +89,7 @@ define(['jquery', 'Swissup_BreezeThemeEditor/js/graphql/client'], function($, Gr
          */
         mockGetCss: function(params, mockResponse) {
             var mockKey = this._createMockKey('GetThemeEditorCss', {
-                storeId: params.storeId,
-                themeId: params.themeId || null,
+                scope: { type: 'stores', scopeId: params.storeId },
                 status: params.status || 'PUBLISHED',
                 publicationId: params.publicationId || null
             });
