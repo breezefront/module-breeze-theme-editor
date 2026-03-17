@@ -315,6 +315,26 @@ _____________________________________________
             }
         }
 
+        .item-badge-live {
+            flex-shrink: 0;
+            margin-left: auto;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: @status-published-color;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .dropdown-item-group:hover .item-badge-live {
+            opacity: 1;
+        }
+
         /* Delete button — sits inside .dropdown-item (flex row), after item-check */
         .dropdown-delete-publication-button {
             flex-shrink: 0;

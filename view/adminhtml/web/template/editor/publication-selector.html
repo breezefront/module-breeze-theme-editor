@@ -83,6 +83,9 @@
                                     <span class="item-title"><%- pub.title %></span>
                                     <span class="item-meta"><%- pub.date %></span>
                                 </span>
+                                <% if (pub.id === activePublicationId) { %>
+                                    <span class="item-badge-live">Live</span>
+                                <% } %>
                                 <% if (status === 'PUBLICATION' && currentPublicationId == pub.id) { %>
                                     <span class="item-check">✓</span>
                                 <% } %>

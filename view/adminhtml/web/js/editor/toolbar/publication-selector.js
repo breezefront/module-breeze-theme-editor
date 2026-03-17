@@ -624,6 +624,7 @@ define([
                 } else {
                     self._onPublishError(response.publishBreezeThemeEditor.message || 'Publish failed');
                 }
+                loading.hide(self.element);
             }).catch(function(error) {
                 self._onPublishError(error.message || 'Unknown error');
                 loading.hide(self.element);
