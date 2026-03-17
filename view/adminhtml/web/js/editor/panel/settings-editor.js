@@ -1138,7 +1138,7 @@ define([
                                  searchText.indexOf('Access token required') !== -1;
 
             if (isThemeConfigError) {
-                var toastMessage = this._getNoSettingsToastMessage();
+                var toastMessage = this._getNoSettingsToastMessage(searchText);
 
                 Toastify.show('warning', toastMessage, {
                     duration: 8000,
@@ -1171,9 +1171,10 @@ define([
          * Return a short toast message for "no Theme Editor settings" errors,
          * tailored to the currently active scope.
          *
+         * @param {string} [errorText] - raw error text to extract theme name from
          * @return {string}
          */
-        _getNoSettingsToastMessage: function() {
+        _getNoSettingsToastMessage: function(errorText) {
             var scope = this.scope || 'stores';
 
             if (scope === 'default') {
@@ -1186,8 +1187,9 @@ define([
                        'Please select a specific store view.';
             }
 
-            // scope === 'stores'
-            var themeName = this.themeName || 'this theme';
+            // scope === 'stores' — include the theme name if we can extract it
+            var themeMatch = errorText && errorText.match(/for theme:\s*(.+)/i);
+            var themeName = themeMatch ? themeMatch[1].trim() : (this.themeName || 'this theme');
             return 'Theme Editor is not available for "' + themeName + '". ' +
                    'Please select a different store view.';
         },
@@ -1234,13 +1236,18 @@ define([
         },
 
         _getFriendlyMessage: function(message, debugMessage) {
-            var themeName = this.themeName || 'current theme';
             var scope = this.scope || 'stores';
             var searchText = debugMessage || message;
 
             // "configuration file not found" — scope-specific messages
             if (searchText.indexOf('configuration file not found') !== -1 ||
                 searchText.indexOf('Theme editor configuration file not found') !== -1) {
+
+                // Prefer the theme name embedded in the backend error message
+                // (e.g. "...not found for theme: Magento Luma") over this.themeName,
+                // which may be stale from a previously loaded scope.
+                var themeMatch = searchText.match(/for theme:\s*(.+)/i);
+                var themeName = themeMatch ? themeMatch[1].trim() : (this.themeName || 'current theme');
 
                 var noSettingsMessage;
 
@@ -1263,7 +1270,7 @@ define([
                         'doesn\'t have the required configuration file.';
                 }
 
-                log.debug('Scope-specific no-settings message for scope=' + scope);
+                log.debug('Scope-specific no-settings message for scope=' + scope + ', theme=' + themeName);
                 return { message: noSettingsMessage, isFriendly: true };
             }
 
