@@ -5,7 +5,8 @@
     "license": "OSL-3.0",
     "require": {
         "php": "^7.4|^8.0|^8.1|^8.2",
-        "magento/framework": "*"
+        "magento/framework": "*",
+        "swissup/module-core": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.5",

@@ -12,8 +12,8 @@
                     </resource>
                 </resource>
                 
-                <!-- Editor access under Content -->
-                <resource id="Magento_Backend::content">
+                <!-- Editor access under Swissup > Breeze -->
+                <resource id="Swissup_Core::swissup">
                     <resource id="Swissup_BreezeThemeEditor::editor" title="Breeze Theme Editor" sortOrder="100">
                         <resource id="Swissup_BreezeThemeEditor::editor_view" title="View Theme Editor" sortOrder="10" />
                         <resource id="Swissup_BreezeThemeEditor::editor_edit" title="Edit Themes" sortOrder="20" />

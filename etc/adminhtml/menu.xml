@@ -1,12 +1,18 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
     <menu>
+        <add id="Swissup_BreezeThemeEditor::breeze"
+             title="Breeze"
+             module="Swissup_BreezeThemeEditor"
+             sortOrder="10"
+             parent="Swissup_Core::swissup"
+             resource="Swissup_BreezeThemeEditor::editor"/>
         <add id="Swissup_BreezeThemeEditor::editor"
              title="Theme Editor"
              translate="title"
              module="Swissup_BreezeThemeEditor"
              sortOrder="100"
-             parent="Magento_Backend::content"
+             parent="Swissup_BreezeThemeEditor::breeze"
              action="breeze_editor/editor/index"
              resource="Swissup_BreezeThemeEditor::editor"/>
     </menu>
