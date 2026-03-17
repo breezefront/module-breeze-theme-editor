@@ -450,7 +450,7 @@ define([
                     log.info('Config loaded for status "' + self.options.status + '"');
                     var config = data.breezeThemeEditorConfig;
 
-                    // Update themeId from resolved metadata (important after scope switch)
+                    // Update themeId and themeName from resolved metadata (important after scope switch)
                     if (config.metadata && config.metadata.themeId) {
                         self.themeId = config.metadata.themeId;
                         // Re-initialize storage with the resolved themeId so that
@@ -463,6 +463,10 @@ define([
                         // find nothing — losing the accordion state.
                         StorageHelper.init(self.scopeId, self.themeId);
                         log.info('themeId resolved from metadata: ' + self.themeId);
+                    }
+                    if (config.metadata && config.metadata.themeName) {
+                        self.themeName = config.metadata.themeName;
+                        log.info('themeName resolved from metadata: ' + self.themeName);
                     }
                     self.config = config; // Store config for palette initialization
                     
@@ -1127,42 +1131,65 @@ define([
         },
 
         _showErrorToast: function(message, debugMessage) {
-            // Check if this is a theme configuration error
             var searchText = debugMessage || message;
             var isThemeConfigError = searchText.indexOf('configuration file not found') !== -1 ||
                                      searchText.indexOf('Theme editor configuration file not found') !== -1;
-            
-            // Check if this is an invalid token error
             var isInvalidToken = searchText.indexOf('Invalid access token') !== -1 ||
-                                searchText.indexOf('Access token required') !== -1;
-            
+                                 searchText.indexOf('Access token required') !== -1;
+
             if (isThemeConfigError) {
-                var themeName = this.themeName || 'this theme';
-                var toastMessage = 'Theme Editor is not available for ' + themeName + '. Please switch to a different store.';
-                
+                var toastMessage = this._getNoSettingsToastMessage();
+
                 Toastify.show('warning', toastMessage, {
-                    duration: 8000,  // 8 seconds (longer than default)
-                    close: true,     // Show close button
+                    duration: 8000,
+                    close: true,
                     gravity: 'top',
                     position: 'center'
                 });
-                
+
                 log.info('Toast shown for unsupported theme');
             }
-            
+
             if (isInvalidToken) {
                 var adminUrl = this.adminUrl || '/admin';
-                var message = 'Your session has expired. <a href="' + adminUrl + '" target="_blank" style="color: #fff; text-decoration: underline;">Login to Admin</a> or refresh the page.';
-                
-                Toastify.show('error', message, {
-                    duration: 10000, // 10 seconds
-                    close: true,     // Show close button
+                var tokenMessage = 'Your session has expired. <a href="' + adminUrl +
+                    '" target="_blank" style="color: #fff; text-decoration: underline;">' +
+                    'Login to Admin</a> or refresh the page.';
+
+                Toastify.show('error', tokenMessage, {
+                    duration: 10000,
+                    close: true,
                     gravity: 'top',
                     position: 'center'
                 });
-                
+
                 log.info('Toast shown for invalid token with admin link');
             }
+        },
+
+        /**
+         * Return a short toast message for "no Theme Editor settings" errors,
+         * tailored to the currently active scope.
+         *
+         * @return {string}
+         */
+        _getNoSettingsToastMessage: function() {
+            var scope = this.scope || 'stores';
+
+            if (scope === 'default') {
+                return 'Theme Editor is not available at the "All Store Views" level. ' +
+                       'Please select a specific store view.';
+            }
+
+            if (scope === 'websites') {
+                return 'Theme Editor is not available for this website scope. ' +
+                       'Please select a specific store view.';
+            }
+
+            // scope === 'stores'
+            var themeName = this.themeName || 'this theme';
+            return 'Theme Editor is not available for "' + themeName + '". ' +
+                   'Please select a different store view.';
         },
 
         _parseErrorData: function(errorData) {
@@ -1208,24 +1235,45 @@ define([
 
         _getFriendlyMessage: function(message, debugMessage) {
             var themeName = this.themeName || 'current theme';
-            
+            var scope = this.scope || 'stores';
+            var searchText = debugMessage || message;
+
+            // "configuration file not found" — scope-specific messages
+            if (searchText.indexOf('configuration file not found') !== -1 ||
+                searchText.indexOf('Theme editor configuration file not found') !== -1) {
+
+                var noSettingsMessage;
+
+                if (scope === 'default') {
+                    noSettingsMessage =
+                        'Theme Editor settings are not available at the "All Store Views" level.\n\n' +
+                        'The theme assigned at the Default Config scope ("' + themeName + '") ' +
+                        'doesn\'t support Theme Editor.\n\n' +
+                        'Please select a specific store view from the dropdown that uses a supported Breeze theme.';
+                } else if (scope === 'websites') {
+                    noSettingsMessage =
+                        'Theme Editor settings are not available for this website.\n\n' +
+                        'The theme assigned to this website ("' + themeName + '") ' +
+                        'doesn\'t support Theme Editor.\n\n' +
+                        'Please select a specific store view from the dropdown.';
+                } else {
+                    noSettingsMessage =
+                        'Theme Editor is not available for this store view.\n\n' +
+                        'The assigned theme ("' + themeName + '") ' +
+                        'doesn\'t have the required configuration file.';
+                }
+
+                log.debug('Scope-specific no-settings message for scope=' + scope);
+                return { message: noSettingsMessage, isFriendly: true };
+            }
+
+            // Other known errors
             var friendlyMessages = {
-                'Theme editor configuration file not found': 
-                    'Theme Editor is not available for "' + themeName + '" theme.\n\n' +
-                    'This theme doesn\'t have the required configuration file.\n\n' +
-                    'Please select a different store from the dropdown above that uses a theme with Theme Editor support.',
-                'configuration file not found': 
-                    'Theme Editor is not available for "' + themeName + '" theme.\n\n' +
-                    'This theme doesn\'t have the required configuration file.\n\n' +
-                    'Please select a different store from the dropdown above that uses a theme with Theme Editor support.',
                 'Access token required': 'Your session has expired. Please refresh the page.',
                 'Invalid access token': 'Your session has expired. Please refresh the page.',
                 'Internal server error': 'The server encountered an error. Please try again later.'
             };
 
-            // Check debugMessage first (more specific), then message (generic)
-            var searchText = debugMessage || message;
-            
             for (var key in friendlyMessages) {
                 if (searchText.indexOf(key) !== -1) {
                     log.debug('Found friendly message for: ' + key + ' in ' + (debugMessage ? 'debugMessage' : 'message'));
