@@ -240,6 +240,15 @@ define([
                         var href = $link.attr('href');
                         
                         log.debug('Link clicked: ' + href);
+
+                        // When BCB content-builder preview is active (bcb_preview=1 in the
+                        // iframe URL), bcb-preview.js handles all clicks internally.
+                        // Do not intercept here — doing so would navigate the iframe away
+                        // instead of letting BCB select the component.
+                        if (iframeWindow.location.search.indexOf('bcb_preview=1') !== -1) {
+                            log.debug('BCB preview active — skipping link intercept for: ' + href);
+                            return;
+                        }
                         
                         // Skip special links
                         if (_shouldSkipLink(href)) {
@@ -264,9 +273,6 @@ define([
                                 return;
                             }
                             
-                            // Check if URL was modified
-                            var hasParams = urlBuilder.hasNavigationParams(href, iframeWindow.location.origin);
-                            var isModified = newUrl !== href || !hasParams.hasStore || !hasParams.hasTheme;
                             // Check if URL was modified
                             var hasParams = urlBuilder.hasNavigationParams(href, iframeWindow.location.origin);
                             var isModified = newUrl !== href || !hasParams.hasStore || !hasParams.hasTheme;
