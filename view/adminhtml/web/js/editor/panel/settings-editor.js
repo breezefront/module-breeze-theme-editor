@@ -159,6 +159,8 @@ define([
             this.element.on('click', '.bte-error-toggle', $.proxy(this._toggleErrorDetails, this));
             this.element.on('click', '.bte-accordion-header', $.proxy(this._toggleSection, this));
 
+            this._bindReadOnlyInteraction();
+
             // ✅ Field changes with live badge updates
             FieldHandlers.init(this.element, function(fieldData) {
                 log.debug('Panel callback triggered for: ' + fieldData.sectionCode + '.' + fieldData.fieldCode);
@@ -712,6 +714,35 @@ define([
             this.$presetContainer.find('input, select, button').prop('disabled', true);
 
             log.info('All fields disabled (palette/font-palette handled via bte:editabilityChanged)');
+        },
+
+        /**
+         * Bind click guard for read-only modes (PUBLISHED / PUBLICATION).
+         * Single delegated handler on the whole panel element — fires once,
+         * checks status at click-time so it reacts correctly to state changes.
+         */
+        _bindReadOnlyInteraction: function() {
+            var self = this;
+            this.element.on('click.readOnlyGuard', function(e) {
+                if (self.options.status === 'DRAFT') return;
+                if ($(e.target).closest(
+                    '.bte-panel-header, .bte-panel-search, .bte-panel-footer, .bte-accordion-header'
+                ).length) return;
+
+                self._promptSwitchToDraft();
+            });
+        },
+
+        /**
+         * Ask user to switch to Draft when they click in read-only mode.
+         */
+        _promptSwitchToDraft: function() {
+            var mode = this.options.status === 'PUBLICATION'
+                ? 'a historical publication'
+                : 'Published';
+            if (confirm('You are viewing ' + mode + ' mode.\nSwitch to Draft to make changes?')) {
+                $(document).trigger('bte:requestSwitchToDraft');
+            }
         },
 
         /**

@@ -270,6 +270,13 @@ define([
                 self._restoreCssState();
             });
             
+            // Switch to Draft when settings panel requests it (user clicked a disabled field)
+            $(document).on('bte:requestSwitchToDraft', function() {
+                if (self.options.currentStatus !== 'DRAFT') {
+                    self._switchStatus('DRAFT');
+                }
+            });
+
             // Draft saved → update changes count
             $(document).on('themeEditorDraftSaved', function(e, data) {
                 if (data && typeof data.draftChangesCount !== 'undefined') {
