@@ -20,11 +20,11 @@
             <!-- Draft status -->
             <div class="dropdown-item-group <%= status === 'DRAFT' ? 'active' : '' %>">
                 <a href="#" class="dropdown-item" data-status="DRAFT">
-                    <span class="item-icon">🟡</span>
+                    <span class="item-icon"><i class="ph ph-pencil-simple" aria-hidden="true"></i></span>
                     <span class="item-text">Draft</span>
                     <span class="item-meta"><%- draftMeta %></span>
                     <% if (status === 'DRAFT') { %>
-                        <span class="item-check">✓</span>
+                        <span class="item-check"><i class="ph ph-check" aria-hidden="true"></i></span>
                     <% } %>
                 </a>
 
@@ -32,7 +32,7 @@
                 <% if (canPublish) { %>
                     <div class="dropdown-publish-button-wrapper">
                         <button type="button" class="dropdown-publish-button" data-action="publish">
-                            <span class="publish-icon">💾</span>
+                            <span class="publish-icon"><i class="ph ph-floppy-disk" aria-hidden="true"></i></span>
                             <span class="publish-label">Publish <%- changesCount %> changes</span>
                         </button>
                     </div>
@@ -51,11 +51,11 @@
             <!-- Published status -->
             <div class="dropdown-item-group <%= status === 'PUBLISHED' ? 'active' : '' %>">
                 <a href="#" class="dropdown-item" data-status="PUBLISHED">
-                    <span class="item-icon">🟢</span>
+                    <span class="item-icon"><i class="ph ph-check-circle" aria-hidden="true"></i></span>
                     <span class="item-text">Published</span>
                     <span class="item-meta"><%- publishedMeta %></span>
                     <% if (status === 'PUBLISHED') { %>
-                        <span class="item-check">✓</span>
+                        <span class="item-check"><i class="ph ph-check" aria-hidden="true"></i></span>
                     <% } %>
                 </a>
 
@@ -78,7 +78,7 @@
                     <% publications.forEach(function(pub) { %>
                         <div class="dropdown-item-group">
                             <a href="#" class="dropdown-item <%= status === 'PUBLICATION' && currentPublicationId == pub.id ? 'active' : '' %>" data-publication-id="<%- pub.id %>">
-                                <span class="item-icon"><% if (pub.isRollback) { %>↩️<% } else { %>📦<% } %></span>
+                                <span class="item-icon"><% if (pub.isRollback) { %><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i><% } else { %><i class="ph ph-archive" aria-hidden="true"></i><% } %></span>
                                 <span class="item-content">
                                     <span class="item-title"><%- pub.title %></span>
                                     <span class="item-meta"><%- pub.date %></span>
@@ -87,7 +87,7 @@
                                     <span class="item-badge-live">Live</span>
                                 <% } %>
                                 <% if (status === 'PUBLICATION' && currentPublicationId == pub.id) { %>
-                                    <span class="item-check">✓</span>
+                                    <span class="item-check"><i class="ph ph-check" aria-hidden="true"></i></span>
                                 <% } %>
                                 <% if (canDeletePublication && pub.id !== activePublicationId) { %>
                                     <button type="button" class="dropdown-delete-publication-button" data-action="delete-publication" data-publication-id="<%- pub.id %>" data-publication-title="<%- pub.title %>" title="Delete this publication">×</button>
@@ -108,14 +108,14 @@
 
                 <!-- Load More Action -->
                 <a href="#" class="dropdown-item dropdown-action" data-action="load-more" style="display: none;">
-                    <span class="item-icon">⬇️</span>
+                    <span class="item-icon"><i class="ph ph-arrow-down" aria-hidden="true"></i></span>
                     <span class="item-text">Load More Publications</span>
                     <span class="item-meta" id="publications-count"></span>
                 </a>
 
                 <!-- All Loaded Message -->
                 <div class="dropdown-item dropdown-info" data-status="all-loaded" style="display: none;">
-                    <span class="item-icon">✅</span>
+                    <span class="item-icon"><i class="ph ph-checks" aria-hidden="true"></i></span>
                     <span class="item-text">All publications loaded</span>
                 </div>
             <% } %>

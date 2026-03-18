@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Issue 017 — Replace Emoji Icons in Publication Selector</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1a1a2e;
+    background: #f5f5f7;
+    padding: 32px 24px 64px;
+  }
+
+  .page { max-width: 960px; margin: 0 auto; }
+
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .meta { color: #666; font-size: 13px; margin-bottom: 32px; }
+  .meta span { margin-right: 16px; }
+  .badge {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+  }
+  .badge-open   { background: #dbeafe; color: #1d4ed8; }
+  .badge-task   { background: #ede9fe; color: #6d28d9; }
+
+  h2 { font-size: 15px; font-weight: 600; margin: 32px 0 12px; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+  h3 { font-size: 13px; font-weight: 600; margin: 20px 0 8px; color: #444; }
+
+  p  { margin-bottom: 10px; color: #333; }
+  code { font-family: "SF Mono", Consolas, monospace; font-size: 12px; background: #eee; padding: 1px 5px; border-radius: 3px; }
+
+  /* ── comparison table ─────────────────────────────────── */
+  .cmp-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .cmp-table th {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .3px;
+  }
+  .cmp-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e5ea;
+    vertical-align: middle;
+  }
+  .cmp-table tr:last-child td { border-bottom: none; }
+  .cmp-table tr:hover td { background: #fafafa; }
+
+  .col-slot  { width: 160px; font-weight: 600; font-size: 13px; }
+  .col-now   { width: 100px; text-align: center; }
+  .col-opt   { min-width: 180px; }
+
+  /* icon cell */
+  .icon-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .icon-cell .ph {
+    font-size: 20px;
+    line-height: 1;
+  }
+  .icon-cell .lbl {
+    font-size: 11px;
+    color: #888;
+    font-family: "SF Mono", Consolas, monospace;
+  }
+  .icon-cell .emoji { font-size: 22px; line-height: 1; }
+
+  /* option grid inside a cell */
+  .opt-grid {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .opt-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    min-width: 72px;
+    text-align: center;
+  }
+  .opt-item:hover { border-color: #6d28d9; background: #faf5ff; }
+  .opt-item.chosen { border-color: #6d28d9; background: #ede9fe; }
+  .opt-item .ph { font-size: 20px; line-height: 1; }
+  .opt-item .opt-name { font-size: 11px; color: #555; font-family: "SF Mono", Consolas, monospace; }
+  .opt-item .opt-label { font-size: 11px; font-weight: 600; color: #6d28d9; }
+
+  /* colour demos */
+  .c-yellow { color: #d97706; }
+  .c-green  { color: #16a34a; }
+  .c-muted  { color: #9ca3af; }
+
+  /* decision table */
+  .decision-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .decision-table th {
+    background: #f0f0f5;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #444;
+  }
+  .decision-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e5e5ea;
+    font-size: 13px;
+  }
+  .decision-table tr:last-child td { border-bottom: none; }
+  .pending { color: #aaa; font-style: italic; }
+
+  /* affected files */
+  .files-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .files-table th { background: #f0f0f5; padding: 8px 12px; text-align: left; font-size: 12px; font-weight: 600; color: #444; }
+  .files-table td { padding: 8px 12px; border-bottom: 1px solid #e5e5ea; font-size: 13px; }
+  .files-table tr:last-child td { border-bottom: none; }
+
+  .note {
+    margin-top: 24px;
+    padding: 12px 16px;
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #78350f;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Issue 017 — Replace Emoji Icons in Publication Selector</h1>
+  <div class="meta">
+    <span><span class="badge badge-open">Closed</span></span>
+    <span><span class="badge badge-task">Task</span></span>
+    <span><strong>Area:</strong> <code>publication-selector.html</code>, <code>_publication-selector.less</code></span>
+  </div>
+
+  <!-- ── Background ──────────────────────────────────────── -->
+  <h2>Background</h2>
+  <p>
+    The publication selector dropdown currently uses emoji characters as status/type
+    indicators: <code>🟡</code> Draft, <code>🟢</code> Published, <code>📦</code> Publication item,
+    <code>✓</code> active check, <code>✅</code> all-loaded, <code>⬇️</code> load more.
+  </p>
+  <p>
+    Emoji rendering is inconsistent across OS and browsers, cannot be styled with CSS
+    (color, size, opacity), and looks out of place next to the Phosphor icon font already
+    used throughout the toolbar. Replacing them with <code>ph-*</code> icons gives full CSS
+    control and visual consistency.
+  </p>
+
+  <!-- ── Comparison ─────────────────────────────────────── -->
+  <h2>Icon Comparison</h2>
+  <p>Click an option to mark it as chosen. Chosen state is local to this page — copy the icon name to the decision table below.</p>
+
+  <table class="cmp-table">
+    <thead>
+      <tr>
+        <th class="col-slot">Slot</th>
+        <th class="col-now">Current</th>
+        <th class="col-opt">Options (regular weight)</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- Draft -->
+      <tr>
+        <td class="col-slot">
+          Draft status<br>
+          <code>.item-icon</code>
+        </td>
+        <td class="col-now">
+          <div class="icon-cell">
+            <span class="emoji">🟡</span>
+            <span class="lbl">emoji</span>
+          </div>
+        </td>
+        <td class="col-opt">
+          <div class="opt-grid">
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-pencil-simple c-yellow"></i>
+              <span class="opt-name">pencil-simple</span>
+              <span class="opt-label">A</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-note-pencil c-yellow"></i>
+              <span class="opt-name">note-pencil</span>
+              <span class="opt-label">B</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-circle c-yellow"></i>
+              <span class="opt-name">circle</span>
+              <span class="opt-label">C</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-dot-outline c-yellow"></i>
+              <span class="opt-name">dot-outline</span>
+              <span class="opt-label">D</span>
+            </div>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Published -->
+      <tr>
+        <td class="col-slot">
+          Published status<br>
+          <code>.item-icon</code>
+        </td>
+        <td class="col-now">
+          <div class="icon-cell">
+            <span class="emoji">🟢</span>
+            <span class="lbl">emoji</span>
+          </div>
+        </td>
+        <td class="col-opt">
+          <div class="opt-grid">
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-check-circle c-green"></i>
+              <span class="opt-name">check-circle</span>
+              <span class="opt-label">A</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-seal-check c-green"></i>
+              <span class="opt-name">seal-check</span>
+              <span class="opt-label">B</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-circle c-green"></i>
+              <span class="opt-name">circle</span>
+              <span class="opt-label">C</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-dot-outline c-green"></i>
+              <span class="opt-name">dot-outline</span>
+              <span class="opt-label">D</span>
+            </div>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Publication item -->
+      <tr>
+        <td class="col-slot">
+          Publication item<br>
+          <code>.item-icon</code>
+        </td>
+        <td class="col-now">
+          <div class="icon-cell">
+            <span class="emoji">📦</span>
+            <span class="lbl">emoji</span>
+          </div>
+        </td>
+        <td class="col-opt">
+          <div class="opt-grid">
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-archive"></i>
+              <span class="opt-name">archive</span>
+              <span class="opt-label">A</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-clock-counter-clockwise"></i>
+              <span class="opt-name">clock-counter-clockwise</span>
+              <span class="opt-label">B</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-bookmark-simple"></i>
+              <span class="opt-name">bookmark-simple</span>
+              <span class="opt-label">C</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-tag"></i>
+              <span class="opt-name">tag</span>
+              <span class="opt-label">D</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-stack"></i>
+              <span class="opt-name">stack</span>
+              <span class="opt-label">E</span>
+            </div>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Active check -->
+      <tr>
+        <td class="col-slot">
+          Active item check<br>
+          <code>.item-check</code>
+        </td>
+        <td class="col-now">
+          <div class="icon-cell">
+            <span class="emoji" style="font-size:16px; font-weight:600;">✓</span>
+            <span class="lbl">text char</span>
+          </div>
+        </td>
+        <td class="col-opt">
+          <div class="opt-grid">
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-check"></i>
+              <span class="opt-name">ph-check</span>
+              <span class="opt-label">A</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-check-fat"></i>
+              <span class="opt-name">check-fat</span>
+              <span class="opt-label">B</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)" style="opacity:.5; cursor:default;" title="No icon change needed">
+              <span style="font-size:16px; font-weight:600;">✓</span>
+              <span class="opt-name">keep as-is</span>
+              <span class="opt-label">C</span>
+            </div>
+          </div>
+        </td>
+      </tr>
+
+      <!-- All loaded -->
+      <tr>
+        <td class="col-slot">
+          All publications loaded<br>
+          <code>.item-icon</code>
+        </td>
+        <td class="col-now">
+          <div class="icon-cell">
+            <span class="emoji">✅</span>
+            <span class="lbl">emoji</span>
+          </div>
+        </td>
+        <td class="col-opt">
+          <div class="opt-grid">
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-checks c-green"></i>
+              <span class="opt-name">checks</span>
+              <span class="opt-label">A</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-list-checks"></i>
+              <span class="opt-name">list-checks</span>
+              <span class="opt-label">B</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)" title="Remove icon entirely">
+              <span class="c-muted" style="font-size:18px; line-height:1;">—</span>
+              <span class="opt-name">no icon</span>
+              <span class="opt-label">C</span>
+            </div>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Load more -->
+      <tr>
+        <td class="col-slot">
+          Load more<br>
+          <code>.item-icon</code>
+        </td>
+        <td class="col-now">
+          <div class="icon-cell">
+            <span class="emoji">⬇️</span>
+            <span class="lbl">emoji</span>
+          </div>
+        </td>
+        <td class="col-opt">
+          <div class="opt-grid">
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-arrow-down"></i>
+              <span class="opt-name">arrow-down</span>
+              <span class="opt-label">A</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-caret-down"></i>
+              <span class="opt-name">caret-down</span>
+              <span class="opt-label">B</span>
+            </div>
+            <div class="opt-item" onclick="toggle(this)">
+              <i class="ph ph-dots-three"></i>
+              <span class="opt-name">dots-three</span>
+              <span class="opt-label">C</span>
+            </div>
+          </div>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <!-- ── Decision ────────────────────────────────────────── -->
+  <h2>Decision</h2>
+
+  <table class="decision-table">
+    <thead>
+      <tr>
+        <th>Slot</th>
+        <th>Chosen icon</th>
+        <th>CSS colour</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Draft <code>.item-icon</code></td>
+        <td><code>ph-pencil-simple</code></td>
+        <td><code>@status-draft-color</code></td>
+        <td>via <code>[data-status="DRAFT"] .item-icon .ph</code></td>
+      </tr>
+      <tr>
+        <td>Published <code>.item-icon</code></td>
+        <td><code>ph-check-circle</code></td>
+        <td><code>@status-published-color</code></td>
+        <td>via <code>[data-status="PUBLISHED"] .item-icon .ph</code></td>
+      </tr>
+      <tr>
+        <td>Publication item <code>.item-icon</code></td>
+        <td><code>ph-archive</code></td>
+        <td><code>@dropdown-item-meta-color</code></td>
+        <td>rollback items use <code>ph-arrow-counter-clockwise</code></td>
+      </tr>
+      <tr>
+        <td>Active check <code>.item-check</code></td>
+        <td><code>ph-check</code></td>
+        <td><code>@status-published-color</code></td>
+        <td>replaces text char <code>✓</code></td>
+      </tr>
+      <tr>
+        <td>Publish button <code>.publish-icon</code></td>
+        <td><code>ph-floppy-disk</code></td>
+        <td>inherited white from button</td>
+        <td>was <code>💾</code></td>
+      </tr>
+      <tr>
+        <td>All loaded <code>.item-icon</code></td>
+        <td><code>ph-checks</code></td>
+        <td><code>@status-published-color</code></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Load more <code>.item-icon</code></td>
+        <td><code>ph-arrow-down</code></td>
+        <td>inherited</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Affected files ──────────────────────────────────── -->
+  <h2>Affected Files</h2>
+
+  <table class="files-table">
+    <thead>
+      <tr><th>File</th><th>Change</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>view/adminhtml/web/template/editor/publication-selector.html</code></td>
+        <td>Replace emoji <code>span</code> contents with <code>&lt;i class="ph ph-*"&gt;</code></td>
+      </tr>
+      <tr>
+        <td><code>view/adminhtml/web/css/source/components/_publication-selector.less</code></td>
+        <td>Add <code>.item-icon .ph</code> sizing + colour rules; remove any emoji-specific hacks</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    The Phosphor CDN stylesheet is already injected lazily by <code>icon-registry.js</code>
+    when the panel opens, so no additional loading is needed for toolbar-level icons.
+    Icons in the publication selector are always visible inside the toolbar so the
+    font will always be available.
+  </div>
+
+</div>
+
+<script>
+  function toggle(el) {
+    // allow only one selection per row
+    var row = el.closest('tr');
+    row.querySelectorAll('.opt-item').forEach(function(i) { i.classList.remove('chosen'); });
+    el.classList.add('chosen');
+  }
+</script>
+</body>
+</html>

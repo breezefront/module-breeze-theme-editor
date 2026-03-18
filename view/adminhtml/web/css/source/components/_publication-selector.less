@@ -75,6 +75,16 @@ _____________________________________________
         }
     }
 
+    /* Draft item icon colour */
+    [data-status="DRAFT"] .item-icon .ph {
+        color: @status-draft-color;
+    }
+
+    /* Published item icon colour */
+    [data-status="PUBLISHED"] .item-icon .ph {
+        color: @status-published-color;
+    }
+
     &.status-published .toolbar-select {
         border-color: @status-published-color;
 
@@ -182,6 +192,13 @@ _____________________________________________
                 flex-shrink: 0;
                 font-size: 16px;
                 line-height: 1;
+                display: flex;
+                align-items: center;
+
+                .ph {
+                    font-size: 16px;
+                    line-height: 1;
+                }
             }
 
             .item-text {
@@ -219,6 +236,13 @@ _____________________________________________
                 color: @status-published-color;
                 font-size: 16px;
                 font-weight: 700;
+                display: flex;
+                align-items: center;
+
+                .ph {
+                    font-size: 16px;
+                    line-height: 1;
+                }
             }
 
             /* Action item (View All Publications) */
@@ -300,6 +324,11 @@ _____________________________________________
 
             .item-icon {
                 font-size: 18px;
+
+                .ph {
+                    font-size: 18px;
+                    color: @dropdown-item-meta-color;
+                }
             }
 
             .item-content {
@@ -318,15 +347,8 @@ _____________________________________________
         .item-badge-live {
             flex-shrink: 0;
             margin-left: auto;
-            font-size: 10px;
-            font-weight: 600;
-            line-height: 1;
-            padding: 2px 6px;
-            border-radius: 10px;
-            background: @status-published-color;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
+            font-size: 12px;
+            color: @dropdown-item-meta-color;
             opacity: 0;
             transition: opacity 0.15s ease;
         }
@@ -477,6 +499,8 @@ _____________________________________________
     .publish-icon {
         font-size: 15px;
         line-height: 1;
+        display: flex;
+        align-items: center;
     }
 
     .publish-label {
