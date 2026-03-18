@@ -1,6 +1,6 @@
 # Issues Dashboard
 
-**Updated:** 2026-03-12
+**Updated:** 2026-03-18
 
 ---
 
@@ -9,10 +9,10 @@
 | | Count |
 |---|---|
 | Total issues | 16 |
-| Fixed / Closed | 15 |
-| Pending | 1 |
+| Fixed / Closed | 16 |
+| Pending | 0 |
 | Bugs | 12 (all closed) |
-| Tasks | 5 (4 done, 1 pending) |
+| Tasks | 5 (all done) |
 
 ---
 
@@ -39,7 +39,7 @@
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| [006](006-light-design-side-columns.md) | Light design for side columns (Figma) | High | **Pending** |
+| [006](006-light-design-side-columns.md) | Light design for side columns (Figma) | High | **Done** — `7c74231` |
 | [007](007-config-groups-closed-by-default.md) | All config groups closed by default | Medium | **Done** — `b134b6b` |
 | [008](008-icons-for-config-sections.md) | Add icons to config sections | Medium | **Done** — `689c6e3` |
 | [009](009-delete-publication-versions.md) | Delete button for saved publication versions | Medium | **Done** — `71c9351` |
@@ -47,17 +47,6 @@
 
 ---
 
-## Pending — detail
-
-### 006 · Light design for side columns
-Apply the Figma light colour scheme to the left and right editor panels.  
-Figma: https://www.figma.com/design/xpUrMtVCZEMWwarMKjlO8K/Breeze-Theme-Editor?node-id=0-1
-
-**Blockers:** none  
-**Notes:** After this is done, Content Builder team (Roma) applies the same design to the content editor.
-
----
-
 ## Release target
 
-Breeze Evolution 3.0 — week of 2026-03-09
+Breeze Evolution 3.0 — released
