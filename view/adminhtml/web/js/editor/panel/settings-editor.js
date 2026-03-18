@@ -726,7 +726,7 @@ define([
             this.element.on('click.readOnlyGuard', function(e) {
                 if (self.options.status === 'DRAFT') return;
                 if ($(e.target).closest(
-                    '.bte-panel-header, .bte-panel-search, .bte-panel-footer, .bte-accordion-header'
+                    '.bte-panel-header, .bte-panel-search, .bte-panel-footer, .bte-accordion-header, .bte-palette-header'
                 ).length) return;
 
                 self._promptSwitchToDraft();

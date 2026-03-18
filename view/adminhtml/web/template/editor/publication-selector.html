@@ -81,7 +81,7 @@
                                 <span class="item-icon"><% if (pub.isRollback) { %><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i><% } else { %><i class="ph ph-archive" aria-hidden="true"></i><% } %></span>
                                 <span class="item-content">
                                     <span class="item-title"><%- pub.title %></span>
-                                    <span class="item-meta"><%- pub.date %></span>
+                                    <span class="item-meta"><%- pub.date %><% if (pub.changesCount > 0) { %> · <%- pub.changesCount %> changes<% } %></span>
                                 </span>
                                 <% if (pub.id === activePublicationId) { %>
                                     <span class="item-badge-live">Live</span>
