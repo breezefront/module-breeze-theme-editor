@@ -221,7 +221,7 @@ define([
          */
         _getBadgeText: function(data) {
             if (data.status === 'DRAFT' && data.changesCount > 0) {
-                return '(' + data.changesCount + ' ' + $t('changes') + ')';
+                return '(' + data.changesCount + ' ' + $t('modifications') + ')';
             } else if (data.status === 'PUBLISHED') {
                 return '(' + $t('Live') + ')';
             } else if (data.status === 'PUBLICATION') {
@@ -257,8 +257,8 @@ define([
         _getMetaText: function(status, data) {
             if (status === 'DRAFT') {
                 return data.changesCount > 0 
-                    ? data.changesCount + ' ' + $t('changes')
-                    : $t('No changes');
+                    ? data.changesCount + ' ' + $t('modifications')
+                    : $t('No modifications');
             } else if (status === 'PUBLISHED') {
                 return $t('Live');
             } else if (status === 'PUBLICATION') {

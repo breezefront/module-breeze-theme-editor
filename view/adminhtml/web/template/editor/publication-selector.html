@@ -33,7 +33,7 @@
                     <div class="dropdown-publish-button-wrapper">
                         <button type="button" class="dropdown-publish-button" data-action="publish">
                             <span class="publish-icon"><i class="ph ph-floppy-disk" aria-hidden="true"></i></span>
-                            <span class="publish-label">Publish <%- changesCount %> changes</span>
+                            <span class="publish-label">Publish <%- changesCount %> modifications</span>
                         </button>
                     </div>
                 <% } %>
@@ -42,7 +42,7 @@
                 <% if (status === 'DRAFT' && changesCount > 0) { %>
                     <div class="dropdown-discard-button-wrapper">
                         <button type="button" class="dropdown-discard-button" data-action="discard-draft">
-                            <span class="discard-label">Discard <%- changesCount %> draft changes</span>
+                            <span class="discard-label">Discard <%- changesCount %> draft modifications</span>
                         </button>
                     </div>
                 <% } %>
@@ -63,7 +63,7 @@
                 <% if (publishedModifiedCount > 0) { %>
                     <div class="dropdown-discard-button-wrapper">
                         <button type="button" class="dropdown-discard-button" data-action="discard-published">
-                            <span class="discard-label">Reset <%- publishedModifiedCount %> published changes to defaults</span>
+                            <span class="discard-label">Reset <%- publishedModifiedCount %> published modifications to defaults</span>
                         </button>
                     </div>
                 <% } %>
@@ -81,7 +81,7 @@
                                 <span class="item-icon"><% if (pub.isRollback) { %><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i><% } else { %><i class="ph ph-archive" aria-hidden="true"></i><% } %></span>
                                 <span class="item-content">
                                     <span class="item-title"><%- pub.title %></span>
-                                    <span class="item-meta"><%- pub.date %><% if (pub.changesCount > 0) { %> · <%- pub.changesCount %> changes<% } %></span>
+                                    <span class="item-meta"><%- pub.date %><% if (pub.changesCount > 0) { %> · <%- pub.changesCount %> modifications<% } %></span>
                                 </span>
                                 <% if (pub.id === activePublicationId) { %>
                                     <span class="item-badge-live">Live</span>
