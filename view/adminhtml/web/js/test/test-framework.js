@@ -249,7 +249,12 @@ define([
              * Get admin Bearer token
              */
             getAdminToken: function() {
-                return localStorage.getItem('bte_admin_token');
+                try {
+                    var obj = JSON.parse(localStorage.getItem('bte')) || {};
+                    return (obj.global && obj.global.admin_token) || null;
+                } catch (e) {
+                    return null;
+                }
             },
             
             /**

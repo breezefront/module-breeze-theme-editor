@@ -56,7 +56,7 @@ define([
         // Initialize Bearer token for GraphQL authentication
         // Token is stored in localStorage for persistence between page loads
         if (config.token) {
-            localStorage.setItem('bte_admin_token', config.token);
+            StorageHelper.setGlobalItem('admin_token', config.token);
             log.info('Admin Bearer token initialized');
         } else {
             log.warn('No admin token provided - GraphQL requests will fail');

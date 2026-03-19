@@ -17,14 +17,36 @@ define([
 
     var STORE = 99;
     var THEME = 99;
-    var KEY_SECTIONS = 'bte_' + STORE + '_' + THEME + '_open_sections';
-    var KEY_PREVIEW  = 'bte_' + STORE + '_' + THEME + '_live_preview_changes';
+
+    /** Read a scoped value directly from the "bte" object in localStorage */
+    function readRaw(storeId, themeId, key) {
+        try {
+            var obj = JSON.parse(localStorage.getItem('bte')) || {};
+            var store = obj[String(storeId)];
+            if (!store) return null;
+            var theme = store[String(themeId)];
+            if (!theme) return null;
+            var val = theme[key];
+            return val === undefined ? null : val;
+        } catch (e) {
+            return null;
+        }
+    }
 
     function setup() {
         StorageHelper.init(STORE, THEME);
-        localStorage.removeItem(KEY_SECTIONS);
-        localStorage.removeItem(KEY_PREVIEW);
-        // Also remove old unscoped keys — getItem() falls back to these via migration logic
+
+        // Remove our scoped entries from the "bte" object
+        try {
+            var obj = JSON.parse(localStorage.getItem('bte')) || {};
+            if (obj[String(STORE)] && obj[String(STORE)][String(THEME)]) {
+                delete obj[String(STORE)][String(THEME)]['open_sections'];
+                delete obj[String(STORE)][String(THEME)]['live_preview_changes'];
+                localStorage.setItem('bte', JSON.stringify(obj));
+            }
+        } catch (e) { /* ignore */ }
+
+        // Also remove any leftover legacy keys
         localStorage.removeItem('bte_open_sections');
         localStorage.removeItem('bte_live_preview_changes');
     }
@@ -65,12 +87,12 @@ define([
             setup();
 
             StorageHelper.setOpenSections(['typography']);
-            var raw = localStorage.getItem(KEY_SECTIONS);
+            var raw = readRaw(STORE, THEME, 'open_sections');
 
-            this.assertNotNull(raw, 'Scoped key should exist in localStorage');
+            this.assertNotNull(raw, 'Scoped key should exist in bte object');
             this.assertEquals(raw, '["typography"]', 'Raw value should be JSON string');
 
-            console.log('✅ setOpenSections() uses scoped key: ' + KEY_SECTIONS);
+            console.log('✅ setOpenSections() uses scoped key: bte.' + STORE + '.' + THEME + '.open_sections');
         },
 
         'setOpenSections([]) saves empty state, getOpenSections() returns []': function () {
@@ -136,12 +158,12 @@ define([
             setup();
 
             StorageHelper.setLivePreviewChanges({'--color-primary': '#abc'});
-            var raw = localStorage.getItem(KEY_PREVIEW);
+            var raw = readRaw(STORE, THEME, 'live_preview_changes');
 
-            this.assertNotNull(raw, 'Scoped key should exist in localStorage');
+            this.assertNotNull(raw, 'Scoped key should exist in bte object');
             this.assertStringContains(raw, '--color-primary', 'Raw JSON should contain the variable name');
 
-            console.log('✅ setLivePreviewChanges() uses scoped key: ' + KEY_PREVIEW);
+            console.log('✅ setLivePreviewChanges() uses scoped key: bte.' + STORE + '.' + THEME + '.live_preview_changes');
         },
 
         'clearLivePreviewChanges() removes key from localStorage': function () {
@@ -150,10 +172,10 @@ define([
             StorageHelper.setLivePreviewChanges({'--color-primary': '#abc'});
             StorageHelper.clearLivePreviewChanges();
 
-            var raw = localStorage.getItem(KEY_PREVIEW);
+            var raw = readRaw(STORE, THEME, 'live_preview_changes');
             var result = StorageHelper.getLivePreviewChanges();
 
-            this.assertNull(raw, 'Scoped key should be removed from localStorage');
+            this.assertNull(raw, 'Scoped key should be removed from bte object');
             this.assertEquals(Object.keys(result).length, 0, 'getLivePreviewChanges() should return {} after clear');
 
             console.log('✅ clearLivePreviewChanges() removes key and returns {} afterwards');
@@ -161,7 +183,15 @@ define([
 
         'getLivePreviewChanges() returns {} when localStorage contains corrupted JSON': function () {
             setup();
-            localStorage.setItem(KEY_PREVIEW, '{broken::json}');
+
+            // Write corrupted JSON directly into bte object at the right scope
+            try {
+                var obj = JSON.parse(localStorage.getItem('bte')) || {};
+                if (!obj[String(STORE)]) obj[String(STORE)] = {};
+                if (!obj[String(STORE)][String(THEME)]) obj[String(STORE)][String(THEME)] = {};
+                obj[String(STORE)][String(THEME)]['live_preview_changes'] = '{broken::json}';
+                localStorage.setItem('bte', JSON.stringify(obj));
+            } catch (e) { /* ignore */ }
 
             var result = StorageHelper.getLivePreviewChanges();
 
@@ -174,12 +204,12 @@ define([
         'live_preview_changes are isolated between themes': function () {
             // Theme A — store 1, theme 10
             StorageHelper.init(1, 10);
-            localStorage.removeItem('bte_1_10_live_preview_changes');
+            StorageHelper.clearLivePreviewChanges();
             StorageHelper.setLivePreviewChanges({'--color-primary': 'red'});
 
             // Theme B — store 1, theme 20
             StorageHelper.init(1, 20);
-            localStorage.removeItem('bte_1_20_live_preview_changes');
+            StorageHelper.clearLivePreviewChanges();
             StorageHelper.setLivePreviewChanges({'--color-primary': 'blue'});
 
             // Verify theme A value is unchanged
@@ -194,8 +224,10 @@ define([
             this.assertEquals(themeBChanges['--color-primary'], 'blue', 'Theme B value should be "blue"');
 
             // Cleanup
-            localStorage.removeItem('bte_1_10_live_preview_changes');
-            localStorage.removeItem('bte_1_20_live_preview_changes');
+            StorageHelper.init(1, 10);
+            StorageHelper.clearLivePreviewChanges();
+            StorageHelper.init(1, 20);
+            StorageHelper.clearLivePreviewChanges();
 
             console.log('✅ live_preview_changes are isolated between themes');
         }

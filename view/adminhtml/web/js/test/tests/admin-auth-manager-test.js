@@ -7,17 +7,18 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/test/test-framework',
     'Swissup_BreezeThemeEditor/js/graphql/client',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager'
-], function($, TestFramework, GraphQLClient, ConfigManager) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper'
+], function($, TestFramework, GraphQLClient, ConfigManager, StorageHelper) {
     'use strict';
     
     return TestFramework.suite('Admin Auth Manager', {
         /**
-         * Test 1: Verify Bearer token exists in localStorage
+         * Test 1: Verify Bearer token exists in bte.global.admin_token
          */
-        'should have Bearer token in localStorage': function() {
-            var token = localStorage.getItem('bte_admin_token');
-            this.assertNotNull(token, 'Bearer token should exist in localStorage');
+        'should have Bearer token in storage': function() {
+            var token = StorageHelper.getGlobalItem('admin_token');
+            this.assertNotNull(token, 'Bearer token should exist in bte.global.admin_token');
             this.assertTrue(token.length > 0, 'Token should not be empty');
             
             console.log('✅ Bearer token found:', token.substring(0, 20) + '...');
@@ -129,8 +130,8 @@ define([
         /**
          * Test 6: Verify token persists across sessions
          */
-        'should persist token in localStorage': function() {
-            var token = localStorage.getItem('bte_admin_token');
+        'should persist token in storage': function() {
+            var token = StorageHelper.getGlobalItem('admin_token');
             this.assertNotNull(token, 'Token should exist initially');
             
             // Store original token

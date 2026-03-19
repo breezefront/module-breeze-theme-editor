@@ -15,7 +15,38 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper'
 ], function($, TestFramework, StorageHelper, IframeHelper) {
     'use strict';
-    
+
+    /**
+     * Read a scoped value directly from the "bte" object in localStorage.
+     * Used in tests to verify the actual storage structure.
+     */
+    function readRaw(storeId, themeId, key) {
+        try {
+            var obj = JSON.parse(localStorage.getItem('bte')) || {};
+            var store = obj[String(storeId)];
+            if (!store) return null;
+            var theme = store[String(themeId)];
+            if (!theme) return null;
+            var val = theme[key];
+            return val === undefined ? null : val;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * Remove a scoped value from the "bte" object (for test setup/cleanup).
+     */
+    function clearScope(storeId, themeId, key) {
+        try {
+            var obj = JSON.parse(localStorage.getItem('bte')) || {};
+            if (obj[String(storeId)] && obj[String(storeId)][String(themeId)]) {
+                delete obj[String(storeId)][String(themeId)][key];
+                localStorage.setItem('bte', JSON.stringify(obj));
+            }
+        } catch (e) { /* ignore */ }
+    }
+
     return TestFramework.suite('URL Navigation Persistence', {
         
         // ========================================================================
@@ -28,17 +59,17 @@ define([
         'StorageHelper.getCurrentUrl() should return default "/" when not set': function() {
             // Setup: Initialize with test store/theme
             StorageHelper.init(99, 99);
-            
-            // Clear any existing data (both new and old key formats)
-            localStorage.removeItem('bte_99_99_current_url');
-            localStorage.removeItem('bte_current_url'); // Clean up old format key from previous tests
-            
+
+            // Clear any existing data
+            clearScope(99, 99, 'current_url');
+            localStorage.removeItem('bte_current_url'); // legacy flat key
+
             // Test: Get URL when not set
             var url = StorageHelper.getCurrentUrl();
-            
+
             // Assert
             this.assertEquals(url, '/', 'Should return default "/"');
-            
+
             console.log('✅ getCurrentUrl() returns default "/"');
         },
         
@@ -57,8 +88,8 @@ define([
             this.assertEquals(url, '/catalog/category', 'Should return saved URL');
             
             // Verify scoped key format
-            var scopedValue = localStorage.getItem('bte_99_99_current_url');
-            this.assertEquals(scopedValue, '/catalog/category', 'Should use scoped key');
+            var scopedValue = readRaw(99, 99, 'current_url');
+            this.assertEquals(scopedValue, '/catalog/category', 'Should use scoped key in bte object');
             
             console.log('✅ setCurrentUrl() and getCurrentUrl() work correctly');
         },
@@ -73,12 +104,12 @@ define([
             // Test: Save URL
             StorageHelper.setCurrentUrl('/catalog/product/view/id/25');
             
-            // Assert: Check localStorage key format
-            var value = localStorage.getItem('bte_1_5_current_url');
-            this.assertNotNull(value, 'Scoped key should exist');
+            // Assert: Check bte object structure
+            var value = readRaw(1, 5, 'current_url');
+            this.assertNotNull(value, 'Scoped key should exist in bte object');
             this.assertEquals(value, '/catalog/product/view/id/25', 'Value should match');
-            
-            console.log('✅ setCurrentUrl() uses scoped key: bte_1_5_current_url');
+
+            console.log('✅ setCurrentUrl() uses scoped key: bte.1.5.current_url');
         },
         
         /**
@@ -87,8 +118,8 @@ define([
         'StorageHelper.getCurrentPageId() should return default when not set': function() {
             // Setup
             StorageHelper.init(99, 99);
-            localStorage.removeItem('bte_99_99_current_page_id');
-            
+            clearScope(99, 99, 'current_page_id');
+
             // Test
             var pageId = StorageHelper.getCurrentPageId();
             
@@ -125,12 +156,12 @@ define([
             // Test: Save page ID
             StorageHelper.setCurrentPageId('catalog_product_view');
             
-            // Assert: Check localStorage key format
-            var value = localStorage.getItem('bte_2_7_current_page_id');
-            this.assertNotNull(value, 'Scoped key should exist');
+            // Assert: Check bte object structure
+            var value = readRaw(2, 7, 'current_page_id');
+            this.assertNotNull(value, 'Scoped key should exist in bte object');
             this.assertEquals(value, 'catalog_product_view', 'Value should match');
-            
-            console.log('✅ setCurrentPageId() uses scoped key: bte_2_7_current_page_id');
+
+            console.log('✅ setCurrentPageId() uses scoped key: bte.2.7.current_page_id');
         },
         
         /**
@@ -145,10 +176,10 @@ define([
             StorageHelper.init(2, 7);
             StorageHelper.setCurrentUrl('/store2-theme7-url');
             
-            // Assert: Both values exist independently
-            var url1 = localStorage.getItem('bte_1_5_current_url');
-            var url2 = localStorage.getItem('bte_2_7_current_url');
-            
+            // Assert: Both values exist independently in the bte object
+            var url1 = readRaw(1, 5, 'current_url');
+            var url2 = readRaw(2, 7, 'current_url');
+
             this.assertEquals(url1, '/store1-theme5-url', 'Store 1/Theme 5 should have own value');
             this.assertEquals(url2, '/store2-theme7-url', 'Store 2/Theme 7 should have own value');
             
@@ -156,29 +187,33 @@ define([
         },
         
         /**
-         * Test 8: Migration from old unscoped keys to new scoped format
+         * Test 8: Migration from old flat keys to new nested bte object
          */
-        'StorageHelper should migrate old unscoped keys to new scoped format': function() {
-            // Setup: Simulate old key format
+        'StorageHelper should migrate old flat keys to new nested bte structure': function() {
+            // Setup: Simulate old flat key format  bte_99_99_current_url
             StorageHelper.init(99, 99);
-            localStorage.removeItem('bte_99_99_current_url'); // Remove new key
-            localStorage.setItem('bte_current_url', '/old-format-url'); // Set old key
-            
-            // Test: Read URL (should trigger migration)
+            clearScope(99, 99, 'current_url');           // Remove new key
+            localStorage.removeItem('bte_current_url');  // Remove oldest flat key
+            localStorage.setItem('bte_99_99_current_url', '/old-scoped-url'); // Set old format key
+
+            // Test: Read URL (should trigger migration into bte object)
             var url = StorageHelper.getCurrentUrl();
-            
+
             // Assert: Should return old value
-            this.assertEquals(url, '/old-format-url', 'Should read from old key');
-            
-            // Assert: Should migrate to new key
-            var newValue = localStorage.getItem('bte_99_99_current_url');
-            this.assertEquals(newValue, '/old-format-url', 'Should migrate to new scoped key');
-            
-            // Cleanup: Remove both keys after test
-            localStorage.removeItem('bte_99_99_current_url');
-            localStorage.removeItem('bte_current_url');
-            
-            console.log('✅ Migration from old unscoped keys works correctly');
+            this.assertEquals(url, '/old-scoped-url', 'Should read from old flat key');
+
+            // Assert: Should migrate to new nested structure
+            var newValue = readRaw(99, 99, 'current_url');
+            this.assertEquals(newValue, '/old-scoped-url', 'Should migrate to bte.99.99.current_url');
+
+            // Assert: Old flat key should be removed
+            var oldValue = localStorage.getItem('bte_99_99_current_url');
+            this.assertNull(oldValue, 'Old flat key should be removed after migration');
+
+            // Cleanup
+            clearScope(99, 99, 'current_url');
+
+            console.log('✅ Migration from old flat keys to new nested structure works');
         },
         
         // ========================================================================
@@ -334,7 +369,7 @@ define([
         'IframeHelper.saveCurrentUrl() should clean and save URL': function() {
             // Setup: Stub getCurrentUrl() to return mock URL
             StorageHelper.init(99, 99);
-            localStorage.removeItem('bte_99_99_current_url');
+            clearScope(99, 99, 'current_url');
             
             var originalGetCurrentUrl = IframeHelper.getCurrentUrl;
             
