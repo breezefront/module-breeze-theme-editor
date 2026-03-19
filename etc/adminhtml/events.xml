@@ -6,20 +6,4 @@
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-    <!--
-        Set theme preview and store cookies when admin editor is accessed.
-        
-        This ensures the iframe displays the correct theme and store when:
-        - User refreshes the page (F5) within the iframe
-        - Navigating between pages (page selector)
-        - Switching store views (scope selector)
-        - Clicking links within the iframe
-        
-        Magento uses:
-        - 'preview_theme' cookie to override store's default theme
-        - 'store' cookie to determine which store view to display
-    -->
-    <event name="controller_action_predispatch_breeze_editor_editor_index">
-        <observer name="swissup_breeze_theme_editor_set_theme_preview_cookie" instance="Swissup\BreezeThemeEditor\Observer\SetThemePreviewCookie" />
-    </event>
 </config>
