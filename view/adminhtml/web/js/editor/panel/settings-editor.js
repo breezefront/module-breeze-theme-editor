@@ -404,35 +404,28 @@ define([
         },
 
         /**
-         * Initialize CSS Preview Manager
+         * Initialize CSS Preview Manager.
+         *
+         * CssPreviewManager.init() returns a Promise that resolves once the
+         * iframe has loaded the frontend page and localStorage changes have been
+         * restored.  We store it as this._previewReady so _loadConfig() can
+         * chain syncFieldsFromChanges() on it — guaranteeing sync always runs
+         * AFTER _loadFromLocalStorage(), with no race-condition setTimeout hacks.
          */
         _initPreview: function() {
             var self = this;
-            setTimeout(function() {
-                CssPreviewManager.init();
-                
-                // CSS Manager may already be initialized early in toolbar.js
-                // Only initialize if not already done
-                if (!CssManager.getCurrentStatus()) {
-                    log.debug('CSS Manager not initialized yet, initializing now...');
-                    CssManager.init(self.scopeId, self.themeId);
-                } else {
-                    log.debug('CSS Manager already initialized (early init from toolbar)');
-                }
-                
-                // Sync panel status with CssManager status (from localStorage)
-                // This ensures panel loads the correct config matching the CSS state
-                setTimeout(function() {
-                    var cssManagerStatus = CssManager.getCurrentStatus();
-                    if (cssManagerStatus && cssManagerStatus !== self.options.status) {
-                        log.debug('Syncing panel status with CssManager: ' + self.options.status + ' -> ' + cssManagerStatus);
-                        self.options.status = cssManagerStatus;
-                        
-                        // Note: Publication Selector already reads from localStorage in _loadConfig()
-                        // So UI should already match. If not, it will sync on first publicationStatusChanged event.
-                    }
-                }, 100);
-            }, 500);
+
+            // Promise: resolves when iframe frontend page is ready + changes loaded
+            this._previewReady = CssPreviewManager.init();
+
+            // panel/css-manager has its own retry loop (200 ms × 20 attempts),
+            // so we can call it immediately without an outer setTimeout.
+            if (!CssManager.getCurrentStatus()) {
+                log.debug('CSS Manager not initialized yet, initializing now...');
+                CssManager.init(self.scopeId, self.themeId);
+            } else {
+                log.debug('CSS Manager already initialized');
+            }
         },
 
         /**
@@ -494,11 +487,21 @@ define([
                     self._renderSections(config.sections);
                     self._hideLoader();
                     
-                    // Sync form fields with live preview changes (if in DRAFT mode)
+                    // Sync form fields with live preview changes (if in DRAFT mode).
+                    // We chain on _previewReady (the Promise from CssPreviewManager.init())
+                    // instead of using a fixed setTimeout.  This guarantees that
+                    // syncFieldsFromChanges() always runs AFTER _loadFromLocalStorage()
+                    // has populated the changes map — regardless of whether GraphQL or
+                    // the iframe loads faster.
                     if (self.options.status === 'DRAFT') {
-                        setTimeout(function() {
+                        self._previewReady.then(function() {
                             CssPreviewManager.syncFieldsFromChanges(self.element);
-                        }, 100);
+                            // syncFieldsFromChanges() now uses synchronous require(), so
+                            // PanelState.setValue() has already run by the time we get here.
+                            // Calling _updateChangesCount() now produces the correct "Save (N)"
+                            // label — fixing the "Save (0)" / disabled Reset regression after F5.
+                            self._updateChangesCount();
+                        });
                     } else {
                         // Clear live preview in read-only modes (PUBLISHED)
                         CssPreviewManager.reset();

@@ -31,24 +31,52 @@ define([
         _paletteManager: null,
 
         /**
-         * Initialize preview manager
+         * Initialize preview manager.
+         *
+         * Returns a Promise that resolves (true) once the iframe has loaded the
+         * frontend page (detected by presence of #bte-theme-css-variables) and
+         * live-preview changes have been loaded from localStorage.
+         *
+         * Uses an event-based approach instead of a fixed setTimeout to avoid
+         * race conditions between GraphQL config load and localStorage restore.
+         *
+         * @returns {Promise<boolean>}
          */
         init: function() {
-            iframeDocument = IframeHelper.getDocument();
-            if (!iframeDocument) {
-                log.warn('CSS Preview Manager: iframe not initialized');
-                return false;
-            }
-            this._createStyleElement();
-            
-            // Load saved changes from localStorage
-            this._loadFromLocalStorage();
-            
-            // Subscribe to palette changes for cascade behavior
-            this._subscribeToPaletteChanges();
-            
-            log.info('CSS Preview Manager initialized');
-            return true;
+            var self = this;
+            return new Promise(function(resolve) {
+                function tryInit() {
+                    iframeDocument = IframeHelper.getDocument();
+
+                    // Wait until the frontend page is loaded.
+                    // #bte-theme-css-variables is injected by the Breeze theme in <head>
+                    // and is absent on the admin redirect page — we use it as a
+                    // reliable "frontend is ready" signal (same check as panel/css-manager).
+                    if (!iframeDocument ||
+                            !$(iframeDocument).find('#bte-theme-css-variables').length) {
+                        return; // not ready yet — will be retried on the next load event
+                    }
+
+                    // Frontend page is ready — clean up listener and finish init
+                    $('#bte-iframe').off('load.bte-preview-init');
+
+                    self._createStyleElement();
+
+                    // Load saved changes from localStorage
+                    self._loadFromLocalStorage();
+
+                    // Subscribe to palette changes for cascade behavior
+                    self._subscribeToPaletteChanges();
+
+                    log.info('CSS Preview Manager initialized');
+                    resolve(true);
+                }
+
+                // Subscribe first so we don't miss the load event, then try
+                // immediately in case the iframe is already on the frontend page.
+                $('#bte-iframe').on('load.bte-preview-init', tryInit);
+                tryInit();
+            });
         },
         
         /**
@@ -232,9 +260,7 @@ define([
             }
 
             if (!iframeDocument || !$styleElement) {
-                if (!this.init()) {
-                    return false;
-                }
+                return false;
             }
             var formattedValue = this._formatValue(value, fieldType, fieldData);
             changes[varName] = formattedValue;
@@ -248,6 +274,21 @@ define([
             // field, then re-inject if the new value is still a palette reference.
             // This covers: reset → concrete value, palette-A → palette-B, etc.
             this._cleanupFieldPaletteVars(varName);
+
+            // Populate _paletteManager from RequireJS cache if it is not set yet.
+            // _subscribeToPaletteChanges() fills it via an async require(); on the
+            // first setVariable() call the async callback may not have fired yet,
+            // but PaletteManager is always in cache once the panel is initialized.
+            // (Same pattern used in syncFieldsFromChanges().)
+            if (!this._paletteManager) {
+                try {
+                    this._paletteManager = require(
+                        'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager'
+                    );
+                } catch (e) {
+                    // Not in RequireJS cache yet — will be set by _subscribeToPaletteChanges callback
+                }
+            }
 
             if (typeof value === 'string' && value.startsWith('--') && this._paletteManager) {
                 var paletteColor = this._paletteManager.getColor(value);
@@ -648,17 +689,37 @@ define([
                 var fieldCode = $field.data('field');
                 
                 if (sectionCode && fieldCode) {
-                    // Dynamically load PanelState and FieldHandlers to avoid circular dependency
-                    require([
-                        'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
-                        'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers'
-                    ], function(PanelState, FieldHandlers) {
+                    // Use synchronous require() — at runtime all modules are already in the
+                    // RequireJS cache, so sync require is safe here (same pattern as
+                    // setVariable() using _paletteManager).  The async form was originally
+                    // used to avoid a circular-dependency error at *definition* time:
+                    //   field-handlers → field-handlers/base → css-preview-manager
+                    // That circularity only matters during the initial module definition,
+                    // not at call time.  Using async require here causes PanelState.setValue()
+                    // to run in a future microtask, so getChangesCount() still reads 0 when
+                    // _updateChangesCount() fires right after syncFieldsFromChanges() returns.
+                    try {
+                        var PanelState    = require('Swissup_BreezeThemeEditor/js/editor/panel/panel-state');
+                        var FieldHandlers = require('Swissup_BreezeThemeEditor/js/editor/panel/field-handlers');
+
+                        // Normalize palette reference: 'var(--color-x)' → '--color-x'
+                        // PanelState stores palette refs without var() wrapper (e.g. '--color-red'),
+                        // but changes in localStorage are formatted with var() for CSS output.
+                        // Without this normalization, a saved palette-ref field (savedValue='--color-x')
+                        // would appear dirty after reload because 'var(--color-x)' !== '--color-x'.
+                        var stateValue = value;
+                        if (typeof stateValue === 'string' && /^var\(--/.test(stateValue)) {
+                            stateValue = stateValue.replace(/^var\((.+)\)$/, '$1');
+                        }
+
                         // Update PanelState to mark field as changed
-                        PanelState.setValue(sectionCode, fieldCode, displayValue);
-                        
+                        PanelState.setValue(sectionCode, fieldCode, stateValue);
+
                         // Update badges to show "Changed" indicator
                         FieldHandlers.updateBadges($panelElement, sectionCode, fieldCode);
-                    });
+                    } catch (e) {
+                        log.warn('syncFieldsFromChanges: PanelState/FieldHandlers not in cache yet: ' + e);
+                    }
                     
                     log.debug('Synced field value & badges: ' + property + ' -> ' + displayValue + ' (' + sectionCode + '.' + fieldCode + ')');
                 } else {
