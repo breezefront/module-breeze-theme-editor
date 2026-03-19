@@ -57,7 +57,7 @@ class ImportSettingsTest extends TestCase
         $this->userResolver->method('getCurrentUserId')->willReturn(1);
         $this->importExportService
             ->method('import')
-            ->willReturn(['imported' => 5, 'skipped' => 2, 'errors' => []]);
+            ->willReturn(['importedCount' => 5, 'skippedCount' => 2, 'errors' => []]);
 
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
@@ -104,7 +104,7 @@ class ImportSettingsTest extends TestCase
             ->willReturn(10);
         $this->importExportService
             ->method('import')
-            ->willReturn(['imported' => 1, 'skipped' => 0, 'errors' => []]);
+            ->willReturn(['importedCount' => 1, 'skippedCount' => 0, 'errors' => []]);
 
         $result = $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,
@@ -135,7 +135,7 @@ class ImportSettingsTest extends TestCase
                 '{}',
                 true
             )
-            ->willReturn(['imported' => 0, 'skipped' => 0, 'errors' => []]);
+            ->willReturn(['importedCount' => 0, 'skippedCount' => 0, 'errors' => []]);
 
         $this->mutation->resolve(
             $this->field, $this->context, $this->resolveInfo, null,

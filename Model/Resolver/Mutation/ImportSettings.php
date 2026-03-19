@@ -62,9 +62,9 @@ class ImportSettings extends AbstractMutationResolver
 
             return [
                 'success' => true,
-                'message' => __('Successfully imported %1 settings', $result['imported']),
-                'importedCount' => $result['imported'],
-                'skippedCount' => $result['skipped'],
+                'message' => __('Successfully imported %1 settings', $result['importedCount']),
+                'importedCount' => $result['importedCount'],
+                'skippedCount' => $result['skippedCount'],
                 'errors' => $result['errors'] ?? []
             ];
 
