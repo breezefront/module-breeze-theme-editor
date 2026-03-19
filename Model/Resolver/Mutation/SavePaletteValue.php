@@ -12,6 +12,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 
 /**
@@ -27,7 +28,8 @@ class SavePaletteValue extends AbstractMutationResolver
         private PaletteResolver $paletteResolver,
         private ThemeResolver $themeResolver,
         private UserResolver $userResolver,
-        private ScopeFactory $scopeFactory
+        private ScopeFactory $scopeFactory,
+        private StatusProvider $statusProvider
     ) {}
 
     public function resolve(
@@ -83,7 +85,7 @@ class SavePaletteValue extends AbstractMutationResolver
         $valueModel->setThemeId($themeId);
         $valueModel->setScope($scope->getType());
         $valueModel->setStoreId($scope->getScopeId());
-        $valueModel->setStatusId(1); // 1 = PUBLISHED (palette changes are always published)
+        $valueModel->setStatusId($this->statusProvider->getStatusId('PUBLISHED')); // palette changes are always published
         $valueModel->setSectionCode('_palette');
         $valueModel->setSettingCode($cssVar);
         $valueModel->setValue($hexValue);

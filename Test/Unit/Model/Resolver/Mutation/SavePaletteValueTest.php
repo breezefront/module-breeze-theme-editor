@@ -13,6 +13,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
+use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
@@ -26,6 +27,7 @@ class SavePaletteValueTest extends TestCase
     private UserResolver|MockObject $userResolverMock;
     private ScopeFactory|MockObject $scopeFactory;
     private ScopeInterface|MockObject $scopeMock;
+    private StatusProvider|MockObject $statusProviderMock;
     private Field|MockObject $fieldMock;
     private ContextInterface|MockObject $contextMock;
     private ResolveInfo|MockObject $resolveInfoMock;
@@ -41,6 +43,10 @@ class SavePaletteValueTest extends TestCase
         $this->scopeFactory->method('create')->willReturnCallback(
             fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
         );
+        $this->statusProviderMock = $this->createMock(StatusProvider::class);
+        $this->statusProviderMock->method('getStatusId')
+            ->with('PUBLISHED')
+            ->willReturn(1);
         $this->fieldMock = $this->createMock(Field::class);
         $this->contextMock = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -54,7 +60,8 @@ class SavePaletteValueTest extends TestCase
             $this->paletteResolverMock,
             $this->themeResolverMock,
             $this->userResolverMock,
-            $this->scopeFactory
+            $this->scopeFactory,
+            $this->statusProviderMock
         );
     }
 
@@ -601,7 +608,7 @@ class SavePaletteValueTest extends TestCase
     }
 
     /**
-     * Test 14: Always saves with statusId = 1 (PUBLISHED)
+     * Test 14: Always saves with PUBLISHED statusId (resolved via StatusProvider)
      */
     public function testAlwaysSavesWithStatusIdPublished(): void
     {
