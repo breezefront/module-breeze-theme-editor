@@ -206,6 +206,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/discard-published-preview-test',
             // Toastify Library Tests (17 tests) - DOM structure, types, options, hide/show, shortcuts
             'Swissup_BreezeThemeEditor/js/test/tests/toastify-test',
+            // SyncFieldsFromChanges F5 Reload Bug Tests (12 tests) — Issues 018 & 019
+            'Swissup_BreezeThemeEditor/js/test/tests/sync-fields-from-changes-test',
         ];
     }
 }

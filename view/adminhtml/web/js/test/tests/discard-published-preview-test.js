@@ -425,7 +425,7 @@ define([
             );
 
             require(['Swissup_BreezeThemeEditor/js/graphql/queries/get-css'], function (getCss) {
-                getCss(1, 1, 'PUBLISHED', null)
+                getCss('stores', 1, 'PUBLISHED', null)
                     .then(function (response) {
                         mockHit = true;
 
@@ -473,12 +473,12 @@ define([
             ], function (MockHelper, getCss) {
                 MockHelper.mockError(
                     'GetThemeEditorCss',
-                    { publicationId: null, status: 'PUBLISHED', storeId: 1, themeId: 1 },
+                    { publicationId: null, scope: { type: 'stores', scopeId: 1 }, status: 'PUBLISHED' },
                     'Service temporarily unavailable'
                 );
 
                 // Inline replication of refreshPublishedCss() error path
-                getCss(1, 1, 'PUBLISHED', null)
+                getCss('stores', 1, 'PUBLISHED', null)
                     .then(function () {
                         resolvedValue = true; // should not reach here
                     })
