@@ -375,13 +375,9 @@ class CssGenerator
             // Breeze 2.0: Output RGB format (255, 255, 255)
             if (ColorConverter::isHex($value)) {
                 // HEX8 (#rrggbbaa) → rgba(r, g, b, a) to preserve alpha channel
-                $hexBody = ltrim($value, '#');
-                if (strlen($hexBody) === 8) {
-                    $r = hexdec(substr($hexBody, 0, 2));
-                    $g = hexdec(substr($hexBody, 2, 2));
-                    $b = hexdec(substr($hexBody, 4, 2));
-                    $a = round(hexdec(substr($hexBody, 6, 2)) / 255, 3);
-                    return "rgba($r, $g, $b, $a)";
+                $rgba = ColorConverter::hex8ToRgba($value);
+                if ($rgba !== null) {
+                    return $rgba;
                 }
                 return ColorConverter::hexToRgb($value);  // #ffffff → 255, 255, 255
             }

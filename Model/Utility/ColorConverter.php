@@ -159,6 +159,34 @@ class ColorConverter
     }
 
     /**
+     * Convert 8-digit HEX color (#rrggbbaa) to rgba() CSS string.
+     *
+     * Examples:
+     * - "#1979c380" → "rgba(25, 121, 195, 0.502)"
+     * - "#ff000000" → "rgba(255, 0, 0, 0)"
+     * - "#ffffffff" → "rgba(255, 255, 255, 1)"
+     *
+     * Returns null if the value is not a valid 8-digit HEX.
+     *
+     * @param string $hex Color string — with or without # prefix, must be 8 hex digits
+     * @return string|null rgba() string or null if not HEX8
+     */
+    public static function hex8ToRgba(string $hex): ?string
+    {
+        $body = ltrim($hex, '#');
+        if (strlen($body) !== 8 || !ctype_xdigit($body)) {
+            return null;
+        }
+
+        $r = hexdec(substr($body, 0, 2));
+        $g = hexdec(substr($body, 2, 2));
+        $b = hexdec(substr($body, 4, 2));
+        $a = round(hexdec(substr($body, 6, 2)) / 255, 3);
+
+        return "rgba($r, $g, $b, $a)";
+    }
+
+    /**
      * Check if string is a valid HEX color
      * 
      * Examples:

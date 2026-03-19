@@ -221,6 +221,30 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logg
         },
 
         /**
+         * Convert 8-digit HEX color (#rrggbbaa) to rgba() CSS string.
+         *
+         * Examples:
+         * - "#1979c380" → "rgba(25, 121, 195, 0.502)"
+         * - "#ff000000" → "rgba(255, 0, 0, 0)"
+         *
+         * Returns null if the string is not a valid 8-digit HEX.
+         *
+         * @param {String} hex - HEX8 color (e.g., "#1979c380")
+         * @returns {String|null} rgba() string or null if not HEX8
+         */
+        hex8ToRgba: function (hex) {
+            var body = (hex || '').replace(/^#/, '');
+            if (body.length !== 8 || !/^[0-9a-fA-F]{8}$/.test(body)) {
+                return null;
+            }
+            var r = parseInt(body.substring(0, 2), 16);
+            var g = parseInt(body.substring(2, 4), 16);
+            var b = parseInt(body.substring(4, 6), 16);
+            var a = Math.round(parseInt(body.substring(6, 8), 16) / 255 * 1000) / 1000;
+            return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
+        },
+
+        /**
          * Check if string is RGB format
          * 
          * Returns true for:

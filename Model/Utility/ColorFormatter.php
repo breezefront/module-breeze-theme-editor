@@ -115,13 +115,9 @@ class ColorFormatter
         try {
             if ($format === 'rgb' && $isHex) {
                 // HEX8 → rgba(r, g, b, a) conversion (preserves alpha channel)
-                $hexBody = ltrim($value, '#');
-                if (strlen($hexBody) === 8) {
-                    $r = hexdec(substr($hexBody, 0, 2));
-                    $g = hexdec(substr($hexBody, 2, 2));
-                    $b = hexdec(substr($hexBody, 4, 2));
-                    $a = round(hexdec(substr($hexBody, 6, 2)) / 255, 3);
-                    return "rgba($r, $g, $b, $a)";
+                $rgba = $this->colorConverter::hex8ToRgba($value);
+                if ($rgba !== null) {
+                    return $rgba;
                 }
                 // HEX6 → RGB conversion
                 return $this->colorConverter::hexToRgb($value);
