@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Service;
 
+use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 
 class ValidationService
@@ -12,7 +13,11 @@ class ValidationService
     ) {}
 
     /**
-     * Валідувати масив значень
+     * Validate an array of ValueInterface objects
+     *
+     * @param int $themeId
+     * @param ValueInterface[] $values
+     * @return array
      */
     public function validateValues(int $themeId, array $values): array
     {
@@ -21,14 +26,14 @@ class ValidationService
         foreach ($values as $value) {
             $error = $this->validateValue(
                 $themeId,
-                $value['sectionCode'],
-                $value['fieldCode'],
-                $value['value']
+                $value->getSectionCode(),
+                $value->getSettingCode(),
+                $value->getValue() ?? ''
             );
 
             if ($error) {
                 $errors[] = [
-                    'fieldCode' => $value['fieldCode'],
+                    'fieldCode' => $value->getSettingCode(),
                     'message' => $error
                 ];
             }

@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Service;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValidationService;
 
@@ -224,10 +225,17 @@ class ValidationServiceTest extends TestCase
             ->method('getField')
             ->willReturn(['type' => 'text']);
 
-        $result = $this->service->validateValues(1, [
-            ['sectionCode' => 'general', 'fieldCode' => 'title', 'value' => 'Hello'],
-            ['sectionCode' => 'general', 'fieldCode' => 'slug',  'value' => 'hello'],
-        ]);
+        $value1 = $this->createMock(ValueInterface::class);
+        $value1->method('getSectionCode')->willReturn('general');
+        $value1->method('getSettingCode')->willReturn('title');
+        $value1->method('getValue')->willReturn('Hello');
+
+        $value2 = $this->createMock(ValueInterface::class);
+        $value2->method('getSectionCode')->willReturn('general');
+        $value2->method('getSettingCode')->willReturn('slug');
+        $value2->method('getValue')->willReturn('hello');
+
+        $result = $this->service->validateValues(1, [$value1, $value2]);
 
         $this->assertSame([], $result);
     }
@@ -243,10 +251,17 @@ class ValidationServiceTest extends TestCase
                 return ['type' => 'text'];
             });
 
-        $result = $this->service->validateValues(1, [
-            ['sectionCode' => 'colors',  'fieldCode' => 'primary_color', 'value' => 'not-a-hex'],
-            ['sectionCode' => 'general', 'fieldCode' => 'title',         'value' => 'Valid Title'],
-        ]);
+        $value1 = $this->createMock(ValueInterface::class);
+        $value1->method('getSectionCode')->willReturn('colors');
+        $value1->method('getSettingCode')->willReturn('primary_color');
+        $value1->method('getValue')->willReturn('not-a-hex');
+
+        $value2 = $this->createMock(ValueInterface::class);
+        $value2->method('getSectionCode')->willReturn('general');
+        $value2->method('getSettingCode')->willReturn('title');
+        $value2->method('getValue')->willReturn('Valid Title');
+
+        $result = $this->service->validateValues(1, [$value1, $value2]);
 
         $this->assertCount(1, $result);
         $this->assertSame('primary_color', $result[0]['fieldCode']);
