@@ -575,10 +575,30 @@ define([
                 
                 // Convert value back to field format
                 if (fieldType === 'color') {
-                    // Convert RGB back to HEX only if value is in RGB format.
-                    // Values from localStorage may already be in HEX or palette
-                    // reference format, so conversion must be conditional.
-                    if (ColorUtils.isRgbColor(value)) {
+                    // Palette reference stored as var(--color-x) in CSS changes,
+                    // but the color input must show the resolved HEX value.
+                    // data-palette-ref on the input element already holds the raw ref.
+                    if (typeof value === 'string' && /^var\(--/.test(value)) {
+                        // Strip var() wrapper to get the raw palette ref (--color-x)
+                        var paletteRef = value.replace(/^var\((.+)\)$/, '$1');
+                        // Resolve the palette ref to its HEX color for display
+                        try {
+                            var PaletteManager = require('Swissup_BreezeThemeEditor/js/editor/panel/palette-manager');
+                            var paletteColor = PaletteManager && PaletteManager.getColor(paletteRef);
+                            if (paletteColor) {
+                                displayValue = paletteColor.hex || paletteColor.value || value;
+                            } else {
+                                // PaletteManager not yet loaded or color not found;
+                                // keep displayValue as-is — the initial render already set
+                                // the input to the correct hex, so we skip the DOM update.
+                                displayValue = null;
+                            }
+                        } catch (e) {
+                            displayValue = null; // PaletteManager not yet ready
+                        }
+                    } else if (ColorUtils.isRgbColor(value)) {
+                        // Convert RGB back to HEX only if value is in RGB format.
+                        // Values from localStorage may already be in HEX format.
                         displayValue = ColorUtils.rgbToHex(value);
                     }
                 }
@@ -592,27 +612,34 @@ define([
                 }
                 
                 // Update field value
-                if ($field.attr('type') === 'color') {
-                    // Color picker
-                    $field.val(displayValue);
-                    
-                    // Also update text input if exists
-                    var $textInput = $field.closest('.bte-field-control').find('.bte-color-input');
-                    if ($textInput.length) {
-                        $textInput.val(displayValue);
-                    }
-                } else if ($field.attr('type') === 'checkbox') {
-                    $field.prop('checked', value === '1' || value === true);
-                } else {
-                    $field.val(displayValue);
-                    // For font pickers, mirror the selected font onto the <select> trigger.
-                    // Use setProperty() so that CSS custom property references like
-                    // '--primary-font' are correctly applied as var(--primary-font).
-                    if (fieldType === 'font_picker') {
-                        var fontCssValue = displayValue.startsWith('--')
-                            ? 'var(' + displayValue + ')'
-                            : displayValue;
-                        $field[0].style.setProperty('font-family', fontCssValue);
+                if (displayValue !== null) {
+                    if (fieldType === 'color') {
+                        // Color picker — update both the text input and the preview dot.
+                        // $field[0] is the .bte-color-trigger div (data-type="color"),
+                        // not an <input type="color">, so we must use fieldType (data-type)
+                        // rather than $field.attr('type') which returns undefined for a div.
+                        var $colorWrapper = $field.closest('.bte-field-control');
+                        var $textInput    = $colorWrapper.find('.bte-color-input');
+                        var $preview      = $colorWrapper.find('.bte-color-preview');
+                        if ($textInput.length) {
+                            $textInput.val(displayValue);
+                        }
+                        if ($preview.length) {
+                            $preview.css('background-color', displayValue);
+                        }
+                    } else if ($field.attr('type') === 'checkbox') {
+                        $field.prop('checked', value === '1' || value === true);
+                    } else {
+                        $field.val(displayValue);
+                        // For font pickers, mirror the selected font onto the <select> trigger.
+                        // Use setProperty() so that CSS custom property references like
+                        // '--primary-font' are correctly applied as var(--primary-font).
+                        if (fieldType === 'font_picker') {
+                            var fontCssValue = displayValue.startsWith('--')
+                                ? 'var(' + displayValue + ')'
+                                : displayValue;
+                            $field[0].style.setProperty('font-family', fontCssValue);
+                        }
                     }
                 }
                 
