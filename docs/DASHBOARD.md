@@ -1,7 +1,7 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 2026-03-18  
-**Загальний прогрес:** 99% завершено
+**Останнє оновлення:** 2026-03-19  
+**Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 0/94
 
 ---
 
@@ -42,7 +42,34 @@
 
 ---
 
-### 🔧 2. Завершені рефакторинги та фічі
+### 🔧 2. Рефакторинг (Code Quality)
+
+**Мета:** Усунення технічної заборгованості після завершення Admin Migration  
+**Статус:** 📋 Заплановано (0 / 94 завершено)  
+**Документація:** [`docs/refactoring/PLAN.md`](refactoring/PLAN.md)
+
+| Категорія | Задач | 🔴 | 🟠 | 🟡 | 🟢 | Статус |
+|-----------|-------|----|----|----|----|--------|
+| Мертвий код — баги | 4 | 3 | 1 | — | — | 📋 |
+| Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 📋 |
+| God classes/widgets | 5 | — | 4 | 1 | — | 📋 |
+| Code duplication | 20 | — | 5 | 9 | 6 | 📋 |
+| Magic numbers/strings | 17 | 1 | — | 4 | 12 | 📋 |
+| Missing abstractions | 8 | — | 1 | 7 | — | 📋 |
+| Tight coupling | 9 | — | 2 | 4 | 3 | 📋 |
+| **Всього** | **94** | **5** | **16** | **35** | **38** | **0%** |
+
+**Критичні баги (виконати першими):**
+- [ ] `ImportExportService` — key mismatch → GraphQL завжди повертає `null` для imported/skipped
+- [ ] `ValidationService::validateValues()` — type mismatch → валідація не працює при імпорті
+- [ ] `palette-manager.js` — `getDirtyCount()` визначений двічі
+- [ ] `SavePaletteValue.php:86` — `setStatusId(1)` magic integer замість StatusProvider
+- [ ] `Observer/SetThemePreviewCookie` — dead observer logic
+- [ ] `etc/frontend/di.xml:3` — typo `urn: magento` (зайвий пробіл)
+
+---
+
+### 📦 3. Завершені рефакторинги та фічі
 
 | Задача | Статус | Дата | Коміт(и) |
 |--------|--------|------|----------|
@@ -69,7 +96,7 @@
 
 ---
 
-### 🧪 3. Тести
+### 🧪 4. Тести
 
 | Тип | Кількість | Статус |
 |-----|-----------|--------|
@@ -79,7 +106,7 @@
 
 ---
 
-### 💡 4. Features
+### 💡 5. Features
 
 | Feature | Статус | Документація |
 |---------|--------|--------------|
@@ -113,6 +140,13 @@ Admin Migration:
 ✅ Phase 4    ████████████ 100%
 🟡 Phase 5    ██████████░░  80% ← Manual E2E + Release
 
+Refactoring:
+🔴 Critical     ░░░░░░░░░░░░   0/5
+🟠 High         ░░░░░░░░░░░░   0/16
+🟡 Medium       ░░░░░░░░░░░░   0/35
+🟢 Low          ░░░░░░░░░░░░   0/38
+📋 Total        ░░░░░░░░░░░░   0/94
+
 Issues:        16/16 closed ✅
 PHP Tests:     50 файлів / 512 tests ✅
 JS Tests:      28 spec-файлів ✅
@@ -141,9 +175,11 @@ docs/
 │   ├── phases/phase-1–5/             # Плани по фазах
 │   └── README.md
 │
-├── refactoring/                      # Завершені рефакторинги
+├── refactoring/                      # Рефакторинги
+│   ├── PLAN.md                       # 📋 Code Quality Plan (94 задачі)
+│   ├── README.md                     # Огляд
 │   ├── js-testing/                   # JS Test Framework
-│   └── completed/
+│   └── completed/                    # Завершені рефакторинги
 │
 └── testing/                          # Гайди тестування
 ```
@@ -153,6 +189,7 @@ docs/
 ## 🔍 Швидкі Посилання
 
 - 🎯 [Phase 5 - Polish & Final Testing](migration/phases/phase-5/README.md)
+- 🔧 [Refactoring Plan — Code Quality](refactoring/PLAN.md)
 - 🐛 [Issues Dashboard](issues/DASHBOARD.md)
 - ✅ [Phase 4 TEST-AUDIT-REPORT](migration/phases/phase-4/TEST-AUDIT-REPORT.md)
 - 🗺️ [Migration Overview](migration/README.md)

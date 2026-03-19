@@ -1,0 +1,746 @@
+# Refactoring Plan — Breeze Theme Editor
+
+**Дата аудиту:** 2026-03-19  
+**Загальний стан:** 109 задокументованих проблем у 7 категоріях  
+**Статус виконання:** 0 / 109 завершено
+
+---
+
+## Пріоритети
+
+| Пріоритет | Опис |
+|-----------|------|
+| 🔴 **Critical** | Реальний баг — неправильна поведінка в production |
+| 🟠 **High** | Суттєва технічна заборгованість, ускладнює підтримку |
+| 🟡 **Medium** | Дублювання або слабка абстракція |
+| 🟢 **Low** | Косметика, іменування, незначні дрібниці |
+
+---
+
+## Зміст
+
+1. [Мертвий код — баги](#1-мертвий-код--баги)
+2. [Dead code cleanup](#2-dead-code-cleanup)
+3. [God classes / God widgets](#3-god-classes--god-widgets)
+4. [Code duplication](#4-code-duplication)
+5. [Magic numbers / Magic strings](#5-magic-numbers--magic-strings)
+6. [Missing abstractions](#6-missing-abstractions)
+7. [Tight coupling](#7-tight-coupling)
+
+---
+
+## 1. Мертвий код — баги
+
+> Мертвий код, що спричиняє реальні помилки в production.
+
+### 1.1 `ImportExportService` — невідповідність ключів повернення
+- **Файл:** `Model/Service/ImportExportService.php`
+- **Проблема:** `import()` повертає `['importedCount' => ..., 'skippedCount' => ...]`, але GraphQL-resolver читає `$result['imported']` та `$result['skipped']` (без суфікса `Count`). Обидва поля GraphQL-відповіді завжди `null`.
+- **Пріоритет:** 🔴 Critical
+- **Статус:** `[ ] TODO`
+
+### 1.2 `ValidationService::validateValues()` — помилка типу
+- **Файл:** `Model/Service/ValidationService.php`
+- **Проблема:** Метод викликається з `ImportExportService.php:124` з масивом `ValueInterface[]`, але тіло методу очікує асоціативні масиви з ключами `sectionCode`/`fieldCode`/`value`. Цикл валідації не спрацьовує — валідація ніколи реально не виконується під час імпорту.
+- **Пріоритет:** 🔴 Critical
+- **Статус:** `[ ] TODO`
+
+### 1.3 `Observer/SetThemePreviewCookie` — dead observer logic
+- **Файл:** `Observer/SetThemePreviewCookie.php`
+- **Проблема:** Observer читає параметр `___store` — конвенція фронтенд-перемикача магазину, яка **ніколи не присутня** в admin-контексті. Event `controller_action_predispatch_breeze_editor_editor_index` — admin-only. Кукі ніколи не встановлюється; логіка observer'а мертва.
+- **Пріоритет:** 🔴 Critical
+- **Статус:** `[ ] TODO`
+
+### 1.4 `etc/frontend/di.xml` — невалідний URI схеми
+- **Файл:** `etc/frontend/di.xml:3`
+- **Проблема:** `xsi:noNamespaceSchemaLocation="urn: magento:framework:..."` — зайвий пробіл після `urn:`. Технічно невалідний URI; строга XML-валідація може провалитись.
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+---
+
+## 2. Dead code cleanup
+
+> Невикористаний код: класи, методи, змінні, модулі, CSS-класи.
+
+### PHP — Невикористані методи (тільки тести, ніяк не production)
+
+### 2.1 `AdminToolbar` — stub-методи та мертві залежності
+- **Файл:** `ViewModel/AdminToolbar.php`
+- **Проблема:**
+  - `getInitialPublications()` — завжди повертає `[]` (stub)
+  - `getInitialPublicationStatus()` — завжди повертає `'DRAFT'` (stub)
+  - `getCurrentPublicationId()` — завжди `null` (залежить від stub вище)
+  - `$searchCriteriaBuilder` (constructor dep) — ніде не використовується
+  - `$publicationRepository` (constructor dep) — ніде не використовується
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 2.2 `StoreDataProvider` — недосяжні методи
+- **Файл:** `Model/Provider/StoreDataProvider.php`
+- **Проблема:** `getAvailableGroups()` та `getAvailableStores()` недосяжні, бо `getSwitchMode()` завжди повертає `'hierarchical'`. `hasMultipleStores()` та `getActiveStorePath()` — не викликаються з production.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 2.3 `BackendSession` — невикористані сеттери
+- **Файл:** `Model/Session/BackendSession.php`
+- **Проблема:** `setScopeType()` та `setScopeId()` ніколи не викликаються з production-коду.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 2.4 `ColorFormatResolver` — методи тільки для тестів
+- **Файл:** `Model/Utility/ColorFormatResolver.php`
+- **Проблема:** `isAutoDetectable()` (рядки 95–109) та `getFormatFromValue()` (рядки 129–150) — викликаються тільки з тест-файлів, не з production.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.5 `AdminUserLoader::clearCache()` — тільки тести
+- **Файл:** `Model/Utility/AdminUserLoader.php`
+- **Проблема:** `clearCache()` викликається тільки з тест-файлів.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.6 `PresetService::applyPreset()` — тільки тести
+- **Файл:** `Model/Service/PresetService.php:81–131`
+- **Проблема:** Resolver `ApplyPreset.php` виконує логіку inline, не делегуючи до цього методу. Метод викликається тільки з unit-тестів.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 2.7 `ConfigProvider` — методи тільки для тестів
+- **Файл:** `Model/Provider/ConfigProvider.php`
+- **Проблема:** `getPresets()` (рядок 243), `getPreset()` (рядок 252), `clearCache()` (рядок 389) — тільки тести.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.8 `StatusProvider` — методи тільки для тестів
+- **Файл:** `Model/Provider/StatusProvider.php`
+- **Проблема:** `getStatusCode()` (рядок 43), `getAllStatuses()` (рядок 59), `clearCache()` (рядок 136) — тільки тести.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.9 `ValueInheritanceResolver` — методи тільки для тестів
+- **Файл:** `Model/Service/ValueInheritanceResolver.php`
+- **Проблема:** `isValueInherited()` (рядок 203), `getInheritedFromTheme()` (рядок 241) — тільки тести.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.10 `ThemeResolver` — методи тільки для тестів
+- **Файл:** `Model/Utility/ThemeResolver.php`
+- **Проблема:** `getThemeInfo()` (рядок 150), `hasParentTheme()` (рядок 171), `getParentThemeId()` — тільки тести або взагалі не викликаються.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.11 `PaletteProvider::getPaletteById()` — тільки тести
+- **Файл:** `Model/Config/PaletteProvider.php:50`
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.12 `AdminTokenGenerator::forceRefresh()` — тільки тести
+- **Файл:** `Model/Service/AdminTokenGenerator.php:150`
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.13 `StatusRepository::delete()` — мертва змінна `$code`
+- **Файл:** `Model/StatusRepository.php:123`
+- **Проблема:** `$code = $status->getCode()` присвоюється і одразу ігнорується.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.14 `FrontendPageUrlProvider` — порожній клас
+- **Файл:** `Model/Provider/FrontendPageUrlProvider.php`
+- **Проблема:** Клас без жодної логіки. Існує лише як DI-alias. Можна замінити прямим preference на батьківський клас.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.15 Collection builders — невикористані query-helper методи
+- **Файли:**
+  - `Model/ResourceModel/Publication/Collection.php` — `addThemeStoreFilter()`, `addTitleSearch()`, `addRollbackFilter()`, `addPublishedAtOrder()`, `joinAdminUser()`
+  - `Model/ResourceModel/Value/Collection.php` — `addThemeStoreFilter()`, `addStatusFilter()`, `addUserFilter()`, `addSectionFilter()`, `addUpdatedAtOrder()`
+  - `Model/ResourceModel/Status/Collection.php` — `addSortOrderSort()`, `addCodeFilter()`
+  - `Model/ResourceModel/Changelog/Collection.php` — `addPublicationFilter()`, `addSectionFilter()`, `addSettingFilter()`
+- **Проблема:** Всі ці query-builder методи написані спекулятивно, ніколи не викликаються з production-коду.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+---
+
+### JS — Невикористані модулі та методи
+
+### 2.16 `editor/toolbar/status-indicator.js` — мертвий виджет
+- **Файл:** `view/adminhtml/web/js/editor/toolbar/status-indicator.js`
+- **Проблема:** Ніколи не імпортується в жодному production JS-файлі, шаблоні чи layout XML. Весь модуль мертвий.
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 2.17 `graphql/queries/get-compare.js` — мертвий модуль
+- **Файл:** `view/adminhtml/web/js/editor/graphql/queries/get-compare.js`
+- **Проблема:** Ніде не імпортується в production.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 2.18 `graphql/queries/get-values.js` — мертвий модуль
+- **Файл:** `view/adminhtml/web/js/editor/graphql/queries/get-values.js`
+- **Проблема:** Ніде не імпортується в production.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 2.19 `editor/constants.js` — не імпортується в production
+- **Файл:** `view/adminhtml/web/js/editor/constants.js`
+- **Проблема:** Весь модуль (PUBLICATION_STATUS, SELECTORS, EVENT_NAMES) імпортується тільки в тест-файлах. Production-код порівнює рядки `'DRAFT'`/`'PUBLISHED'` напряму та хардкодить `'#bte-iframe'`. Константи є, але не застосовуються.
+- **Пріоритет:** 🟠 High (або виправити використання, або видалити)
+- **Статус:** `[ ] TODO`
+
+### 2.20 `palette-manager.js` — deprecated методи-обгортки
+- **Файл:** `view/adminhtml/web/js/editor/panel/palette-manager.js`
+- **Проблема:** `hexToRgb()` та `rgbToHex()` позначені `@deprecated`, делегують до `ColorUtils`, жодних викликів.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.21 `palette-manager.js` — `getDirtyCount()` визначений двічі
+- **Файл:** `view/adminhtml/web/js/editor/panel/palette-manager.js:309–311` та `480–482`
+- **Проблема:** Метод визначений двічі в одному object literal. Перше визначення мертве — перезаписується другим.
+- **Пріоритет:** 🔴 Critical (потенційний баг — перша реалізація може відрізнятись)
+- **Статус:** `[ ] TODO`
+
+### 2.22 `repeater.js::initSortable()` — stub-метод
+- **Файл:** `view/adminhtml/web/js/editor/panel/field-handlers/repeater.js:301–305`
+- **Проблема:** Тіло містить лише `console.log('initSortable called')`. Drag-and-drop sorting ніколи не реалізовано.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 2.23 `error-handler.js::_logToServer()` — stub
+- **Файл:** `view/adminhtml/web/js/editor/utils/ui/error-handler.js:110–119`
+- **Проблема:** `// TODO: Implement server-side error logging endpoint`. Тіло тільки `console.log`. Серверне логування ніколи не реалізоване.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 2.24 `highlight-toggle.js` — нереалізована фіча
+- **Файл:** `view/adminhtml/web/js/editor/toolbar/highlight-toggle.js`
+- **Проблема:** `// TODO Phase 2: Enable/disable element overlay in iframe`. Кнопка рендериться, але нічого не робить.
+- **Пріоритет:** 🟡 Medium (реалізувати або прибрати кнопку)
+- **Статус:** `[ ] TODO`
+
+### 2.25 Невикористані JS utilities
+- **Файл:** `view/adminhtml/web/js/editor/utils/browser/url-builder.js`
+  - `updateThemeParam()`, `getNavigationParams()`, `removeNavigationParams()` — не викликаються
+- **Файл:** `view/adminhtml/web/js/editor/utils/browser/cookie-manager.js`
+  - `getStoreCookie()`, `getThemePreviewCookie()`, `deleteStoreCookie()`, `deleteThemePreviewCookie()` — не викликаються
+- **Файл:** `view/adminhtml/web/js/editor/utils/ui/permissions.js`
+  - `shouldHide()`, `getRoleDescription()` — не викликаються
+- **Файл:** `view/adminhtml/web/js/editor/utils/ui/loading.js`
+  - `isLoading()` — не викликається
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.26 `publication-selector/metadata-loader.js::getPublicationTitle()` — не викликається
+- **Файл:** `view/adminhtml/web/js/editor/toolbar/publication-selector/metadata-loader.js:184`
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.27 `autoPublish` / `publicationTitle` — мертві GraphQL параметри
+- **Файли:** `view/adminhtml/web/js/editor/graphql/mutation/save-values.js`, `etc/schema.graphqls:412–413`
+- **Проблема:** Параметри передаються в мутацію та визначені в схемі, але `SaveValues.php` resolver їх ніколи не читає. Схемний dead code.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+---
+
+### CSS — Мертві класи та правила
+
+### 2.28 `_publication-selector.less` — responsive-блоки з неправильним класом
+- **Файл:** `view/adminhtml/web/css/source/_publication-selector.less:405–429`
+- **Проблема:** Responsive-блоки таргетують `.toolbar-publication-selector`, але виджет використовує `.bte-publication-selector`. Ці правила ніколи не спрацюють.
+- **Пріоритет:** 🟠 High (візуальний баг на мобільних)
+- **Статус:** `[ ] TODO`
+
+### 2.29 `_utilities.less` — мертві CSS-класи
+- **Файл:** `view/adminhtml/web/css/source/_utilities.less`
+- **Проблема:**
+  - `.permission-notice` та `.permission-notice .help-text` (рядки 70–86) — ніде не застосовуються в шаблонах
+  - Порожній `&:hover::after {}` блок (рядки 109–112) — компілюється в nothing
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.30 `_theme-editor-panel.less` — legacy CSS
+- **Файл:** `view/adminhtml/web/css/source/panels/_theme-editor-panel.less:307–357`
+- **Проблема:** `.bte-control-group`, `.bte-color-picker`, `.bte-font-picker select.bte-control`, `.bte-range-slider`, `.bte-range-value` — позначені або ідентифіковані як legacy, потенційно дублюються або мертві.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 2.31 `_variables.less` — перезаписані змінні (перші визначення мертві)
+- **Файли:** `view/base/web/css/source/_variables.less`, `view/adminhtml/web/css/source/_variables.less`
+- **Проблема:** `@dropdown-section-title-color`, `@dropdown-action-bg`, `@dropdown-action-hover-bg`, `@dropdown-item-meta-color` визначаються двічі в одному файлі. Перші визначення повністю перезаписуються.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+---
+
+## 3. God classes / God widgets
+
+> Класи та модулі, що роблять занадто багато — порушення SRP.
+
+### 3.1 `CssGenerator` — God service (721 рядок)
+- **Файл:** `Model/Service/CssGenerator.php`
+- **Проблема:** Відповідає за: завантаження значень, вирішення спадкування, форматування кольорів (HEX, HEX8, RGB, RGBA), форматування шрифтів (з вбудованими масивами serif/monospace), генерацію CSS-змінних, збірку `:root {}` блоку, форматування виводу.
+- **Пропозиція:** Розділити на `CssVariableBuilder`, `ColorValueFormatter`, `FontValueFormatter` — `CssGenerator` залишити тонким оркестратором.
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 3.2 `AdminToolbar` ViewModel — 15 залежностей (613 рядків)
+- **Файл:** `ViewModel/AdminToolbar.php`
+- **Проблема:** 15 constructor-залежностей. Відповідає за: генерацію URL, виявлення scope/store, резолюцію теми, перевірку дозволів, завантаження даних користувача, визначення типу сторінки, збірку конфігурації toolbar, вбудовування SVG.
+- **Пропозиція:** Розбити на `ScopeViewModel`, `PermissionsViewModel` тощо, скомпонувати в `AdminToolbar`.
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 3.3 `settings-editor.js` — God widget (1511 рядків)
+- **Файл:** `view/adminhtml/web/js/editor/settings-editor.js`
+- **Проблема:** Керує: завантаженням конфігу, рендерингом секцій, подіями полів, скиданням/відновленням полів, станом палітри, станом шрифтової палітри, CSS preview updates, обробкою зміни scope, обробкою помилок, форматуванням повідомлень.
+- **Пропозиція:** Декомпозиція на спеціалізовані суб-модулі або суб-виджети.
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 3.4 `publication-selector.js` — God widget (994 рядки)
+- **Файл:** `view/adminhtml/web/js/editor/toolbar/publication-selector.js`
+- **Проблема:** Керує: публікацією, відкатом, відхиленням чернетки, відхиленням опублікованого, видаленням публікації, відновленням CSS-стану, пагінацією, змінами scope, перевіркою дозволів, відображенням помилок.
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 3.5 `AbstractConfigResolver` — наближається до God abstract class (363 рядки)
+- **Файл:** `Model/Resolver/Query/AbstractConfigResolver.php`
+- **Проблема:** Один abstract клас відповідає за: завантаження секцій, побудову полів, params для validation/option/select/font-picker/palette/font-palette, побудову preset.
+- **Пропозиція:** Виокремити окремі builder-класи.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+---
+
+## 4. Code duplication
+
+> Повторення логіки, яка має жити в одному місці.
+
+### 4.1 `extractLabels()` — дублювання verbatim у двох файлах
+- **Файли:** `Model/Provider/CompareProvider.php:90–104`, `Model/Resolver/Query/Publication.php:90–104`
+- **Проблема:** Ідентичний вкладений цикл побудови `$labels[$sectionCode]['label']/['fields'][$fieldCode]`. `PublicationDataTrait` вже існує, але не містить цього методу.
+- **Пропозиція:** Винести в `PublicationDataTrait`.
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 4.2 `PageUrlProvider` методи дубльовані в `AdminPageUrlProvider`
+- **Файли:** `Model/Provider/PageUrlProvider.php:107–194`, `Model/Provider/AdminPageUrlProvider.php:62–153`
+- **Проблема:** `getCategoryUrl()`, `getProductUrl()`, `getCmsPageUrl()` — майже ідентичні копії. Дочірній клас розширює батьківський, але перевизначає всі три методи з нуля.
+- **Пропозиція:** Shared query logic у батьківський клас, override тільки `buildUrl()`.
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 4.3 PUBLISHED/DRAFT branching у двох query resolvers
+- **Файли:** `Model/Resolver/Query/Config.php:95–106`, `Model/Resolver/Query/Values.php:72–83`
+- **Проблема:** Ідентичний `if ($params['statusCode'] === 'PUBLISHED')` блок у двох місцях.
+- **Пропозиція:** Protected helper в `AbstractConfigResolver`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 4.4 `$userIdForSave` — ідентичний one-liner у двох сервісах
+- **Файли:** `Model/Service/PresetService.php:97`, `Model/Service/ImportExportService.php:96`
+- **Проблема:** `$userIdForSave = ($params['statusCode'] ?? '') === 'DRAFT' ? ($params['userId'] ?? 0) : 0;`
+- **Пропозиція:** Винести в `AbstractMutationResolver` або shared utility.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 4.5 DRAFT ternary — 7+ повторень у mutation resolvers
+- **Файли:** `Model/Resolver/Mutation/ApplyPreset.php:67,105`, `ResetToDefaults.php:53,65,66`, `CopyFromStore.php:54,63`
+- **Проблема:** `$params['statusCode'] === 'DRAFT' ? $params['userId'] : null` написано 7+ разів.
+- **Пропозиція:** Protected метод на `AbstractMutationResolver`.
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 4.6 `ValueInterface[]` GraphQL return payload — у всіх mutation resolvers
+- **Файли:** `ApplyPreset.php:83–95`, `ResetToDefaults.php:69–78`, `CopyFromStore.php:108–116`, `SaveValues.php:26–40`
+- **Проблема:** Ітерація `$values` і маппінг `[sectionCode, fieldCode, value, isModified, updatedAt]` для GraphQL-відповіді — структурно ідентична в усіх чотирьох файлах.
+- **Пропозиція:** Protected `toGraphQlValue()` на `AbstractMutationResolver`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 4.7 HEX8→rgba — тричі дубльована логіка
+- **Файли:** `Model/Service/CssGenerator.php:378–384`, `Model/Utility/ColorFormatter.php:118–125`, `view/adminhtml/web/js/editor/panel/css-preview-manager.js` (всередині `_formatColorValue()`)
+- **Проблема:** Алгоритм конвертації 8-значного hex в `rgba()` дубльований у PHP двічі та перереалізований у JS.
+- **Пропозиція:** `ColorConverter::hex8ToRgba()` + JS-аналог в `ColorUtils`.
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 4.8 Style reference refresh — тричі в `css-manager.js`
+- **Файл:** `view/adminhtml/web/js/editor/panel/css-manager.js`
+- **Проблема:** `showPublished()`, `showDraft()`, `showPublication()` — всі три містять ідентичний блок, що знаходить 3 іменованих `<style>` елементи, видаляє та перевставляє їх.
+- **Пропозиція:** Private `_refreshStyleElements()` helper.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 4.9 Scope traversal — 3 рази в `scope-selector.js`
+- **Файл:** `view/adminhtml/web/js/editor/toolbar/scope-selector.js`
+- **Проблема:** `_findScopeName()`, `_findStoreCode()`, `_findDefaultStoreId()` — кожен містить майже ідентичний потрійний `$.each` по `websites/groups/stores` ієрархії.
+- **Пропозиція:** `_traverseScopes(callback)` helper.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 4.10 `handleFieldReset()` / `handleFieldRestore()` — майже ідентичні в `base.js`
+- **Файл:** `view/adminhtml/web/js/editor/panel/field-handlers/base.js`
+- **Проблема:** ~40 рядків кожен, однакова структура. Різниця тільки в тексті підтвердження та джерелі "default value".
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 4.11 `publish()` / `rollback()` — спільна DB pipeline
+- **Файл:** `Model/Service/PublishService.php:92–113` та `184–203`
+- **Проблема:** Обидва методи: delete old rows → save new rows → write changelog. Спільні кроки можна витягти в private `_applySnapshot()`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 4.12 `saveChangelog()` / `saveChangelogFromOld()` — майже ідентичні цикли
+- **Файл:** `Model/Service/PublishService.php:223–246`
+- **Проблема:** Обидва ітерують значення, будують `ChangelogInterface` — різниця тільки у джерелі "before" значення.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 4.13 `mergeSections()` / `mergeSettings()` — одновалентний алгоритм
+- **Файл:** `Model/Provider/ConfigProvider.php`
+- **Проблема:** Обидва реалізують однаковий merge-by-code pattern.
+- **Пропозиція:** `_mergeById(array $target, array $source, string $key): array`
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 4.14 `toRow()` — дублювання в `ValueRepository`
+- **Файл:** `Model/ValueRepository.php`
+- **Проблема:** `save()` та `saveMultiple()` будують ідентичний `$row` масив. Потрібна private `toRow(ValueInterface $value): array`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 4.15 `getUserData()` / `getMultipleUsersData()` — дублювання array-building
+- **Файл:** `Model/Utility/AdminUserLoader.php`
+- **Проблема:** Ідентична конкатенація `fullname` та ідентичний `$userData` масив у двох методах.
+- **Пропозиція:** Private `_buildUserData(AdminUserInterface $user): array`.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 4.16 Tooltip HTML — двічі в palette renderer
+- **Файл:** `view/adminhtml/web/js/editor/panel/sections/palette-section-renderer.js`
+- **Проблема:** HTML-шаблон tooltip для swatch будується ідентично в `_createSwatch()` та `_updateSwatchModifiedState()`.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 4.17 Accordion toggle — у двох renderer'ах
+- **Файли:** `palette-section-renderer.js`, `font-palette-section-renderer.js`
+- **Проблема:** Ідентичне прив'язування accordion expand/collapse + анімація.
+- **Пропозиція:** Shared `accordion-mixin.js` або base renderer.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 4.18 Error message extraction — 6+ разів inline в `publication-selector.js`
+- **Файл:** `view/adminhtml/web/js/editor/toolbar/publication-selector.js`
+- **Проблема:** `error?.response?.data?.errors?.[0]?.message || error?.message || defaultMsg` написано inline 6+ разів.
+- **Пропозиція:** Private `_extractErrorMessage(error, fallback)`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 4.19 `_loadConfig()` / `_loadConfigFromPublication()` — shared init blocks
+- **Файл:** `view/adminhtml/web/js/editor/settings-editor.js`
+- **Проблема:** Обидва методи містять майже ідентичні блоки ініціалізації секцій, стану палітри, ре-рендеру.
+- **Пропозиція:** Private `_applyConfig(config)`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 4.20 `_injectCSS()` / `injectCSS()` — near-identical pair
+- **Файл:** `view/adminhtml/web/js/editor/preview-manager.js`
+- **Проблема:** Public та private майже ідентичні; `removeDraftCSS()` та `removeCSS()` теж.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+---
+
+## 5. Magic numbers / Magic strings
+
+> Хардкодовані значення без іменованих констант.
+
+### 5.1 `setStatusId(1)` — magic integer
+- **Файл:** `Model/Resolver/Mutation/SavePaletteValue.php:86`
+- **Проблема:** `$valueModel->setStatusId(1)` хардкодить integer ID для PUBLISHED-статусу. Весь інший код використовує `$statusProvider->getStatusId('PUBLISHED')`.
+- **Пріоритет:** 🔴 Critical (може зламатись якщо ID зміниться)
+- **Статус:** `[ ] TODO`
+
+### 5.2 `":root {\n}\n"` — sentinel value в 3 місцях
+- **Файли:** `ViewModel/ThemeCssVariables.php:~72`, `Model/Resolver/Query/GetCss.php:~92,~112`
+- **Проблема:** Хардкодоване представлення "порожнього CSS". Потрібна константа `CssGenerator::EMPTY_CSS_OUTPUT`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 5.3 `'#bte-iframe'` — не використовує SELECTORS константу
+- **Файли:** `view/adminhtml/web/js/editor/toolbar.js` (7 разів), `color.js`, `css-preview-manager.js`
+- **Проблема:** `constants.js` визначає `SELECTORS.IFRAME = '#bte-iframe'`, але жоден з файлів не імпортує та не використовує цю константу.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 5.4 Magic z-index `10001` / `10002`
+- **Файли:** `palette-section-renderer.js`, `color.js`, `_color-picker.less:22,169`
+- **Проблема:** `_variables.less` визначає `@bte-toolbar-z-index`, але ці файли використовують raw integers.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 5.5 Magic `30000` — auto-refresh interval
+- **Файл:** `view/adminhtml/web/js/editor/toolbar/status-indicator.js`
+- **Проблема:** 30-секундний інтервал polling хардкодований без іменованої константи.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 5.6 Magic device widths `'768px'`, `'375px'`
+- **Файл:** `view/adminhtml/web/js/editor/toolbar/device-switcher.js`
+- **Проблема:** Breakpoints хардкодовані як inline рядки без констант.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 5.7 Magic числа в `palette-section-renderer.js`
+- **Файл:** `view/adminhtml/web/js/editor/panel/sections/palette-section-renderer.js`
+- **Проблема:** `220` (popup width), `50` (scroll offset), `150` (debounce delay), `500` (cooldown delay) — всі без іменованих констант.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 5.8 `'--color-brand-'` prefix у `CssGenerator`
+- **Файл:** `Model/Service/CssGenerator.php:712`
+- **Проблема:** Рядковий префікс для стриппінгу label хардкодований. Потрібна class constant.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 5.9 `'--color-'` для detection у `color.js`
+- **Файл:** `view/adminhtml/web/js/editor/panel/field-handlers/color.js`
+- **Проблема:** `value.startsWith('--color-')` хардкодує prefix для palette CSS variable references.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 5.10 Inline CSS transition в JS
+- **Файл:** `view/adminhtml/web/js/editor/toolbar/device-switcher.js`
+- **Проблема:** `transition: 'width 0.3s ease'` встановлюється через JS замість CSS-класу.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 5.11 `'DRAFT'` / `'PUBLISHED'` порівнюється напряму в 10+ місцях
+- **Файли:** Всі mutation resolvers + кілька JS-файлів
+- **Проблема:** `constants.js` визначає `PUBLICATION_STATUS.DRAFT`, але більшість mutation resolvers та JS-файли порівнюють рядки напряму.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 5.12 `#1979c3` (Magento blue) — 10+ разів у LESS
+- **Файл:** `view/adminhtml/web/css/source/_theme-editor-fields.less`
+- **Проблема:** Основний Magento admin action color хардкодований 10+ разів замість LESS-змінної `@action-primary`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 5.13 `rgba(255, 255, 255, 0.2)` — 8+ разів у LESS
+- **Файл:** `view/adminhtml/web/css/source/_theme-editor-fields.less`
+- **Проблема:** Semi-transparent white border inline замість `@bte-field-border-translucent` змінної.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 5.14 `'Courier New', monospace` — повторення в LESS
+- **Файл:** `view/adminhtml/web/css/source/_theme-editor-fields.less`
+- **Проблема:** Monospace font stack повторюється без `@bte-code-font` змінної.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 5.15 `min-width: 220px` в mixin
+- **Файл:** `view/adminhtml/web/css/source/_mixins.less:51`
+- **Проблема:** Мінімальна ширина dropdown хардкодована в mixin без LESS-змінної.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 5.16 `max-height: 75vh` — двічі в `_mixins.less`
+- **Файл:** `view/adminhtml/web/css/source/_mixins.less:70,175`
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 5.17 `padding-right: 36px` у `_publication-selector.less`
+- **Файл:** `view/adminhtml/web/css/source/_publication-selector.less:323`
+- **Проблема:** Offset для icon width пояснений тільки коментарем, не змінною.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+---
+
+## 6. Missing abstractions
+
+> Відсутні абстракції, які зменшили б дублювання та поліпшили б читаність.
+
+### 6.1 `ScopeInput` value object
+- **Зачіпає:** Всі 13 mutation resolvers + query resolvers
+- **Проблема:** Scope завжди передається як raw `['type' => ..., 'scopeId' => ...]` асоціативний масив. Жодної типізації, жодних іменованих accessors.
+- **Пропозиція:** `ScopeInput` value object з `getType(): string` та `getScopeId(): int`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 6.2 `StatusCode` enum / constants class
+- **Зачіпає:** Всі mutation resolvers, кілька сервісів, JS-файли
+- **Проблема:** Рядки `'DRAFT'` / `'PUBLISHED'` порівнюються напряму в 10+ місцях. PHP 8.1 дозволяє backed enums.
+- **Пропозиція:** `StatusCode` enum або `StatusCode::DRAFT / ::PUBLISHED` constants class.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 6.3 `ColorPipeline` facade
+- **Зачіпає:** `ColorFormatResolver.php`, `ColorFormatter.php`, `ColorConverter.php`, `css-preview-manager.js`
+- **Проблема:** Логіка детекції та конвертації кольорів розкидана по трьох PHP-класах (жоден не розширює інший) та продубльована в JS.
+- **Пропозиція:** `ColorPipeline` з чітким `detect() → convert() → format()` інтерфейсом як єдина точка входу.
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 6.4 `toGraphQlValue()` на `AbstractMutationResolver`
+- **Зачіпає:** 4 mutation resolvers (ApplyPreset, ResetToDefaults, CopyFromStore, SaveValues)
+- **Проблема:** Маппінг `ValueInterface → GraphQL array` дубльований у всіх 4 resolver'ах.
+- **Пропозиція:** Protected `toGraphQlValue(ValueInterface $value): array` на `AbstractMutationResolver`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 6.5 `DraftUserIdResolver` abstraction
+- **Зачіпає:** 7+ місць (3 mutation resolver файли, 2 сервіси)
+- **Проблема:** `isDraft ? $userId : null` (або варіації) написано inline 7+ разів.
+- **Пропозиція:** `DraftUserIdResolver::resolve(string $statusCode, int $userId): ?int`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 6.6 Base palette renderer (`base-palette-renderer.js`)
+- **Зачіпає:** `palette-section-renderer.js`, `font-palette-section-renderer.js`
+- **Проблема:** Accordion toggle, swatch rendering scaffolding, dirty-state tracking, confirm-dialog reset — все дубльоване в обох renderer'ах.
+- **Пропозиція:** Shared `base-palette-renderer.js` mixin або прототип.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 6.7 Magento modal замість `window.confirm()` / `alert()`
+- **Зачіпає:** `field-handlers/base.js`, `palette-section-renderer.js`, `font-palette-section-renderer.js`, `repeater.js`
+- **Проблема:** Native `confirm()` та `alert()` для деструктивних дій. `Magento_Ui/js/modal/confirm` доступний і надає консистентний UI.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 6.8 `ThemeCache` в `ThemeResolver`
+- **Файл:** `Model/Utility/ThemeResolver.php`
+- **Проблема:** `getThemeInfo()`, `getParentThemeId()`, `hasParentTheme()` — кожен робить окремий DB-запит для одних і тих самих даних.
+- **Пропозиція:** Private `getThemeCollection()` з кешуванням per-request.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+---
+
+## 7. Tight coupling
+
+> Тісне зчеплення між компонентами.
+
+### 7.1 `window.breezeThemeEditorConfig` — глобальний стан
+- **Файл:** `view/adminhtml/web/js/editor/toolbar.js`
+- **Проблема:** Toolbar записує конфіг у `window.breezeThemeEditorConfig`, кілька компонентів читають звідти. Невидима залежність між toolbar та будь-яким компонентом, що читає цей глобал.
+- **Пропозиція:** Замінити на shared AMD-модуль (config store).
+- **Пріоритет:** 🟠 High
+- **Статус:** `[ ] TODO`
+
+### 7.2 `AdminToolbar` — 15 constructor-залежностей
+- **Файл:** `ViewModel/AdminToolbar.php`
+- **Проблема:** Зміна будь-якого з 15 залежних класів потенційно ламає ViewModel. Включаючи 2 мертві залежності (п. 2.1).
+- **Пріоритет:** 🟠 High (пов'язано з п. 3.2)
+- **Статус:** `[ ] TODO`
+
+### 7.3 `CssGenerator` — 3 color utility залежності
+- **Файл:** `Model/Service/CssGenerator.php`
+- **Проблема:** Напряму залежить від `ColorConverter`, `ColorFormatter`, `ColorFormatResolver`. Новий color format потребує змін у `CssGenerator`.
+- **Пропозиція:** `ColorPipeline` facade (пов'язано з п. 6.3).
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 7.4 `db_schema.xml` — FK `onDelete="NO ACTION"` для `user_id`
+- **Файл:** `etc/db_schema.xml:63`
+- **Проблема:** Видалення admin user провалиться якщо в нього є збережені draft values. Краще `onDelete="SET NULL"` + nullable `user_id`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 7.5 ACL plugin — мовчазне ігнорування при відсутності interface
+- **Файл:** `Plugin/GraphQL/AclAuthorization.php`, `etc/graphql/di.xml`
+- **Проблема:** Plugin спрацьовує тільки на resolver'ах, що реалізують `ResolverInterface`. Якщо resolver забуде реалізувати interface — авторизація мовчки обходиться.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+
+### 7.6 Надмірне логування — `AdminTokenGenerator`
+- **Файл:** `Model/Service/AdminTokenGenerator.php`
+- **Проблема:** 20+ `debug()` записів на кожен GraphQL-виклик. В dev/staging — значний шум у логах.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 7.7 `UserResolver` — info log на кожному auth
+- **Файл:** `Model/Utility/UserResolver.php:90–94`
+- **Проблема:** `info`-рівень лог на кожному автентифікованому GraphQL-запиті. При live-preview — сотні записів за хвилину.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 7.8 Мішаниця мов у коментарях
+- **Файли:** `ConfigProvider.php`, `ValidationService.php`, `ValueInheritanceResolver.php`, `ImportExportService.php`, `css-manager.js`, `css-preview-manager.js`, `_mixins.less`
+- **Проблема:** Коментарі в деяких файлах написані українською, в інших — англійською. Ускладнює onboarding.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+### 7.9 `strpos` chain для визначення типу сторінки
+- **Файл:** `ViewModel/AdminToolbar.php:449–468`
+- **Проблема:** Довгий ланцюжок `if (strpos($url, '/catalog/product') !== false) ... elseif ...` крихкий і важко розширюваний.
+- **Пропозиція:** Lookup table `[url-fragment => pageId]`.
+- **Пріоритет:** 🟢 Low
+- **Статус:** `[ ] TODO`
+
+---
+
+## Статистика
+
+| Категорія | Всього | 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low |
+|-----------|--------|------------|--------|----------|-------|
+| 1. Мертвий код — баги | 4 | 3 | 1 | — | — |
+| 2. Dead code cleanup | 31 | 1 | 3 | 10 | 17 |
+| 3. God classes | 5 | — | 4 | 1 | — |
+| 4. Code duplication | 20 | — | 5 | 9 | 6 |
+| 5. Magic numbers/strings | 17 | 1 | — | 4 | 12 |
+| 6. Missing abstractions | 8 | — | 1 | 7 | — |
+| 7. Tight coupling | 9 | — | 2 | 4 | 3 |
+| **Всього** | **94** | **5** | **16** | **35** | **38** |
+
+> Примітка: деякі пункти перетинаються між категоріями (напр. п. 3.2 і п. 7.2, або п. 6.3 і п. 7.3).
+
+---
+
+## Рекомендований порядок виконання
+
+### Крок 1 — Критичні баги (виконати першими)
+1. `[ ]` **п. 1.1** — Виправити `importedCount`/`skippedCount` → `imported`/`skipped` key mismatch
+2. `[ ]` **п. 1.2** — Виправити type mismatch у `ValidationService::validateValues()`
+3. `[ ]` **п. 2.21** — Виправити подвійне визначення `getDirtyCount()` в `palette-manager.js`
+4. `[ ]` **п. 5.1** — Замінити `setStatusId(1)` на `$statusProvider->getStatusId('PUBLISHED')`
+5. `[ ]` **п. 1.3** — Перевірити та виправити `Observer/SetThemePreviewCookie`
+6. `[ ]` **п. 1.4** — Виправити typo в `etc/frontend/di.xml`
+
+### Крок 2 — Dead code (швидкий виграш)
+7. `[ ]` **п. 2.28** — Виправити `.toolbar-publication-selector` → `.bte-publication-selector` в responsive LESS
+8. `[ ]` **п. 2.16** — Видалити або підключити `status-indicator.js`
+9. `[ ]` **п. 2.17, 2.18** — Видалити мертві GraphQL query модулі
+10. `[ ]` **п. 2.1** — Прибрати мертві DI-залежності та stubs з `AdminToolbar`
+
+### Крок 3 — High-priority duplication
+11. `[ ]` **п. 4.1** — Перенести `extractLabels()` в `PublicationDataTrait`
+12. `[ ]` **п. 4.5** — DRAFT ternary → protected метод в `AbstractMutationResolver`
+13. `[ ]` **п. 4.7** — Уніфікувати HEX8→rgba в PHP та JS
+14. `[ ]` **п. 4.2** — Виправити дублювання `PageUrlProvider` / `AdminPageUrlProvider`
+
+### Крок 4 — God classes (великі рефакторинги)
+15. `[ ]` **п. 3.1** — Декомпозиція `CssGenerator`
+16. `[ ]` **п. 3.2** — Декомпозиція `AdminToolbar` ViewModel
+17. `[ ]` **п. 3.3** — Декомпозиція `settings-editor.js`
+18. `[ ]` **п. 3.4** — Декомпозиція `publication-selector.js`
+
+### Крок 5 — Missing abstractions + Magic strings
+19. `[ ]` **п. 6.2** — `StatusCode` enum/constants
+20. `[ ]` **п. 6.1** — `ScopeInput` value object
+21. `[ ]` **п. 6.3** — `ColorPipeline` facade
+22. `[ ]` **п. 5.11** — Замінити магічні `'DRAFT'`/`'PUBLISHED'` рядки константами
+23. `[ ]` **п. 5.12** — Замінити `#1979c3` на LESS-змінну
+
+### Крок 6 — Low priority cleanup
+- Решта магічних чисел, low-priority dead code, коментарі
+
+---
+
+_Повернутися до [Refactoring README](README.md) | [Dashboard](../DASHBOARD.md)_
