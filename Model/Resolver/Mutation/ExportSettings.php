@@ -70,7 +70,7 @@ class ExportSettings extends AbstractMutationResolver
             $themeId,
             $scope,
             $statusCode,
-            $statusCode === 'DRAFT' ? $userId : null
+            $this->getDraftUserId(['statusCode' => $statusCode, 'userId' => $userId])
         );
 
         return [

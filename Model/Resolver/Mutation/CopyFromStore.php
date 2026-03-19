@@ -51,7 +51,7 @@ class CopyFromStore extends AbstractSaveMutation
             $params['themeId'],
             $params['scope'],
             $params['statusId'],
-            $params['statusCode'] === 'DRAFT' ? $params['userId'] : 0,
+            $this->getDraftUserIdForSave($params),
             $sectionCodes
         );
 
@@ -60,7 +60,7 @@ class CopyFromStore extends AbstractSaveMutation
             $params['themeId'],
             $params['scope'],
             $params['statusId'],
-            $params['statusCode'] === 'DRAFT' ? $params['userId'] : null
+            $this->getDraftUserId($params)
         );
 
         $copiedValues = [];

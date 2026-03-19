@@ -43,4 +43,29 @@ abstract class AbstractMutationResolver implements ResolverInterface
     {
         return 'Swissup_BreezeThemeEditor::editor_edit';
     }
+
+    /**
+     * Return userId for draft operations, null for published.
+     *
+     * Use when passing userId to service methods that accept nullable userId,
+     * e.g. ValueService::getValuesByTheme().
+     *
+     * @param array $params Result of prepareBaseParams() or equivalent
+     */
+    protected function getDraftUserId(array $params): ?int
+    {
+        return $params['statusCode'] === 'DRAFT' ? (int)$params['userId'] : null;
+    }
+
+    /**
+     * Return userId for model setUserId(), 0 for published.
+     *
+     * Use when setting userId on a ValueInterface model before saving.
+     *
+     * @param array $params Result of prepareBaseParams() or equivalent
+     */
+    protected function getDraftUserIdForSave(array $params): int
+    {
+        return $params['statusCode'] === 'DRAFT' ? (int)$params['userId'] : 0;
+    }
 }

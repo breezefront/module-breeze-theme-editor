@@ -64,7 +64,7 @@ class ApplyPreset extends AbstractSaveMutation
                 $params['themeId'],
                 $params['scope'],
                 $params['statusId'],
-                $params['statusCode'] === 'DRAFT' ?  $params['userId'] : null
+                $this->getDraftUserId($params)
             );
 
             $existingKeys = [];
@@ -79,7 +79,7 @@ class ApplyPreset extends AbstractSaveMutation
         }
 
         // СТВОРЮЄМО ValueInterface[] моделі
-        $userIdForSave = $params['statusCode'] === 'DRAFT' ? $params['userId'] : 0;
+        $userIdForSave = $this->getDraftUserIdForSave($params);
         $valueModels = [];
         foreach ($presetValues as $val) {
             $valueModel = $this->valueRepository->create();
@@ -102,7 +102,7 @@ class ApplyPreset extends AbstractSaveMutation
             $params['themeId'],
             $params['scope'],
             $params['statusId'],
-            $params['statusCode'] === 'DRAFT' ? $params['userId'] : null
+            $this->getDraftUserId($params)
         );
 
         $savedValues = [];

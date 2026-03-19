@@ -50,7 +50,7 @@ class ResetToDefaults extends AbstractSaveMutation
             $valueModel->setValue($defaultValue);
 
             // Для published user_id = 0, для draft юзай поточного
-            $valueModel->setUserId($params['statusCode'] === 'DRAFT' ? $params['userId'] : 0);
+            $valueModel->setUserId($this->getDraftUserIdForSave($params));
 
             $valueModels[] = $valueModel;
         }
@@ -63,7 +63,7 @@ class ResetToDefaults extends AbstractSaveMutation
             $params['themeId'],
             $params['scope'],
             $params['statusId'],
-            $params['statusCode'] === 'DRAFT' ? $params['userId'] : null
+            $this->getDraftUserId($params)
         );
 
         $savedValues = [];
