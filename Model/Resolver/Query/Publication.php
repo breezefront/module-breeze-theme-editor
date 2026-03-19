@@ -87,22 +87,6 @@ class Publication extends AbstractQueryResolver
         return $this->formatPublicationData($publication, $userData, $changes);
     }
 
-    private function extractLabels(array $config): array
-    {
-        $labels = [];
-        foreach ($config['sections'] ??  [] as $section) {
-            $sectionCode = $section['id'];
-            $labels[$sectionCode] = [
-                'label' => $section['name'],
-                'fields' => []
-            ];
-            foreach ($section['settings'] ?? [] as $setting) {
-                $labels[$sectionCode]['fields'][$setting['id']] = $setting['label'];
-            }
-        }
-        return $labels;
-    }
-
     private function determineChangeType(? string $oldValue, ?string $newValue): string
     {
         if ($oldValue === null) {

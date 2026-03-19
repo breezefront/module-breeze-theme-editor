@@ -7,10 +7,35 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Query;
 /**
  * Trait for formatting publication data arrays
  *
- * Shared between Publication and Publications resolvers
+ * Shared between Publication resolver and CompareProvider
  */
 trait PublicationDataTrait
 {
+    /**
+     * Extract section/field labels from a config array.
+     *
+     * Returns a nested map:
+     *   [ $sectionCode => [ 'label' => string, 'fields' => [ $fieldCode => string ] ] ]
+     *
+     * @param array $config Result of ConfigProvider::getConfigurationWithInheritance()
+     * @return array
+     */
+    private function extractLabels(array $config): array
+    {
+        $labels = [];
+        foreach ($config['sections'] ?? [] as $section) {
+            $sectionCode = $section['id'];
+            $labels[$sectionCode] = [
+                'label'  => $section['name'],
+                'fields' => [],
+            ];
+            foreach ($section['settings'] ?? [] as $setting) {
+                $labels[$sectionCode]['fields'][$setting['id']] = $setting['label'];
+            }
+        }
+        return $labels;
+    }
+
     /**
      * Format a publication model into a GraphQL-ready data array.
      *

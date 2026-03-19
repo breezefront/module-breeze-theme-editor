@@ -7,9 +7,12 @@ use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
+use Swissup\BreezeThemeEditor\Model\Resolver\Query\PublicationDataTrait;
 
 class CompareProvider
 {
+    use PublicationDataTrait;
+
     public function __construct(
         private ValueService $valueService,
         private ConfigProvider $configProvider,
@@ -87,27 +90,5 @@ class CompareProvider
             'changesCount' => count($changes),
             'changes' => $changes
         ];
-    }
-
-    /**
-     * Витягти labels з конфігу
-     */
-    private function extractLabels(array $config): array
-    {
-        $labels = [];
-
-        foreach ($config['sections'] ??  [] as $section) {
-            $sectionCode = $section['id'];
-            $labels[$sectionCode] = [
-                'label' => $section['name'],
-                'fields' => []
-            ];
-
-            foreach ($section['settings'] ??  [] as $setting) {
-                $labels[$sectionCode]['fields'][$setting['id']] = $setting['label'];
-            }
-        }
-
-        return $labels;
     }
 }
