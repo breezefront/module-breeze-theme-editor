@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Test\Unit\ViewModel;
 
 use Magento\Backend\Model\Auth\Session as AuthSession;
-use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\AuthorizationInterface;
 use Magento\Framework\Serialize\Serializer\Json;
@@ -12,7 +11,6 @@ use Magento\Framework\UrlInterface;
 use Magento\Framework\View\DesignInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\TestCase;
-use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider;
@@ -48,8 +46,6 @@ class AdminToolbarTest extends TestCase
             $this->createMock(StoreDataProvider::class),
             $this->createMock(DesignInterface::class),
             $this->createMock(Json::class),
-            $this->createMock(PublicationRepositoryInterface::class),
-            $this->createMock(SearchCriteriaBuilder::class),
             $this->createMock(AdminTokenGenerator::class),
             $this->createMock(AuthorizationInterface::class),
             $this->createMock(ThemeResolver::class),

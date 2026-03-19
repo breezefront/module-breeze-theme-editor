@@ -7,9 +7,6 @@ use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\View\DesignInterface;
 use Magento\Backend\Model\Auth\Session as AuthSession;
-use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
-use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\Api\SortOrder;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 
 /**
@@ -19,7 +16,6 @@ use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
  * - Admin authentication and user info
  * - Store hierarchy (via StoreDataProvider)
  * - Page types (via PageUrlProvider)
- * - Publications list (via PublicationRepository)
  * - ACL permission checks
  * - Admin integration token (via AdminTokenGenerator)
  */
@@ -66,16 +62,6 @@ class AdminToolbar implements ArgumentInterface
     private $jsonSerializer;
 
     /**
-     * @var PublicationRepositoryInterface
-     */
-    private $publicationRepository;
-
-    /**
-     * @var SearchCriteriaBuilder
-     */
-    private $searchCriteriaBuilder;
-
-    /**
      * @var \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator
      */
     private $tokenGenerator;
@@ -109,8 +95,6 @@ class AdminToolbar implements ArgumentInterface
      * @param \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider
      * @param DesignInterface $design
      * @param Json $jsonSerializer
-     * @param PublicationRepositoryInterface $publicationRepository
-     * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator $tokenGenerator
      * @param \Magento\Framework\AuthorizationInterface $authorization
      * @param \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver
@@ -126,8 +110,6 @@ class AdminToolbar implements ArgumentInterface
         \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider,
         DesignInterface $design,
         Json $jsonSerializer,
-        PublicationRepositoryInterface $publicationRepository,
-        SearchCriteriaBuilder $searchCriteriaBuilder,
         \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator $tokenGenerator,
         \Magento\Framework\AuthorizationInterface $authorization,
         \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver,
@@ -142,8 +124,6 @@ class AdminToolbar implements ArgumentInterface
         $this->storeDataProvider = $storeDataProvider;
         $this->design = $design;
         $this->jsonSerializer = $jsonSerializer;
-        $this->publicationRepository = $publicationRepository;
-        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->tokenGenerator = $tokenGenerator;
         $this->authorization = $authorization;
         $this->themeResolver = $themeResolver;
@@ -389,39 +369,6 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
-     * Get initial publications list for JS config bootstrap.
-     * Returns empty array — real data is loaded via GraphQL immediately after page load.
-     *
-     * @return array
-     */
-    public function getInitialPublications(): array
-    {
-        return [];
-    }
-
-    /**
-     * Get fallback publication status for initial JS config.
-     * The real value is loaded via GraphQL immediately after page load.
-     *
-     * @return string
-     */
-    public function getInitialPublicationStatus(): string
-    {
-        return 'DRAFT';
-    }
-
-    /**
-     * Get current publication ID (latest published for theme+store)
-     *
-     * @return int|null
-     */
-    public function getCurrentPublicationId()
-    {
-        $publications = $this->getInitialPublications();
-        return !empty($publications) ? $publications[0]['id'] : null;
-    }
-
-    /**
      * Check if jstest mode is enabled
      *
      * @return bool
@@ -605,9 +552,9 @@ class AdminToolbar implements ArgumentInterface
             'currentPageId' => $this->getCurrentPageId(),
 
             // ===== Publications (loaded via GraphQL at runtime) =====
-            'publications'          => $this->getInitialPublications(),
-            'currentPublicationId'  => $this->getCurrentPublicationId(),
-            'currentStatus'         => $this->getInitialPublicationStatus(),
+            'publications'          => [],
+            'currentPublicationId'  => null,
+            'currentStatus'         => 'DRAFT',
         ];
     }
 }
