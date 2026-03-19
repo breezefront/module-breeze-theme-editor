@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 задокументованих проблем у 7 категоріях  
-**Статус виконання:** 12 / 94 завершено
+**Статус виконання:** 16 / 94 завершено
 
 ---
 
@@ -324,14 +324,14 @@
 - **Проблема:** Ідентичний вкладений цикл побудови `$labels[$sectionCode]['label']/['fields'][$fieldCode]`. `PublicationDataTrait` вже існує, але не містить цього методу.
 - **Пропозиція:** Винести в `PublicationDataTrait`.
 - **Пріоритет:** 🟠 High
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `d8483ed`
 
 ### 4.2 `PageUrlProvider` методи дубльовані в `AdminPageUrlProvider`
 - **Файли:** `Model/Provider/PageUrlProvider.php:107–194`, `Model/Provider/AdminPageUrlProvider.php:62–153`
 - **Проблема:** `getCategoryUrl()`, `getProductUrl()`, `getCmsPageUrl()` — майже ідентичні копії. Дочірній клас розширює батьківський, але перевизначає всі три методи з нуля.
 - **Пропозиція:** Shared query logic у батьківський клас, override тільки `buildUrl()`.
 - **Пріоритет:** 🟠 High
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `4e1e1d0`
 
 ### 4.3 PUBLISHED/DRAFT branching у двох query resolvers
 - **Файли:** `Model/Resolver/Query/Config.php:95–106`, `Model/Resolver/Query/Values.php:72–83`
@@ -352,7 +352,7 @@
 - **Проблема:** `$params['statusCode'] === 'DRAFT' ? $params['userId'] : null` написано 7+ разів.
 - **Пропозиція:** Protected метод на `AbstractMutationResolver`.
 - **Пріоритет:** 🟠 High
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `ee89eb8`
 
 ### 4.6 `ValueInterface[]` GraphQL return payload — у всіх mutation resolvers
 - **Файли:** `ApplyPreset.php:83–95`, `ResetToDefaults.php:69–78`, `CopyFromStore.php:108–116`, `SaveValues.php:26–40`
@@ -366,7 +366,7 @@
 - **Проблема:** Алгоритм конвертації 8-значного hex в `rgba()` дубльований у PHP двічі та перереалізований у JS.
 - **Пропозиція:** `ColorConverter::hex8ToRgba()` + JS-аналог в `ColorUtils`.
 - **Пріоритет:** 🟠 High
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `a3ad5d3`
 
 ### 4.8 Style reference refresh — тричі в `css-manager.js`
 - **Файл:** `view/adminhtml/web/js/editor/panel/css-manager.js`
@@ -693,13 +693,13 @@
 | 1. Мертвий код — баги | 4 | 3 | 1 | — | — | ✅ 4/4 |
 | 2. Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 6/31 |
 | 3. God classes | 5 | — | 4 | 1 | — | 0/5 |
-| 4. Code duplication | 20 | — | 5 | 9 | 6 | 0/20 |
+| 4. Code duplication | 20 | — | 5 | 9 | 6 | 4/20 |
 | 5. Magic numbers/strings | 17 | 1 | — | 4 | 12 | 2/17 |
 | 6. Missing abstractions | 8 | — | 1 | 7 | — | 0/8 |
 | 7. Tight coupling | 9 | — | 2 | 4 | 3 |
 | **Всього** | **94** | **5** | **16** | **35** | **38** |
-| **Виконано** | **12** | **5** | **4** | **2** | **1** |
-| **Залишилось** | **82** | **0** | **12** | **33** | **37** |
+| **Виконано** | **16** | **5** | **6** | **3** | **2** |
+| **Залишилось** | **78** | **0** | **10** | **32** | **36** |
 
 > Примітка: деякі пункти перетинаються між категоріями (напр. п. 3.2 і п. 7.2, або п. 6.3 і п. 7.3).
 
@@ -722,10 +722,10 @@
 10. `[x]` **п. 2.1** — Прибрати мертві DI-залежності та stubs з `AdminToolbar` — `6955d07`
 
 ### Крок 3 — High-priority duplication
-11. `[ ]` **п. 4.1** — Перенести `extractLabels()` в `PublicationDataTrait`
-12. `[ ]` **п. 4.5** — DRAFT ternary → protected метод в `AbstractMutationResolver`
-13. `[ ]` **п. 4.7** — Уніфікувати HEX8→rgba в PHP та JS
-14. `[ ]` **п. 4.2** — Виправити дублювання `PageUrlProvider` / `AdminPageUrlProvider`
+11. `[x]` **п. 4.1** — Перенести `extractLabels()` в `PublicationDataTrait` — `d8483ed`
+12. `[x]` **п. 4.5** — DRAFT ternary → protected метод в `AbstractMutationResolver` — `ee89eb8`
+13. `[x]` **п. 4.7** — Уніфікувати HEX8→rgba в PHP та JS — `a3ad5d3`
+14. `[x]` **п. 4.2** — Виправити дублювання `PageUrlProvider` / `AdminPageUrlProvider` — `4e1e1d0`
 
 ### Крок 4 — God classes (великі рефакторинги)
 15. `[ ]` **п. 3.1** — Декомпозиція `CssGenerator`
