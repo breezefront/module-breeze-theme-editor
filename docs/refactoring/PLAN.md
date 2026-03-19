@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 задокументованих проблем у 7 категоріях  
-**Статус виконання:** 3 / 94 завершено
+**Статус виконання:** 6 / 94 завершено
 
 ---
 
@@ -49,13 +49,13 @@
 - **Файл:** `Observer/SetThemePreviewCookie.php`
 - **Проблема:** Observer читає параметр `___store` — конвенція фронтенд-перемикача магазину, яка **ніколи не присутня** в admin-контексті. Event `controller_action_predispatch_breeze_editor_editor_index` — admin-only. Кукі ніколи не встановлюється; логіка observer'а мертва.
 - **Пріоритет:** 🔴 Critical
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `619354e` (переміщено у frontend), `428725a` (видалено admin observer)
 
 ### 1.4 `etc/frontend/di.xml` — невалідний URI схеми
 - **Файл:** `etc/frontend/di.xml:3`
 - **Проблема:** `xsi:noNamespaceSchemaLocation="urn: magento:framework:..."` — зайвий пробіл після `urn:`. Технічно невалідний URI; строга XML-валідація може провалитись.
 - **Пріоритет:** 🟠 High
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `1e8d8f1`
 
 ---
 
@@ -463,7 +463,7 @@
 - **Файл:** `Model/Resolver/Mutation/SavePaletteValue.php:86`
 - **Проблема:** `$valueModel->setStatusId(1)` хардкодить integer ID для PUBLISHED-статусу. Весь інший код використовує `$statusProvider->getStatusId('PUBLISHED')`.
 - **Пріоритет:** 🔴 Critical (може зламатись якщо ID зміниться)
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `6e59fd6`
 
 ### 5.2 `":root {\n}\n"` — sentinel value в 3 місцях
 - **Файли:** `ViewModel/ThemeCssVariables.php:~72`, `Model/Resolver/Query/GetCss.php:~92,~112`
@@ -690,16 +690,16 @@
 
 | Категорія | Всього | 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low |
 |-----------|--------|------------|--------|----------|-------|
-| 1. Мертвий код — баги | 4 | 3 | 1 | — | — |
-| 2. Dead code cleanup | 31 | 1 | 3 | 10 | 17 |
-| 3. God classes | 5 | — | 4 | 1 | — |
-| 4. Code duplication | 20 | — | 5 | 9 | 6 |
-| 5. Magic numbers/strings | 17 | 1 | — | 4 | 12 |
-| 6. Missing abstractions | 8 | — | 1 | 7 | — |
+| 1. Мертвий код — баги | 4 | 3 | 1 | — | — | ✅ 4/4 |
+| 2. Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 1/31 |
+| 3. God classes | 5 | — | 4 | 1 | — | 0/5 |
+| 4. Code duplication | 20 | — | 5 | 9 | 6 | 0/20 |
+| 5. Magic numbers/strings | 17 | 1 | — | 4 | 12 | 1/17 |
+| 6. Missing abstractions | 8 | — | 1 | 7 | — | 0/8 |
 | 7. Tight coupling | 9 | — | 2 | 4 | 3 |
 | **Всього** | **94** | **5** | **16** | **35** | **38** |
-| **Виконано** | **3** | **3** | **—** | **—** | **—** |
-| **Залишилось** | **91** | **2** | **16** | **35** | **38** |
+| **Виконано** | **6** | **5** | **1** | **—** | **—** |
+| **Залишилось** | **88** | **0** | **15** | **35** | **38** |
 
 > Примітка: деякі пункти перетинаються між категоріями (напр. п. 3.2 і п. 7.2, або п. 6.3 і п. 7.3).
 
@@ -711,9 +711,9 @@
 1. `[x]` **п. 1.1** — Виправити `importedCount`/`skippedCount` → `imported`/`skipped` key mismatch — `0e4e4cb`
 2. `[x]` **п. 1.2** — Виправити type mismatch у `ValidationService::validateValues()` — `54d007e`
 3. `[x]` **п. 2.21** — Виправити подвійне визначення `getDirtyCount()` в `palette-manager.js` — `1560258`
-4. `[ ]` **п. 5.1** — Замінити `setStatusId(1)` на `$statusProvider->getStatusId('PUBLISHED')`
-5. `[ ]` **п. 1.3** — Перевірити та виправити `Observer/SetThemePreviewCookie`
-6. `[ ]` **п. 1.4** — Виправити typo в `etc/frontend/di.xml`
+4. `[x]` **п. 5.1** — Замінити `setStatusId(1)` на `$statusProvider->getStatusId('PUBLISHED')` — `6e59fd6`
+5. `[x]` **п. 1.3** — Перевірити та виправити `Observer/SetThemePreviewCookie` — `619354e` + `428725a`
+6. `[x]` **п. 1.4** — Виправити typo в `etc/frontend/di.xml` — `1e8d8f1`
 
 ### Крок 2 — Dead code (швидкий виграш)
 7. `[ ]` **п. 2.28** — Виправити `.toolbar-publication-selector` → `.bte-publication-selector` в responsive LESS

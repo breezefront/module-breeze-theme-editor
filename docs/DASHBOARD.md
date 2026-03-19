@@ -1,7 +1,7 @@
 # Breeze Theme Editor - Project Dashboard
 
 **Останнє оновлення:** 2026-03-19  
-**Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 3/94
+**Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 6/94
 
 ---
 
@@ -141,11 +141,11 @@ Admin Migration:
 🟡 Phase 5    ██████████░░  80% ← Manual E2E + Release
 
 Refactoring:
-🔴 Critical     ███░░░░░░░░░   3/5  ← 3 критичних баги виправлено
-🟠 High         ░░░░░░░░░░░░   0/16
+🔴 Critical     ████████████   5/5  ✅ Крок 1 завершено
+🟠 High         ░░░░░░░░░░░░   1/16 ← (п. 1.4 di.xml typo)
 🟡 Medium       ░░░░░░░░░░░░   0/35
 🟢 Low          ░░░░░░░░░░░░   0/38
-📋 Total        ░░░░░░░░░░░░   3/94
+📋 Total        ░░░░░░░░░░░░   6/94
 
 Issues:        16/16 closed ✅
 PHP Tests:     50 файлів / 512 tests ✅
