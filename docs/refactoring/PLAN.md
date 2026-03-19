@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 задокументованих проблем у 7 категоріях  
-**Статус виконання:** 9 / 94 завершено
+**Статус виконання:** 11 / 94 завершено
 
 ---
 
@@ -74,7 +74,7 @@
   - `$searchCriteriaBuilder` (constructor dep) — ніде не використовується
   - `$publicationRepository` (constructor dep) — ніде не використовується
 - **Пріоритет:** 🟠 High
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `6955d07`
 
 ### 2.2 `StoreDataProvider` — недосяжні методи
 - **Файл:** `Model/Provider/StoreDataProvider.php`
@@ -251,7 +251,7 @@
 - **Файл:** `view/adminhtml/web/css/source/_publication-selector.less:405–429`
 - **Проблема:** Responsive-блоки таргетують `.toolbar-publication-selector`, але виджет використовує `.bte-publication-selector`. Ці правила ніколи не спрацюють.
 - **Пріоритет:** 🟠 High (візуальний баг на мобільних)
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `b978bf5`
 
 ### 2.29 `_utilities.less` — мертві CSS-класи
 - **Файл:** `view/adminhtml/web/css/source/_utilities.less`
@@ -691,15 +691,15 @@
 | Категорія | Всього | 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low |
 |-----------|--------|------------|--------|----------|-------|
 | 1. Мертвий код — баги | 4 | 3 | 1 | — | — | ✅ 4/4 |
-| 2. Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 4/31 |
+| 2. Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 6/31 |
 | 3. God classes | 5 | — | 4 | 1 | — | 0/5 |
 | 4. Code duplication | 20 | — | 5 | 9 | 6 | 0/20 |
 | 5. Magic numbers/strings | 17 | 1 | — | 4 | 12 | 1/17 |
 | 6. Missing abstractions | 8 | — | 1 | 7 | — | 0/8 |
 | 7. Tight coupling | 9 | — | 2 | 4 | 3 |
 | **Всього** | **94** | **5** | **16** | **35** | **38** |
-| **Виконано** | **9** | **5** | **2** | **2** | **—** |
-| **Залишилось** | **85** | **0** | **14** | **33** | **38** |
+| **Виконано** | **11** | **5** | **4** | **2** | **—** |
+| **Залишилось** | **83** | **0** | **12** | **33** | **38** |
 
 > Примітка: деякі пункти перетинаються між категоріями (напр. п. 3.2 і п. 7.2, або п. 6.3 і п. 7.3).
 
@@ -716,10 +716,10 @@
 6. `[x]` **п. 1.4** — Виправити typo в `etc/frontend/di.xml` — `1e8d8f1`
 
 ### Крок 2 — Dead code (швидкий виграш)
-7. `[ ]` **п. 2.28** — Виправити `.toolbar-publication-selector` → `.bte-publication-selector` в responsive LESS
+7. `[x]` **п. 2.28** — Виправити `.toolbar-publication-selector` → `.bte-publication-selector` в responsive LESS — `b978bf5`
 8. `[x]` **п. 2.16** — Видалити `status-indicator.js` — `88b6aa6`
 9. `[x]` **п. 2.17, 2.18** — Видалити мертві GraphQL query модулі — `88b6aa6`
-10. `[ ]` **п. 2.1** — Прибрати мертві DI-залежності та stubs з `AdminToolbar`
+10. `[x]` **п. 2.1** — Прибрати мертві DI-залежності та stubs з `AdminToolbar` — `6955d07`
 
 ### Крок 3 — High-priority duplication
 11. `[ ]` **п. 4.1** — Перенести `extractLabels()` в `PublicationDataTrait`
