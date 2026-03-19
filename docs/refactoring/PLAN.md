@@ -1,8 +1,8 @@
 # Refactoring Plan — Breeze Theme Editor
 
 **Дата аудиту:** 2026-03-19  
-**Загальний стан:** 109 задокументованих проблем у 7 категоріях  
-**Статус виконання:** 0 / 109 завершено
+**Загальний стан:** 94 задокументованих проблем у 7 категоріях  
+**Статус виконання:** 3 / 94 завершено
 
 ---
 
@@ -37,13 +37,13 @@
 - **Файл:** `Model/Service/ImportExportService.php`
 - **Проблема:** `import()` повертає `['importedCount' => ..., 'skippedCount' => ...]`, але GraphQL-resolver читає `$result['imported']` та `$result['skipped']` (без суфікса `Count`). Обидва поля GraphQL-відповіді завжди `null`.
 - **Пріоритет:** 🔴 Critical
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `0e4e4cb`
 
 ### 1.2 `ValidationService::validateValues()` — помилка типу
 - **Файл:** `Model/Service/ValidationService.php`
 - **Проблема:** Метод викликається з `ImportExportService.php:124` з масивом `ValueInterface[]`, але тіло методу очікує асоціативні масиви з ключами `sectionCode`/`fieldCode`/`value`. Цикл валідації не спрацьовує — валідація ніколи реально не виконується під час імпорту.
 - **Пріоритет:** 🔴 Critical
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `54d007e`
 
 ### 1.3 `Observer/SetThemePreviewCookie` — dead observer logic
 - **Файл:** `Observer/SetThemePreviewCookie.php`
@@ -200,7 +200,7 @@
 - **Файл:** `view/adminhtml/web/js/editor/panel/palette-manager.js:309–311` та `480–482`
 - **Проблема:** Метод визначений двічі в одному object literal. Перше визначення мертве — перезаписується другим.
 - **Пріоритет:** 🔴 Critical (потенційний баг — перша реалізація може відрізнятись)
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `1560258`
 
 ### 2.22 `repeater.js::initSortable()` — stub-метод
 - **Файл:** `view/adminhtml/web/js/editor/panel/field-handlers/repeater.js:301–305`
@@ -698,6 +698,8 @@
 | 6. Missing abstractions | 8 | — | 1 | 7 | — |
 | 7. Tight coupling | 9 | — | 2 | 4 | 3 |
 | **Всього** | **94** | **5** | **16** | **35** | **38** |
+| **Виконано** | **3** | **3** | **—** | **—** | **—** |
+| **Залишилось** | **91** | **2** | **16** | **35** | **38** |
 
 > Примітка: деякі пункти перетинаються між категоріями (напр. п. 3.2 і п. 7.2, або п. 6.3 і п. 7.3).
 
@@ -706,9 +708,9 @@
 ## Рекомендований порядок виконання
 
 ### Крок 1 — Критичні баги (виконати першими)
-1. `[ ]` **п. 1.1** — Виправити `importedCount`/`skippedCount` → `imported`/`skipped` key mismatch
-2. `[ ]` **п. 1.2** — Виправити type mismatch у `ValidationService::validateValues()`
-3. `[ ]` **п. 2.21** — Виправити подвійне визначення `getDirtyCount()` в `palette-manager.js`
+1. `[x]` **п. 1.1** — Виправити `importedCount`/`skippedCount` → `imported`/`skipped` key mismatch — `0e4e4cb`
+2. `[x]` **п. 1.2** — Виправити type mismatch у `ValidationService::validateValues()` — `54d007e`
+3. `[x]` **п. 2.21** — Виправити подвійне визначення `getDirtyCount()` в `palette-manager.js` — `1560258`
 4. `[ ]` **п. 5.1** — Замінити `setStatusId(1)` на `$statusProvider->getStatusId('PUBLISHED')`
 5. `[ ]` **п. 1.3** — Перевірити та виправити `Observer/SetThemePreviewCookie`
 6. `[ ]` **п. 1.4** — Виправити typo в `etc/frontend/di.xml`
