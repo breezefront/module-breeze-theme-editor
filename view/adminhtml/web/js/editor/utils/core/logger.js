@@ -8,9 +8,9 @@
  *   DEBUG  — detailed trace information (hidden by default)
  *
  * Runtime override (persist across reloads):
- *   localStorage.setItem('bte-log-level', 'DEBUG')
- *   localStorage.setItem('bte-log-level', 'INFO')  // back to default
- *   localStorage.removeItem('bte-log-level')        // reset to default
+ *   localStorage.setItem('bte_log_level', 'DEBUG')
+ *   localStorage.setItem('bte_log_level', 'INFO')  // back to default
+ *   localStorage.removeItem('bte_log_level')        // reset to default
  *
  * Usage (bound — preferred for per-file use):
  *   define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logger) {
@@ -43,7 +43,7 @@ define([], function () {
      */
     function readStoredLevel() {
         try {
-            var stored = localStorage.getItem('bte-log-level');
+            var stored = localStorage.getItem('bte_log_level');
             if (stored) {
                 var n = LEVELS[stored.toUpperCase()];
                 if (n !== undefined) {
@@ -102,7 +102,7 @@ define([], function () {
             var n = LEVELS[(levelName || '').toUpperCase()];
             if (n !== undefined) {
                 currentLevel = n;
-                try { localStorage.setItem('bte-log-level', levelName.toUpperCase()); } catch (e) {}
+                try { localStorage.setItem('bte_log_level', levelName.toUpperCase()); } catch (e) {}
             }
         },
 

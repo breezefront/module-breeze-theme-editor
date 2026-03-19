@@ -110,7 +110,15 @@ define([
 
         'getOpenSections() returns [] when localStorage contains corrupted JSON': function () {
             setup();
-            localStorage.setItem(KEY_SECTIONS, 'not-valid-json{{');
+
+            // Write corrupted JSON directly into bte object at the right scope
+            try {
+                var obj = JSON.parse(localStorage.getItem('bte')) || {};
+                if (!obj[String(STORE)]) obj[String(STORE)] = {};
+                if (!obj[String(STORE)][String(THEME)]) obj[String(STORE)][String(THEME)] = {};
+                obj[String(STORE)][String(THEME)]['open_sections'] = 'not-valid-json{{';
+                localStorage.setItem('bte', JSON.stringify(obj));
+            } catch (e) { /* ignore */ }
 
             var result = StorageHelper.getOpenSections();
 
@@ -230,6 +238,80 @@ define([
             StorageHelper.clearLivePreviewChanges();
 
             console.log('✅ live_preview_changes are isolated between themes');
+        },
+
+        // ====================================================================
+        // GROUP 3: getGlobalItem / setGlobalItem / removeGlobalItem (4 tests)
+        // ====================================================================
+
+        'setGlobalItem() + getGlobalItem() round-trip stores under bte.global': function () {
+            // Clean up before test
+            StorageHelper.removeGlobalItem('admin_toolbar_visible');
+
+            StorageHelper.setGlobalItem('admin_toolbar_visible', '0');
+            var result = StorageHelper.getGlobalItem('admin_toolbar_visible');
+
+            this.assertEquals(result, '0', 'Should return stored value');
+
+            // Verify raw structure
+            try {
+                var obj = JSON.parse(localStorage.getItem('bte')) || {};
+                this.assertEquals(
+                    obj['global'] && obj['global']['admin_toolbar_visible'],
+                    '0',
+                    'Value should be stored at bte.global.admin_toolbar_visible'
+                );
+            } catch (e) { /* ignore */ }
+
+            // Cleanup
+            StorageHelper.removeGlobalItem('admin_toolbar_visible');
+
+            console.log('✅ setGlobalItem() stores under bte.global.*');
+        },
+
+        'getGlobalItem() returns null when key is not set': function () {
+            StorageHelper.removeGlobalItem('admin_toolbar_visible');
+
+            var result = StorageHelper.getGlobalItem('admin_toolbar_visible');
+
+            this.assertNull(result, 'Should return null when not set');
+
+            console.log('✅ getGlobalItem() returns null when key not set');
+        },
+
+        'getGlobalItem() migrates legacy bte_log_level flat key': function () {
+            // Simulate old flat key written by logger.js before migration
+            StorageHelper.removeGlobalItem('log_level');
+            localStorage.setItem('bte_log_level', 'DEBUG');
+
+            var result = StorageHelper.getGlobalItem('log_level');
+
+            this.assertEquals(result, 'DEBUG', 'Should migrate and return legacy value');
+            this.assertNull(localStorage.getItem('bte_log_level'), 'Legacy key should be removed after migration');
+
+            // Cleanup
+            StorageHelper.removeGlobalItem('log_level');
+
+            console.log('✅ getGlobalItem() migrates bte_log_level -> bte.global.log_level');
+        },
+
+        'getGlobalItem() migrates legacy bte-admin-toolbar-visible hyphen key': function () {
+            // Simulate old hyphen key written by old toolbar-toggle.js
+            StorageHelper.removeGlobalItem('admin_toolbar_visible');
+            localStorage.setItem('bte-admin-toolbar-visible', '0');
+
+            var result = StorageHelper.getGlobalItem('admin_toolbar_visible');
+
+            this.assertEquals(result, '0', 'Should migrate and return legacy hyphen value');
+            this.assertNull(
+                localStorage.getItem('bte-admin-toolbar-visible'),
+                'Legacy hyphen key should be removed after migration'
+            );
+
+            // Cleanup
+            StorageHelper.removeGlobalItem('admin_toolbar_visible');
+
+            console.log('✅ getGlobalItem() migrates bte-admin-toolbar-visible -> bte.global.admin_toolbar_visible');
         }
     });
 });

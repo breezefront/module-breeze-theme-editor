@@ -10,8 +10,9 @@ define([
     'jquery-ui-modules/widget',
     'text!Swissup_BreezeThemeEditor/template/editor/toolbar-toggle.html',
     'text!Swissup_BreezeThemeEditor/template/editor/compact-toggle-button.html',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, mageTemplate, widget, toggleTemplate, compactTemplate, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper'
+], function ($, mageTemplate, widget, toggleTemplate, compactTemplate, Logger, StorageHelper) {
     'use strict';
 
     var log = Logger.for('toolbar/toolbar-toggle');
@@ -20,8 +21,7 @@ define([
         options: {
             collapsed: false,
             toolbarSelector: '.bte-toolbar',
-            compactContainerSelector: '#bte-compact-toggle',
-            storageKey: 'bte-admin-toolbar-visible'
+            compactContainerSelector: '#bte-compact-toggle'
         },
 
         /**
@@ -149,11 +149,7 @@ define([
          * @private
          */
         _saveState: function(isVisible) {
-            try {
-                localStorage.setItem(this.options.storageKey, isVisible ? '1' : '0');
-            } catch (e) {
-                log.warn('Could not save toolbar state: ' + e);
-            }
+            StorageHelper.setGlobalItem('admin_toolbar_visible', isVisible ? '1' : '0');
         },
 
         /**
@@ -161,14 +157,10 @@ define([
          * @private
          */
         _restoreState: function() {
-            try {
-                var state = localStorage.getItem(this.options.storageKey);
-                if (state === '0') {
-                    // Restore collapsed state after a short delay
-                    setTimeout($.proxy(this._hideToolbar, this), 100);
-                }
-            } catch (e) {
-                log.warn('Could not restore toolbar state: ' + e);
+            var state = StorageHelper.getGlobalItem('admin_toolbar_visible');
+            if (state === '0') {
+                // Restore collapsed state after a short delay
+                setTimeout($.proxy(this._hideToolbar, this), 100);
             }
         }
     });

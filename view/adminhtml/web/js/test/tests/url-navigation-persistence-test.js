@@ -90,6 +90,9 @@ define([
             // Verify scoped key format
             var scopedValue = readRaw(99, 99, 'current_url');
             this.assertEquals(scopedValue, '/catalog/category', 'Should use scoped key in bte object');
+
+            // Cleanup
+            clearScope(99, 99, 'current_url');
             
             console.log('✅ setCurrentUrl() and getCurrentUrl() work correctly');
         },
@@ -142,6 +145,9 @@ define([
             // Assert: Retrieve saved page ID
             var pageId = StorageHelper.getCurrentPageId();
             this.assertEquals(pageId, 'catalog_category_view', 'Should return saved page ID');
+
+            // Cleanup
+            clearScope(99, 99, 'current_page_id');
             
             console.log('✅ setCurrentPageId() and getCurrentPageId() work correctly');
         },
@@ -390,6 +396,9 @@ define([
                 this.assertStringContains(savedUrl, 'page=2', 'Should preserve user param');
                 this.assertFalse(savedUrl.indexOf('___store') >= 0, 'Should remove ___store');
                 this.assertFalse(savedUrl.indexOf('preview_theme') >= 0, 'Should remove preview_theme');
+
+                // Cleanup
+                clearScope(99, 99, 'current_url');
                 
                 console.log('✅ saveCurrentUrl() saves cleaned URL:', savedUrl);
             } finally {
@@ -526,6 +535,9 @@ define([
             var retrieved = StorageHelper.getCurrentUrl();
             
             this.assertEquals(retrieved, result, 'Should save and retrieve long URL');
+
+            // Cleanup: remove long URL so subsequent runs of Test 1 start clean
+            clearScope(99, 99, 'current_url');
             
             console.log('✅ Handles very long URLs (' + result.length + ' chars)');
         },

@@ -261,15 +261,27 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logg
                 var value = global[key];
 
                 if (value === undefined || value === null) {
-                    // Migrate legacy bte_{key}
+                    // Migrate legacy bte_{key} (underscore flat key)
                     var legacyKey = 'bte_' + key;
                     var legacy = localStorage.getItem(legacyKey);
-                    if (legacy !== null) {
+
+                    if (legacy === null) {
+                        // Migrate legacy bte-{hyphenated-key} (hyphen flat key, e.g. bte-log-level)
+                        var hyphenKey = 'bte-' + key.replace(/_/g, '-');
+                        legacy = localStorage.getItem(hyphenKey);
+                        if (legacy !== null) {
+                            log.info('Migrating ' + hyphenKey + ' -> bte.global.' + key);
+                            localStorage.removeItem(hyphenKey);
+                        }
+                    } else {
                         log.info('Migrating ' + legacyKey + ' -> bte.global.' + key);
+                        localStorage.removeItem(legacyKey);
+                    }
+
+                    if (legacy !== null) {
                         if (!obj['global']) obj['global'] = {};
                         obj['global'][key] = legacy;
                         write(obj);
-                        localStorage.removeItem(legacyKey);
                         return legacy;
                     }
                     return null;
@@ -312,8 +324,9 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logg
                     delete obj['global'][key];
                     write(obj);
                 }
-                // Clean up legacy key
+                // Clean up legacy keys
                 localStorage.removeItem('bte_' + key);
+                localStorage.removeItem('bte-' + key.replace(/_/g, '-'));
             } catch (e) {
                 log.error('Storage remove error: ' + e);
             }
