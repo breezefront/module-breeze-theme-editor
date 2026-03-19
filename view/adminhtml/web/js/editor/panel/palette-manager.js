@@ -303,14 +303,6 @@ define([
         },
 
         /**
-         * Get count of dirty colors
-         * @returns {Number}
-         */
-        getDirtyCount: function() {
-            return Object.keys(this.dirtyColors).length;
-        },
-
-        /**
          * Revert all dirty changes back to saved values
          * @returns {Number} Count of reverted colors
          */
