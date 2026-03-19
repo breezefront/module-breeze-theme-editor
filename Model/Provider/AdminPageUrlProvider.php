@@ -45,141 +45,15 @@ class AdminPageUrlProvider extends PageUrlProvider
     }
 
     /**
-     * Get home page URL
+     * Override buildUrl to use frontend URL builder instead of admin URL builder.
      *
+     * @param string $route
+     * @param array  $params
      * @return string
      */
-    public function getHomeUrl()
+    protected function buildUrl($route = '', $params = [])
     {
-        return $this->getFrontendUrl('');
-    }
-
-    /**
-     * Get category page URL (first active category)
-     *
-     * @return string
-     */
-    public function getCategoryUrl()
-    {
-        try {
-            $storeId = $this->storeManager->getStore()->getId();
-
-            $category = $this->categoryFactory->create()
-                ->getCollection()
-                ->setStoreId($storeId)
-                ->addAttributeToSelect('url_key')
-                ->addAttributeToFilter('is_active', 1)
-                ->addAttributeToFilter('level', ['gt' => 1])
-                ->addAttributeToFilter('children_count', ['gt' => 0])
-                ->setOrder('level', 'ASC')
-                ->setPageSize(1)
-                ->getFirstItem();
-
-            if ($category->getId()) {
-                return $this->getFrontendUrl('catalog/category/view', [
-                    'id' => $category->getId()
-                ]);
-            }
-        } catch (\Exception $e) {
-            // Silent fail
-        }
-
-        return $this->getFrontendUrl('catalog/category/view', ['id' => 2]);
-    }
-
-    /**
-     * Get product page URL (first active, visible product)
-     *
-     * @return string
-     */
-    public function getProductUrl()
-    {
-        try {
-            $storeId = $this->storeManager->getStore()->getId();
-
-            $product = $this->productFactory->create()
-                ->getCollection()
-                ->setStoreId($storeId)
-                ->addAttributeToSelect('url_key')
-                ->addAttributeToFilter('status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
-                ->addAttributeToFilter('visibility', [
-                    'in' => [
-                        \Magento\Catalog\Model\Product\Visibility::VISIBILITY_IN_CATALOG,
-                        \Magento\Catalog\Model\Product\Visibility::VISIBILITY_IN_SEARCH,
-                        \Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH
-                    ]
-                ])
-                ->setPageSize(1)
-                ->getFirstItem();
-
-            if ($product->getId()) {
-                return $this->getFrontendUrl('catalog/product/view', [
-                    'id' => $product->getId()
-                ]);
-            }
-        } catch (\Exception $e) {
-            // Silent fail
-        }
-
-        return $this->getFrontendUrl('catalog/product/view', ['id' => 1]);
-    }
-
-    /**
-     * Get CMS page URL (first active page, excluding home)
-     *
-     * @return string
-     */
-    public function getCmsPageUrl()
-    {
-        try {
-            $storeId = $this->storeManager->getStore()->getId();
-
-            $page = $this->pageFactory->create()
-                ->getCollection()
-                ->addStoreFilter($storeId)
-                ->addFieldToFilter('is_active', 1)
-                ->addFieldToFilter('identifier', ['nin' => ['home', 'no-route']])
-                ->setPageSize(1)
-                ->getFirstItem();
-
-            if ($page->getId()) {
-                return $this->getFrontendUrl($page->getIdentifier());
-            }
-        } catch (\Exception $e) {
-            // Silent fail
-        }
-
-        return $this->getFrontendUrl('about-us');
-    }
-
-    /**
-     * Get shopping cart URL
-     *
-     * @return string
-     */
-    public function getCartUrl()
-    {
-        return $this->getFrontendUrl('checkout/cart');
-    }
-
-    /**
-     * Get checkout URL
-     *
-     * @return string
-     */
-    public function getCheckoutUrl()
-    {
-        return $this->getFrontendUrl('checkout');
-    }
-
-    /**
-     * Get customer account URL
-     *
-     * @return string
-     */
-    public function getAccountUrl()
-    {
-        return $this->getFrontendUrl('customer/account');
+        return $this->getFrontendUrl($route, $params);
     }
 
     /**

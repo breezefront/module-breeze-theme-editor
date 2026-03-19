@@ -90,13 +90,27 @@ class PageUrlProvider
     }
 
     /**
+     * Build a URL for a given route and params.
+     *
+     * Subclasses may override this to generate frontend URLs from admin context.
+     *
+     * @param string $route
+     * @param array  $params
+     * @return string
+     */
+    protected function buildUrl($route = '', $params = [])
+    {
+        return $this->urlBuilder->getUrl($route, $params);
+    }
+
+    /**
      * Get home page URL
      *
      * @return string
      */
     public function getHomeUrl()
     {
-        return $this->urlBuilder->getUrl('');
+        return $this->buildUrl('');
     }
 
     /**
@@ -121,13 +135,13 @@ class PageUrlProvider
                 ->getFirstItem();
 
             if ($category->getId()) {
-                return $category->getUrl();
+                return $this->buildUrl('catalog/category/view', ['id' => $category->getId()]);
             }
         } catch (\Exception $e) {
             // Silent fail
         }
 
-        return $this->urlBuilder->getUrl('catalog/category/view', ['id' => 2]);
+        return $this->buildUrl('catalog/category/view', ['id' => 2]);
     }
 
     /**
@@ -156,13 +170,13 @@ class PageUrlProvider
                 ->getFirstItem();
 
             if ($product->getId()) {
-                return $product->getProductUrl();
+                return $this->buildUrl('catalog/product/view', ['id' => $product->getId()]);
             }
         } catch (\Exception $e) {
             // Silent fail
         }
 
-        return $this->urlBuilder->getUrl('catalog/product/view', ['id' => 1]);
+        return $this->buildUrl('catalog/product/view', ['id' => 1]);
     }
 
     /**
@@ -184,13 +198,13 @@ class PageUrlProvider
                 ->getFirstItem();
 
             if ($page->getId()) {
-                return $this->urlBuilder->getUrl($page->getIdentifier());
+                return $this->buildUrl($page->getIdentifier());
             }
         } catch (\Exception $e) {
             // Silent fail
         }
 
-        return $this->urlBuilder->getUrl('about-us');
+        return $this->buildUrl('about-us');
     }
 
     /**
@@ -200,7 +214,7 @@ class PageUrlProvider
      */
     public function getCartUrl()
     {
-        return $this->urlBuilder->getUrl('checkout/cart');
+        return $this->buildUrl('checkout/cart');
     }
 
     /**
@@ -210,7 +224,7 @@ class PageUrlProvider
      */
     public function getCheckoutUrl()
     {
-        return $this->urlBuilder->getUrl('checkout');
+        return $this->buildUrl('checkout');
     }
 
     /**
@@ -220,6 +234,6 @@ class PageUrlProvider
      */
     public function getAccountUrl()
     {
-        return $this->urlBuilder->getUrl('customer/account');
+        return $this->buildUrl('customer/account');
     }
 }
