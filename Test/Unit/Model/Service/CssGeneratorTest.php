@@ -9,7 +9,11 @@ use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
+use Swissup\BreezeThemeEditor\Model\Service\Css\CssValueFormatter;
+use Swissup\BreezeThemeEditor\Model\Service\Css\CssVariableBuilder;
+use Swissup\BreezeThemeEditor\Model\Service\Css\CssFontImportBuilder;
 
 /**
  * Unit tests for CssGenerator service
@@ -25,7 +29,6 @@ class CssGeneratorTest extends TestCase
     private ValueInheritanceResolver $valueInheritanceResolverMock;
     private StatusProvider $statusProviderMock;
     private ConfigProvider $configProviderMock;
-    private ColorFormatResolver $colorFormatResolverMock;
     private ScopeInterface $scope;
     
     protected function setUp(): void
@@ -34,14 +37,19 @@ class CssGeneratorTest extends TestCase
         $this->valueInheritanceResolverMock = $this->createMock(ValueInheritanceResolver::class);
         $this->statusProviderMock = $this->createMock(StatusProvider::class);
         $this->configProviderMock = $this->createMock(ConfigProvider::class);
-        $this->colorFormatResolverMock = $this->createMock(ColorFormatResolver::class);
         $this->scope = $this->createMock(ScopeInterface::class);
-        
+
+        $colorFormatResolver = new ColorFormatResolver(new ColorConverter());
+        $formatter           = new CssValueFormatter($colorFormatResolver);
+        $variableBuilder     = new CssVariableBuilder($formatter);
+        $fontImportBuilder   = new CssFontImportBuilder($variableBuilder);
+
         $this->cssGenerator = new CssGenerator(
             $this->valueInheritanceResolverMock,
             $this->statusProviderMock,
             $this->configProviderMock,
-            $this->colorFormatResolverMock
+            $variableBuilder,
+            $fontImportBuilder
         );
     }
     
@@ -277,13 +285,6 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
         
-        // Mock ColorFormatResolver to return 'rgb' (explicit format)
-        $this->colorFormatResolverMock
-            ->expects($this->once())
-            ->method('resolve')
-            ->with('rgb', '#ffffff')
-            ->willReturn('rgb');
-        
         $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
         
         // Assert: Field maps to -rgb palette variant
@@ -437,15 +438,6 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
         
-        // Mock ColorFormatResolver for both fields
-        $this->colorFormatResolverMock
-            ->expects($this->exactly(2))
-            ->method('resolve')
-            ->willReturnCallback(function ($format, $default) {
-                // Return the explicit format (hex or rgb)
-                return $format;
-            });
-        
         $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
         
         // Assert: Same palette color referenced in different formats
@@ -568,13 +560,6 @@ class CssGeneratorTest extends TestCase
             'palettes' => []
         ]);
         
-        // Mock ColorFormatResolver to return 'rgb' (auto-detected from default)
-        $this->colorFormatResolverMock
-            ->expects($this->once())
-            ->method('resolve')
-            ->with(null, 'rgb(17, 24, 39)')
-            ->willReturn('rgb');
-        
         // Act: Generate CSS
         $css = $this->cssGenerator->generate(1, $this->scope, 'DRAFT');
         
@@ -633,13 +618,6 @@ class CssGeneratorTest extends TestCase
             'palettes' => []
         ]);
         
-        // Mock ColorFormatResolver to return 'hex'
-        $this->colorFormatResolverMock
-            ->expects($this->once())
-            ->method('resolve')
-            ->with(null, '#1979c3')
-            ->willReturn('hex');
-        
         // Act
         $css = $this->cssGenerator->generate(1, $this->scope, 'DRAFT');
         
@@ -694,13 +672,6 @@ class CssGeneratorTest extends TestCase
             ],
             'palettes' => []
         ]);
-        
-        // Mock ColorFormatResolver to return 'rgb'
-        $this->colorFormatResolverMock
-            ->expects($this->once())
-            ->method('resolve')
-            ->with(null, 'rgb(17, 24, 39)')
-            ->willReturn('rgb');
         
         // Act
         $css = $this->cssGenerator->generate(1, $this->scope, 'DRAFT');
@@ -868,10 +839,6 @@ class CssGeneratorTest extends TestCase
             ]
         ]);
 
-        $this->colorFormatResolverMock
-            ->method('resolve')
-            ->willReturn('rgb');
-
         $css = $this->cssGenerator->generate(1, $this->scope, 'DRAFT');
 
         // Palette variable must be emitted even though it is not in DB
@@ -930,10 +897,6 @@ class CssGeneratorTest extends TestCase
                 ]
             ]
         ]);
-
-        $this->colorFormatResolverMock
-            ->method('resolve')
-            ->willReturn('rgb');
 
         // No _palette entry — only the field value referencing the palette color
         $css = $this->cssGenerator->generateFromValuesMap(1, [
@@ -1025,8 +988,6 @@ class CssGeneratorTest extends TestCase
                 'value' => '#ffffff'
             ],
         ]);
-
-        $this->colorFormatResolverMock->method('resolve')->willReturn('hex');
 
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
@@ -1191,8 +1152,6 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $this->colorFormatResolverMock->method('resolve')->willReturn('hex');
-
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
                 [
@@ -1236,8 +1195,6 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $this->colorFormatResolverMock->method('resolve')->willReturn('rgb');
-
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
                 [
@@ -1279,8 +1236,6 @@ class CssGeneratorTest extends TestCase
             ],
         ]);
 
-        $this->colorFormatResolverMock->method('resolve')->willReturn('hex');
-
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
                 [
@@ -1320,8 +1275,6 @@ class CssGeneratorTest extends TestCase
                 'value' => '#1979c3ff'
             ],
         ]);
-
-        $this->colorFormatResolverMock->method('resolve')->willReturn('rgb');
 
         $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
             'sections' => [
