@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 20 / 107 завершено  
+**Статус виконання:** 25 / 107 завершено  
 
 ---
 
@@ -305,7 +305,7 @@
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/publication-selector.js`
 - **Проблема:** Керує: публікацією, відкатом, відхиленням чернетки, відхиленням опублікованого, видаленням публікації, відновленням CSS-стану, пагінацією, змінами scope, перевіркою дозволів, відображенням помилок.
 - **Пріоритет:** 🟠 High
-- **Статус:** `[x] DONE` — оркестратор 512 рядків; витягнуті `css-state-restorer.js` (255 рядків) та `action-executor.js` (494 рядки)
+- **Статус:** `[x] DONE` — коміт `d4700ec`; оркестратор 512 рядків; витягнуті `css-state-restorer.js` (255 рядків) та `action-executor.js` (494 рядки)
 
 ### 3.5 `AbstractConfigResolver` — наближається до God abstract class (363 рядки)
 - **Файл:** `Model/Resolver/Query/AbstractConfigResolver.php`
@@ -579,7 +579,7 @@
 - **Проблема:** Рядки `'DRAFT'` / `'PUBLISHED'` порівнюються напряму в 10+ місцях. PHP 8.1 дозволяє backed enums.
 - **Пропозиція:** `StatusCode` enum або `StatusCode::DRAFT / ::PUBLISHED` constants class.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[x] DONE` — 2 коміти (constants + resolvers)
+- **Статус:** `[x] DONE` — коміти `69782d2`, `12e674f` (constants + resolvers)
 
 ### 6.3 `ColorPipeline` facade
 - **Зачіпає:** `ColorFormatResolver.php`, `ColorFormatter.php`, `ColorConverter.php`, `css-preview-manager.js`
@@ -863,11 +863,11 @@
 18. `[x]` **п. 3.4** — Декомпозиція `publication-selector.js` — коміт `d4700ec`
 
 ### Крок 5 — Missing abstractions + Magic strings
-19. `[x]` **п. 6.2** — `StatusCode` enum/constants
-20. `[x]` **п. 6.1** — `ScopeInput` value object
-21. `[x]` **п. 6.3** — `ColorPipeline` facade
-22. `[x]` **п. 5.11** — Замінити магічні `'DRAFT'`/`'PUBLISHED'` рядки константами
-23. `[x]` **п. 5.12** — Замінити `#1979c3` на LESS-змінну
+19. `[x]` **п. 6.2** — `StatusCode` enum/constants — `69782d2`, `12e674f`
+20. `[x]` **п. 6.1** — `ScopeInput` value object — `bdcca71`
+21. `[x]` **п. 6.3** — `ColorPipeline` facade — `20a334c`
+22. `[x]` **п. 5.11** — Замінити магічні `'DRAFT'`/`'PUBLISHED'` рядки константами — `0c57fa1`
+23. `[x]` **п. 5.12** — Замінити `#1979c3` на LESS-змінну — `eaa7e7c`
 
 ### Крок 6 — Low priority cleanup
 - Решта магічних чисел, low-priority dead code, коментарі
