@@ -15,7 +15,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/panel/sections/palette-section-renderer',
+    'Swissup_BreezeThemeEditor/js/editor/panel/sections/font-palette-section-renderer'
 ], function (
     $,
     FieldRenderer,
@@ -23,6 +25,8 @@ define([
     IconRegistry,
     StorageHelper,
     Logger
+    // palette-section-renderer and font-palette-section-renderer are side-effect
+    // only imports: they register $.fn.paletteSection / $.fn.fontPaletteSection
 ) {
     'use strict';
 
@@ -96,11 +100,6 @@ define([
                 return;
             }
 
-            if (typeof ctx.$paletteContainer.paletteSection !== 'function') {
-                log.warn('paletteSection widget not yet registered — skipping palette init');
-                return;
-            }
-
             // Destroy existing instance so re-init works after store switch
             if (ctx.$paletteContainer.data('swissup-paletteSection')) {
                 log.debug('Destroying existing paletteSection widget before re-init');
@@ -135,11 +134,6 @@ define([
         initFontPalette: function (ctx) {
             if (!ctx.$fontPaletteContainer || ctx.$fontPaletteContainer.length === 0) {
                 log.warn('Font palette container not found');
-                return;
-            }
-
-            if (typeof ctx.$fontPaletteContainer.fontPaletteSection !== 'function') {
-                log.warn('fontPaletteSection widget not yet registered — skipping font palette init');
                 return;
             }
 
