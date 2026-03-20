@@ -7,8 +7,7 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
 
 /**
@@ -24,8 +23,7 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
         protected ConfigProvider $configProvider,
         protected PaletteProvider $paletteProvider,
         protected FontPaletteProvider $fontPaletteProvider,
-        protected ColorFormatResolver $colorFormatResolver,
-        protected ColorFormatter $colorFormatter
+        protected ColorPipeline $colorPipeline
     ) {}
 
     /**
@@ -73,7 +71,7 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
                 // Resolve format early for color fields (needed for value conversion)
                 $colorFormat = null;
                 if ($type === 'color') {
-                    $colorFormat = $this->colorFormatResolver->resolve(
+                    $colorFormat = $this->colorPipeline->resolveFormat(
                         $setting['format'] ?? null,
                         $setting['default'] ?? null
                     );
@@ -85,7 +83,7 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
                     'type' => strtoupper($setting['type']),
                     'description' => $setting['description'] ?? null,
                     'value' => $colorFormat !== null 
-                        ? $this->colorFormatter->formatColorValue($currentValue, $colorFormat)
+                        ? $this->colorPipeline->format($currentValue, $colorFormat)
                         : $currentValue,
                     'default' => $this->encodeValue($defaultValue),
                     'isModified' => $currentValue !== null && $currentValue !== $defaultValue,

@@ -11,8 +11,7 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
@@ -43,8 +42,6 @@ class AbstractConfigResolverFontPalettePassthroughTest extends TestCase
     private Config $config;
 
     private ColorConverter $colorConverter;
-    private ColorFormatter $colorFormatter;
-    private ColorFormatResolver $colorFormatResolver;
 
     private SerializerInterface $serializerMock;
     private ConfigProvider $configProviderMock;
@@ -65,8 +62,9 @@ class AbstractConfigResolverFontPalettePassthroughTest extends TestCase
     protected function setUp(): void
     {
         $this->colorConverter      = new ColorConverter();
-        $this->colorFormatter      = new ColorFormatter($this->colorConverter);
-        $this->colorFormatResolver = new ColorFormatResolver($this->colorConverter);
+        $colorFormatter      = new \Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter($this->colorConverter);
+        $colorFormatResolver = new \Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver($this->colorConverter);
+        $colorPipeline       = new ColorPipeline($colorFormatResolver, $colorFormatter);
 
         $this->serializerMock               = $this->createMock(SerializerInterface::class);
         $this->configProviderMock           = $this->createMock(ConfigProvider::class);
@@ -100,8 +98,7 @@ class AbstractConfigResolverFontPalettePassthroughTest extends TestCase
             $this->configProviderMock,
             $this->paletteProviderMock,
             $this->fontPaletteProviderMock,
-            $this->colorFormatResolver,
-            $this->colorFormatter,
+            $colorPipeline,
             $this->valueInheritanceResolverMock,
             $this->statusProviderMock,
             $this->compareProviderMock,

@@ -11,8 +11,7 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
@@ -36,8 +35,7 @@ class ConfigTest extends TestCase
     private ConfigProvider $configProviderMock;
     private PaletteProvider $paletteProviderMock;
     private FontPaletteProvider $fontPaletteProviderMock;
-    private ColorFormatResolver $colorFormatResolverMock;
-    private ColorFormatter $colorFormatterMock;
+    private ColorPipeline $colorPipelineMock;
     private ValueInheritanceResolver $valueInheritanceResolverMock;
     private StatusProvider $statusProviderMock;
     private CompareProvider $compareProviderMock;
@@ -57,8 +55,7 @@ class ConfigTest extends TestCase
         $this->configProviderMock = $this->createMock(ConfigProvider::class);
         $this->paletteProviderMock = $this->createMock(PaletteProvider::class);
         $this->fontPaletteProviderMock = $this->createMock(FontPaletteProvider::class);
-        $this->colorFormatResolverMock = $this->createMock(ColorFormatResolver::class);
-        $this->colorFormatterMock = $this->createMock(ColorFormatter::class);
+        $this->colorPipelineMock = $this->createMock(ColorPipeline::class);
         $this->valueInheritanceResolverMock = $this->createMock(ValueInheritanceResolver::class);
         $this->statusProviderMock = $this->createMock(StatusProvider::class);
         $this->compareProviderMock = $this->createMock(CompareProvider::class);
@@ -84,8 +81,8 @@ class ConfigTest extends TestCase
             return json_encode($value);
         });
 
-        // Setup default ColorFormatter behavior (passthrough for simplicity)
-        $this->colorFormatterMock->method('formatColorValue')->willReturnCallback(function($value, $format) {
+        // Setup default ColorPipeline behavior (passthrough for simplicity)
+        $this->colorPipelineMock->method('format')->willReturnCallback(function($value, $format) {
             return $value; // Passthrough in tests - actual conversion tested separately
         });
 
@@ -95,8 +92,7 @@ class ConfigTest extends TestCase
             $this->configProviderMock,
             $this->paletteProviderMock,
             $this->fontPaletteProviderMock,
-            $this->colorFormatResolverMock,
-            $this->colorFormatterMock,
+            $this->colorPipelineMock,
             $this->valueInheritanceResolverMock,
             $this->statusProviderMock,
             $this->compareProviderMock,
@@ -430,22 +426,23 @@ class ConfigTest extends TestCase
      * SCENARIO: Color field with format="rgb" has HEX value in database
      * EXPECTED: GraphQL returns converted RGB value "0, 0, 0"
      * 
-     * NOTE: Uses REAL ColorFormatter (not mock) to test actual conversion
+     * NOTE: Uses REAL ColorPipeline (with real ColorFormatter) to test actual conversion
      */
     public function testConvertsColorValuesToRgbFormat(): void
     {
-        // Create REAL ColorFormatter (not mock) for actual conversion testing
+        // Create REAL ColorPipeline (not mock) for actual conversion testing
         $realColorConverter = new \Swissup\BreezeThemeEditor\Model\Utility\ColorConverter();
         $realColorFormatter = new \Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter($realColorConverter);
+        $realColorFormatResolver = new \Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver($realColorConverter);
+        $realColorPipeline = new \Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline($realColorFormatResolver, $realColorFormatter);
 
-        // Recreate Config resolver with real ColorFormatter
+        // Recreate Config resolver with real ColorPipeline
         $config = new Config(
             $this->serializerMock,
             $this->configProviderMock,
             $this->paletteProviderMock,
             $this->fontPaletteProviderMock,
-            $this->colorFormatResolverMock,
-            $realColorFormatter, // REAL formatter instead of mock
+            $realColorPipeline, // REAL pipeline instead of mock
             $this->valueInheritanceResolverMock,
             $this->statusProviderMock,
             $this->compareProviderMock,
@@ -499,10 +496,6 @@ class ConfigTest extends TestCase
 
         $this->configProviderMock->method('getAllDefaults')
             ->willReturn(['colors.text_color' => '#111827']);
-
-        // Mock ColorFormatResolver to return 'rgb'
-        $this->colorFormatResolverMock->method('resolve')
-            ->willReturn('rgb');
 
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->compareProviderMock->method('compare')->willReturn([
@@ -586,9 +579,9 @@ class ConfigTest extends TestCase
         $this->configProviderMock->method('getAllDefaults')
             ->willReturn(['layout.container_width' => '1280px']);
 
-        // ColorFormatter should NOT be called for non-color fields
-        $this->colorFormatterMock->expects($this->never())
-            ->method('formatColorValue');
+        // ColorPipeline::format should NOT be called for non-color fields
+        $this->colorPipelineMock->expects($this->never())
+            ->method('format');
 
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->compareProviderMock->method('compare')->willReturn([

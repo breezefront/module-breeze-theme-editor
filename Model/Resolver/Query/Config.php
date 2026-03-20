@@ -12,8 +12,7 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
@@ -34,8 +33,7 @@ class Config extends AbstractConfigResolver
         ConfigProvider $configProvider,
         PaletteProvider $paletteProvider,
         FontPaletteProvider $fontPaletteProvider,
-        ColorFormatResolver $colorFormatResolver,
-        ColorFormatter $colorFormatter,
+        ColorPipeline $colorPipeline,
         private ValueInheritanceResolver $valueInheritanceResolver,
         private StatusProvider $statusProvider,
         private CompareProvider $compareProvider,
@@ -43,7 +41,7 @@ class Config extends AbstractConfigResolver
         private UserResolver $userResolver,
         private ScopeFactory $scopeFactory
     ) {
-        parent::__construct($serializer, $configProvider, $paletteProvider, $fontPaletteProvider, $colorFormatResolver, $colorFormatter);
+        parent::__construct($serializer, $configProvider, $paletteProvider, $fontPaletteProvider, $colorPipeline);
     }
 
     public function resolve(

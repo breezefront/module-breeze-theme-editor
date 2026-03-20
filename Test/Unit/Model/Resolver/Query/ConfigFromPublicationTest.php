@@ -21,8 +21,7 @@ use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Resolver\Query\ConfigFromPublication;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline;
 use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
@@ -34,8 +33,7 @@ class ConfigFromPublicationTest extends TestCase
     private ConfigProvider|MockObject $configProvider;
     private PaletteProvider|MockObject $paletteProvider;
     private FontPaletteProvider|MockObject $fontPaletteProvider;
-    private ColorFormatResolver|MockObject $colorFormatResolver;
-    private ColorFormatter|MockObject $colorFormatter;
+    private ColorPipeline|MockObject $colorPipeline;
     private ThemeResolver|MockObject $themeResolver;
     private PublicationRepositoryInterface|MockObject $publicationRepository;
     private ChangelogRepositoryInterface|MockObject $changelogRepository;
@@ -51,8 +49,7 @@ class ConfigFromPublicationTest extends TestCase
         $this->configProvider              = $this->createMock(ConfigProvider::class);
         $this->paletteProvider             = $this->createMock(PaletteProvider::class);
         $this->fontPaletteProvider         = $this->createMock(FontPaletteProvider::class);
-        $this->colorFormatResolver         = $this->createMock(ColorFormatResolver::class);
-        $this->colorFormatter              = $this->createMock(ColorFormatter::class);
+        $this->colorPipeline               = $this->createMock(ColorPipeline::class);
         $this->themeResolver               = $this->createMock(ThemeResolver::class);
         $this->publicationRepository       = $this->createMock(PublicationRepositoryInterface::class);
         $this->changelogRepository         = $this->createMock(ChangelogRepositoryInterface::class);
@@ -87,8 +84,7 @@ class ConfigFromPublicationTest extends TestCase
             $this->configProvider,
             $this->paletteProvider,
             $this->fontPaletteProvider,
-            $this->colorFormatResolver,
-            $this->colorFormatter,
+            $this->colorPipeline,
             $this->themeResolver,
             $this->publicationRepository,
             $this->changelogRepository,

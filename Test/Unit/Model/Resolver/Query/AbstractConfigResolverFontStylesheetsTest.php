@@ -10,8 +10,7 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
@@ -37,8 +36,6 @@ class AbstractConfigResolverFontStylesheetsTest extends TestCase
 
     // Real objects (no mocks)
     private ColorConverter $colorConverter;
-    private ColorFormatter $colorFormatter;
-    private ColorFormatResolver $colorFormatResolver;
 
     // Mocked dependencies
     private SerializerInterface $serializerMock;
@@ -61,8 +58,9 @@ class AbstractConfigResolverFontStylesheetsTest extends TestCase
     {
         // Real color utilities
         $this->colorConverter     = new ColorConverter();
-        $this->colorFormatter     = new ColorFormatter($this->colorConverter);
-        $this->colorFormatResolver = new ColorFormatResolver($this->colorConverter);
+        $colorFormatter     = new \Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter($this->colorConverter);
+        $colorFormatResolver = new \Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver($this->colorConverter);
+        $colorPipeline      = new ColorPipeline($colorFormatResolver, $colorFormatter);
 
         // Mock external dependencies
         $this->serializerMock                 = $this->createMock(SerializerInterface::class);
@@ -100,8 +98,7 @@ class AbstractConfigResolverFontStylesheetsTest extends TestCase
             $this->configProviderMock,
             $this->paletteProviderMock,
             $this->fontPaletteProviderMock,
-            $this->colorFormatResolver,
-            $this->colorFormatter,
+            $colorPipeline,
             $this->valueInheritanceResolverMock,
             $this->statusProviderMock,
             $this->compareProviderMock,
