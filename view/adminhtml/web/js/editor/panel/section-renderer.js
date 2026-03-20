@@ -96,6 +96,11 @@ define([
                 return;
             }
 
+            if (typeof ctx.$paletteContainer.paletteSection !== 'function') {
+                log.warn('paletteSection widget not yet registered — skipping palette init');
+                return;
+            }
+
             // Destroy existing instance so re-init works after store switch
             if (ctx.$paletteContainer.data('swissup-paletteSection')) {
                 log.debug('Destroying existing paletteSection widget before re-init');
@@ -133,6 +138,11 @@ define([
                 return;
             }
 
+            if (typeof ctx.$fontPaletteContainer.fontPaletteSection !== 'function') {
+                log.warn('fontPaletteSection widget not yet registered — skipping font palette init');
+                return;
+            }
+
             // Destroy existing instance so re-init works after store switch
             if (ctx.$fontPaletteContainer.data('swissup-fontPaletteSection')) {
                 log.debug('Destroying existing fontPaletteSection widget before re-init');
@@ -165,6 +175,11 @@ define([
         initPresetSelector: function (ctx) {
             if (!ctx.$presetContainer || ctx.$presetContainer.length === 0) {
                 log.warn('Preset container not found');
+                return;
+            }
+
+            if (typeof ctx.$presetContainer.presetSelector !== 'function') {
+                log.warn('presetSelector widget not yet registered — skipping preset init');
                 return;
             }
 
