@@ -3,24 +3,24 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Test\Unit\ViewModel;
 
-use Magento\Backend\Model\Auth\Session as AuthSession;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\AuthorizationInterface;
-use Magento\Framework\Serialize\Serializer\Json;
-use Magento\Framework\UrlInterface;
-use Magento\Framework\View\DesignInterface;
-use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\TestCase;
-use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider;
-use Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator;
 use Swissup\BreezeThemeEditor\Model\Session\BackendSession;
-use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\ViewModel\AdminToolbar;
+use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarAuthProvider;
+use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarPermissionsProvider;
+use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarScopeProvider;
+use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarThemeProvider;
+use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarUrlProvider;
 
 /**
- * Unit tests for AdminToolbar::getScope() and getScopeId()
+ * Unit tests for AdminToolbar delegation to helper ViewModels.
+ *
+ * getScope() and getScopeId() are tested here via AdminToolbar (which
+ * delegates to ToolbarScopeProvider). Deeper tests for each provider
+ * live in Test/Unit/ViewModel/Toolbar/.
  *
  * Scope state is persisted via cookies (BackendSession) only.
  * URL parameters ?scope= and ?scopeId= are intentionally NOT supported
@@ -34,23 +34,24 @@ class AdminToolbarTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->request = $this->createMock(RequestInterface::class);
+        $this->request        = $this->createMock(RequestInterface::class);
         $this->backendSession = $this->createMock(BackendSession::class);
+
+        $scopeProvider = new ToolbarScopeProvider(
+            $this->backendSession,
+            $this->createMock(\Magento\Store\Model\StoreManagerInterface::class),
+            $this->request
+        );
 
         $this->viewModel = new AdminToolbar(
             $this->request,
-            $this->createMock(UrlInterface::class),
-            $this->createMock(AuthSession::class),
-            $this->createMock(StoreManagerInterface::class),
             $this->createMock(PageUrlProvider::class),
             $this->createMock(StoreDataProvider::class),
-            $this->createMock(DesignInterface::class),
-            $this->createMock(Json::class),
-            $this->createMock(AdminTokenGenerator::class),
-            $this->createMock(AuthorizationInterface::class),
-            $this->createMock(ThemeResolver::class),
-            $this->backendSession,
-            $this->createMock(ScopeFactory::class)
+            $scopeProvider,
+            $this->createMock(ToolbarAuthProvider::class),
+            $this->createMock(ToolbarPermissionsProvider::class),
+            $this->createMock(ToolbarUrlProvider::class),
+            $this->createMock(ToolbarThemeProvider::class)
         );
     }
 
@@ -95,9 +96,9 @@ class AdminToolbarTest extends TestCase
     public static function validScopeSessionProvider(): array
     {
         return [
-            'default from session' => ['default'],
+            'default from session'  => ['default'],
             'websites from session' => ['websites'],
-            'stores from session' => ['stores'],
+            'stores from session'   => ['stores'],
         ];
     }
 

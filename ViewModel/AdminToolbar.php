@@ -3,21 +3,24 @@
 namespace Swissup\BreezeThemeEditor\ViewModel;
 
 use Magento\Framework\View\Element\Block\ArgumentInterface;
-use Magento\Framework\Serialize\Serializer\Json;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\View\DesignInterface;
-use Magento\Backend\Model\Auth\Session as AuthSession;
-use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarAuthProvider;
+use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarPermissionsProvider;
+use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarScopeProvider;
+use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarThemeProvider;
+use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarUrlProvider;
 
 /**
  * ViewModel for Theme Editor admin toolbar
  *
- * Provides all data required by the adminhtml toolbar template:
- * - Admin authentication and user info
- * - Store hierarchy (via StoreDataProvider)
- * - Page types (via PageUrlProvider)
- * - ACL permission checks
- * - Admin integration token (via AdminTokenGenerator)
+ * Thin orchestrator that composes five focused helper ViewModels:
+ * - ToolbarScopeProvider    — scope/store resolution
+ * - ToolbarAuthProvider     — authentication and user identity
+ * - ToolbarPermissionsProvider — ACL permission checks
+ * - ToolbarUrlProvider      — admin + GraphQL URLs
+ * - ToolbarThemeProvider    — frontend theme ID resolution
+ *
+ * All public methods are kept to preserve backward compatibility with
+ * templates and any code that may call them directly.
  */
 class AdminToolbar implements ArgumentInterface
 {
@@ -25,21 +28,6 @@ class AdminToolbar implements ArgumentInterface
      * @var \Magento\Framework\App\RequestInterface
      */
     private $request;
-
-    /**
-     * @var \Magento\Framework\UrlInterface
-     */
-    private $urlBuilder;
-
-    /**
-     * @var AuthSession
-     */
-    private $authSession;
-
-    /**
-     * @var StoreManagerInterface
-     */
-    private $storeManager;
 
     /**
      * @var \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider
@@ -52,84 +40,63 @@ class AdminToolbar implements ArgumentInterface
     private $storeDataProvider;
 
     /**
-     * @var DesignInterface
+     * @var ToolbarScopeProvider
      */
-    private $design;
+    private $scopeProvider;
 
     /**
-     * @var Json
+     * @var ToolbarAuthProvider
      */
-    private $jsonSerializer;
+    private $authProvider;
 
     /**
-     * @var \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator
+     * @var ToolbarPermissionsProvider
      */
-    private $tokenGenerator;
+    private $permissionsProvider;
 
     /**
-     * @var \Magento\Framework\AuthorizationInterface
+     * @var ToolbarUrlProvider
      */
-    private $authorization;
+    private $urlProvider;
 
     /**
-     * @var \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver
+     * @var ToolbarThemeProvider
      */
-    private $themeResolver;
-
-    /**
-     * @var \Swissup\BreezeThemeEditor\Model\Session\BackendSession
-     */
-    private $backendSession;
-
-    /**
-     * @var ScopeFactory
-     */
-    private $scopeFactory;
+    private $themeProvider;
 
     /**
      * @param \Magento\Framework\App\RequestInterface $request
-     * @param \Magento\Framework\UrlInterface $urlBuilder
-     * @param AuthSession $authSession
-     * @param StoreManagerInterface $storeManager
      * @param \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider $pageUrlProvider
      * @param \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider
-     * @param DesignInterface $design
-     * @param Json $jsonSerializer
-     * @param \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator $tokenGenerator
-     * @param \Magento\Framework\AuthorizationInterface $authorization
-     * @param \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver
-     * @param \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession
-     * @param ScopeFactory $scopeFactory
+     * @param ToolbarScopeProvider $scopeProvider
+     * @param ToolbarAuthProvider $authProvider
+     * @param ToolbarPermissionsProvider $permissionsProvider
+     * @param ToolbarUrlProvider $urlProvider
+     * @param ToolbarThemeProvider $themeProvider
      */
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
-        \Magento\Framework\UrlInterface $urlBuilder,
-        AuthSession $authSession,
-        StoreManagerInterface $storeManager,
         \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider $pageUrlProvider,
         \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider,
-        DesignInterface $design,
-        Json $jsonSerializer,
-        \Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator $tokenGenerator,
-        \Magento\Framework\AuthorizationInterface $authorization,
-        \Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver $themeResolver,
-        \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession,
-        ScopeFactory $scopeFactory
+        ToolbarScopeProvider $scopeProvider,
+        ToolbarAuthProvider $authProvider,
+        ToolbarPermissionsProvider $permissionsProvider,
+        ToolbarUrlProvider $urlProvider,
+        ToolbarThemeProvider $themeProvider
     ) {
-        $this->request = $request;
-        $this->urlBuilder = $urlBuilder;
-        $this->authSession = $authSession;
-        $this->storeManager = $storeManager;
-        $this->pageUrlProvider = $pageUrlProvider;
-        $this->storeDataProvider = $storeDataProvider;
-        $this->design = $design;
-        $this->jsonSerializer = $jsonSerializer;
-        $this->tokenGenerator = $tokenGenerator;
-        $this->authorization = $authorization;
-        $this->themeResolver = $themeResolver;
-        $this->backendSession = $backendSession;
-        $this->scopeFactory = $scopeFactory;
+        $this->request             = $request;
+        $this->pageUrlProvider     = $pageUrlProvider;
+        $this->storeDataProvider   = $storeDataProvider;
+        $this->scopeProvider       = $scopeProvider;
+        $this->authProvider        = $authProvider;
+        $this->permissionsProvider = $permissionsProvider;
+        $this->urlProvider         = $urlProvider;
+        $this->themeProvider       = $themeProvider;
     }
+
+    // =========================================================================
+    // Auth delegation — ToolbarAuthProvider
+    // =========================================================================
 
     /**
      * Admin area doesn't require AccessToken validation —
@@ -139,237 +106,151 @@ class AdminToolbar implements ArgumentInterface
      */
     public function canShow()
     {
-        return $this->authSession->isLoggedIn();
+        return $this->authProvider->canShow();
     }
 
     /**
-     * Get admin username
+     * Get admin username.
      *
      * @return string
      */
     public function getAdminUsername()
     {
-        $user = $this->authSession->getUser();
-        return $user ? $user->getUsername() : __('Admin');
+        return $this->authProvider->getAdminUsername();
     }
 
     /**
-     * Get admin dashboard URL
+     * Get admin user ID.
      *
-     * Respects custom backend frontName from app/etc/env.php.
-     *
-     * @return string
+     * @return int|null
      */
-    public function getAdminUrl()
+    public function getUserId()
     {
-        try {
-            return $this->urlBuilder->getUrl('admin/dashboard/index', ['_nosid' => true]);
-        } catch (\Exception $e) {
-            return $this->urlBuilder->getUrl('admin');
-        }
+        return $this->authProvider->getUserId();
     }
 
     /**
-     * Get current scope ('default'|'websites'|'stores')
-     *
-     * Priority:
-     * 1. BackendSession last used scope (cookie)
-     * 2. Fallback: 'default'
-     *
-     * @return string
-     */
-    public function getScope(): string
-    {
-        $valid = ['default', 'websites', 'stores'];
-
-        $lastScope = (string)$this->backendSession->getScopeType();
-        if (in_array($lastScope, $valid, true)) {
-            return $lastScope;
-        }
-
-        return 'default';
-    }
-
-    /**
-     * Get current scope ID.
-     *
-     * For scope='default'  → 0
-     * For scope='websites' → website_id from session
-     * For scope='stores'   → store_view_id from session
-     *
-     * @return int
-     */
-    public function getScopeId(): int
-    {
-        $scope = $this->getScope();
-
-        if ($scope === 'default') {
-            return 0;
-        }
-
-        // Priority 1: session (cookie)
-        $lastScopeId = (int)$this->backendSession->getScopeId();
-        if ($lastScopeId > 0) {
-            return $lastScopeId;
-        }
-
-        // Fallback — current store
-        if ($scope === 'stores') {
-            try {
-                return (int)$this->storeManager->getStore()->getId();
-            } catch (\Exception $e) {
-                return 1;
-            }
-        }
-
-        // websites fallback — current website
-        try {
-            return (int)$this->storeManager->getWebsite()->getId();
-        } catch (\Exception $e) {
-            return 1;
-        }
-    }
-
-    /**
-     * Get current store ID (legacy helper, kept for iframe preview URL).
-     * Uses session/URL priority chain.
-     *
-     * @return int
-     */
-    public function getStoreId()
-    {
-        // Priority 1: URL parameter ?store=X
-        $storeId = (int) $this->request->getParam('store', 0);
-        if ($storeId > 0) {
-            try {
-                return (int) $this->storeManager->getStore($storeId)->getId();
-            } catch (\Exception $e) {
-                // store not found, fall through
-            }
-        }
-
-        // Priority 2: cookie 'bte_last_store_id' (written by JS scope-selector)
-        $lastStoreId = $this->backendSession->getStoreId();
-        if ($lastStoreId) {
-            try {
-                return (int) $this->storeManager->getStore($lastStoreId)->getId();
-            } catch (\Exception $e) {
-                // store not found, fall through
-            }
-        }
-
-        // Priority 3: fallback
-        try {
-            return (int) $this->storeManager->getStore()->getId();
-        } catch (\Exception $e) {
-            return 1;
-        }
-    }
-
-    /**
-     * Get frontend theme ID for the current scope.
-     *
-     * Uses ThemeResolver::getThemeIdByScope() so that Default and Website
-     * scopes are resolved correctly instead of always reading from store scope.
-     *
-     * @return int
-     */
-    public function getThemeId()
-    {
-        try {
-            $scope = $this->scopeFactory->create($this->getScope(), $this->getScopeId());
-            return $this->themeResolver->getThemeIdByScope($scope);
-        } catch (\Exception $e) {
-            try {
-                return (int)$this->design->getDesignTheme()->getId();
-            } catch (\Exception $e2) {
-                return 0;
-            }
-        }
-    }
-
-    /**
-     * Get scope selector data (flat list, groups, or hierarchical tree)
-     *
-     * @return array
-     */
-    public function getScopeSelectorData()
-    {
-        $mode = $this->storeDataProvider->getSwitchMode();
-
-        if ($mode === 'hierarchical') {
-            return $this->storeDataProvider->getHierarchicalStores();
-        }
-
-        if ($mode === 'groups') {
-            return $this->storeDataProvider->getAvailableGroups();
-        }
-
-        return $this->storeDataProvider->getAvailableStores();
-    }
-
-    /**
-     * Get page selector data
-     *
-     * Returns an array of page type entries with id/title/url/active keys.
-     * No access tokens are appended — admin is already authenticated.
-     *
-     * @return array
-     */
-    public function getPageSelectorData()
-    {
-        $currentFullActionName = $this->request->getFullActionName();
-        $pages = $this->pageUrlProvider->getAvailablePages();
-
-        $result = [];
-        foreach ($pages as $actionName => $data) {
-            $result[] = [
-                'id'     => $actionName,
-                'title'  => (string)$data['title'],
-                'url'    => $data['url'],
-                'active' => $actionName === $currentFullActionName,
-            ];
-        }
-
-        return $result;
-    }
-
-    /**
-     * Get GraphQL endpoint URL (frontend endpoint, not admin-prefixed)
-     *
-     * @return string
-     */
-    public function getGraphqlEndpoint()
-    {
-        try {
-            $baseUrl = $this->storeManager->getStore()->getBaseUrl(
-                \Magento\Framework\UrlInterface::URL_TYPE_WEB
-            );
-            return rtrim($baseUrl, '/') . '/graphql';
-        } catch (\Exception $e) {
-            return '/graphql';
-        }
-    }
-
-    /**
-     * Get Magento admin integration token for GraphQL authentication
-     *
-     * Returns a cached token if still valid, or generates a new one.
-     * Token is valid for 4 hours and cached in Backend Session.
+     * Get Magento admin integration token for GraphQL authentication.
      *
      * @return string|null
      */
     public function getToken(): ?string
     {
-        try {
-            return $this->tokenGenerator->generateForCurrentAdmin();
-        } catch (\Exception $e) {
-            return null;
-        }
+        return $this->authProvider->getToken();
+    }
+
+    // =========================================================================
+    // Permissions delegation — ToolbarPermissionsProvider
+    // =========================================================================
+
+    /**
+     * Check if user has permission to edit theme.
+     *
+     * @return bool
+     */
+    public function canEdit(): bool
+    {
+        return $this->permissionsProvider->canEdit();
     }
 
     /**
-     * Check if jstest mode is enabled
+     * Check if user has permission to publish theme.
+     *
+     * @return bool
+     */
+    public function canPublish(): bool
+    {
+        return $this->permissionsProvider->canPublish();
+    }
+
+    /**
+     * Get user permissions for ACL checks.
+     *
+     * @return array
+     */
+    public function getPermissions()
+    {
+        return $this->permissionsProvider->getPermissions();
+    }
+
+    // =========================================================================
+    // Scope delegation — ToolbarScopeProvider
+    // =========================================================================
+
+    /**
+     * Get current scope ('default'|'websites'|'stores').
+     *
+     * @return string
+     */
+    public function getScope(): string
+    {
+        return $this->scopeProvider->getScope();
+    }
+
+    /**
+     * Get current scope ID.
+     *
+     * @return int
+     */
+    public function getScopeId(): int
+    {
+        return $this->scopeProvider->getScopeId();
+    }
+
+    /**
+     * Get current store ID (legacy helper, kept for iframe preview URL).
+     *
+     * @return int
+     */
+    public function getStoreId()
+    {
+        return $this->scopeProvider->getStoreId();
+    }
+
+    // =========================================================================
+    // URL delegation — ToolbarUrlProvider
+    // =========================================================================
+
+    /**
+     * Get admin dashboard URL.
+     *
+     * @return string
+     */
+    public function getAdminUrl()
+    {
+        return $this->urlProvider->getAdminUrl();
+    }
+
+    /**
+     * Get GraphQL endpoint URL (frontend endpoint, not admin-prefixed).
+     *
+     * @return string
+     */
+    public function getGraphqlEndpoint()
+    {
+        return $this->urlProvider->getGraphqlEndpoint();
+    }
+
+    // =========================================================================
+    // Theme delegation — ToolbarThemeProvider
+    // =========================================================================
+
+    /**
+     * Get frontend theme ID for the current scope.
+     *
+     * @return int
+     */
+    public function getThemeId()
+    {
+        return $this->themeProvider->getThemeId();
+    }
+
+    // =========================================================================
+    // Orchestrator methods — remain in AdminToolbar
+    // =========================================================================
+
+    /**
+     * Check if jstest mode is enabled.
      *
      * @return bool
      */
@@ -379,7 +260,7 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
-     * Derive the current page action name from the iframe URL parameter
+     * Derive the current page action name from the iframe URL parameter.
      *
      * This is an approximation based on URL patterns. For precise detection,
      * use postMessage from the iframe.
@@ -416,69 +297,52 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
-     * Check if user has permission to edit theme
-     *
-     * @return bool
-     */
-    public function canEdit(): bool
-    {
-        return $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_edit');
-    }
-
-    /**
-     * Check if user has permission to publish theme
-     *
-     * @return bool
-     */
-    public function canPublish(): bool
-    {
-        return $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_publish');
-    }
-
-    /**
-     * Get admin user ID
-     *
-     * @return int|null
-     */
-    public function getUserId()
-    {
-        $user = $this->authSession->getUser();
-        return $user ? (int)$user->getId() : null;
-    }
-
-    /**
-     * Get user permissions for ACL checks
+     * Get scope selector data (flat list, groups, or hierarchical tree).
      *
      * @return array
      */
-    public function getPermissions()
+    public function getScopeSelectorData()
     {
-        return [
-            'canView'             => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_view'),
-            'canEdit'             => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_edit'),
-            'canPublish'          => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_publish'),
-            'canRollback'         => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_rollback'),
-            'canResetPublished'   => $this->authorization->isAllowed('Swissup_BreezeThemeEditor::editor_reset_published'),
-        ];
-    }
+        $mode = $this->storeDataProvider->getSwitchMode();
 
-    /**
-     * Get store code for the current preview store (used by JS link interceptor,
-     * page-selector and StorageHelper). Falls back to 'default' on error.
-     *
-     * @return string
-     */
-    private function getStoreCode(): string
-    {
-        try {
-            return $this->storeManager->getStore($this->getStoreId())->getCode();
-        } catch (\Exception $e) {
-            return 'default';
+        if ($mode === 'hierarchical') {
+            return $this->storeDataProvider->getHierarchicalStores();
         }
+
+        if ($mode === 'groups') {
+            return $this->storeDataProvider->getAvailableGroups();
+        }
+
+        return $this->storeDataProvider->getAvailableStores();
     }
 
     /**
-     * Get toolbar configuration array for JavaScript initialization
+     * Get page selector data.
+     *
+     * Returns an array of page type entries with id/title/url/active keys.
+     *
+     * @return array
+     */
+    public function getPageSelectorData()
+    {
+        $currentFullActionName = $this->request->getFullActionName();
+        $pages = $this->pageUrlProvider->getAvailablePages();
+
+        $result = [];
+        foreach ($pages as $actionName => $data) {
+            $result[] = [
+                'id'     => $actionName,
+                'title'  => (string)$data['title'],
+                'url'    => $data['url'],
+                'active' => $actionName === $currentFullActionName,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get toolbar configuration array for JavaScript initialization.
      *
      * @return array
      */
@@ -486,22 +350,22 @@ class AdminToolbar implements ArgumentInterface
     {
         return [
             // ===== Core parameters =====
-            'scope'            => $this->getScope(),
-            'scopeId'          => $this->getScopeId(),
-            'storeId'          => $this->getStoreId(),
-            'storeCode'        => $this->getStoreCode(),
-            'token'            => $this->getToken(),
-            'themeId'          => $this->getThemeId(),
-            'jstest'           => $this->isJstestMode(),
-            'username'         => $this->getAdminUsername(),
-            'adminUrl'         => $this->getAdminUrl(),
-            'graphqlEndpoint'  => $this->getGraphqlEndpoint(),
-            'iframeSelector'   => '#bte-iframe',
+            'scope'           => $this->getScope(),
+            'scopeId'         => $this->getScopeId(),
+            'storeId'         => $this->getStoreId(),
+            'storeCode'       => $this->scopeProvider->getStoreCode(),
+            'token'           => $this->getToken(),
+            'themeId'         => $this->getThemeId(),
+            'jstest'          => $this->isJstestMode(),
+            'username'        => $this->getAdminUsername(),
+            'adminUrl'        => $this->getAdminUrl(),
+            'graphqlEndpoint' => $this->getGraphqlEndpoint(),
+            'iframeSelector'  => '#bte-iframe',
 
             // ===== Permissions (ACL) =====
-            'permissions'      => $this->getPermissions(),
+            'permissions'     => $this->getPermissions(),
 
-            'exitUrl'          => $this->getAdminUrl(),
+            'exitUrl'         => $this->getAdminUrl(),
 
             // ===== Component configurations =====
             'components' => [
@@ -552,9 +416,9 @@ class AdminToolbar implements ArgumentInterface
             'currentPageId' => $this->getCurrentPageId(),
 
             // ===== Publications (loaded via GraphQL at runtime) =====
-            'publications'          => [],
-            'currentPublicationId'  => null,
-            'currentStatus'         => 'DRAFT',
+            'publications'         => [],
+            'currentPublicationId' => null,
+            'currentStatus'        => 'DRAFT',
         ];
     }
 }
