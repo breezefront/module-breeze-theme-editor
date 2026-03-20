@@ -1,6 +1,13 @@
 /**
  * Publication Selector Widget (Admin)
- * Coordinator between Renderer, MetadataLoader, and CSS Manager
+ *
+ * Thin orchestrator: delegates CSS-state logic to CssStateRestorer and all
+ * GraphQL mutation actions to ActionExecutor.  Only coordination code lives
+ * here — rendering, data-loading, event-wiring, and the public API.
+ *
+ * п.3.4 refactoring: extracted helpers
+ *   - publication-selector/css-state-restorer.js
+ *   - publication-selector/action-executor.js
  */
 define([
     'jquery',
@@ -8,21 +15,27 @@ define([
     'mage/translate',
     'text!Swissup_BreezeThemeEditor/template/editor/publication-selector.html',
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/permissions',
-    'Swissup_BreezeThemeEditor/js/editor/utils/ui/error-handler',
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/loading',
-    'Swissup_BreezeThemeEditor/js/editor/css-manager',
-    'Swissup_BreezeThemeEditor/js/graphql/mutations/publish',
-    'Swissup_BreezeThemeEditor/js/graphql/mutations/rollback',
-    'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-draft',
-    'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-published',
-    'Swissup_BreezeThemeEditor/js/graphql/mutations/delete-publication',
-    'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
-    'Swissup_BreezeThemeEditor/js/lib/toastify',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/renderer',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/metadata-loader',
+    'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/css-state-restorer',
+    'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/action-executor',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, widget, $t, template, permissions, errorHandler, loading, cssManager, publishMutation, rollbackMutation, discardDraftMutation, discardPublishedMutation, deletePublicationMutation, PanelState, Toastify, StorageHelper, Renderer, MetadataLoader, Logger) {
+], function (
+    $,
+    widget,
+    $t,
+    template,
+    permissions,
+    loading,
+    StorageHelper,
+    Renderer,
+    MetadataLoader,
+    CssStateRestorer,
+    ActionExecutor,
+    Logger
+) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector');
@@ -45,59 +58,59 @@ define([
         /**
          * Widget initialization
          */
-        _create: function() {
+        _create: function () {
             log.info('Initializing publication selector');
-            
+
             // Get scope and theme IDs
             var config = window.breezeThemeEditorConfig || {};
             this.scope   = config.scope   || this.options.scope   || 'stores';
             this.scopeId = config.scopeId || this.options.scopeId;
             this.themeId = config.themeId || this.options.themeId;
-            
+
             // Initialize modules
             this._initModules();
-            
+
             // Restore state from localStorage
             this._restoreState();
-            
+
             // Initialize CSS Manager
-            this._initCssManager();
-            
+            CssStateRestorer.initCssManager(this);
+
             // Initial render and bind events
             this.renderer.render(this._getState());
             this._applyPermissions();
             this._bindEvents();
             this._bindGlobalEvents();
-            
+
             // Load publications and draft metadata in parallel, render once when both complete
             this._loadInitialData();
-            
+
             // Restore CSS state when ready
-            this._setupCssStateRestoration();
-            
+            CssStateRestorer.setupCssStateRestoration(this);
+
             log.info('Publication selector initialized');
         },
 
         /**
          * Initialize modules (Renderer, MetadataLoader, StorageHelper)
          */
-        _initModules: function() {
+        _initModules: function () {
             // Initialize StorageHelper
             if (this.scopeId && this.themeId) {
                 StorageHelper.init(this.scopeId, this.themeId);
             }
-            
+
             // Initialize Renderer
             this.renderer = Object.create(Renderer).init({
                 element: this.element,
                 templateString: template
             });
-            
+
             // Initialize MetadataLoader
             this.metadataLoader = Object.create(MetadataLoader).init({
-                scope:   this.scope,
-                scopeId: this.scopeId,
-                themeId: this.themeId,
+                scope:    this.scope,
+                scopeId:  this.scopeId,
+                themeId:  this.themeId,
                 pageSize: this.options.publicationsPageSize
             });
         },
@@ -105,153 +118,88 @@ define([
         /**
          * Restore state from localStorage
          */
-        _restoreState: function() {
-            this.options.currentStatus = StorageHelper.getCurrentStatus() || 'DRAFT';
-            this.options.currentPublicationId = StorageHelper.getCurrentPublicationId();
+        _restoreState: function () {
+            this.options.currentStatus          = StorageHelper.getCurrentStatus() || 'DRAFT';
+            this.options.currentPublicationId   = StorageHelper.getCurrentPublicationId();
             this.options.currentPublicationTitle = StorageHelper.getCurrentPublicationTitle();
-            
-            log.debug('State restored from localStorage: status=' + this.options.currentStatus + ' publicationId=' + this.options.currentPublicationId);
-        },
 
-        /**
-         * Initialize CSS Manager
-         */
-        _initCssManager: function() {
-            cssManager.init({
-                scope:   this.scope,
-                scopeId: this.scopeId,
-                themeId: this.themeId,
-                iframeId: 'bte-iframe'
-            });
-        },
-
-        /**
-         * Setup CSS state restoration
-         */
-        _setupCssStateRestoration: function() {
-            var self = this;
-            if (cssManager.isReady()) {
-                this._restoreCssState();
-            } else {
-                $(document).one('bte:cssManagerReady', function() {
-                    self._restoreCssState();
-                });
-            }
-        },
-
-        /**
-         * Restore CSS state from localStorage
-         */
-        _restoreCssState: function() {
-            var self = this;
-            
-            if (this.options.currentStatus === 'PUBLICATION' && this.options.currentPublicationId) {
-                cssManager.switchTo('PUBLICATION', this.options.currentPublicationId).then(function() {
-                    log.info('Restored PUBLICATION mode: ' + self.options.currentPublicationId);
-                }).catch(function(error) {
-                    log.error('Failed to restore publication: ' + error);
-                    self._fallbackToDraft();
-                });
-            } else if (this.options.currentStatus === 'PUBLISHED') {
-                cssManager.switchTo('PUBLISHED').then(function() {
-                    log.info('Restored PUBLISHED mode');
-                }).catch(function(error) {
-                    log.error('Failed to restore published state: ' + error);
-                });
-            } else if (this.options.currentStatus === 'DRAFT') {
-                // Restore DRAFT mode - load draft CSS via GraphQL
-                cssManager.switchTo('DRAFT').then(function() {
-                    log.info('Restored DRAFT mode');
-                }).catch(function(error) {
-                    log.error('Failed to restore draft state: ' + error);
-                });
-            }
-        },
-
-        /**
-         * Fallback to DRAFT if restoration fails
-         */
-        _fallbackToDraft: function() {
-            this.options.currentStatus = 'DRAFT';
-            this.options.currentPublicationId = null;
-            this.options.currentPublicationTitle = null;
-            StorageHelper.setCurrentStatus('DRAFT');
-            StorageHelper.clearCurrentPublication();
-            this.renderer.render(this._getState());
-            this._applyPermissions();
+            log.debug('State restored from localStorage: status=' + this.options.currentStatus +
+                ' publicationId=' + this.options.currentPublicationId);
         },
 
         /**
          * Bind UI event handlers
          */
-        _bindEvents: function() {
+        _bindEvents: function () {
             var self = this;
-            
+
             // Toggle dropdown
-            this.element.on('click', '.toolbar-select', function(e) {
+            this.element.on('click', '.toolbar-select', function (e) {
                 e.preventDefault();
                 self._toggleDropdown();
             });
 
             // Switch status (Draft/Published)
-            this.element.on('click', '[data-status]', function(e) {
+            this.element.on('click', '[data-status]', function (e) {
                 e.preventDefault();
-                self._switchStatus($(this).data('status'));
+                CssStateRestorer.switchStatus(self, $(this).data('status'));
             });
 
             // Publish changes
-            this.element.on('click', '[data-action="publish"]', function(e) {
+            this.element.on('click', '[data-action="publish"]', function (e) {
                 e.preventDefault();
-                self._publishChanges();
+                ActionExecutor.publishChanges(self);
             });
 
             // Discard all saved draft changes
-            this.element.on('click', '[data-action="discard-draft"]', function(e) {
+            this.element.on('click', '[data-action="discard-draft"]', function (e) {
                 e.preventDefault();
-                self._discardDraft();
+                ActionExecutor.discardDraft(self);
             });
 
             // Reset all published customizations to theme defaults
-            this.element.on('click', '[data-action="discard-published"]', function(e) {
+            this.element.on('click', '[data-action="discard-published"]', function (e) {
                 e.preventDefault();
-                self._discardPublished();
+                ActionExecutor.discardPublished(self);
             });
 
             // Publish this version (rollback to historical publication)
-            this.element.on('click', '[data-action="rollback"]', function(e) {
+            this.element.on('click', '[data-action="rollback"]', function (e) {
                 e.preventDefault();
                 var $btn = $(this);
-                self._rollbackTo(
+                ActionExecutor.rollbackTo(
+                    self,
                     parseInt($btn.data('publication-id')),
                     $btn.data('publication-title')
                 );
             });
 
             // Load publication (exclude rollback/action buttons that also carry data-publication-id)
-            this.element.on('click', '[data-publication-id]:not([data-action])', function(e) {
+            this.element.on('click', '[data-publication-id]:not([data-action])', function (e) {
                 e.preventDefault();
-                self._loadPublication($(this).data('publication-id'));
+                CssStateRestorer.loadPublication(self, $(this).data('publication-id'));
             });
 
             // Load more publications
-            this.element.on('click', '[data-action="load-more"]', function(e) {
+            this.element.on('click', '[data-action="load-more"]', function (e) {
                 e.preventDefault();
                 self._loadMorePublications();
             });
 
             // Delete a historical publication
-            this.element.on('click', '[data-action="delete-publication"]', function(e) {
+            this.element.on('click', '[data-action="delete-publication"]', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
                 var $btn = $(this);
-                self._deletePublication(
+                ActionExecutor.deletePublication(
+                    self,
                     parseInt($btn.data('publication-id')),
                     $btn.data('publication-title')
                 );
             });
 
             // Close dropdown on outside click
-            $(document).on('click', function(e) {
+            $(document).on('click', function (e) {
                 if (!$(e.target).closest(self.element).length) {
                     self.renderer.closeDropdown();
                 }
@@ -261,34 +209,35 @@ define([
         /**
          * Bind global events
          */
-        _bindGlobalEvents: function() {
+        _bindGlobalEvents: function () {
             var self = this;
-            
+
             // Iframe reloaded → restore CSS state
-            $(document).on('bte:iframeReloaded', function() {
+            $(document).on('bte:iframeReloaded', function () {
                 log.info('Iframe reloaded, restoring CSS state...');
-                self._restoreCssState();
+                CssStateRestorer.restoreCssState(self);
             });
-            
+
             // Switch to Draft when settings panel requests it (user clicked a disabled field)
-            $(document).on('bte:requestSwitchToDraft', function() {
+            $(document).on('bte:requestSwitchToDraft', function () {
                 if (self.options.currentStatus !== 'DRAFT') {
-                    self._switchStatus('DRAFT');
+                    CssStateRestorer.switchStatus(self, 'DRAFT');
                 }
             });
 
             // Draft saved → update changes count
-            $(document).on('themeEditorDraftSaved', function(e, data) {
+            $(document).on('themeEditorDraftSaved', function (e, data) {
                 if (data && typeof data.draftChangesCount !== 'undefined') {
                     self.options.changesCount = data.draftChangesCount;
                     self.renderer.render(self._getState());
                     self._applyPermissions();
                 }
             });
-            
+
             // Scope changed → reload metadata and publications for new scope
-            $(document).on('scopeChanged', function(e, scope, scopeId) {
-                log.info('Scope changed to ' + scope + ':' + scopeId + ', reloading publication selector data...');
+            $(document).on('scopeChanged', function (e, scope, scopeId) {
+                log.info('Scope changed to ' + scope + ':' + scopeId +
+                    ', reloading publication selector data...');
 
                 self.scope   = scope;
                 self.scopeId = scopeId;
@@ -303,12 +252,12 @@ define([
                 StorageHelper.init(scopeId, null);
 
                 // Reset options to a clean state for the new scope
-                self.options.changesCount = 0;
-                self.options.publishedModifiedCount = 0;
-                self.options.publications = [];
-                self.options.currentPublicationId = null;
+                self.options.changesCount            = 0;
+                self.options.publishedModifiedCount  = 0;
+                self.options.publications            = [];
+                self.options.currentPublicationId    = null;
                 self.options.currentPublicationTitle = null;
-                self.options.publicationsPage = 1;
+                self.options.publicationsPage        = 1;
 
                 // Restore status from localStorage for the new scope
                 self.options.currentStatus = StorageHelper.getCurrentStatus() || 'DRAFT';
@@ -321,124 +270,52 @@ define([
             });
 
             // Published → reload publications + reset changes count
-            $(document).on('bte:published', function(e, data) {
-                self.options.currentStatus = 'PUBLISHED';
-                self.options.changesCount = 0;
-                
+            $(document).on('bte:published', function (e, data) {
+                self.options.currentStatus  = 'PUBLISHED';
+                self.options.changesCount   = 0;
+
                 if (data && data.publicationId) {
                     var newPub = {
-                        id: data.publicationId,
+                        id:    data.publicationId,
                         title: 'Publication #' + data.publicationId,
-                        date: new Date().toLocaleString()
+                        date:  new Date().toLocaleString()
                     };
                     self.options.publications.unshift(newPub);
                 }
-                
+
                 self.renderer.render(self._getState());
                 self._applyPermissions();
 
                 // Refresh publishedModifiedCount — PUBLISHED config changed after publish/rollback
-                self.metadataLoader.loadMetadata().then(function(meta) {
+                self.metadataLoader.loadMetadata().then(function (meta) {
                     if (meta) {
                         self.options.publishedModifiedCount = meta.modifiedCount || 0;
                         self.renderer.render(self._getState());
                         self._applyPermissions();
                     }
-                }).catch(function() { /* non-critical, ignore */ });
+                }).catch(function () { /* non-critical, ignore */ });
             });
         },
 
         /**
          * Toggle dropdown visibility
          */
-        _toggleDropdown: function() {
+        _toggleDropdown: function () {
             var $dropdown = this.element.find('.toolbar-dropdown');
             var isVisible = $dropdown.is(':visible');
-            
+
             $('.toolbar-dropdown').not($dropdown).hide();
             $dropdown.toggle();
-            
+
             log.info(isVisible ? 'Closing dropdown' : 'Opening dropdown');
         },
 
         /**
-         * Switch between Draft and Published status
+         * Fall back to DRAFT — thin wrapper so ActionExecutor.deletePublication
+         * and _bindGlobalEvents can call ctx._fallbackToDraft() transparently.
          */
-        _switchStatus: function(status) {
-            if (status === this.options.currentStatus) {
-                log.info('Already in ' + status + ' mode');
-                this.renderer.closeDropdown();
-                return;
-            }
-            
-            var self = this;
-            loading.show(this.element);
-            
-            cssManager.switchTo(status).then(function() {
-                self.options.currentStatus = status;
-                self.options.currentPublicationId = null;
-                self.options.currentPublicationTitle = null;
-                
-                StorageHelper.setCurrentStatus(status);
-                StorageHelper.clearCurrentPublication();
-                
-                self.renderer.render(self._getState());
-                self._applyPermissions();
-                self.renderer.closeDropdown();
-
-                $(document).trigger('publicationStatusChanged', {
-                    status: status,
-                    publicationId: null
-                });
-                log.info('Switched to ' + status);
-                
-                loading.hide(self.element);
-            }).catch(function(error) {
-                log.error('Failed to switch status: ' + error);
-                errorHandler.handle(error, 'switch-status');
-                loading.hide(self.element);
-            });
-        },
-
-        /**
-         * Load a specific publication
-         */
-        _loadPublication: function(publicationId) {
-            var publication = this.metadataLoader.findPublicationById(this.options.publications, publicationId);
-            
-            if (!publication) {
-                log.error('Publication not found: ' + publicationId);
-                return;
-            }
-            
-            var self = this;
-            loading.show(this.element);
-            
-            cssManager.switchTo('PUBLICATION', publicationId).then(function() {
-                self.options.currentStatus = 'PUBLICATION';
-                self.options.currentPublicationId = publicationId;
-                self.options.currentPublicationTitle = publication.title;
-                
-                StorageHelper.setCurrentStatus('PUBLICATION');
-                StorageHelper.setCurrentPublicationId(publicationId);
-                StorageHelper.setCurrentPublicationTitle(publication.title);
-                
-                self.renderer.render(self._getState());
-                self._applyPermissions();
-                self.renderer.closeDropdown();
-                
-                $(document).trigger('publicationStatusChanged', {
-                    status: 'PUBLICATION',
-                    publicationId: publicationId
-                });
-                
-                log.info('Publication loaded: ' + publication.title);
-                loading.hide(self.element);
-            }).catch(function(error) {
-                log.error('Failed to load publication: ' + error);
-                errorHandler.handle(error, 'load-publication');
-                loading.hide(self.element);
-            });
+        _fallbackToDraft: function () {
+            CssStateRestorer.fallbackToDraft(this);
         },
 
         /**
@@ -447,9 +324,9 @@ define([
          * a race condition where two concurrent renders could briefly
          * show stale state.
          */
-        _loadInitialData: function() {
+        _loadInitialData: function () {
             var self = this;
-            var resolved = {pub: false, meta: false, pubData: null, metaData: null};
+            var resolved = { pub: false, meta: false, pubData: null, metaData: null };
 
             function finalize() {
                 if (!resolved.pub || !resolved.meta) {
@@ -458,12 +335,12 @@ define([
 
                 if (resolved.pubData) {
                     self.options.publications = resolved.pubData.items;
-                    self.totalPublications = resolved.pubData.total_count;
-                    self.pageInfo = resolved.pubData.page_info;
+                    self.totalPublications    = resolved.pubData.total_count;
+                    self.pageInfo             = resolved.pubData.page_info;
                 }
 
                 if (resolved.metaData) {
-                    self.options.changesCount = resolved.metaData.draftChangesCount;
+                    self.options.changesCount           = resolved.metaData.draftChangesCount;
                     self.options.publishedModifiedCount = resolved.metaData.modifiedCount || 0;
                 }
 
@@ -472,33 +349,35 @@ define([
 
                 if (resolved.pubData) {
                     self.renderer.updateLoadMoreButton({
-                        publications: self.options.publications,
+                        publications:      self.options.publications,
                         totalPublications: self.totalPublications
                     });
                 }
 
-                log.info('Initial data loaded: ' + (resolved.pubData ? self.options.publications.length : 0) + ' publications, ' + self.options.changesCount + ' changes');
+                log.info('Initial data loaded: ' +
+                    (resolved.pubData ? self.options.publications.length : 0) +
+                    ' publications, ' + self.options.changesCount + ' changes');
             }
 
             this.metadataLoader.loadPublications(1, null)
-                .then(function(data) {
-                    resolved.pub = true;
+                .then(function (data) {
+                    resolved.pub     = true;
                     resolved.pubData = data;
                     finalize();
                 })
-                .catch(function(error) {
+                .catch(function (error) {
                     log.error('Failed to load publications: ' + error);
                     resolved.pub = true;
                     finalize();
                 });
 
             this.metadataLoader.loadMetadata()
-                .then(function(data) {
-                    resolved.meta = true;
+                .then(function (data) {
+                    resolved.meta     = true;
                     resolved.metaData = data;
                     finalize();
                 })
-                .catch(function(error) {
+                .catch(function (error) {
                     log.warn('Could not load draft metadata: ' + error);
                     resolved.meta = true;
                     finalize();
@@ -508,450 +387,64 @@ define([
         /**
          * Load publications from GraphQL (used for Load More pagination)
          */
-        _loadPublications: function() {
+        _loadPublications: function () {
             var self = this;
-            
-            this.metadataLoader.loadPublications(this.options.publicationsPage, null).then(function(data) {
-                if (self.options.publicationsPage === 1) {
-                    self.options.publications = data.items;
-                } else {
-                    self.options.publications = self.options.publications.concat(data.items);
-                }
-                
-                self.totalPublications = data.total_count;
-                self.pageInfo = data.page_info;
-                
-                self.renderer.render(self._getState());
-                self._applyPermissions();
-                
-                // Update Load More button visibility
-                self.renderer.updateLoadMoreButton({
-                    publications: self.options.publications,
-                    totalPublications: self.totalPublications
+
+            this.metadataLoader.loadPublications(this.options.publicationsPage, null)
+                .then(function (data) {
+                    if (self.options.publicationsPage === 1) {
+                        self.options.publications = data.items;
+                    } else {
+                        self.options.publications = self.options.publications.concat(data.items);
+                    }
+
+                    self.totalPublications = data.total_count;
+                    self.pageInfo          = data.page_info;
+
+                    self.renderer.render(self._getState());
+                    self._applyPermissions();
+
+                    // Update Load More button visibility
+                    self.renderer.updateLoadMoreButton({
+                        publications:      self.options.publications,
+                        totalPublications: self.totalPublications
+                    });
+
+                    log.info('Loaded ' + self.options.publications.length +
+                        ' / ' + self.totalPublications + ' publications');
+                })
+                .catch(function (error) {
+                    log.error('Failed to load publications: ' + error);
                 });
-                
-                log.info('Loaded ' + self.options.publications.length + ' / ' + self.totalPublications + ' publications');
-            }).catch(function(error) {
-                log.error('Failed to load publications: ' + error);
-            });
         },
 
         /**
          * Load more publications (pagination)
          */
-        _loadMorePublications: function() {
+        _loadMorePublications: function () {
             if (this.options.publications.length >= this.totalPublications) {
                 log.info('All publications loaded');
                 return;
             }
-            
+
             this.options.publicationsPage++;
             this._loadPublications();
         },
 
         /**
-         * Suggest a publication title based on the most recent publication.
-         *
-         * If the previous title ends with _vN the version number is incremented.
-         * Otherwise _v1 is appended. Returns an empty string when no previous
-         * publication exists.
-         */
-        _suggestPublicationTitle: function () {
-            var publications = this.options.publications;
-
-            if (!publications || !publications.length) {
-                return '';
-            }
-
-            var lastTitle = publications[0].title || '';
-            var match = lastTitle.match(/^(.*?)_v(\d+)$/);
-
-            if (match) {
-                return match[1] + '_v' + (parseInt(match[2], 10) + 1);
-            }
-
-            return lastTitle ? lastTitle + '_v1' : '';
-        },
-
-        /**
-         * Publish draft changes
-         */
-        _publishChanges: function() {
-            if (this.options.changesCount === 0) {
-                Toastify.show('notice', $t('No changes to publish'));
-                return;
-            }
-            
-            if (!permissions.canPublish()) {
-                errorHandler.handle({
-                    message: permissions.getPermissionMessage('publish')
-                }, 'publish-draft');
-                return;
-            }
-            
-            if (!this._confirmUnsavedChanges()) {
-                return;
-            }
-            
-            var suggested = this._suggestPublicationTitle();
-            var title = prompt($t('Enter publication title:'), suggested);
-            if (!title || !title.trim()) {
-                return;
-            }
-
-            this._executePublish(title.trim());
-        },
-
-        /**
-         * Check unsaved changes and confirm with user
-         */
-        _confirmUnsavedChanges: function() {
-            var hasUnsaved = PanelState.hasChanges();
-            if (!hasUnsaved) {
-                return true;
-            }
-            
-            var unsavedCount = PanelState.getChangesCount();
-            var message = $t('You have %1 unsaved change(s).\n\nPublish will ignore them. Continue?')
-                .replace('%1', unsavedCount);
-            
-            return confirm(message);
-        },
-
-        /**
-         * Execute publish mutation
-         */
-        _executePublish: function(title) {
-            var self = this;
-            
-            loading.show(this.element);
-            
-            publishMutation(
-                this.scope,
-                parseInt(this.scopeId),
-                title,
-                null,
-                false
-            ).then(function(response) {
-                if (response && response.publishBreezeThemeEditor && response.publishBreezeThemeEditor.success) {
-                    var result = response.publishBreezeThemeEditor;
-                    
-                    self.options.currentStatus = 'PUBLISHED';
-                    self.options.changesCount = 0;
-                    self.renderer.render(self._getState());
-                    self._applyPermissions();
-                    
-                    Toastify.show('success', $t('Published successfully: %1').replace('%1', title));
-                    
-                    $(document).trigger('bte:published', {
-                        publication: result.publication,
-                        scope:   self.scope,
-                        scopeId: self.scopeId,
-                        themeId: self.themeId
-                    });
-                    
-                    self.renderer.closeDropdown();
-                    self.options.publicationsPage = 1;
-                    self._loadPublications();
-                } else {
-                    self._onPublishError(response.publishBreezeThemeEditor.message || 'Publish failed');
-                }
-                loading.hide(self.element);
-            }).catch(function(error) {
-                self._onPublishError(error.message || 'Unknown error');
-                loading.hide(self.element);
-            });
-        },
-
-        /**
-         * Handle publish error
-         */
-        _onPublishError: function(message) {
-            Toastify.show('error', $t('Publish failed: %1').replace('%1', message));
-            errorHandler.handle({ message: message }, 'publish-draft');
-        },
-
-        /**
-         * Discard all saved draft changes after confirmation
-         */
-        _discardDraft: function() {
-            if (this.options.changesCount === 0) {
-                return;
-            }
-
-            var message = $t('Discard all %1 draft changes? This cannot be undone.')
-                .replace('%1', this.options.changesCount);
-
-            if (!confirm(message)) {
-                return;
-            }
-
-            var self = this;
-            loading.show(this.element);
-
-            discardDraftMutation(
-                this.scope,
-                parseInt(this.scopeId),
-                null
-            ).then(function(response) {
-                if (response && response.discardBreezeThemeEditorDraft && response.discardBreezeThemeEditorDraft.success) {
-                    self.options.changesCount = 0;
-                    self.renderer.render(self._getState());
-                    self._applyPermissions();
-
-                    Toastify.show('success', $t('Draft changes discarded'));
-
-                    $(document).trigger('bte:draftDiscarded', {
-                        scope:   self.scope,
-                        scopeId: self.scopeId,
-                        themeId: self.themeId
-                    });
-
-                    self.renderer.closeDropdown();
-                } else {
-                    var errMsg = (response && response.discardBreezeThemeEditorDraft && response.discardBreezeThemeEditorDraft.message)
-                        ? response.discardBreezeThemeEditorDraft.message
-                        : 'Discard failed';
-                    Toastify.show('error', $t('Discard failed: %1').replace('%1', errMsg));
-                    errorHandler.handle({ message: errMsg }, 'discard-draft');
-                }
-                loading.hide(self.element);
-            }).catch(function(error) {
-                var errMsg = error.message || 'Unknown error';
-                Toastify.show('error', $t('Discard failed: %1').replace('%1', errMsg));
-                errorHandler.handle({ message: errMsg }, 'discard-draft');
-                loading.hide(self.element);
-            });
-        },
-
-        /**
-         * Reset all published customizations to theme defaults after confirmation
-         */
-        _discardPublished: function() {
-            if (this.options.publishedModifiedCount === 0) {
-                return;
-            }
-
-            var message = $t(
-                'This will reset %1 customized fields to theme defaults on the live site.\n\nThis cannot be undone.'
-            ).replace('%1', this.options.publishedModifiedCount);
-
-            if (!confirm(message)) {
-                return;
-            }
-
-            this._executeDiscardPublished();
-        },
-
-        /**
-         * Execute discardBreezeThemeEditorPublished GraphQL mutation
-         */
-        _executeDiscardPublished: function() {
-            var self = this;
-            loading.show(this.element);
-
-            discardPublishedMutation(
-                this.scope,
-                parseInt(this.scopeId)
-            ).then(function(response) {
-                if (response && response.discardBreezeThemeEditorPublished && response.discardBreezeThemeEditorPublished.success) {
-                    self.options.publishedModifiedCount = 0;
-
-                    // Reset localStorage state to PUBLISHED (clear any active PUBLICATION)
-                    // so that after page reload the editor does not re-apply a stale
-                    // publication CSS layer that shows the old (now discarded) values.
-                    StorageHelper.setCurrentStatus('PUBLISHED');
-                    StorageHelper.clearCurrentPublication();
-                    self.options.currentStatus = 'PUBLISHED';
-                    self.options.currentPublicationId = null;
-                    self.options.currentPublicationTitle = null;
-
-                    self.renderer.render(self._getState());
-                    self._applyPermissions();
-
-                    Toastify.show('success', $t('Published customizations reset to defaults'));
-
-                    $(document).trigger('bte:publishedDiscarded', {
-                        scope:   self.scope,
-                        scopeId: self.scopeId,
-                        themeId: self.themeId
-                    });
-
-                    self.renderer.closeDropdown();
-                } else {
-                    var errMsg = (response && response.discardBreezeThemeEditorPublished && response.discardBreezeThemeEditorPublished.message)
-                        ? response.discardBreezeThemeEditorPublished.message
-                        : 'Reset failed';
-                    Toastify.show('error', $t('Reset failed: %1').replace('%1', errMsg));
-                    errorHandler.handle({ message: errMsg }, 'discard-published');
-                }
-                loading.hide(self.element);
-            }).catch(function(error) {
-                var errMsg = error.message || 'Unknown error';
-                Toastify.show('error', $t('Reset failed: %1').replace('%1', errMsg));
-                errorHandler.handle({ message: errMsg }, 'discard-published');
-                loading.hide(self.element);
-            });
-        },
-
-        /**
-         * Initiate "Publish this version" flow for a historical publication
-         */
-        _rollbackTo: function(publicationId, publicationTitle) {
-            if (!permissions.canRollback()) {
-                errorHandler.handle({
-                    message: permissions.getPermissionMessage('rollback')
-                }, 'rollback');
-                return;
-            }
-
-            // Warn about unsaved draft changes — rollback will discard them
-            if (this.options.changesCount > 0 || PanelState.hasChanges()) {
-                var unsavedCount = PanelState.hasChanges() ? PanelState.getChangesCount() : 0;
-                var draftCount   = this.options.changesCount;
-
-                var message = $t(
-                    'Publishing this version will discard your current draft.\n\n' +
-                    '%1 saved draft change(s) and %2 unsaved change(s) will be lost.\n\n' +
-                    'Continue?'
-                ).replace('%1', draftCount).replace('%2', unsavedCount);
-
-                if (!confirm(message)) {
-                    return;
-                }
-            }
-
-            var defaultTitle = $t('Restoring: %1').replace('%1', publicationTitle);
-            var title = prompt($t('Enter a title for this restore:'), defaultTitle);
-            if (!title || !title.trim()) {
-                return;
-            }
-
-            this._executeRollback(publicationId, title.trim());
-        },
-
-        /**
-         * Execute rollback GraphQL mutation
-         *
-         * @param {Number} publicationId
-         * @param {String} title
-         */
-        _executeRollback: function(publicationId, title) {
-            var self = this;
-
-            loading.show(this.element);
-
-            rollbackMutation(publicationId, title, null)
-                .then(function(response) {
-                    if (response && response.rollbackBreezeThemeEditor && response.rollbackBreezeThemeEditor.success) {
-                        var result = response.rollbackBreezeThemeEditor;
-
-                        self.options.currentStatus = 'PUBLISHED';
-                        self.options.changesCount  = 0;
-                        self.renderer.render(self._getState());
-                        self._applyPermissions();
-
-                        Toastify.show('success', $t('Published: %1').replace('%1', title));
-
-                        $(document).trigger('bte:published', {
-                            publication: result.publication,
-                            scope:   self.scope,
-                            scopeId: self.scopeId,
-                            themeId: self.themeId,
-                            isRollback: true
-                        });
-
-                        self.renderer.closeDropdown();
-                        self.options.publicationsPage = 1;
-                        self._loadPublications();
-                    } else {
-                        var errMsg = (response && response.rollbackBreezeThemeEditor && response.rollbackBreezeThemeEditor.message)
-                            ? response.rollbackBreezeThemeEditor.message
-                            : 'Publish failed';
-                        Toastify.show('error', $t('Publish failed: %1').replace('%1', errMsg));
-                        errorHandler.handle({ message: errMsg }, 'rollback');
-                    }
-                    loading.hide(self.element);
-                })
-                .catch(function(error) {
-                    var errMsg = error.message || 'Unknown error';
-                    Toastify.show('error', $t('Publish failed: %1').replace('%1', errMsg));
-                    errorHandler.handle({ message: errMsg }, 'rollback');
-                    loading.hide(self.element);
-                });
-        },
-
-        /**
-         * Delete a historical publication after confirmation
-         */
-        _deletePublication: function(publicationId, publicationTitle) {
-            var message = $t('Delete "%1"? This cannot be undone.')
-                .replace('%1', publicationTitle || ('#' + publicationId));
-
-            if (!confirm(message)) {
-                return;
-            }
-
-            var self = this;
-            loading.show(this.element);
-
-            deletePublicationMutation(publicationId)
-                .then(function(response) {
-                    var result = response && response.deleteBreezeThemeEditorPublication;
-
-                    if (result && result.success) {
-                        // Remove from local list
-                        self.options.publications = self.options.publications.filter(function(pub) {
-                            return pub.id !== publicationId;
-                        });
-
-                        // If we were viewing the deleted publication, fall back to DRAFT
-                        if (self.options.currentStatus === 'PUBLICATION' &&
-                                self.options.currentPublicationId === publicationId) {
-                            self._fallbackToDraft();
-                        } else {
-                            self.renderer.render(self._getState());
-                            self._applyPermissions();
-                            self.renderer.updateLoadMoreButton({
-                                publications: self.options.publications,
-                                totalPublications: self.totalPublications ? self.totalPublications - 1 : 0
-                            });
-                        }
-
-                        if (self.totalPublications) {
-                            self.totalPublications--;
-                        }
-
-                        Toastify.show('success', $t('Publication deleted'));
-                    } else {
-                        var errMsg = (result && result.message) ? result.message : 'Delete failed';
-                        Toastify.show('error', $t('Delete failed: %1').replace('%1', errMsg));
-                        errorHandler.handle({ message: errMsg }, 'delete-publication');
-                    }
-                    loading.hide(self.element);
-                })
-                .catch(function(error) {
-                    var errMsg = error.message || 'Unknown error';
-                    Toastify.show('error', $t('Delete failed: %1').replace('%1', errMsg));
-                    errorHandler.handle({ message: errMsg }, 'delete-publication');
-                    loading.hide(self.element);
-                });
-        },
-
-        /**
          * Apply ACL permissions to UI
          */
-        _applyPermissions: function() {
-            var $publishBtn = this.element.find('[data-action="publish"]');
-            var $rollbackBtns = this.element.find('[data-action="rollback"]');
+        _applyPermissions: function () {
+            var $publishBtn        = this.element.find('[data-action="publish"]');
+            var $rollbackBtns      = this.element.find('[data-action="rollback"]');
             var $resetPublishedBtn = this.element.find('[data-action="discard-published"]');
-            
+
             if ($publishBtn.length && !permissions.canPublish()) {
                 permissions.applyToElement($publishBtn, 'publish');
             }
-            
+
             if ($rollbackBtns.length && !permissions.canRollback()) {
-                $rollbackBtns.each(function() {
+                $rollbackBtns.each(function () {
                     permissions.applyToElement($(this), 'rollback');
                 });
             }
@@ -964,33 +457,33 @@ define([
         /**
          * Get current state object
          */
-        _getState: function() {
+        _getState: function () {
             return {
-                status: this.options.currentStatus,
-                currentPublicationId: this.options.currentPublicationId,
+                status:                  this.options.currentStatus,
+                currentPublicationId:    this.options.currentPublicationId,
                 currentPublicationTitle: this.options.currentPublicationTitle,
-                publications: this.options.publications,
-                totalPublications: this.totalPublications || 0,
-                changesCount: this.options.changesCount,
-                publishedModifiedCount: this.options.publishedModifiedCount,
-                canPublish: permissions.canPublish() && 
-                           this.options.changesCount > 0 && 
-                           this.options.currentStatus === 'DRAFT',
-                canRollback: permissions.canRollback(),
-                canResetPublished: permissions.canResetPublished && permissions.canResetPublished(),
-                canDeletePublication: permissions.canPublish(),
-                activePublicationId: this.options.publications.length > 0
+                publications:            this.options.publications,
+                totalPublications:       this.totalPublications || 0,
+                changesCount:            this.options.changesCount,
+                publishedModifiedCount:  this.options.publishedModifiedCount,
+                canPublish:              permissions.canPublish() &&
+                                         this.options.changesCount > 0 &&
+                                         this.options.currentStatus === 'DRAFT',
+                canRollback:             permissions.canRollback(),
+                canResetPublished:       permissions.canResetPublished && permissions.canResetPublished(),
+                canDeletePublication:    permissions.canPublish(),
+                activePublicationId:     this.options.publications.length > 0
                     ? this.options.publications[0].id
                     : null
             };
         },
 
-        // ============ Public API ============
+        // ===================== Public API =====================
 
         /**
          * Update changes count
          */
-        updateChangesCount: function(count) {
+        updateChangesCount: function (count) {
             this.options.changesCount = count;
             this.renderer.render(this._getState());
             this._applyPermissions();
@@ -999,7 +492,7 @@ define([
         /**
          * Set publication status
          */
-        setStatus: function(status) {
+        setStatus: function (status) {
             this.options.currentStatus = status;
             this.renderer.render(this._getState());
             this._applyPermissions();
@@ -1008,7 +501,7 @@ define([
         /**
          * Add publication to list
          */
-        addPublication: function(publication) {
+        addPublication: function (publication) {
             this.options.publications.unshift(publication);
             this.renderer.render(this._getState());
             this._applyPermissions();

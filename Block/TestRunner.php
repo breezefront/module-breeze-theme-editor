@@ -223,6 +223,10 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/toolbar-toggle-test',
             // Highlight Toggle Widget Tests (7 tests) - _toggleHighlight/active-class/event
             'Swissup_BreezeThemeEditor/js/test/tests/highlight-toggle-test',
+            // ActionExecutor Pure Logic Tests (п.3.4 pre-work) — suggestTitle/mutationCheck/guards/transitions
+            'Swissup_BreezeThemeEditor/js/test/tests/action-executor-test',
+            // CssStateRestorer Pure Logic Tests (п.3.4 pre-work) — determineCssMode/fallback/switchGuards
+            'Swissup_BreezeThemeEditor/js/test/tests/css-state-restorer-test',
         ];
     }
 }
