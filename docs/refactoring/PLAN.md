@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 19 / 107 завершено
+**Статус виконання:** 20 / 107 завершено
 
 ---
 
@@ -305,7 +305,7 @@
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/publication-selector.js`
 - **Проблема:** Керує: публікацією, відкатом, відхиленням чернетки, відхиленням опублікованого, видаленням публікації, відновленням CSS-стану, пагінацією, змінами scope, перевіркою дозволів, відображенням помилок.
 - **Пріоритет:** 🟠 High
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — оркестратор 512 рядків; витягнуті `css-state-restorer.js` (255 рядків) та `action-executor.js` (494 рядки)
 
 ### 3.5 `AbstractConfigResolver` — наближається до God abstract class (363 рядки)
 - **Файл:** `Model/Resolver/Query/AbstractConfigResolver.php`
@@ -859,8 +859,8 @@
 ### Крок 4 — God classes (великі рефакторинги)
 15. `[x]` **п. 3.1** — Декомпозиція `CssGenerator` — коміт `389b3b1`
 16. `[x]` **п. 3.2** — Декомпозиція `AdminToolbar` ViewModel — коміт `98545c1`
-17. `[ ]` **п. 3.3** — Декомпозиція `settings-editor.js`
-18. `[ ]` **п. 3.4** — Декомпозиція `publication-selector.js`
+17. `[x]` **п. 3.3** — Декомпозиція `settings-editor.js` — коміти `b9dad47`, `709c593`, `cb7c148`
+18. `[x]` **п. 3.4** — Декомпозиція `publication-selector.js` — коміт `d4700ec`
 
 ### Крок 5 — Missing abstractions + Magic strings
 19. `[ ]` **п. 6.2** — `StatusCode` enum/constants
