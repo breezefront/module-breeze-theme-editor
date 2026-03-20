@@ -550,6 +550,30 @@ define([
         },
 
         /**
+         * Suggest a publication title based on the most recent publication.
+         *
+         * If the previous title ends with _vN the version number is incremented.
+         * Otherwise _v1 is appended. Returns an empty string when no previous
+         * publication exists.
+         */
+        _suggestPublicationTitle: function () {
+            var publications = this.options.publications;
+
+            if (!publications || !publications.length) {
+                return '';
+            }
+
+            var lastTitle = publications[0].title || '';
+            var match = lastTitle.match(/^(.*?)_v(\d+)$/);
+
+            if (match) {
+                return match[1] + '_v' + (parseInt(match[2], 10) + 1);
+            }
+
+            return lastTitle ? lastTitle + '_v1' : '';
+        },
+
+        /**
          * Publish draft changes
          */
         _publishChanges: function() {
@@ -569,11 +593,12 @@ define([
                 return;
             }
             
-            var title = prompt($t('Enter publication title:'));
+            var suggested = this._suggestPublicationTitle();
+            var title = prompt($t('Enter publication title:'), suggested);
             if (!title || !title.trim()) {
                 return;
             }
-            
+
             this._executePublish(title.trim());
         },
 
