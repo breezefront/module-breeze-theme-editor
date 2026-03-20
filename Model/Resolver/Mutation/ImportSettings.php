@@ -11,6 +11,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Import settings from JSON
@@ -46,7 +47,7 @@ class ImportSettings extends AbstractMutationResolver
             ? (int)$input['themeId']
             : $this->themeResolver->getThemeIdByScope($scope);
 
-        $statusCode = $input['status'] ?? 'DRAFT';
+        $statusCode = $input['status'] ?? StatusCode::DRAFT;
         $jsonData = $input['jsonData'];
         $overwriteExisting = $input['overwriteExisting'] ?? true;
 

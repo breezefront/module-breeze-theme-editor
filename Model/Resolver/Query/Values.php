@@ -14,6 +14,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractQueryResolver;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Get only values (without config structure)
@@ -48,7 +49,7 @@ class Values extends AbstractQueryResolver
             ? (int)$args['themeId']
             : $this->themeResolver->getThemeIdByScope($scope);
 
-        $statusCode = $args['status'] ?? 'PUBLISHED';
+        $statusCode = $args['status'] ?? StatusCode::PUBLISHED;
         $sectionCodes = $args['sectionCodes'] ?? null;
 
         // Validate: PUBLICATION not supported for this query
@@ -61,7 +62,7 @@ class Values extends AbstractQueryResolver
         // Отримати userId з токена
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        if ($statusCode === 'DRAFT' && !$userId) {
+        if ($statusCode === StatusCode::DRAFT && !$userId) {
             throw new GraphQlAuthorizationException(__('Authorization required'));
         }
 
@@ -69,10 +70,10 @@ class Values extends AbstractQueryResolver
 
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row still return the published value, not the theme default.
-        if ($statusCode === 'PUBLISHED') {
+        if ($statusCode === StatusCode::PUBLISHED) {
             $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope, $statusId, null);
         } else {
-            $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
+            $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
             $values = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
                 $themeId,
                 $scope,

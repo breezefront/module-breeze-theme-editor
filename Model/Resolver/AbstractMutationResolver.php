@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Resolver;
 
 use Swissup\BreezeThemeEditor\Api\GraphQL\ResolverInterface;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Abstract base class for all BreezeThemeEditor Mutation resolvers
@@ -54,7 +55,7 @@ abstract class AbstractMutationResolver implements ResolverInterface
      */
     protected function getDraftUserId(array $params): ?int
     {
-        return $params['statusCode'] === 'DRAFT' ? (int)$params['userId'] : null;
+        return $params['statusCode'] === StatusCode::DRAFT ? (int)$params['userId'] : null;
     }
 
     /**
@@ -66,6 +67,6 @@ abstract class AbstractMutationResolver implements ResolverInterface
      */
     protected function getDraftUserIdForSave(array $params): int
     {
-        return $params['statusCode'] === 'DRAFT' ? (int)$params['userId'] : 0;
+        return $params['statusCode'] === StatusCode::DRAFT ? (int)$params['userId'] : 0;
     }
 }

@@ -6,6 +6,7 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 class CopyFromStore extends AbstractSaveMutation
 {
@@ -33,7 +34,7 @@ class CopyFromStore extends AbstractSaveMutation
         // Використати базовий метод для target scope
         $params = $this->prepareBaseParams([
             'scope'   => ['type' => $toScopeType, 'scopeId' => $toScopeId],
-            'status'  => $input['status'] ?? 'DRAFT'
+            'status'  => $input['status'] ?? StatusCode::DRAFT
         ], $context);
 
         // Визначити themeId для source scope
@@ -41,7 +42,7 @@ class CopyFromStore extends AbstractSaveMutation
         $fromThemeId = $this->themeResolver->getThemeIdByScope($fromScopeVO);
 
         // Копіювати published values з source scope через ValueService
-        $fromStatusId = $this->statusProvider->getStatusId('PUBLISHED');
+        $fromStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
 
         $copiedCount = $this->valueService->copyValues(
             $fromThemeId,

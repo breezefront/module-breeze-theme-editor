@@ -20,6 +20,7 @@ use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Get theme configuration with current values
@@ -71,7 +72,7 @@ class Config extends AbstractConfigResolver
         }
 
         // 4. Визначити статус
-        $statusCode = $args['status'] ?? 'PUBLISHED';
+        $statusCode = $args['status'] ?? StatusCode::PUBLISHED;
 
         // Validate: PUBLICATION not supported for this query
         if ($statusCode === 'PUBLICATION') {
@@ -92,10 +93,10 @@ class Config extends AbstractConfigResolver
         // 6. Отримати збережені значення через InheritanceResolver
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row still display the published value, not the theme default.
-        if ($statusCode === 'PUBLISHED') {
+        if ($statusCode === StatusCode::PUBLISHED) {
             $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope, $statusId, null);
         } else {
-            $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
+            $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
             $savedValues = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
                 $themeId,
                 $scope,
@@ -137,7 +138,7 @@ class Config extends AbstractConfigResolver
         }
 
         // 11. Якщо draft - перевірити зміни
-        if ($statusCode === 'DRAFT') {
+        if ($statusCode === StatusCode::DRAFT) {
             $comparison = $this->compareProvider->compare($themeId, $scope, $userId);
             $metadata['hasUnpublishedChanges'] = $comparison['hasChanges'];
             $metadata['draftChangesCount'] = $comparison['changesCount'];

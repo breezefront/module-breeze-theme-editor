@@ -10,6 +10,7 @@ use Swissup\BreezeThemeEditor\Model\Service\CssGenerator;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Helper\Data as HelperData;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 class ThemeCssVariables implements ArgumentInterface
 {
@@ -38,7 +39,7 @@ class ThemeCssVariables implements ArgumentInterface
             $themeId = $this->themeResolver->getThemeIdByStoreId($storeId);
 
             $scope = $this->scopeFactory->create('stores', $storeId);
-            return $this->cssGenerator->generate($themeId, $scope, 'PUBLISHED');
+            return $this->cssGenerator->generate($themeId, $scope, StatusCode::PUBLISHED);
         } catch (\Exception $e) {
             return "/* Breeze Theme Editor: Error generating CSS - {$e->getMessage()} */";
         }

@@ -7,6 +7,8 @@ use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
+use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Resolves palette color references to actual color values
@@ -17,7 +19,8 @@ class PaletteResolver
     public function __construct(
         private ConfigProvider $configProvider,
         private ValueInheritanceResolver $valueInheritanceResolver,
-        private PaletteProvider $paletteProvider
+        private PaletteProvider $paletteProvider,
+        private StatusProvider $statusProvider
     ) {}
 
     /**
@@ -69,7 +72,7 @@ class PaletteResolver
         $result = $this->valueInheritanceResolver->resolveSingleValue(
             $themeId,
             $scope,
-            1, // statusId = 1 (PUBLISHED)
+            $this->statusProvider->getStatusId(StatusCode::PUBLISHED),
             '_palette',
             $cssVar,
             null  // userId (null = published/global values)

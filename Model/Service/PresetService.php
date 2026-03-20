@@ -8,6 +8,7 @@ use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 class PresetService
 {
@@ -94,7 +95,7 @@ class PresetService
         }
 
         $statusId = $this->statusProvider->getStatusId($statusCode);
-        $userIdForSave = ($statusCode === 'PUBLISHED') ? 0 : $userId;
+        $userIdForSave = ($statusCode === StatusCode::PUBLISHED) ? 0 : $userId;
 
         // Create ValueInterface models
         $models = [];

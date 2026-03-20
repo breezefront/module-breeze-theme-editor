@@ -12,6 +12,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Export settings as JSON
@@ -56,7 +57,7 @@ class ExportSettings extends AbstractMutationResolver
             ? (int)$args['themeId']
             : $this->themeResolver->getThemeIdByScope($scope);
 
-        $statusCode = $args['status'] ?? 'PUBLISHED';
+        $statusCode = $args['status'] ?? StatusCode::PUBLISHED;
         
         // Validate: PUBLICATION not supported for export
         if ($statusCode === 'PUBLICATION') {

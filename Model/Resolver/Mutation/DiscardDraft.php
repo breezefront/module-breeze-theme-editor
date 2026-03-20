@@ -11,6 +11,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Discard draft changes
@@ -46,7 +47,7 @@ class DiscardDraft extends AbstractMutationResolver
         $fieldCodes   = $args['fieldCodes']   ?? null;
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
+        $draftStatusId = $this->statusProvider->getStatusId(StatusCode::DRAFT);
 
         // Видалити draft значення через ValueService
         $discardedCount = $this->valueService->deleteValues(

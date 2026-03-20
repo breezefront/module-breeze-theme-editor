@@ -15,6 +15,7 @@ use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\PublicationFactory;
 use Swissup\BreezeThemeEditor\Model\ChangelogFactory;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 class PublishService
 {
@@ -45,8 +46,8 @@ class PublishService
             throw new LocalizedException(__('No changes to publish'));
         }
 
-        $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
-        $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
+        $draftStatusId = $this->statusProvider->getStatusId(StatusCode::DRAFT);
+        $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
 
         // Load all draft values via ValueService
         $draftValues = $this->valueService->getValuesByTheme($themeId, $scope, $draftStatusId, $userId);
@@ -166,8 +167,8 @@ class PublishService
         $publication->setRollbackFrom($publicationId);
         $publication->setChangesCount(count($oldChanges));
 
-        $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
-        $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
+        $draftStatusId = $this->statusProvider->getStatusId(StatusCode::DRAFT);
+        $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
 
         $connection = $this->resourceConnection->getConnection();
         $connection->beginTransaction();

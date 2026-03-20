@@ -9,6 +9,7 @@ use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\Api\SearchCriteriaBuilderFactory;
 use Swissup\BreezeThemeEditor\Model\Service\CssGenerator;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
@@ -55,7 +56,7 @@ class GetCss extends AbstractQueryResolver
         $themeId = $this->themeResolver->getThemeIdByScope($scope);
 
         // 3. Get status (default: PUBLISHED)
-        $status = $args['status'] ?? 'PUBLISHED';
+        $status = $args['status'] ?? StatusCode::PUBLISHED;
 
         // 4. Get publication ID (optional, for PUBLICATION status)
         $publicationId = isset($args['publicationId']) ? (int) $args['publicationId'] : null;

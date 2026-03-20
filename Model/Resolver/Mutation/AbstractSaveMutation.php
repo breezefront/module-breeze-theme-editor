@@ -12,6 +12,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Abstract base class for Save mutations
@@ -47,7 +48,7 @@ abstract class AbstractSaveMutation extends AbstractMutationResolver
             ? (int)$input['themeId']
             : $this->themeResolver->getThemeIdByScope($scope);
 
-        $statusCode = $input['status'] ?? 'DRAFT';
+        $statusCode = $input['status'] ?? StatusCode::DRAFT;
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
         return [

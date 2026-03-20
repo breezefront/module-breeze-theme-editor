@@ -10,6 +10,7 @@ use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Reset all published customizations to theme defaults.
@@ -49,7 +50,7 @@ class DiscardPublished extends AbstractMutationResolver
             ? (int)$args['themeId']
             : $this->themeResolver->getThemeIdByScope($scope);
 
-        $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
+        $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
 
         // Delete all PUBLISHED values (userId=null — published values have no per-user scope)
         $discardedCount = $this->valueService->deleteValues(

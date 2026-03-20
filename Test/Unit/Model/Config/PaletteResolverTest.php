@@ -9,6 +9,7 @@ use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteResolver;
 use Swissup\BreezeThemeEditor\Model\Data\Scope;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 
 class PaletteResolverTest extends TestCase
@@ -17,17 +18,21 @@ class PaletteResolverTest extends TestCase
     private ConfigProvider $configProvider;
     private ValueInheritanceResolver $valueInheritanceResolver;
     private PaletteProvider $paletteProvider;
+    private StatusProvider $statusProvider;
 
     protected function setUp(): void
     {
         $this->configProvider = $this->createMock(ConfigProvider::class);
         $this->valueInheritanceResolver = $this->createMock(ValueInheritanceResolver::class);
         $this->paletteProvider = $this->createMock(PaletteProvider::class);
+        $this->statusProvider = $this->createMock(StatusProvider::class);
+        $this->statusProvider->method('getStatusId')->willReturn(1);
 
         $this->paletteResolver = new PaletteResolver(
             $this->configProvider,
             $this->valueInheritanceResolver,
-            $this->paletteProvider
+            $this->paletteProvider,
+            $this->statusProvider
         );
     }
 

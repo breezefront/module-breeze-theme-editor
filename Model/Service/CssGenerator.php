@@ -10,6 +10,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 use Swissup\BreezeThemeEditor\Model\Service\Css\CssVariableBuilder;
 use Swissup\BreezeThemeEditor\Model\Service\Css\CssFontImportBuilder;
 use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Orchestrates CSS generation from saved theme values.
@@ -38,14 +39,14 @@ class CssGenerator
      * @param string $status 'PUBLISHED' or 'DRAFT'
      * @return string CSS code with :root { ... }
      */
-    public function generate(int $themeId, ScopeInterface $scope, string $status = 'PUBLISHED'): string
+    public function generate(int $themeId, ScopeInterface $scope, string $status = StatusCode::PUBLISHED): string
     {
         $statusId = $this->statusProvider->getStatusId($status);
 
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row are still rendered using the published value.
-        if ($status === 'DRAFT') {
-            $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
+        if ($status === StatusCode::DRAFT) {
+            $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
             $values = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
                 $themeId,
                 $scope,

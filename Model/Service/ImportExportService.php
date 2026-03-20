@@ -10,6 +10,7 @@ use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValidationService;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 class ImportExportService
 {
@@ -33,7 +34,7 @@ class ImportExportService
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
         // Використати ValueService для отримання значень
-        if ($statusCode === 'PUBLISHED') {
+        if ($statusCode === StatusCode::PUBLISHED) {
             $values = $this->valueService->getValuesByTheme($themeId, $scope, $statusId, null);
         } else {
             $values = $this->valueService->getValuesByTheme($themeId, $scope, $statusId, $userId);
@@ -93,7 +94,7 @@ class ImportExportService
         }
 
         $statusId = $this->statusProvider->getStatusId($statusCode);
-        $userIdForSave = ($statusCode === 'PUBLISHED') ? 0 : $userId;
+        $userIdForSave = ($statusCode === StatusCode::PUBLISHED) ? 0 : $userId;
 
         // Конвертувати у ValueInterface[]
         $models = [];

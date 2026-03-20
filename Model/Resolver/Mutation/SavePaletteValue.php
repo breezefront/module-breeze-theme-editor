@@ -14,6 +14,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Save palette color value mutation
@@ -85,7 +86,7 @@ class SavePaletteValue extends AbstractMutationResolver
         $valueModel->setThemeId($themeId);
         $valueModel->setScope($scope->getType());
         $valueModel->setStoreId($scope->getScopeId());
-        $valueModel->setStatusId($this->statusProvider->getStatusId('PUBLISHED')); // palette changes are always published
+        $valueModel->setStatusId($this->statusProvider->getStatusId(StatusCode::PUBLISHED)); // palette changes are always published
         $valueModel->setSectionCode('_palette');
         $valueModel->setSettingCode($cssVar);
         $valueModel->setValue($hexValue);

@@ -8,6 +8,7 @@ use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Resolver\Query\PublicationDataTrait;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 class CompareProvider
 {
@@ -24,8 +25,8 @@ class CompareProvider
      */
     public function compare(int $themeId, ScopeInterface $scope, int $userId): array
     {
-        $draftStatusId = $this->statusProvider->getStatusId('DRAFT');
-        $publishedStatusId = $this->statusProvider->getStatusId('PUBLISHED');
+        $draftStatusId = $this->statusProvider->getStatusId(StatusCode::DRAFT);
+        $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
 
         // Отримати draft через ValueService
         $draft = $this->valueService->getValuesByTheme($themeId, $scope, $draftStatusId, $userId);
