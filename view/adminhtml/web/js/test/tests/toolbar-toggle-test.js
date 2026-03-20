@@ -20,9 +20,13 @@ define([
 
     /**
      * Build minimal DOM for the toggle widget.
-     * Returns { $toggleEl, $toolbar, $compactContainer, widget, cleanup }.
+     *
+     * @param {string} id          - Unique prefix for element IDs
+     * @param {string|null} [storedState] - Value to pre-set in StorageHelper before
+     *                                      widget init (null = clear key entirely)
+     * Returns { $toggleEl, $toolbar, $compact, widget, cleanup }.
      */
-    function makeEnv(id) {
+    function makeEnv(id, storedState) {
         var toggleId   = id + '-btn';
         var toolbarId  = id + '-toolbar';
         var compactId  = id + '-compact';
@@ -36,8 +40,11 @@ define([
 
         $('body').append($toolbar).append($toggleEl).append($compact);
 
-        // Clean localStorage before widget initialises so _restoreState is neutral
+        // Set or clear localStorage state BEFORE widget init so _create/_restoreState sees it
         StorageHelper.removeGlobalItem('admin_toolbar_visible');
+        if (storedState !== null && storedState !== undefined) {
+            StorageHelper.setGlobalItem('admin_toolbar_visible', storedState);
+        }
 
         $toggleEl.breezeToolbarToggle({
             toolbarSelector:        '#' + toolbarId,
@@ -153,8 +160,6 @@ define([
         // ====================================================================
 
         '_saveState(true) writes "1" to admin_toolbar_visible': function () {
-            StorageHelper.removeGlobalItem('admin_toolbar_visible');
-
             var env = makeEnv('bte-tt-7');
             env.widget._saveState(true);
 
@@ -166,8 +171,6 @@ define([
         },
 
         '_saveState(false) writes "0" to admin_toolbar_visible': function () {
-            StorageHelper.removeGlobalItem('admin_toolbar_visible');
-
             var env = makeEnv('bte-tt-8');
             env.widget._saveState(false);
 
@@ -185,16 +188,11 @@ define([
         '_restoreState() collapses toolbar when stored state is "0"': function (done) {
             var self = this;
 
-            // Pre-set stored state to hidden
-            StorageHelper.setGlobalItem('admin_toolbar_visible', '0');
+            // Pass '0' to makeEnv so the state is set BEFORE widget init.
+            // _create() calls _restoreState() which internally uses setTimeout(100).
+            var env = makeEnv('bte-tt-9', '0');
 
-            var env = makeEnv('bte-tt-9');
-
-            // Call _restoreState explicitly (widget already called it in _create,
-            // but we need to verify via a fresh call after setting the state)
-            env.widget._restoreState();
-
-            // _restoreState uses setTimeout(100) internally
+            // Wait longer than the internal 100ms delay
             setTimeout(function () {
                 self.assertTrue(env.$toolbar.hasClass('toolbar-collapsed'),
                     'Toolbar should be collapsed when stored state is "0"');
@@ -208,10 +206,8 @@ define([
         '_restoreState() does not collapse toolbar when no state stored': function (done) {
             var self = this;
 
-            StorageHelper.removeGlobalItem('admin_toolbar_visible');
-
+            // Pass no storedState — makeEnv clears the key before widget init
             var env = makeEnv('bte-tt-10');
-            env.widget._restoreState();
 
             setTimeout(function () {
                 self.assertFalse(env.$toolbar.hasClass('toolbar-collapsed'),
