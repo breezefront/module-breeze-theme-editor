@@ -208,6 +208,21 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/toastify-test',
             // SyncFieldsFromChanges F5 Reload Bug Tests (12 tests) — Issues 018 & 019
             'Swissup_BreezeThemeEditor/js/test/tests/sync-fields-from-changes-test',
+            // Utils & Toolbar Unit Tests (п.3.3 pre-work)
+            // Error Handler Tests (13 tests) - _getErrorMessage + _isCritical
+            'Swissup_BreezeThemeEditor/js/test/tests/error-handler-test',
+            // Permissions Tests (19 tests) - getPermissions/canX/applyToElement/shouldHide/getRoleDescription
+            'Swissup_BreezeThemeEditor/js/test/tests/permissions-test',
+            // Loading Utility Tests (12 tests) - show/hide/toggle/isLoading DOM state
+            'Swissup_BreezeThemeEditor/js/test/tests/loading-test',
+            // Cookie Manager Tests (13 tests) - set/get/delete for store + theme preview cookies
+            'Swissup_BreezeThemeEditor/js/test/tests/cookie-manager-test',
+            // Device Switcher Widget Tests (9 tests) - _prepareDevicesData/getDevice/setDevice/_switchDevice
+            'Swissup_BreezeThemeEditor/js/test/tests/device-switcher-test',
+            // Toolbar Toggle Widget Tests (10 tests) - _hideToolbar/_showToolbar/_saveState/_restoreState
+            'Swissup_BreezeThemeEditor/js/test/tests/toolbar-toggle-test',
+            // Highlight Toggle Widget Tests (7 tests) - _toggleHighlight/active-class/event
+            'Swissup_BreezeThemeEditor/js/test/tests/highlight-toggle-test',
         ];
     }
 }
