@@ -117,18 +117,20 @@
 | **Font Palette System** | ✅ Завершено | — |
 | **Multi-scope support** | ✅ Завершено | [features/multi-scope.md](features/multi-scope.md) |
 | **Pickr + opacity** | ✅ Завершено | [features/palette-pickr-opacity.md](features/palette-pickr-opacity.md) |
+| **PHP Settings Reader** | 📋 Планується | [features/php-settings-reader.md](features/php-settings-reader.md) |
 
 ---
 
-## 🐛 Issues — всі закриті
+## 🐛 Issues
 
 **Детально:** [issues/DASHBOARD.md](issues/DASHBOARD.md)
 
-| Категорія | Всього | Закрито |
-|-----------|--------|---------|
-| Bugs | 12 | 12 ✅ |
-| Tasks | 5 | 5 ✅ |
-| **Всього** | **16** | **16 ✅** |
+| Категорія | Всього | Закрито | Відкрито |
+|-----------|--------|---------|---------|
+| Bugs | 14 | 13 ✅ | 0 |
+| Tasks | 8 | 7 ✅ | 1 (css-var) |
+| Без номера | 1 | — | 1 (test-cov) |
+| **Всього** | **23** | **20 ✅** | **3** |
 
 ---
 
@@ -150,9 +152,9 @@ Refactoring:
 🟢 Low          █░░░░░░░░░░░   4/48
 📋 Total        ██░░░░░░░░░░  25/107 (23%)
 
-Issues:        16/16 closed ✅
-PHP Tests:     50 файлів / 512 tests ✅
-JS Tests:      28 spec-файлів ✅
+Issues:        20/23 closed (3 open/deferred)
+PHP Tests:     50 файлів / 710 tests ✅
+JS Tests:      30 spec-файлів / 592 tests ✅
 ```
 
 ---

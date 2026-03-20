@@ -4,7 +4,7 @@
 **Area:** `view/adminhtml/web/js/editor/panel/css-preview-manager.js`,  
           `view/adminhtml/web/js/editor/panel/settings-editor.js`  
 **Type:** Bug  
-**Status:** Open
+**Status:** Closed — `6dab435`
 
 ---
 

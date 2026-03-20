@@ -1,6 +1,6 @@
 # Issues Dashboard
 
-**Updated:** 2026-03-18
+**Updated:** 2026-03-20
 
 ---
 
@@ -8,11 +8,11 @@
 
 | | Count |
 |---|---|
-| Total issues | 16 |
-| Fixed / Closed | 16 |
-| Pending | 0 |
-| Bugs | 12 (all closed) |
-| Tasks | 5 (all done) |
+| Total issues | 22 |
+| Fixed / Closed | 20 |
+| Pending | 2 |
+| Bugs | 14 (13 closed, 1 open) |
+| Tasks | 8 (7 done, 1 pending) |
 
 ---
 
@@ -32,6 +32,8 @@
 | — | Palette sections ignore stored `false` state on reload | `16de0a3` | **Closed** |
 | [014](014-scope-chain-website-id-not-resolved.md) | Scope chain never includes website leg — `websiteId` never passed | `445d55d` | **Closed** |
 | [015](015-css-generator-published-bypasses-scope-chain.md) | `CssGenerator` PUBLISHED branch bypasses scope chain and theme hierarchy | `7013886` | **Closed** |
+| [018](018-f5-color-preview-dot-not-updated.md) | Color preview dot not updated after F5 in DRAFT mode | `6b186d9` | **Closed** |
+| [019](019-f5-save-counter-shows-zero.md) | "Save (0)" and disabled Reset button after F5 in DRAFT mode | `6dab435` | **Closed** |
 
 ---
 
@@ -44,6 +46,17 @@
 | [008](008-icons-for-config-sections.md) | Add icons to config sections | Medium | **Done** — `689c6e3` |
 | [009](009-delete-publication-versions.md) | Delete button for saved publication versions | Medium | **Done** — `71c9351` |
 | [016](016-editor-defaults-to-stores-scope-not-default.md) | Editor opens in `stores` scope instead of `default` | Low | **Done** — `8071f79` |
+| [css-var](css-var-property-transition-incomplete.md) | Incomplete `css_var` → `property` transition (shim cleanup) | Medium | **Open** |
+| [highlight](highlight-toggle-not-implemented.md) | Highlight toggle — button hidden pending Phase 2 implementation | Medium | **Deferred** — `f393219` |
+| [error-log](error-handler-server-logging.md) | Client-side errors not logged server-side (TODO stub) | Low | **Open** |
+
+---
+
+## Undocumented / No Issue Number
+
+| File | Issue | Status |
+|------|-------|--------|
+| [missing-test-coverage.md](missing-test-coverage.md) | Missing test coverage across multiple classes | **Ongoing** |
 
 ---
 

@@ -54,7 +54,22 @@
 
 ## 📊 Пріоритети
 
-Поточні пріоритети сфокусовані на завершенні задачі 006 (light design side columns) та Phase 5 (E2E тестування + release prep).
+Поточні пріоритети: **PHP Settings Reader** (#13) та Phase 5 (E2E тестування + release prep).
+
+---
+
+## 📋 Заплановані Features
+
+### PHP Settings Reader
+📄 [php-settings-reader.md](php-settings-reader.md)
+
+**Статус:** 📋 Планується (GitHub issue #13)
+
+**Що планується:**
+- `View/Helper/BreezeThemeEditor.php` — `get('section/field')`, `is('section/field', 'value')`
+- Автоматичний інжект `$breezeThemeEditor` у всі frontend `.phtml` шаблони через `blockVariables`
+- In-memory кешування per-request
+- Підтримка налаштувань без `property` (PHP-only, без CSS)
 
 ---
 

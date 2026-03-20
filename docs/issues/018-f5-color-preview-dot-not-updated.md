@@ -3,7 +3,7 @@
 **Severity:** Medium  
 **Area:** `view/adminhtml/web/js/editor/panel/css-preview-manager.js`  
 **Type:** Bug  
-**Status:** Open
+**Status:** Closed — `6b186d9`
 
 ---
 
