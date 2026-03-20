@@ -1,7 +1,7 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 2026-03-19  
-**Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 12/94
+**Останнє оновлення:** 2026-03-20  
+**Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 16/94
 
 ---
 
@@ -45,27 +45,30 @@
 ### 🔧 2. Рефакторинг (Code Quality)
 
 **Мета:** Усунення технічної заборгованості після завершення Admin Migration  
-**Статус:** 📋 Заплановано (0 / 94 завершено)  
+**Статус:** 🔄 В процесі (16 / 94 завершено)  
 **Документація:** [`docs/refactoring/PLAN.md`](refactoring/PLAN.md)
 
-| Категорія | Задач | 🔴 | 🟠 | 🟡 | 🟢 | Статус |
-|-----------|-------|----|----|----|----|--------|
-| Мертвий код — баги | 4 | 3 | 1 | — | — | 📋 |
-| Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 📋 |
-| God classes/widgets | 5 | — | 4 | 1 | — | 📋 |
-| Code duplication | 20 | — | 5 | 9 | 6 | 📋 |
-| Magic numbers/strings | 17 | 1 | — | 4 | 12 | 📋 |
-| Missing abstractions | 8 | — | 1 | 7 | — | 📋 |
-| Tight coupling | 9 | — | 2 | 4 | 3 | 📋 |
-| **Всього** | **94** | **5** | **16** | **35** | **38** | **0%** |
+| Категорія | Задач | 🔴 | 🟠 | 🟡 | 🟢 | Виконано |
+|-----------|-------|----|----|----|----|----------|
+| Мертвий код — баги | 4 | 3 | 1 | — | — | ✅ 4/4 |
+| Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 6/31 |
+| God classes/widgets | 5 | — | 4 | 1 | — | 0/5 |
+| Code duplication | 20 | — | 5 | 9 | 6 | 4/20 |
+| Magic numbers/strings | 17 | 1 | — | 4 | 12 | 2/17 |
+| Missing abstractions | 8 | — | 1 | 7 | — | 0/8 |
+| Tight coupling | 9 | — | 2 | 4 | 3 | 0/9 |
+| **Всього** | **94** | **5** | **16** | **35** | **38** | **16/94** |
 
-**Критичні баги (виконати першими):**
-- [ ] `ImportExportService` — key mismatch → GraphQL завжди повертає `null` для imported/skipped
-- [ ] `ValidationService::validateValues()` — type mismatch → валідація не працює при імпорті
-- [ ] `palette-manager.js` — `getDirtyCount()` визначений двічі
-- [ ] `SavePaletteValue.php:86` — `setStatusId(1)` magic integer замість StatusProvider
-- [ ] `Observer/SetThemePreviewCookie` — dead observer logic
-- [ ] `etc/frontend/di.xml:3` — typo `urn: magento` (зайвий пробіл)
+**Завершені кроки:**
+- ✅ Крок 1 — Критичні баги (6/6): пп. 1.1, 1.2, 1.3, 1.4, 2.21, 5.1
+- ✅ Крок 2 — Dead code (5/5 + 1 N/A): пп. 2.1, 2.16, 2.17, 2.18, 2.28 + п. 5.5 (файл видалено)
+- ✅ Крок 3 — High-priority duplication (4/4): пп. 4.1, 4.2, 4.5, 4.7
+
+**Наступний крок — Крок 4: God classes**
+- [ ] п. 3.1 — Декомпозиція `CssGenerator` (~721 рядок)
+- [ ] п. 3.2 — Декомпозиція `AdminToolbar` ViewModel (15 deps, ~560 рядків)
+- [ ] п. 3.3 — Декомпозиція `settings-editor.js` (~1511 рядків)
+- [ ] п. 3.4 — Декомпозиція `publication-selector.js` (~994 рядки)
 
 ---
 
@@ -142,10 +145,10 @@ Admin Migration:
 
 Refactoring:
 🔴 Critical     ████████████   5/5  ✅ Крок 1 завершено
-🟠 High         ██░░░░░░░░░░   4/16 ← (п. 1.4 di.xml, 2.16, 2.28, 2.1)
-🟡 Medium       █░░░░░░░░░░░   2/35 ← (п. 2.17 get-compare + 2.18 get-values)
-🟢 Low          █░░░░░░░░░░░   1/38 ← (п. 5.5 N/A — файл видалено)
-📋 Total        ░░░░░░░░░░░░  12/94
+🟠 High         ██████░░░░░░   6/16 ✅ Кроки 2+3 завершено
+🟡 Medium       █░░░░░░░░░░░   3/35 ← Крок 4 наступний
+🟢 Low          █░░░░░░░░░░░   2/38
+📋 Total        ██░░░░░░░░░░  16/94 (17%)
 
 Issues:        16/16 closed ✅
 PHP Tests:     50 файлів / 512 tests ✅
