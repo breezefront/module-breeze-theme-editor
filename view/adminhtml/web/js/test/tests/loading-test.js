@@ -16,7 +16,7 @@ define([
 
     /** Create a scratch container in the document and return its unique selector */
     function makeContainer(id) {
-        var $el = $('<div id="' + id + '"><button>B</button><input type="text"/></div>');
+        var $el = $('<div id="' + id + '"><button>B</button><input type="text"></div>');
         $('body').append($el);
         return $el;
     }
