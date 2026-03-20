@@ -19,13 +19,13 @@ class CopyFromStore extends AbstractSaveMutation
     ) {
         $input = $args['input'];
 
-        $fromScope   = $input['from']['type']    ?? 'stores';
-        $fromScopeId = (int)($input['from']['scopeId'] ?? 0);
-        $toScopeType = $input['to']['type']      ?? 'stores';
-        $toScopeId   = (int)($input['to']['scopeId']   ?? 0);
+        $fromScopeVO = $this->scopeFactory->fromInput($input['from'] ?? []);
+        $toScopeVO   = $this->scopeFactory->fromInput($input['to']   ?? []);
         $sectionCodes = $input['sectionCodes'] ?? null;
 
-        if ($fromScope === $toScopeType && $fromScopeId === $toScopeId) {
+        if ($fromScopeVO->getType() === $toScopeVO->getType() &&
+            $fromScopeVO->getScopeId() === $toScopeVO->getScopeId()
+        ) {
             throw new GraphQlInputException(
                 __('Cannot copy from the same scope/scopeId')
             );
@@ -33,12 +33,11 @@ class CopyFromStore extends AbstractSaveMutation
 
         // Використати базовий метод для target scope
         $params = $this->prepareBaseParams([
-            'scope'   => ['type' => $toScopeType, 'scopeId' => $toScopeId],
+            'scope'   => $input['to'],
             'status'  => $input['status'] ?? StatusCode::DRAFT
         ], $context);
 
         // Визначити themeId для source scope
-        $fromScopeVO = $this->scopeFactory->create($fromScope, $fromScopeId);
         $fromThemeId = $this->themeResolver->getThemeIdByScope($fromScopeVO);
 
         // Копіювати published values з source scope через ValueService
@@ -81,7 +80,7 @@ class CopyFromStore extends AbstractSaveMutation
 
         return [
             'success' => true,
-            'message' => __('Successfully copied settings from %1/%2 to %3/%4', $fromScope, $fromScopeId, $toScopeType, $toScopeId),
+            'message' => __('Successfully copied settings from %1/%2 to %3/%4', $fromScopeVO->getType(), $fromScopeVO->getScopeId(), $toScopeVO->getType(), $toScopeVO->getScopeId()),
             'values' => $copiedValues,
             'copiedCount' => $copiedCount
         ];

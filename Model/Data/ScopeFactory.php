@@ -16,4 +16,20 @@ class ScopeFactory
     {
         return new Scope($type, $scopeId);
     }
+
+    /**
+     * Build a Scope from a raw GraphQL input array.
+     *
+     * Accepts the sub-array that resolvers receive as $args['scope']:
+     *   ['type' => 'stores', 'scopeId' => 1]
+     *
+     * @param array $data Raw scope input (keys: type, scopeId)
+     */
+    public function fromInput(array $data): ScopeInterface
+    {
+        return $this->create(
+            $data['type'] ?? 'stores',
+            (int) ($data['scopeId'] ?? 0)
+        );
+    }
 }

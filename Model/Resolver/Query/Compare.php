@@ -35,10 +35,7 @@ class Compare extends AbstractQueryResolver
         // Отримати userId з токена
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        $scope = $this->scopeFactory->create(
-            $args['scope']['type'] ?? 'stores',
-            (int)($args['scope']['scopeId'] ?? 0)
-        );
+        $scope = $this->scopeFactory->fromInput($args['scope'] ?? []);
 
         // Auto-detect theme
         $themeId = isset($args['themeId'])

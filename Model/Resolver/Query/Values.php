@@ -39,10 +39,7 @@ class Values extends AbstractQueryResolver
         array $value = null,
         array $args = null
     ) {
-        $scope = $this->scopeFactory->create(
-            $args['scope']['type'] ?? 'stores',
-            (int)($args['scope']['scopeId'] ?? 0)
-        );
+        $scope = $this->scopeFactory->fromInput($args['scope'] ?? []);
 
         // Auto-detect themeId
         $themeId = isset($args['themeId'])

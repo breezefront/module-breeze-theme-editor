@@ -43,6 +43,9 @@ class SavePaletteValueTest extends TestCase
         $this->scopeFactory->method('create')->willReturnCallback(
             fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
         );
+        $this->scopeFactory->method('fromInput')->willReturnCallback(
+            fn(array $data) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($data['type'] ?? 'stores', (int)($data['scopeId'] ?? 0))
+        );
         $this->statusProviderMock = $this->createMock(StatusProvider::class);
         $this->statusProviderMock->method('getStatusId')
             ->with('PUBLISHED')

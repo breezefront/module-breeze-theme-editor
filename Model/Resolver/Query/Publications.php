@@ -41,10 +41,7 @@ class Publications extends AbstractQueryResolver
         array $value = null,
         array $args = null
     ) {
-        $scope = $this->scopeFactory->create(
-            $args['scope']['type'] ?? 'stores',
-            (int)($args['scope']['scopeId'] ?? 0)
-        );
+        $scope = $this->scopeFactory->fromInput($args['scope'] ?? []);
         $themeId = isset($args['themeId'])
             ? (int)$args['themeId']
             : $this->themeResolver->getThemeIdByScope($scope);

@@ -42,10 +42,7 @@ class SavePaletteValue extends AbstractMutationResolver
     ) {
         $input = $args['input'];
 
-        $scope = $this->scopeFactory->create(
-            $input['scope']['type'] ?? 'stores',
-            (int)($input['scope']['scopeId'] ?? 0)
-        );
+        $scope = $this->scopeFactory->fromInput($input['scope'] ?? []);
         $themeId = isset($input['themeId'])
             ? (int)$input['themeId']
             : $this->themeResolver->getThemeIdByScope($scope);

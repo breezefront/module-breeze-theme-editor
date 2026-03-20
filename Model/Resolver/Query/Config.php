@@ -57,10 +57,7 @@ class Config extends AbstractConfigResolver
         $userId = $this->userResolver->getCurrentUserId($context);
 
         // 2. Отримати scope / scopeId
-        $scope = $this->scopeFactory->create(
-            $args['scope']['type'] ?? 'stores',
-            (int)($args['scope']['scopeId'] ?? 0)
-        );
+        $scope = $this->scopeFactory->fromInput($args['scope'] ?? []);
 
         // 3. Визначити theme ID
         try {
