@@ -21,7 +21,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/metadata-loader',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/css-state-restorer',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/action-executor',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function (
     $,
     widget,
@@ -34,16 +35,18 @@ define([
     MetadataLoader,
     CssStateRestorer,
     ActionExecutor,
-    Logger
+    Logger,
+    Constants
 ) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
 
     $.widget('swissup.breezePublicationSelector', {
         options: {
             publications: [],
-            currentStatus: 'DRAFT',
+            currentStatus: PUBLICATION_STATUS.DRAFT,
             changesCount: 0,
             publishedModifiedCount: 0,
             currentPublicationId: null,
@@ -119,7 +122,7 @@ define([
          * Restore state from localStorage
          */
         _restoreState: function () {
-            this.options.currentStatus          = StorageHelper.getCurrentStatus() || 'DRAFT';
+            this.options.currentStatus          = StorageHelper.getCurrentStatus() || PUBLICATION_STATUS.DRAFT;
             this.options.currentPublicationId   = StorageHelper.getCurrentPublicationId();
             this.options.currentPublicationTitle = StorageHelper.getCurrentPublicationTitle();
 
@@ -220,8 +223,8 @@ define([
 
             // Switch to Draft when settings panel requests it (user clicked a disabled field)
             $(document).on('bte:requestSwitchToDraft', function () {
-                if (self.options.currentStatus !== 'DRAFT') {
-                    CssStateRestorer.switchStatus(self, 'DRAFT');
+                if (self.options.currentStatus !== PUBLICATION_STATUS.DRAFT) {
+                    CssStateRestorer.switchStatus(self, PUBLICATION_STATUS.DRAFT);
                 }
             });
 
@@ -260,7 +263,7 @@ define([
                 self.options.publicationsPage        = 1;
 
                 // Restore status from localStorage for the new scope
-                self.options.currentStatus = StorageHelper.getCurrentStatus() || 'DRAFT';
+                self.options.currentStatus = StorageHelper.getCurrentStatus() || PUBLICATION_STATUS.DRAFT;
 
                 self.renderer.render(self._getState());
                 self._applyPermissions();
@@ -271,7 +274,7 @@ define([
 
             // Published → reload publications + reset changes count
             $(document).on('bte:published', function (e, data) {
-                self.options.currentStatus  = 'PUBLISHED';
+                self.options.currentStatus  = PUBLICATION_STATUS.PUBLISHED;
                 self.options.changesCount   = 0;
 
                 if (data && data.publicationId) {
@@ -468,7 +471,7 @@ define([
                 publishedModifiedCount:  this.options.publishedModifiedCount,
                 canPublish:              permissions.canPublish() &&
                                          this.options.changesCount > 0 &&
-                                         this.options.currentStatus === 'DRAFT',
+                                         this.options.currentStatus === PUBLICATION_STATUS.DRAFT,
                 canRollback:             permissions.canRollback(),
                 canResetPublished:       permissions.canResetPublished && permissions.canResetPublished(),
                 canDeletePublication:    permissions.canPublish(),

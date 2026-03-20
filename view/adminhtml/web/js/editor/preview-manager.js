@@ -10,11 +10,13 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/graphql/client',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function($, graphqlClient, getCssQuery, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function($, graphqlClient, getCssQuery, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('preview-manager');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
     
     return {
         /**
@@ -36,7 +38,7 @@ define([
             log.debug('Loading draft CSS for scope=' + scope + ' scopeId=' + scopeId);
             
             // Load CSS from GraphQL using the query function
-            getCssQuery(scope, scopeId, 'DRAFT', null)
+            getCssQuery(scope, scopeId, PUBLICATION_STATUS.DRAFT, null)
                 .then(function(response) {
                 if (response && response.getThemeEditorCss) {
                     var css = response.getThemeEditorCss.css;

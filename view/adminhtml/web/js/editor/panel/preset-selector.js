@@ -7,7 +7,8 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/apply-preset',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function (
     $,
     widget,
@@ -17,11 +18,13 @@ define([
     applyPreset,
     PanelState,
     Toastify,
-    Logger
+    Logger,
+    Constants
 ) {
     'use strict';
 
     var log = Logger.for('panel/preset-selector');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
 
     $.widget('swissup.presetSelector', {
         options: {
@@ -321,7 +324,7 @@ define([
                 this.options.scope,
                 this.options.scopeId,
                 presetId,
-                'DRAFT',
+                PUBLICATION_STATUS.DRAFT,
                 overwrite
             )
                 .then(function (data) {

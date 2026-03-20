@@ -11,14 +11,17 @@
  */
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function (
     $,
-    Logger
+    Logger,
+    Constants
 ) {
     'use strict';
 
     var log = Logger.for('panel/field-editability');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
 
     return {
         /**
@@ -29,7 +32,7 @@ define([
          */
         update: function (ctx) {
             var status = ctx.options.status;
-            var isEditable = (status === 'DRAFT');
+            var isEditable = (status === PUBLICATION_STATUS.DRAFT);
 
             log.debug('Updating fields editability: status=' + status + ' isEditable=' + isEditable);
 
@@ -45,7 +48,7 @@ define([
                 ctx.$saveButton.prop('disabled', true);
                 ctx.$resetButton.prop('disabled', true);
 
-                var mode = status === 'PUBLICATION' ? 'PUBLICATION' : 'PUBLISHED';
+                var mode = status === PUBLICATION_STATUS.PUBLICATION ? 'PUBLICATION' : 'PUBLISHED';
                 log.debug('Fields disabled in ' + mode + ' mode');
             }
         },
@@ -93,7 +96,7 @@ define([
          */
         bindReadOnlyGuard: function (ctx) {
             ctx.element.on('click.readOnlyGuard', function (e) {
-                if (ctx.options.status === 'DRAFT') {
+                if (ctx.options.status === PUBLICATION_STATUS.DRAFT) {
                     return;
                 }
                 if ($(e.target).closest(
@@ -102,7 +105,7 @@ define([
                     return;
                 }
 
-                var mode = ctx.options.status === 'PUBLICATION'
+                var mode = ctx.options.status === PUBLICATION_STATUS.PUBLICATION
                     ? 'a historical publication'
                     : 'Published';
                 if (confirm('You are viewing ' + mode + ' mode.\nSwitch to Draft to make changes?')) {

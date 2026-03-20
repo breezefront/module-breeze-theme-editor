@@ -10,13 +10,15 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
     'Swissup_BreezeThemeEditor/js/editor/preview-manager',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function($, getCss, previewManager, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function($, getCss, previewManager, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('css-manager');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
     
-    var currentStatus = 'DRAFT';
+    var currentStatus = PUBLICATION_STATUS.DRAFT;
     var currentPublicationId = null;
     var scope   = null;
     var scopeId = null;
@@ -283,9 +285,9 @@ define([
             var self = this;
             
             switch (status) {
-                case 'DRAFT':
+                case PUBLICATION_STATUS.DRAFT:
                     // Load draft CSS via GraphQL and create style dynamically
-                    return getCss(scope, scopeId, 'DRAFT', null)
+                    return getCss(scope, scopeId, PUBLICATION_STATUS.DRAFT, null)
                         .then(function(response) {
                             if (response && response.getThemeEditorCss) {
                                 var css = response.getThemeEditorCss.css || '';
@@ -316,7 +318,7 @@ define([
                                 });
 
                                 log.info('CSS Manager: Showing DRAFT (created dynamically)');
-                                return {status: 'DRAFT', success: true};
+                                return {status: PUBLICATION_STATUS.DRAFT, success: true};
                             } else {
                                 throw new Error('Invalid response from GraphQL');
                             }
@@ -326,7 +328,7 @@ define([
                             return Promise.reject(error);
                         });
                         
-                case 'PUBLISHED':
+                case PUBLICATION_STATUS.PUBLISHED:
                     // Use existing published style from PHP template
                     self._enableStyle($publishedStyle);
                     self._disableStyle($draftStyle);
@@ -340,16 +342,16 @@ define([
                     });
                     
                     log.info('CSS Manager: Showing PUBLISHED');
-                    return Promise.resolve({status: 'PUBLISHED', success: true});
+                    return Promise.resolve({status: PUBLICATION_STATUS.PUBLISHED, success: true});
                     
-                case 'PUBLICATION':
+                case PUBLICATION_STATUS.PUBLICATION:
                     if (!publicationId) {
                         log.error('Publication ID required');
                         return Promise.reject(new Error('Publication ID required'));
                     }
                     
                     // Load publication CSS via GraphQL
-                    return getCss(scope, scopeId, 'PUBLICATION', publicationId)
+                    return getCss(scope, scopeId, PUBLICATION_STATUS.PUBLICATION, publicationId)
                         .then(function(response) {
                             if (response && response.getThemeEditorCss) {
                                 var css = response.getThemeEditorCss.css || '';
@@ -380,7 +382,7 @@ define([
                                 
                                 log.info('CSS Manager: Showing PUBLICATION ' + publicationId);
                                 return {
-                                    status: 'PUBLICATION', 
+                                    status: PUBLICATION_STATUS.PUBLICATION, 
                                     publicationId: publicationId, 
                                     success: true
                                 };
@@ -409,11 +411,11 @@ define([
          */
         _getStyleId: function(status, publicationId) {
             switch (status) {
-                case 'DRAFT':
+                case PUBLICATION_STATUS.DRAFT:
                     return 'bte-theme-css-variables-draft';
-                case 'PUBLISHED':
+                case PUBLICATION_STATUS.PUBLISHED:
                     return 'bte-theme-css-variables';
-                case 'PUBLICATION':
+                case PUBLICATION_STATUS.PUBLICATION:
                     return 'bte-publication-css-' + publicationId;
                 default:
                     return 'bte-css';
@@ -455,7 +457,7 @@ define([
          * @returns {Boolean}
          */
         isEditable: function() {
-            return currentStatus === 'DRAFT';
+            return currentStatus === PUBLICATION_STATUS.DRAFT;
         },
         
         /**

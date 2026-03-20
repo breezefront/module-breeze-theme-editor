@@ -6,11 +6,13 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-publications',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function($, getPublications, getConfig, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function($, getPublications, getConfig, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector/metadata-loader');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
 
     return {
         /**
@@ -50,8 +52,8 @@ define([
             var scope   = this.scope;
             var scopeId = parseInt(this.scopeId) || 0;
 
-            var draftRequest     = getConfig(scope, scopeId, 'DRAFT');
-            var publishedRequest = getConfig(scope, scopeId, 'PUBLISHED');
+            var draftRequest     = getConfig(scope, scopeId, PUBLICATION_STATUS.DRAFT);
+            var publishedRequest = getConfig(scope, scopeId, PUBLICATION_STATUS.PUBLISHED);
 
             return $.when(draftRequest, publishedRequest).then(function(draftData, publishedData) {
                 var draftMeta     = draftData.breezeThemeEditorConfig.metadata;

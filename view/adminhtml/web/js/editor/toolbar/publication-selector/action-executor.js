@@ -26,7 +26,8 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-published',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/delete-publication',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function (
     $,
     $t,
@@ -41,11 +42,13 @@ define([
     discardPublishedMutation,
     deletePublicationMutation,
     StorageHelper,
-    Logger
+    Logger,
+    Constants
 ) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector/action-executor');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
 
     return {
 
@@ -106,7 +109,7 @@ define([
                 var result = response && response.publishBreezeThemeEditor;
 
                 if (result && result.success) {
-                    ctx.options.currentStatus = 'PUBLISHED';
+                    ctx.options.currentStatus = PUBLICATION_STATUS.PUBLISHED;
                     ctx.options.changesCount  = 0;
                     ctx.renderer.render(ctx._getState());
                     ctx._applyPermissions();
@@ -202,7 +205,7 @@ define([
                     var result = response && response.rollbackBreezeThemeEditor;
 
                     if (result && result.success) {
-                        ctx.options.currentStatus = 'PUBLISHED';
+                        ctx.options.currentStatus = PUBLICATION_STATUS.PUBLISHED;
                         ctx.options.changesCount  = 0;
                         ctx.renderer.render(ctx._getState());
                         ctx._applyPermissions();
@@ -335,9 +338,9 @@ define([
 
                 if (result && result.success) {
                     ctx.options.publishedModifiedCount   = 0;
-                    StorageHelper.setCurrentStatus('PUBLISHED');
+                    StorageHelper.setCurrentStatus(PUBLICATION_STATUS.PUBLISHED);
                     StorageHelper.clearCurrentPublication();
-                    ctx.options.currentStatus            = 'PUBLISHED';
+                    ctx.options.currentStatus            = PUBLICATION_STATUS.PUBLISHED;
                     ctx.options.currentPublicationId     = null;
                     ctx.options.currentPublicationTitle  = null;
 

@@ -6,11 +6,13 @@ define([
     'jquery',
     'mage/template',
     'mage/translate',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function($, mageTemplate, $t, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function($, mageTemplate, $t, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector/renderer');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
 
     return {
         /**
@@ -48,8 +50,8 @@ define([
                 displayLabel: this._getDisplayLabel(data),
                 badgeText: this._getBadgeText(data),
                 badgeClass: this._getBadgeClass(data),
-                draftMeta: this._getMetaText('DRAFT', data),
-                publishedMeta: this._getMetaText('PUBLISHED', data)
+                draftMeta: this._getMetaText(PUBLICATION_STATUS.DRAFT, data),
+                publishedMeta: this._getMetaText(PUBLICATION_STATUS.PUBLISHED, data)
             });
             
             this.$element.html(html);
@@ -133,7 +135,7 @@ define([
                            .append('<span class="item-check">✓</span>');
                 
                 // Also mark the parent group for Draft (which has additional publish button)
-                if (data.status === 'DRAFT') {
+                if (data.status === PUBLICATION_STATUS.DRAFT) {
                     $statusItem.closest('.dropdown-item-group').addClass('active');
                 }
             }
@@ -220,11 +222,11 @@ define([
          * @returns {string}
          */
         _getBadgeText: function(data) {
-            if (data.status === 'DRAFT' && data.changesCount > 0) {
+            if (data.status === PUBLICATION_STATUS.DRAFT && data.changesCount > 0) {
                 return '(' + data.changesCount + ' ' + $t('modifications') + ')';
-            } else if (data.status === 'PUBLISHED') {
+            } else if (data.status === PUBLICATION_STATUS.PUBLISHED) {
                 return '(' + $t('Live') + ')';
-            } else if (data.status === 'PUBLICATION') {
+            } else if (data.status === PUBLICATION_STATUS.PUBLICATION) {
                 return '(' + $t('Archive') + ')';
             }
             return '';
@@ -237,11 +239,11 @@ define([
          * @returns {string}
          */
         _getBadgeClass: function(data) {
-            if (data.status === 'DRAFT') {
+            if (data.status === PUBLICATION_STATUS.DRAFT) {
                 return 'badge-changes';
-            } else if (data.status === 'PUBLISHED') {
+            } else if (data.status === PUBLICATION_STATUS.PUBLISHED) {
                 return 'badge-live';
-            } else if (data.status === 'PUBLICATION') {
+            } else if (data.status === PUBLICATION_STATUS.PUBLICATION) {
                 return 'badge-archive';
             }
             return '';
@@ -255,13 +257,13 @@ define([
          * @returns {string}
          */
         _getMetaText: function(status, data) {
-            if (status === 'DRAFT') {
+            if (status === PUBLICATION_STATUS.DRAFT) {
                 return data.changesCount > 0 
                     ? data.changesCount + ' ' + $t('modifications')
                     : $t('No modifications');
-            } else if (status === 'PUBLISHED') {
+            } else if (status === PUBLICATION_STATUS.PUBLISHED) {
                 return $t('Live');
-            } else if (status === 'PUBLICATION') {
+            } else if (status === PUBLICATION_STATUS.PUBLICATION) {
                 return $t('Archive');
             }
             return '';

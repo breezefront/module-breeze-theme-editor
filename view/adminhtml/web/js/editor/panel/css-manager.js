@@ -3,11 +3,13 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, IframeHelper, getCss, StorageHelper, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function ($, IframeHelper, getCss, StorageHelper, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('panel/css-manager');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
 
     var $publishedStyle = null;
     var $draftStyle = null;
@@ -190,13 +192,13 @@ define([
             log.info('Applying stored CSS state: ' + status + ' ' + publicationId);
 
             switch (status) {
-                case 'PUBLISHED':
+                case PUBLICATION_STATUS.PUBLISHED:
                     this.showPublished();
                     break;
-                case 'DRAFT':
+                case PUBLICATION_STATUS.DRAFT:
                     this.showDraft();
                     break;
-                case 'PUBLICATION':
+                case PUBLICATION_STATUS.PUBLICATION:
                     if (publicationId) {
                         this.showPublication(publicationId);
                     } else {
@@ -244,11 +246,11 @@ define([
             // Remove publication CSS
             this._removePublicationStyle();
 
-            currentStatus = 'PUBLISHED';
+            currentStatus = PUBLICATION_STATUS.PUBLISHED;
             log.info('CSS Manager: Showing PUBLISHED (read-only mode)');
             
             // ✅ Trigger event to notify panel about status change
-            $(document).trigger('publicationStatusChanged', {status: 'PUBLISHED'});
+            $(document).trigger('publicationStatusChanged', {status: PUBLICATION_STATUS.PUBLISHED});
             
             return true;
         },
@@ -276,7 +278,7 @@ define([
             if (!$draftStyle || !$draftStyle.length) {
                 log.info('Loading draft CSS from GraphQL...');
                 
-                return getCss(scope, scopeId, 'DRAFT', null)
+                return getCss(scope, scopeId, PUBLICATION_STATUS.DRAFT, null)
                     .then(function(response) {
                         if (response && response.getThemeEditorCss) {
                             var css = response.getThemeEditorCss.css || '';
@@ -309,11 +311,11 @@ define([
                             // Remove publication CSS
                             self._removePublicationStyle();
 
-                            currentStatus = 'DRAFT';
+                            currentStatus = PUBLICATION_STATUS.DRAFT;
                             log.info('CSS Manager: Showing DRAFT (editable mode, created dynamically)');
                             
                             // Trigger event to notify panel about status change
-                            $(document).trigger('publicationStatusChanged', {status: 'DRAFT'});
+                            $(document).trigger('publicationStatusChanged', {status: PUBLICATION_STATUS.DRAFT});
                             
                             return true;
                         }
@@ -337,11 +339,11 @@ define([
             // Remove publication CSS
             this._removePublicationStyle();
 
-            currentStatus = 'DRAFT';
+            currentStatus = PUBLICATION_STATUS.DRAFT;
             log.info('CSS Manager: Showing DRAFT (editable mode)');
             
             // Trigger event to notify panel about status change
-            $(document).trigger('publicationStatusChanged', {status: 'DRAFT'});
+            $(document).trigger('publicationStatusChanged', {status: PUBLICATION_STATUS.DRAFT});
             
             return Promise.resolve(true);
         },
@@ -387,7 +389,7 @@ define([
             resetLivePreview();
 
             // Fetch publication CSS via GraphQL
-            return getCss(scope, scopeId, 'PUBLICATION', publicationId)
+            return getCss(scope, scopeId, PUBLICATION_STATUS.PUBLICATION, publicationId)
                 .then(function(response) {
                     // GraphQL client returns response.data, so response = {getThemeEditorCss: {...}}
                     if (!response || !response.getThemeEditorCss) {
@@ -404,12 +406,12 @@ define([
                     // Inject publication CSS as <style> element
                     self._injectPublicationStyle(result.css);
 
-                    currentStatus = 'PUBLICATION';
+                    currentStatus = PUBLICATION_STATUS.PUBLICATION;
                     log.info('CSS Manager: Showing PUBLICATION ' + publicationId + ' (read-only mode)');
                     
                     // ✅ Trigger event to notify panel about status change
                     $(document).trigger('publicationStatusChanged', {
-                        status: 'PUBLICATION',
+                        status: PUBLICATION_STATUS.PUBLICATION,
                         publicationId: publicationId
                     });
                     
@@ -483,13 +485,13 @@ define([
             log.info('CSS Manager: Switching to ' + status + ' ' + (publicationId || ''));
 
             switch (status) {
-                case 'PUBLISHED':
+                case PUBLICATION_STATUS.PUBLISHED:
                     this.showPublished();
                     return Promise.resolve(true);
-                case 'DRAFT':
+                case PUBLICATION_STATUS.DRAFT:
                     this.showDraft();
                     return Promise.resolve(true);
-                case 'PUBLICATION':
+                case PUBLICATION_STATUS.PUBLICATION:
                     return this.showPublication(publicationId);
                 default:
                     log.error('Invalid status: ' + status);
@@ -509,7 +511,7 @@ define([
         refreshPublishedCss: function() {
             var self = this;
 
-            return getCss(scope, scopeId, 'PUBLISHED', null)
+            return getCss(scope, scopeId, PUBLICATION_STATUS.PUBLISHED, null)
                 .then(function(response) {
                     var css = (response &&
                                response.getThemeEditorCss &&
@@ -585,7 +587,7 @@ define([
          * @returns {Boolean}
          */
         isEditable: function() {
-            return currentStatus === 'DRAFT';
+            return currentStatus === PUBLICATION_STATUS.DRAFT;
         },
 
         /**

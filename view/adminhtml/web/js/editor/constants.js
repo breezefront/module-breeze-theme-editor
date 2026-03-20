@@ -87,7 +87,8 @@ define([], function() {
         PUBLICATION_STATUS: {
             DRAFT: 'DRAFT',
             PUBLISHED: 'PUBLISHED',
-            SCHEDULED: 'SCHEDULED'
+            SCHEDULED: 'SCHEDULED',
+            PUBLICATION: 'PUBLICATION'
         },
         
         /**

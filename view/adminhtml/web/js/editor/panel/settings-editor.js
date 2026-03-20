@@ -30,7 +30,8 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/save-values',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-draft',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function (
     $,
     widget,
@@ -49,18 +50,20 @@ define([
     saveValues,
     discardDraft,
     StorageHelper,
-    Logger
+    Logger,
+    Constants
 ) {
     'use strict';
 
     var log = Logger.for('panel/settings-editor');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
 
     $.widget('swissup.themeSettingsEditor', {
         options: {
             title: 'Theme Settings',
             closeTitle: 'Close Panel',
             presetsLabel: 'Presets:',
-            status: 'DRAFT'
+            status: PUBLICATION_STATUS.DRAFT
         },
 
         _create: function () {
@@ -97,13 +100,13 @@ define([
 
             log.info('Settings Editor initializing with mode: ' + currentStatus);
 
-            if (currentStatus === 'PUBLICATION') {
+            if (currentStatus === PUBLICATION_STATUS.PUBLICATION) {
                 var publicationId = StorageHelper.getCurrentPublicationId();
                 if (publicationId && !isNaN(publicationId)) {
                     this._loadConfigFromPublication(publicationId);
                 } else {
                     log.warn('PUBLICATION mode but no valid publication ID, falling back to DRAFT');
-                    this.options.status = 'DRAFT';
+                    this.options.status = PUBLICATION_STATUS.DRAFT;
                     this._loadConfig();
                 }
             } else {
@@ -523,7 +526,7 @@ define([
 
         _onPublicationStatusChanged: function (data) {
             var self    = this;
-            var validStatuses = ['DRAFT', 'PUBLISHED', 'PUBLICATION'];
+            var validStatuses = [PUBLICATION_STATUS.DRAFT, PUBLICATION_STATUS.PUBLISHED, PUBLICATION_STATUS.PUBLICATION];
             if (!data || !data.status || validStatuses.indexOf(data.status) === -1) {
                 log.warn('publicationStatusChanged: unknown status "' + (data && data.status) + '" - ignoring');
                 return;
@@ -536,19 +539,19 @@ define([
                 self._updateFieldsEditability();
             }, 100);
 
-            if (self.options.status === data.status && data.status !== 'PUBLICATION') {
+            if (self.options.status === data.status && data.status !== PUBLICATION_STATUS.PUBLICATION) {
                 log.debug('Status unchanged, skipping config reload');
                 return;
             }
 
             self.options.status = data.status;
 
-            if (data.status === 'PUBLICATION') {
+            if (data.status === PUBLICATION_STATUS.PUBLICATION) {
                 if (data.publicationId && !isNaN(data.publicationId)) {
                     self._loadConfigFromPublication(data.publicationId);
                 } else {
                     log.warn('PUBLICATION status but no valid publication ID, falling back to DRAFT');
-                    self.options.status = 'DRAFT';
+                    self.options.status = PUBLICATION_STATUS.DRAFT;
                     self._loadConfig();
                 }
             } else {

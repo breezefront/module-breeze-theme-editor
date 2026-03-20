@@ -26,14 +26,16 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/settings-editor',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation, 
              publicationSelector, scopeSelector, pageSelector, highlightToggle, 
              toolbarToggle, exitButton, configManager, urlBuilder, graphQLClient, 
-             previewManager, cssManager, settingsEditor, iframeHelper, StorageHelper, Logger) {
+             previewManager, cssManager, settingsEditor, iframeHelper, StorageHelper, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
     
     /**
      * Initialize admin toolbar
@@ -146,7 +148,7 @@ define([
         if ($('#bte-publication-selector').length) {
             $('#bte-publication-selector').breezePublicationSelector({
                 publications:        config.publications || [],
-                currentStatus:       config.currentStatus || 'DRAFT',
+                currentStatus:       config.currentStatus || PUBLICATION_STATUS.DRAFT,
                 changesCount:        config.changesCount || 0,
                 currentPublicationId: config.currentPublicationId || null,
                 scope:               config.scope || 'stores',

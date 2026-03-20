@@ -17,7 +17,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
-    'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication'
+    'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function (
     PanelState,
     PaletteManager,
@@ -26,11 +27,13 @@ define([
     StorageHelper,
     Logger,
     getConfig,
-    getConfigFromPublication
+    getConfigFromPublication,
+    Constants
 ) {
     'use strict';
 
     var log = Logger.for('panel/config-loader');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
 
     return {
         /**
@@ -83,7 +86,7 @@ define([
                     onSuccess(config);
 
                     // In DRAFT mode: chain sync on _previewReady Promise
-                    if (ctx.options.status === 'DRAFT') {
+                    if (ctx.options.status === PUBLICATION_STATUS.DRAFT) {
                         ctx._previewReady.then(function () {
                             CssPreviewManager.syncFieldsFromChanges(ctx.element);
                             ctx._updateChangesCount();

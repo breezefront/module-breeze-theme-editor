@@ -18,18 +18,21 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/error-handler',
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/loading',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function (
     $,
     cssManager,
     errorHandler,
     loading,
     StorageHelper,
-    Logger
+    Logger,
+    Constants
 ) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector/css-state-restorer');
+    var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
 
     return {
 
@@ -89,8 +92,8 @@ define([
             log.info('Restoring CSS state: mode=' + mode.mode +
                 (mode.publicationId ? ' id=' + mode.publicationId : ''));
 
-            if (mode.mode === 'PUBLICATION') {
-                cssManager.switchTo('PUBLICATION', mode.publicationId)
+            if (mode.mode === PUBLICATION_STATUS.PUBLICATION) {
+                cssManager.switchTo(PUBLICATION_STATUS.PUBLICATION, mode.publicationId)
                     .then(function () {
                         log.info('Restored PUBLICATION mode: ' + mode.publicationId);
                     })
@@ -98,8 +101,8 @@ define([
                         log.error('Failed to restore publication: ' + error);
                         self.fallbackToDraft(ctx);
                     });
-            } else if (mode.mode === 'PUBLISHED') {
-                cssManager.switchTo('PUBLISHED')
+            } else if (mode.mode === PUBLICATION_STATUS.PUBLISHED) {
+                cssManager.switchTo(PUBLICATION_STATUS.PUBLISHED)
                     .then(function () {
                         log.info('Restored PUBLISHED mode');
                     })
@@ -107,7 +110,7 @@ define([
                         log.error('Failed to restore published state: ' + error);
                     });
             } else {
-                cssManager.switchTo('DRAFT')
+                cssManager.switchTo(PUBLICATION_STATUS.DRAFT)
                     .then(function () {
                         log.info('Restored DRAFT mode');
                     })
@@ -123,11 +126,11 @@ define([
          * @param {Object} ctx - Widget context
          */
         fallbackToDraft: function (ctx) {
-            ctx.options.currentStatus           = 'DRAFT';
+            ctx.options.currentStatus           = PUBLICATION_STATUS.DRAFT;
             ctx.options.currentPublicationId    = null;
             ctx.options.currentPublicationTitle = null;
 
-            StorageHelper.setCurrentStatus('DRAFT');
+            StorageHelper.setCurrentStatus(PUBLICATION_STATUS.DRAFT);
             StorageHelper.clearCurrentPublication();
 
             ctx.renderer.render(ctx._getState());
@@ -199,12 +202,12 @@ define([
 
             loading.show(ctx.element);
 
-            cssManager.switchTo('PUBLICATION', publicationId).then(function () {
-                ctx.options.currentStatus           = 'PUBLICATION';
+            cssManager.switchTo(PUBLICATION_STATUS.PUBLICATION, publicationId).then(function () {
+                ctx.options.currentStatus           = PUBLICATION_STATUS.PUBLICATION;
                 ctx.options.currentPublicationId    = publicationId;
                 ctx.options.currentPublicationTitle = publication.title;
 
-                StorageHelper.setCurrentStatus('PUBLICATION');
+                StorageHelper.setCurrentStatus(PUBLICATION_STATUS.PUBLICATION);
                 StorageHelper.setCurrentPublicationId(publicationId);
                 StorageHelper.setCurrentPublicationTitle(publication.title);
 
@@ -213,7 +216,7 @@ define([
                 ctx.renderer.closeDropdown();
 
                 $(document).trigger('publicationStatusChanged', {
-                    status:        'PUBLICATION',
+                    status:        PUBLICATION_STATUS.PUBLICATION,
                     publicationId: publicationId
                 });
 
@@ -240,16 +243,16 @@ define([
          * @return {{ mode: string, publicationId: number|null }}
          */
         determineCssMode: function (currentStatus, currentPublicationId) {
-            if (currentStatus === 'PUBLICATION' && currentPublicationId) {
-                return { mode: 'PUBLICATION', publicationId: currentPublicationId };
+            if (currentStatus === PUBLICATION_STATUS.PUBLICATION && currentPublicationId) {
+                return { mode: PUBLICATION_STATUS.PUBLICATION, publicationId: currentPublicationId };
             }
 
-            if (currentStatus === 'PUBLISHED') {
-                return { mode: 'PUBLISHED', publicationId: null };
+            if (currentStatus === PUBLICATION_STATUS.PUBLISHED) {
+                return { mode: PUBLICATION_STATUS.PUBLISHED, publicationId: null };
             }
 
             // Default / DRAFT / unknown
-            return { mode: 'DRAFT', publicationId: null };
+            return { mode: PUBLICATION_STATUS.DRAFT, publicationId: null };
         }
     };
 });
