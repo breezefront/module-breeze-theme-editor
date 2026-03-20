@@ -524,13 +524,13 @@
 - **Файли:** Всі mutation resolvers + кілька JS-файлів
 - **Проблема:** `constants.js` визначає `PUBLICATION_STATUS.DRAFT`, але більшість mutation resolvers та JS-файли порівнюють рядки напряму.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `0c57fa1`
 
 ### 5.12 `#1979c3` (Magento blue) — 10+ разів у LESS
 - **Файл:** `view/adminhtml/web/css/source/_theme-editor-fields.less`
 - **Проблема:** Основний Magento admin action color хардкодований 10+ разів замість LESS-змінної `@action-primary`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `eaa7e7c`
 
 ### 5.13 `rgba(255, 255, 255, 0.2)` — 8+ разів у LESS
 - **Файл:** `view/adminhtml/web/css/source/_theme-editor-fields.less`
@@ -572,21 +572,21 @@
 - **Проблема:** Scope завжди передається як raw `['type' => ..., 'scopeId' => ...]` асоціативний масив. Жодної типізації, жодних іменованих accessors.
 - **Пропозиція:** `ScopeInput` value object з `getType(): string` та `getScopeId(): int`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `bdcca71`
 
 ### 6.2 `StatusCode` enum / constants class
 - **Зачіпає:** Всі mutation resolvers, кілька сервісів, JS-файли
 - **Проблема:** Рядки `'DRAFT'` / `'PUBLISHED'` порівнюються напряму в 10+ місцях. PHP 8.1 дозволяє backed enums.
 - **Пропозиція:** `StatusCode` enum або `StatusCode::DRAFT / ::PUBLISHED` constants class.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — 2 коміти (constants + resolvers)
 
 ### 6.3 `ColorPipeline` facade
 - **Зачіпає:** `ColorFormatResolver.php`, `ColorFormatter.php`, `ColorConverter.php`, `css-preview-manager.js`
 - **Проблема:** Логіка детекції та конвертації кольорів розкидана по трьох PHP-класах (жоден не розширює інший) та продубльована в JS.
 - **Пропозиція:** `ColorPipeline` з чітким `detect() → convert() → format()` інтерфейсом як єдина точка входу.
 - **Пріоритет:** 🟠 High
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `20a334c`
 
 ### 6.4 `toGraphQlValue()` на `AbstractMutationResolver`
 - **Зачіпає:** 4 mutation resolvers (ApplyPreset, ResetToDefaults, CopyFromStore, SaveValues)
