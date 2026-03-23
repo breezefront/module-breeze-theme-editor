@@ -54,22 +54,21 @@
 
 ## 📊 Пріоритети
 
-Поточні пріоритети: **PHP Settings Reader** (#13) та Phase 5 (E2E тестування + release prep).
+Поточні пріоритети сфокусовані на завершенні Phase 5 (E2E тестування + release prep).
 
 ---
 
-## 📋 Заплановані Features
-
-### PHP Settings Reader
+### PHP Settings Reader (23.03.2026)
 📄 [php-settings-reader.md](php-settings-reader.md)
 
-**Статус:** 📋 Планується (GitHub issue #13)
+**Статус:** ✅ Завершено (GitHub issue #13)
 
-**Що планується:**
-- `View/Helper/BreezeThemeEditor.php` — `get('section/field')`, `is('section/field', 'value')`
-- Автоматичний інжект `$breezeThemeEditor` у всі frontend `.phtml` шаблони через `blockVariables`
-- In-memory кешування per-request
-- Підтримка налаштувань без `property` (PHP-only, без CSS)
+**Що реалізовано:**
+- `View/Helper/BreezeThemeEditor` — helper з `get('section/field')`, `is('section/field', 'value')`
+- Автоматичний inject `$breezeThemeEditor` у всі frontend `.phtml` шаблони через `blockVariables`
+- Lazy loading через `\Proxy` (той самий механізм що і `$secureRenderer`)
+- In-memory кешування per-request, scope + theme inheritance, fallback до `default` з `settings.json`
+- 8 юніт-тестів: 8/8 ✅
 
 ---
 
