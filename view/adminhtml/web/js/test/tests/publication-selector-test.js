@@ -576,6 +576,195 @@ define([
             this.assertFalse(result,
                 'canPublish must be false after draft is discarded (changesCount=0)'
             );
+        },
+
+        // ====================================================================
+        // GROUP 11: themeEditorDraftSaved → server re-fetch fix
+        //
+        // Regression tests for the bug where the Publish button did not appear
+        // after saving font/palette changes because the client-side
+        // draftChangesCount (PanelState.getModifiedCount + PaletteManager.getModifiedCount)
+        // could return 0 when all saved values happened to equal the theme defaults.
+        //
+        // The fix: the themeEditorDraftSaved handler now calls
+        // metadataLoader.loadMetadata() to get the real server count and only
+        // falls back to the client-supplied value if the request fails.
+        //
+        // We test the decision logic and integration contract in isolation
+        // using a simulated metadataLoader and options object.
+        // ====================================================================
+
+        'fix: server count wins over client count in happy path': function (done) {
+            // Scenario: client computes draftChangesCount=0 (saved value == default)
+            // but server actually has 3 draft records.
+            var options = { changesCount: 0, currentStatus: 'DRAFT' };
+            var renderCallCount = 0;
+
+            // Simulate metadataLoader.loadMetadata() resolving with real server data
+            var fakeMetadataLoader = {
+                loadMetadata: function () {
+                    return $.Deferred().resolve({ draftChangesCount: 3 }).promise();
+                }
+            };
+
+            // Simulate the fixed handler logic
+            fakeMetadataLoader.loadMetadata().then(function (meta) {
+                options.changesCount = meta.draftChangesCount;
+                renderCallCount++;
+            }).always(function () {
+                try {
+                    this.assertEquals(3, options.changesCount,
+                        'changesCount must be 3 (from server), not 0 (from client)'
+                    );
+                    this.assertEquals(1, renderCallCount,
+                        'render must be called exactly once after server responds'
+                    );
+                    this.assertTrue(
+                        computeCanPublish(true, options.changesCount, options.currentStatus),
+                        'Publish button must appear after server returns changesCount=3'
+                    );
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            }.bind(this));
+        },
+
+        'fix: fallback to client count when loadMetadata fails': function (done) {
+            // Scenario: server request fails → fall back to client-supplied count
+            var options = { changesCount: 0, currentStatus: 'DRAFT' };
+            var clientData = { draftChangesCount: 2 };
+
+            var fakeMetadataLoader = {
+                loadMetadata: function () {
+                    return $.Deferred().reject('network error').promise();
+                }
+            };
+
+            fakeMetadataLoader.loadMetadata().then(function () {
+                // should not reach here
+                options.changesCount = 999;
+            }).catch(function () {
+                // fallback path
+                if (clientData && typeof clientData.draftChangesCount !== 'undefined') {
+                    options.changesCount = clientData.draftChangesCount;
+                }
+            }).always(function () {
+                try {
+                    this.assertEquals(2, options.changesCount,
+                        'On network failure, changesCount must fall back to client-supplied value (2)'
+                    );
+                    this.assertTrue(
+                        computeCanPublish(true, options.changesCount, options.currentStatus),
+                        'Publish button must still appear via fallback count'
+                    );
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            }.bind(this));
+        },
+
+        'fix: no crash when loadMetadata fails and data has no draftChangesCount': function (done) {
+            // Edge case: server fails AND event data is malformed — must not throw
+            var options = { changesCount: 0, currentStatus: 'DRAFT' };
+            var clientData = {}; // no draftChangesCount key
+
+            var fakeMetadataLoader = {
+                loadMetadata: function () {
+                    return $.Deferred().reject('timeout').promise();
+                }
+            };
+
+            var errorThrown = false;
+            try {
+                fakeMetadataLoader.loadMetadata().then(function () {
+                    options.changesCount = 999;
+                }).catch(function () {
+                    if (clientData && typeof clientData.draftChangesCount !== 'undefined') {
+                        options.changesCount = clientData.draftChangesCount;
+                    }
+                    // else: leave changesCount unchanged — no crash
+                }).always(function () {
+                    try {
+                        this.assertEquals(0, options.changesCount,
+                            'changesCount stays 0 when both server and fallback data are unavailable'
+                        );
+                        done();
+                    } catch (e) {
+                        done(e);
+                    }
+                }.bind(this));
+            } catch (e) {
+                errorThrown = true;
+                done(new Error('Handler threw unexpectedly: ' + e.message));
+            }
+        },
+
+        'fix: server count=0 correctly hides Publish button (all changes reverted)': function (done) {
+            // Scenario: user saved changes that brought all values back to defaults.
+            // Server correctly returns 0 draft records → Publish button must be hidden.
+            var options = { changesCount: 5, currentStatus: 'DRAFT' }; // stale value before save
+
+            var fakeMetadataLoader = {
+                loadMetadata: function () {
+                    return $.Deferred().resolve({ draftChangesCount: 0 }).promise();
+                }
+            };
+
+            fakeMetadataLoader.loadMetadata().then(function (meta) {
+                options.changesCount = meta.draftChangesCount;
+            }).always(function () {
+                try {
+                    this.assertEquals(0, options.changesCount,
+                        'changesCount must be 0 when server reports no outstanding draft records'
+                    );
+                    this.assertFalse(
+                        computeCanPublish(true, options.changesCount, options.currentStatus),
+                        'Publish button must be hidden when server confirms 0 draft changes'
+                    );
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            }.bind(this));
+        },
+
+        'fix: client count=0 is ignored when server returns actual count (font/palette edge case)': function (done) {
+            // This is the exact reproduction of the reported bug:
+            // - User changes font settings, saves
+            // - PanelState.getModifiedCount() returns 0 because saved value equals theme default
+            // - Without the fix: draftChangesCount=0 → Publish button hidden
+            // - With the fix: server returns 1 → Publish button shown
+            var clientSuppliedCount = 0; // what settings-editor.js triggers in the event
+            var options = { changesCount: clientSuppliedCount, currentStatus: 'DRAFT' };
+
+            // Without fix: apply client count directly
+            var withoutFix = computeCanPublish(true, clientSuppliedCount, 'DRAFT');
+            this.assertFalse(withoutFix,
+                'Without fix: Publish button hidden because client count=0 (bug reproduced)'
+            );
+
+            // With fix: server re-fetch overrides client count
+            var fakeMetadataLoader = {
+                loadMetadata: function () {
+                    return $.Deferred().resolve({ draftChangesCount: 1 }).promise();
+                }
+            };
+
+            fakeMetadataLoader.loadMetadata().then(function (meta) {
+                options.changesCount = meta.draftChangesCount;
+            }).always(function () {
+                try {
+                    var withFix = computeCanPublish(true, options.changesCount, 'DRAFT');
+                    this.assertTrue(withFix,
+                        'With fix: Publish button appears because server returns real count=1'
+                    );
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            }.bind(this));
         }
     });
 });

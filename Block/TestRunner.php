@@ -196,7 +196,7 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/palette-manager-test',
             // Palette Manager Init Listener Tests (8 tests) - init() must not wipe subscribers
             'Swissup_BreezeThemeEditor/js/test/tests/palette-manager-init-listeners-test',
-            // Publication Selector Tests (15 tests) - canPublish logic + Bug 1 + Bug 2 regression
+            // Publication Selector Tests (20 tests) - canPublish logic + Bug 1 + Bug 2 + fix: server re-fetch after save
             'Swissup_BreezeThemeEditor/js/test/tests/publication-selector-test',
             // Settings Editor Reset/Restore CSS Preview Tests (10 tests) - data-property vs data-css-var bug
             'Swissup_BreezeThemeEditor/js/test/tests/settings-editor-reset-test',
