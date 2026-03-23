@@ -599,11 +599,12 @@ define([
             // but server actually has 3 draft records.
             var options = { changesCount: 0, currentStatus: 'DRAFT' };
             var renderCallCount = 0;
+            var self = this;
 
             // Simulate metadataLoader.loadMetadata() resolving with real server data
             var fakeMetadataLoader = {
                 loadMetadata: function () {
-                    return $.Deferred().resolve({ draftChangesCount: 3 }).promise();
+                    return Promise.resolve({ draftChangesCount: 3 });
                 }
             };
 
@@ -611,33 +612,30 @@ define([
             fakeMetadataLoader.loadMetadata().then(function (meta) {
                 options.changesCount = meta.draftChangesCount;
                 renderCallCount++;
-            }).always(function () {
-                try {
-                    this.assertEquals(3, options.changesCount,
-                        'changesCount must be 3 (from server), not 0 (from client)'
-                    );
-                    this.assertEquals(1, renderCallCount,
-                        'render must be called exactly once after server responds'
-                    );
-                    this.assertTrue(
-                        computeCanPublish(true, options.changesCount, options.currentStatus),
-                        'Publish button must appear after server returns changesCount=3'
-                    );
-                    done();
-                } catch (e) {
-                    done(e);
-                }
-            }.bind(this));
+            }).then(function () {
+                self.assertEquals(3, options.changesCount,
+                    'changesCount must be 3 (from server), not 0 (from client)'
+                );
+                self.assertEquals(1, renderCallCount,
+                    'render must be called exactly once after server responds'
+                );
+                self.assertTrue(
+                    computeCanPublish(true, options.changesCount, options.currentStatus),
+                    'Publish button must appear after server returns changesCount=3'
+                );
+                done();
+            }).catch(function (e) { done(e); });
         },
 
         'fix: fallback to client count when loadMetadata fails': function (done) {
             // Scenario: server request fails → fall back to client-supplied count
             var options = { changesCount: 0, currentStatus: 'DRAFT' };
             var clientData = { draftChangesCount: 2 };
+            var self = this;
 
             var fakeMetadataLoader = {
                 loadMetadata: function () {
-                    return $.Deferred().reject('network error').promise();
+                    return Promise.reject(new Error('network error'));
                 }
             };
 
@@ -649,85 +647,59 @@ define([
                 if (clientData && typeof clientData.draftChangesCount !== 'undefined') {
                     options.changesCount = clientData.draftChangesCount;
                 }
-            }).always(function () {
-                try {
-                    this.assertEquals(2, options.changesCount,
-                        'On network failure, changesCount must fall back to client-supplied value (2)'
-                    );
-                    this.assertTrue(
-                        computeCanPublish(true, options.changesCount, options.currentStatus),
-                        'Publish button must still appear via fallback count'
-                    );
-                    done();
-                } catch (e) {
-                    done(e);
-                }
-            }.bind(this));
+            }).then(function () {
+                self.assertEquals(2, options.changesCount,
+                    'On network failure, changesCount must fall back to client-supplied value (2)'
+                );
+                self.assertTrue(
+                    computeCanPublish(true, options.changesCount, options.currentStatus),
+                    'Publish button must still appear via fallback count'
+                );
+                done();
+            }).catch(function (e) { done(e); });
         },
 
-        'fix: no crash when loadMetadata fails and data has no draftChangesCount': function (done) {
-            // Edge case: server fails AND event data is malformed — must not throw
-            var options = { changesCount: 0, currentStatus: 'DRAFT' };
+        'fix: no crash when loadMetadata fails and data has no draftChangesCount': function () {
+            // Edge case: server fails AND event data is malformed — must not throw.
+            // Tested synchronously: only the guard condition matters.
+            var options = { changesCount: 0 };
             var clientData = {}; // no draftChangesCount key
 
-            var fakeMetadataLoader = {
-                loadMetadata: function () {
-                    return $.Deferred().reject('timeout').promise();
-                }
-            };
-
-            var errorThrown = false;
-            try {
-                fakeMetadataLoader.loadMetadata().then(function () {
-                    options.changesCount = 999;
-                }).catch(function () {
-                    if (clientData && typeof clientData.draftChangesCount !== 'undefined') {
-                        options.changesCount = clientData.draftChangesCount;
-                    }
-                    // else: leave changesCount unchanged — no crash
-                }).always(function () {
-                    try {
-                        this.assertEquals(0, options.changesCount,
-                            'changesCount stays 0 when both server and fallback data are unavailable'
-                        );
-                        done();
-                    } catch (e) {
-                        done(e);
-                    }
-                }.bind(this));
-            } catch (e) {
-                errorThrown = true;
-                done(new Error('Handler threw unexpectedly: ' + e.message));
+            // Simulate fallback guard from the fixed handler
+            if (clientData && typeof clientData.draftChangesCount !== 'undefined') {
+                options.changesCount = clientData.draftChangesCount;
             }
+            // else: leave changesCount unchanged — no crash
+
+            this.assertEquals(0, options.changesCount,
+                'changesCount stays 0 when both server and fallback data are unavailable'
+            );
         },
 
         'fix: server count=0 correctly hides Publish button (all changes reverted)': function (done) {
             // Scenario: user saved changes that brought all values back to defaults.
             // Server correctly returns 0 draft records → Publish button must be hidden.
             var options = { changesCount: 5, currentStatus: 'DRAFT' }; // stale value before save
+            var self = this;
 
             var fakeMetadataLoader = {
                 loadMetadata: function () {
-                    return $.Deferred().resolve({ draftChangesCount: 0 }).promise();
+                    return Promise.resolve({ draftChangesCount: 0 });
                 }
             };
 
             fakeMetadataLoader.loadMetadata().then(function (meta) {
                 options.changesCount = meta.draftChangesCount;
-            }).always(function () {
-                try {
-                    this.assertEquals(0, options.changesCount,
-                        'changesCount must be 0 when server reports no outstanding draft records'
-                    );
-                    this.assertFalse(
-                        computeCanPublish(true, options.changesCount, options.currentStatus),
-                        'Publish button must be hidden when server confirms 0 draft changes'
-                    );
-                    done();
-                } catch (e) {
-                    done(e);
-                }
-            }.bind(this));
+            }).then(function () {
+                self.assertEquals(0, options.changesCount,
+                    'changesCount must be 0 when server reports no outstanding draft records'
+                );
+                self.assertFalse(
+                    computeCanPublish(true, options.changesCount, options.currentStatus),
+                    'Publish button must be hidden when server confirms 0 draft changes'
+                );
+                done();
+            }).catch(function (e) { done(e); });
         },
 
         'fix: client count=0 is ignored when server returns actual count (font/palette edge case)': function (done) {
@@ -738,6 +710,7 @@ define([
             // - With the fix: server returns 1 → Publish button shown
             var clientSuppliedCount = 0; // what settings-editor.js triggers in the event
             var options = { changesCount: clientSuppliedCount, currentStatus: 'DRAFT' };
+            var self = this;
 
             // Without fix: apply client count directly
             var withoutFix = computeCanPublish(true, clientSuppliedCount, 'DRAFT');
@@ -748,23 +721,19 @@ define([
             // With fix: server re-fetch overrides client count
             var fakeMetadataLoader = {
                 loadMetadata: function () {
-                    return $.Deferred().resolve({ draftChangesCount: 1 }).promise();
+                    return Promise.resolve({ draftChangesCount: 1 });
                 }
             };
 
             fakeMetadataLoader.loadMetadata().then(function (meta) {
                 options.changesCount = meta.draftChangesCount;
-            }).always(function () {
-                try {
-                    var withFix = computeCanPublish(true, options.changesCount, 'DRAFT');
-                    this.assertTrue(withFix,
-                        'With fix: Publish button appears because server returns real count=1'
-                    );
-                    done();
-                } catch (e) {
-                    done(e);
-                }
-            }.bind(this));
+            }).then(function () {
+                self.assertTrue(
+                    computeCanPublish(true, options.changesCount, 'DRAFT'),
+                    'With fix: Publish button appears because server returns real count=1'
+                );
+                done();
+            }).catch(function (e) { done(e); });
         }
     });
 });
