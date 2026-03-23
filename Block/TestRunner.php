@@ -204,6 +204,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/global-reset-palette-test',
             // Discard Published Preview Refresh Tests (14 tests) - bte:publishedDiscarded had no listener
             'Swissup_BreezeThemeEditor/js/test/tests/discard-published-preview-test',
+            // Discard Draft Panel Badge Refresh Tests (11 tests) - bte:draftDiscarded had no listener in settings-editor
+            'Swissup_BreezeThemeEditor/js/test/tests/discard-draft-panel-test',
             // Toastify Library Tests (17 tests) - DOM structure, types, options, hide/show, shortcuts
             'Swissup_BreezeThemeEditor/js/test/tests/toastify-test',
             // SyncFieldsFromChanges F5 Reload Bug Tests (12 tests) — Issues 018 & 019

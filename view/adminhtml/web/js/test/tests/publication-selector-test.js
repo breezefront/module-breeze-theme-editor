@@ -22,9 +22,10 @@
  *              and canRollback state passed to template.
  */
 define([
+    'jquery',
     'Swissup_BreezeThemeEditor/js/test/test-framework',
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/permissions'
-], function (TestFramework, permissions) {
+], function ($, TestFramework, permissions) {
     'use strict';
 
     // -------------------------------------------------------------------------
