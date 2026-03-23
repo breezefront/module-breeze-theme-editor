@@ -20,7 +20,7 @@ class Index extends AbstractEditor implements HttpGetActionInterface
         // Prevent browser from caching this page (bfcache).
         // Editor state depends on PHP-read cookies (bte_last_store_id etc.) —
         // a stale bfcache snapshot would show the wrong store after history.back().
-        $resultPage->getResponse()->setHeader('Cache-Control', 'no-store', true);
+        $this->getResponse()->setHeader('Cache-Control', 'no-store', true);
 
         // Pass data to layout
         $storeId = $this->getStoreId();
