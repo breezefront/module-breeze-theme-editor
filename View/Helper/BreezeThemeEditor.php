@@ -15,7 +15,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
  * View helper for reading Breeze Theme Editor settings in .phtml templates.
  *
  * Automatically injected as $breezeThemeEditor into all frontend templates
- * via blockVariables mechanism (same as $secureRenderer).
+ * via Plugin\TemplateEngine\PhpPlugin (beforeRender).
  *
  * Usage in .phtml:
  *   $breezeThemeEditor?->get('section/setting')

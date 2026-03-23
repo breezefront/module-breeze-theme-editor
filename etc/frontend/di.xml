@@ -6,16 +6,13 @@
     <preference for="Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider"
                 type="Swissup\BreezeThemeEditor\Model\Provider\FrontendPageUrlProvider"/>
 
-    <!-- Inject $breezeThemeEditor into all frontend .phtml templates.
-         Uses \Proxy for lazy instantiation (same pattern as $secureRenderer). -->
+    <!-- Inject $breezeThemeEditor into all frontend .phtml templates via plugin.
+         Plugin is used instead of blockVariables to avoid DI compile issue:
+         declaring blockVariables in a module's di.xml replaces (not merges)
+         the array from app/etc/di.xml, wiping out $escaper, $secureRenderer, etc. -->
     <type name="Magento\Framework\View\TemplateEngine\Php">
-        <arguments>
-            <argument name="blockVariables" xsi:type="array">
-                <item name="breezeThemeEditor" xsi:type="object">
-                    Swissup\BreezeThemeEditor\View\Helper\BreezeThemeEditor\Proxy
-                </item>
-            </argument>
-        </arguments>
+        <plugin name="breeze_theme_editor_block_variables"
+                type="Swissup\BreezeThemeEditor\Plugin\TemplateEngine\PhpPlugin"/>
     </type>
 
 </config>
