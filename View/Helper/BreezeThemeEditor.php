@@ -9,6 +9,7 @@ use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\StatusCode;
+use Swissup\BreezeThemeEditor\Api\View\Helper\BreezeThemeEditorInterface;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 
 /**
@@ -21,7 +22,7 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
  *   $breezeThemeEditor?->get('section/setting')
  *   $breezeThemeEditor?->is('section/setting', 'value')
  */
-class BreezeThemeEditor
+class BreezeThemeEditor implements BreezeThemeEditorInterface
 {
     /**
      * Per-request in-memory cache.

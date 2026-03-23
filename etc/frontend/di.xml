@@ -9,10 +9,21 @@
     <!-- Inject $breezeThemeEditor into all frontend .phtml templates via plugin.
          Plugin is used instead of blockVariables to avoid DI compile issue:
          declaring blockVariables in a module's di.xml replaces (not merges)
-         the array from app/etc/di.xml, wiping out $escaper, $secureRenderer, etc. -->
+         the array from app/etc/di.xml, wiping out $escaper, $secureRenderer, etc.
+         Proxy is used for lazy instantiation — helper is not constructed unless
+         a template actually calls $breezeThemeEditor->get() or ->is(). -->
     <type name="Magento\Framework\View\TemplateEngine\Php">
         <plugin name="breeze_theme_editor_block_variables"
                 type="Swissup\BreezeThemeEditor\Plugin\TemplateEngine\PhpPlugin"/>
+    </type>
+
+    <!-- Inject Proxy into PhpPlugin for lazy instantiation of the helper. -->
+    <type name="Swissup\BreezeThemeEditor\Plugin\TemplateEngine\PhpPlugin">
+        <arguments>
+            <argument name="helper" xsi:type="object">
+                Swissup\BreezeThemeEditor\View\Helper\BreezeThemeEditor\Proxy
+            </argument>
+        </arguments>
     </type>
 
 </config>

@@ -5,7 +5,7 @@ namespace Swissup\BreezeThemeEditor\Plugin\TemplateEngine;
 
 use Magento\Framework\View\Element\BlockInterface;
 use Magento\Framework\View\TemplateEngine\Php;
-use Swissup\BreezeThemeEditor\View\Helper\BreezeThemeEditor;
+use Swissup\BreezeThemeEditor\Api\View\Helper\BreezeThemeEditorInterface;
 
 /**
  * Injects $breezeThemeEditor into every frontend .phtml template.
@@ -18,7 +18,7 @@ use Swissup\BreezeThemeEditor\View\Helper\BreezeThemeEditor;
 class PhpPlugin
 {
     public function __construct(
-        private BreezeThemeEditor $helper
+        private BreezeThemeEditorInterface $helper
     ) {}
 
     /**

@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
 
+    <!-- View Helper -->
+    <preference for="Swissup\BreezeThemeEditor\Api\View\Helper\BreezeThemeEditorInterface"
+                type="Swissup\BreezeThemeEditor\View\Helper\BreezeThemeEditor"/>
+
     <!-- Repository Preferences -->
     <preference for="Swissup\BreezeThemeEditor\Api\StatusRepositoryInterface"
                 type="Swissup\BreezeThemeEditor\Model\StatusRepository"/>
