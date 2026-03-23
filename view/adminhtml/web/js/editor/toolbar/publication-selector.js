@@ -228,13 +228,22 @@ define([
                 }
             });
 
-            // Draft saved → update changes count
+            // Draft saved → re-fetch real draftChangesCount from server to ensure
+            // the Publish button appears even when client-side count is inaccurate
+            // (e.g. palette/font changes whose saved value equals the theme default).
             $(document).on('themeEditorDraftSaved', function (e, data) {
-                if (data && typeof data.draftChangesCount !== 'undefined') {
-                    self.options.changesCount = data.draftChangesCount;
+                self.metadataLoader.loadMetadata().then(function (meta) {
+                    self.options.changesCount = meta.draftChangesCount;
                     self.renderer.render(self._getState());
                     self._applyPermissions();
-                }
+                }).catch(function () {
+                    // Fallback to client-supplied count if the request fails
+                    if (data && typeof data.draftChangesCount !== 'undefined') {
+                        self.options.changesCount = data.draftChangesCount;
+                        self.renderer.render(self._getState());
+                        self._applyPermissions();
+                    }
+                });
             });
 
             // Scope changed → reload metadata and publications for new scope
