@@ -347,6 +347,25 @@ define([
                 path: '/', maxAge: 86400, sameSite: 'Lax'
             });
 
+            // Sync PHP BackendSession cookie (bte_last_store_id).
+            // All three scope variants naturally resolve to a concrete storeId:
+            //   'stores'   → the store view's own ID
+            //   'websites' → the website's default store ID
+            //   'default'  → the installation's default store ID
+            // Without this write, after logout→login PHP reads a stale cookie
+            // and serves wrong settings for the previously-selected store.
+            if (defaultStoreId > 0) {
+                cookieManager.setCookie('bte_last_store_id', defaultStoreId, {
+                    path: '/', maxAge: 86400, sameSite: 'Lax'
+                });
+                log.info('Synced bte_last_store_id: ' + defaultStoreId);
+            } else {
+                // Mapping failed (misconfigured store data) — remove stale value
+                // so PHP falls through to its own default-store fallback.
+                cookieManager.deleteCookie('bte_last_store_id');
+                log.warn('bte_last_store_id cleared — defaultStoreId could not be resolved for scope: ' + scope + ':' + scopeId);
+            }
+
             // Update iframe src and navigate to the new URL.
             // When the constructed URL is identical to the current src (e.g. "All Store Views"
             // resolves to the same preview store that is already loaded), setting the src
