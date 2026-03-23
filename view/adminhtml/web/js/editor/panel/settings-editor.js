@@ -214,6 +214,14 @@ define([
                 CssManager.refreshPublishedCss();
                 self._loadConfig();
             });
+
+            $(document).on('bte:draftDiscarded', function () {
+                log.info('Draft discarded, refreshing panel...');
+                PanelState.reset();
+                PaletteManager.revertDirtyChanges();
+                CssPreviewManager.reset();
+                self._loadConfig();
+            });
         },
 
         // ─── Init helpers ────────────────────────────────────────────────────────
