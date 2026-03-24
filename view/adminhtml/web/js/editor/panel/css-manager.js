@@ -40,7 +40,7 @@ define([
         });
     }
 
-    var module = {
+    var manager = {
         /**
          * Initialize CSS manager
          *
@@ -128,7 +128,7 @@ define([
             // Sync scope vars and flush stale DOM refs on scope switch.
             // off+on prevents duplicate listeners if init() is called again.
             $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function (e, newScope, newScopeId) {
-                module.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
+                manager.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
             });
 
             log.info('CSS Manager initialized (status: ' + currentStatus + ')');
@@ -635,5 +635,5 @@ define([
         }
     };
 
-    return module;
+    return manager;
 });

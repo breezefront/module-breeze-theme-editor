@@ -25,10 +25,10 @@ define([
     var themeId = null;
     var iframeId = null;
     
-    return {
+    var manager = {
         /**
          * Initialize CSS Manager
-         * 
+         *
          * @param {Object} config - Configuration object
          * @param {String} config.scope - Scope ('default'|'websites'|'stores')
          * @param {Number} config.scopeId - Scope ID
@@ -108,7 +108,7 @@ define([
             // Sync scope vars on scope switch; off+on prevents duplicates
             // if init() is called again for a new scope.
             $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function (e, newScope, newScopeId) {
-                module.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
+                manager.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
             });
 
             return true;
@@ -501,5 +501,5 @@ define([
         }
     };
 
-    return module;
+    return manager;
 });
