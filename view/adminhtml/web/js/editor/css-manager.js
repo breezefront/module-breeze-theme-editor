@@ -104,7 +104,13 @@ define([
             
             // Trigger ready event for other components
             $(document).trigger('bte:cssManagerReady');
-            
+
+            // Sync scope vars on scope switch; off+on prevents duplicates
+            // if init() is called again for a new scope.
+            $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function (e, newScope, newScopeId) {
+                module.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
+            });
+
             return true;
         },
         
@@ -494,13 +500,6 @@ define([
             log.info('CSS Manager: reinit scope=' + scope + ':' + scopeId + ' flush=' + !!flush);
         }
     };
-
-    // Automatically sync scope vars when the scope selector switches to a new
-    // store/website/default scope.  The flush resets status tracking so that
-    // the next switchTo() (triggered by bte:iframeReloaded) starts clean.
-    $(document).on('scopeChanged', function (e, newScope, newScopeId) {
-        module.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
-    });
 
     return module;
 });

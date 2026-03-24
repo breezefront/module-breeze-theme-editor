@@ -125,6 +125,12 @@ define([
                 }
             });
 
+            // Sync scope vars and flush stale DOM refs on scope switch.
+            // off+on prevents duplicate listeners if init() is called again.
+            $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function (e, newScope, newScopeId) {
+                module.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
+            });
+
             log.info('CSS Manager initialized (status: ' + currentStatus + ')');
             return true;
         },
@@ -624,15 +630,10 @@ define([
             $draftStyle = null;
             $livePreviewStyle = null;
             currentStatus = null;
+            $(document).off('scopeChanged.cssManager');
             log.info('CSS Manager destroyed');
         }
     };
-
-    // Automatically sync scope vars and flush stale DOM refs when the scope
-    // selector switches to a new store/website/default scope.
-    $(document).on('scopeChanged', function (e, newScope, newScopeId) {
-        module.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
-    });
 
     return module;
 });
