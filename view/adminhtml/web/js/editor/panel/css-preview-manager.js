@@ -5,8 +5,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/css-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager'
-], function ($, ColorUtils, IframeHelper, CssManager, StorageHelper, Logger, FontPaletteManager) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager',
+    'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager'
+], function ($, ColorUtils, IframeHelper, CssManager, StorageHelper, Logger, FontPaletteManager, PaletteManager) {
     'use strict';
 
     var log = Logger.for('panel/css-preview-manager');
@@ -112,29 +113,27 @@ define([
          */
         _subscribeToPaletteChanges: function() {
             var self = this;
-            
-            // Lazy require to avoid circular dependency
-            require(['Swissup_BreezeThemeEditor/js/editor/panel/palette-manager'], function(PaletteManager) {
-                // Cache reference so setVariable() can inject palette vars synchronously
-                self._paletteManager = PaletteManager;
 
-                    PaletteManager.subscribe(function(cssVar, hexValue) {
-                        log.debug('Palette cascade: ' + cssVar + ' -> ' + hexValue);
-                    
-            // Update BOTH HEX and RGB versions in live preview
-            // This ensures fields with format:rgb can reference var(--palette-color-rgb)
-            self.setVariable(cssVar, hexValue, 'color');  // HEX version: --color-brand-primary
-            
-            // Convert HEX to RGB and set RGB version with explicit format
-            var rgbValue = ColorUtils.hexToRgb(hexValue);
-            self.setVariable(cssVar + '-rgb', rgbValue, 'color', { format: 'rgb' });  // RGB version: --color-brand-primary-rgb
-                    
-                    // Update color fields that reference this palette color
-                    self._updateFieldsReferencingPalette(cssVar, hexValue);
-                });
-                
-                log.info('Subscribed to palette changes');
+            // PaletteManager is a static AMD dependency of this module — no circular
+            // dependency exists and no async require is needed.
+            self._paletteManager = PaletteManager;
+
+            PaletteManager.subscribe(function(cssVar, hexValue) {
+                log.debug('Palette cascade: ' + cssVar + ' -> ' + hexValue);
+
+                // Update HEX version in live preview (e.g. --color-brand-primary)
+                self.setVariable(cssVar, hexValue, 'color');
+
+                // Update RGB version so fields with format:rgb can reference
+                // var(--color-brand-primary-rgb)
+                var rgbValue = ColorUtils.hexToRgb(hexValue);
+                self.setVariable(cssVar + '-rgb', rgbValue, 'color', { format: 'rgb' });
+
+                // Update color fields that reference this palette color
+                self._updateFieldsReferencingPalette(cssVar, hexValue);
             });
+
+            log.info('Subscribed to palette changes');
         },
 
         /**
@@ -147,6 +146,7 @@ define([
         _updateFieldsReferencingPalette: function(cssVar, hexValue) {
             // Find all color inputs with this palette reference
             var $inputs = $('.bte-color-input[data-palette-ref="' + cssVar + '"]');
+
             
             if ($inputs.length === 0) {
                 return;
@@ -161,6 +161,7 @@ define([
                 
                 // Get field's CSS variable
                 var fieldCssVar = $input.attr('data-css-var');
+
                 
                 // Update input value
                 $input.val(hexValue);
@@ -266,6 +267,7 @@ define([
             var formattedValue = this._formatValue(value, fieldType, fieldData);
             changes[varName] = formattedValue;
 
+
             // When the value is a palette reference (e.g. '--color-brand-amber-primary'),
             // ensure the palette variable and its -rgb variant are defined in the live
             // preview.  Without this, var(--color-brand-amber-primary-rgb) resolves to
@@ -276,21 +278,8 @@ define([
             // This covers: reset → concrete value, palette-A → palette-B, etc.
             this._cleanupFieldPaletteVars(varName);
 
-            // Populate _paletteManager from RequireJS cache if it is not set yet.
-            // _subscribeToPaletteChanges() fills it via an async require(); on the
-            // first setVariable() call the async callback may not have fired yet,
-            // but PaletteManager is always in cache once the panel is initialized.
-            // (Same pattern used in syncFieldsFromChanges().)
-            if (!this._paletteManager) {
-                try {
-                    this._paletteManager = require(
-                        'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager'
-                    );
-                } catch (e) {
-                    // Not in RequireJS cache yet — will be set by _subscribeToPaletteChanges callback
-                }
-            }
-
+            // _paletteManager is set synchronously in _subscribeToPaletteChanges()
+            // because PaletteManager is a static AMD dependency of this module.
             if (typeof value === 'string' && value.startsWith('--') && this._paletteManager) {
                 var paletteColor = this._paletteManager.getColor(value);
                 if (paletteColor) {
@@ -529,6 +518,7 @@ define([
                 log.error('$styleElement is null!');
                 return;
             }
+
             var css = ':root {\n';
             Object.keys(changes).forEach(function(varName) {
                 css += '    ' + varName + ': ' + changes[varName] + ';\n';
@@ -598,18 +588,24 @@ define([
                 return;
             }
             
+
+            
             // Iterate over all changes and update corresponding form fields
             Object.keys(changes).forEach(function(property) {
                 var value = changes[property];
                 
                 // Find field with this CSS property
-                var $field = $('[data-property="' + property + '"]');
+                // Use [data-section][data-field] to match only real form fields,
+                // not palette swatches which also carry data-property.
+                var $field = $('[data-property="' + property + '"][data-section][data-field]');
+
                 if (!$field.length) {
                     return;
                 }
                 
                 var fieldType = $field.data('type');
                 var displayValue = value;
+
                 
                 // Convert value back to field format
                 if (fieldType === 'color') {
@@ -620,19 +616,13 @@ define([
                         // Strip var() wrapper to get the raw palette ref (--color-x)
                         var paletteRef = value.replace(/^var\((.+)\)$/, '$1');
                         // Resolve the palette ref to its HEX color for display
-                        try {
-                            var PaletteManager = require('Swissup_BreezeThemeEditor/js/editor/panel/palette-manager');
-                            var paletteColor = PaletteManager && PaletteManager.getColor(paletteRef);
-                            if (paletteColor) {
-                                displayValue = paletteColor.hex || paletteColor.value || value;
-                            } else {
-                                // PaletteManager not yet loaded or color not found;
-                                // keep displayValue as-is — the initial render already set
-                                // the input to the correct hex, so we skip the DOM update.
-                                displayValue = null;
-                            }
-                        } catch (e) {
-                            displayValue = null; // PaletteManager not yet ready
+                        var paletteColor = PaletteManager.getColor(paletteRef);
+                        if (paletteColor) {
+                            displayValue = paletteColor.hex || paletteColor.value || value;
+                        } else {
+                            // Color not found in palette; skip DOM update — the
+                            // initial render already set the input to the correct hex.
+                            displayValue = null;
                         }
                     } else if (ColorUtils.isRgbColor(value)) {
                         // Convert RGB back to HEX only if value is in RGB format.
@@ -665,6 +655,7 @@ define([
                         if ($preview.length) {
                             $preview.css('background-color', displayValue);
                         }
+
                     } else if ($field.attr('type') === 'checkbox') {
                         $field.prop('checked', value === '1' || value === true);
                     } else {
@@ -793,6 +784,7 @@ define([
                            _fieldPaletteVars[fv].indexOf(paletteVar) !== -1;
                 });
                 if (!stillNeeded) {
+
                     delete changes[paletteVar];
                 }
             });

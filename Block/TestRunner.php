@@ -231,6 +231,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/css-state-restorer-test',
             // Color Handler Swatch Tests (11 tests) — Bug A: wrong data key; Bug B: setTimeout/rAF race
             'Swissup_BreezeThemeEditor/js/test/tests/color-handler-swatch-test',
+            // CssPreviewManager Subscribe Tests (10 tests) — Bug C: async require race in _subscribeToPaletteChanges
+            'Swissup_BreezeThemeEditor/js/test/tests/css-preview-manager-subscribe-test',
             // Scope-Switch CSS Race Condition Tests (18 tests) — stale-response guard + scopeCtx forwarding + reinit
             'Swissup_BreezeThemeEditor/js/test/tests/scope-switch-css-race-test',
         ];

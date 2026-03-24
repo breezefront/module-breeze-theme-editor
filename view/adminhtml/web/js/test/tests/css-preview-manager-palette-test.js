@@ -410,84 +410,73 @@ define([
          * Skipped automatically if the editor is not in DRAFT mode or palette
          * data is unavailable.
          */
-        'should inject palette HEX+RGB vars via real setVariable() in DRAFT mode': function (done) {
-            var self = this;
+        'should inject palette HEX+RGB vars via real setVariable() in DRAFT mode': function () {
+            // CssPreviewManager is a static AMD dep of this file — PaletteManager is
+            // also a static dep of CssPreviewManager, so it is guaranteed to be in the
+            // RequireJS cache at this point. No async require needed.
+            var PaletteManager = require('Swissup_BreezeThemeEditor/js/editor/panel/palette-manager');
 
-            require([
-                'Swissup_BreezeThemeEditor/js/editor/css-manager',
-                'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager'
-            ], function (CssManager, PaletteManager) {
+            // Skip if iframe preview is not active (not in DRAFT mode / no live editor)
+            if (!CssPreviewManager.isActive()) {
+                return;
+            }
 
-                if (!CssManager.isEditable()) {
-                    console.log('   ⚠️  Skipping integration test: editor not in DRAFT mode');
-                    done();
-                    return;
+            // Pick the first available palette color
+            var testVar = null;
+            var paletteColor = null;
+            var palettes = PaletteManager.palettes || {};
+
+            Object.keys(palettes).some(function (cssVar) {
+                var c = palettes[cssVar];
+                if (c && (c.value || c.hex)) {
+                    testVar = cssVar;
+                    paletteColor = c;
+                    return true;
                 }
-
-                // Pick the first available palette color
-                var testVar = null;
-                var paletteColor = null;
-                var palettes = PaletteManager.palettes || {};
-
-                Object.keys(palettes).some(function (cssVar) {
-                    var c = palettes[cssVar];
-                    if (c && (c.value || c.hex)) {
-                        testVar = cssVar;
-                        paletteColor = c;
-                        return true;
-                    }
-                });
-
-                if (!testVar) {
-                    console.log('   ⚠️  Skipping integration test: no palette colors loaded');
-                    done();
-                    return;
-                }
-
-                var expectedHex = paletteColor.value || paletteColor.hex;
-                var expectedRgb = ColorUtils.hexToRgb(expectedHex);
-                var fieldVar    = '--bte-test-integration-color';
-
-                // Act
-                var ok = CssPreviewManager.setVariable(fieldVar, testVar, 'color', { format: 'rgb' });
-
-                if (!ok) {
-                    console.log('   ⚠️  setVariable() returned false, cannot verify injection');
-                    done();
-                    return;
-                }
-
-                var changes = CssPreviewManager.getChanges();
-
-                // Assert — field var formatted correctly
-                self.assertEquals(
-                    changes[fieldVar],
-                    'var(' + testVar + '-rgb)',
-                    'Field var should be set to var(' + testVar + '-rgb)'
-                );
-
-                // Assert — palette HEX injected
-                self.assertEquals(
-                    changes[testVar],
-                    expectedHex,
-                    'Palette HEX var ' + testVar + ' should be injected as ' + expectedHex
-                );
-
-                // Assert — palette RGB injected
-                self.assertEquals(
-                    changes[testVar + '-rgb'],
-                    expectedRgb,
-                    'Palette RGB var ' + testVar + '-rgb should be injected as "' + expectedRgb + '"'
-                );
-
-                // Cleanup — remove only what we added
-                CssPreviewManager.resetVariable(fieldVar);
-                CssPreviewManager.resetVariable(testVar);
-                CssPreviewManager.resetVariable(testVar + '-rgb');
-
-                console.log('   ✅ Integration: injected', testVar, '→', expectedHex, '/', expectedRgb);
-                done();
             });
+
+            if (!testVar) {
+                return; // no palette colors loaded — skip
+            }
+
+            var expectedHex = paletteColor.value || paletteColor.hex;
+            var expectedRgb = ColorUtils.hexToRgb(expectedHex);
+            var fieldVar    = '--bte-test-integration-color';
+
+            // Act
+            var ok = CssPreviewManager.setVariable(fieldVar, testVar, 'color', { format: 'rgb' });
+
+            if (!ok) {
+                return; // setVariable() not ready — skip
+            }
+
+            var changes = CssPreviewManager.getChanges();
+
+            // Assert — field var formatted correctly
+            this.assertEquals(
+                changes[fieldVar],
+                'var(' + testVar + '-rgb)',
+                'Field var should be set to var(' + testVar + '-rgb)'
+            );
+
+            // Assert — palette HEX injected
+            this.assertEquals(
+                changes[testVar],
+                expectedHex,
+                'Palette HEX var ' + testVar + ' should be injected as ' + expectedHex
+            );
+
+            // Assert — palette RGB injected
+            this.assertEquals(
+                changes[testVar + '-rgb'],
+                expectedRgb,
+                'Palette RGB var ' + testVar + '-rgb should be injected as "' + expectedRgb + '"'
+            );
+
+            // Cleanup — remove only what we added
+            CssPreviewManager.resetVariable(fieldVar);
+            CssPreviewManager.resetVariable(testVar);
+            CssPreviewManager.resetVariable(testVar + '-rgb');
         }
     });
 });
