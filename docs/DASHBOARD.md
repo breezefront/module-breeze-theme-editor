@@ -1,7 +1,7 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 2026-03-20  
-**Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 25/107
+**Останнє оновлення:** 2026-03-24  
+**Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 25/108
 
 ---
 
@@ -53,12 +53,12 @@
 | Мертвий код — баги | 4 | 3 | 1 | — | — | ✅ 4/4 |
 | Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 6/31 |
 | God classes/widgets | 5 | — | 4 | 1 | — | 4/5 |
-| Code duplication | 20 | — | 5 | 9 | 6 | 4/20 |
+| Code duplication | 21 | — | 5 | 10 | 6 | 4/21 |
 | Magic numbers/strings | 17 | 1 | — | 4 | 12 | 4/17 |
 | Missing abstractions | 8 | — | 1 | 7 | — | 3/8 |
 | Tight coupling | 9 | — | 2 | 4 | 3 | 0/9 |
 | setTimeout audit | 13 | — | — | 3 | 10 | 0/13 |
-| **Всього** | **107** | **5** | **16** | **38** | **48** | **25/107** |
+| **Всього** | **108** | **5** | **16** | **39** | **48** | **25/108** |
 
 **Завершені кроки:**
 - ✅ Крок 1 — Критичні баги (6/6): пп. 1.1, 1.2, 1.3, 1.4, 2.21, 5.1
@@ -69,6 +69,7 @@
 
 **Наступні кроки:**
 - [ ] Крок 6 — Low priority cleanup (пп. 5.13–5.16 та ін.)
+- [ ] п. 4.21 — Font palette role fields авто-генерація ([детально](refactoring/font-palette-role-fields-autogeneration.md))
 
 ---
 
@@ -118,6 +119,7 @@
 | **Multi-scope support** | ✅ Завершено | [features/multi-scope.md](features/multi-scope.md) |
 | **Pickr + opacity** | ✅ Завершено | [features/palette-pickr-opacity.md](features/palette-pickr-opacity.md) |
 | **PHP Settings Reader** | 📋 Планується | [features/php-settings-reader.md](features/php-settings-reader.md) |
+| **Font Palette Role Fields Auto-gen** | 📋 Планується | [refactoring/font-palette-role-fields-autogeneration.md](refactoring/font-palette-role-fields-autogeneration.md) |
 
 ---
 
@@ -150,7 +152,7 @@ Refactoring:
 🟠 High         ██████████░░  10/16 ✅ Кроки 2+3+4 завершено
 🟡 Medium       ██░░░░░░░░░░   6/38 ✅ Крок 5 завершено
 🟢 Low          █░░░░░░░░░░░   4/48
-📋 Total        ██░░░░░░░░░░  25/107 (23%)
+📋 Total        ██░░░░░░░░░░  25/108 (23%)
 
 Issues:        20/23 closed (3 open/deferred)
 PHP Tests:     50 файлів / 710 tests ✅

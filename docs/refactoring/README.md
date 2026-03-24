@@ -9,23 +9,29 @@
 ### 🔧 Code Quality Audit 2026-03-19
 📄 **[PLAN.md](PLAN.md)**
 
-**Статус:** 📋 Заплановано (0 / 94 завершено)  
+**Статус:** 📋 Заплановано (25 / 108 завершено)  
 **Аудит проведено:** 2026-03-19  
 
 **Зміст плану:**
 - 🔴 4 критичних баги (включаючи production null-відповіді та broken validation)
 - 🟠 16 high-priority задач (God classes, дублювання, мертві модулі)
-- 🟡 35 medium задач (missing abstractions, magic strings, duplication)
+- 🟡 36 medium задач (missing abstractions, magic strings, duplication)
 - 🟢 38 low-priority задач (cleanup, naming, CSS variables)
 
 **Категорії:**
 1. [Мертвий код — баги](PLAN.md#1-мертвий-код--баги) (4 задачі)
 2. [Dead code cleanup](PLAN.md#2-dead-code-cleanup) (31 задача)
 3. [God classes / God widgets](PLAN.md#3-god-classes--god-widgets) (5 задач)
-4. [Code duplication](PLAN.md#4-code-duplication) (20 задач)
+4. [Code duplication](PLAN.md#4-code-duplication) (21 задача)
 5. [Magic numbers / Magic strings](PLAN.md#5-magic-numbers--magic-strings) (17 задач)
 6. [Missing abstractions](PLAN.md#6-missing-abstractions) (8 задач)
 7. [Tight coupling](PLAN.md#7-tight-coupling) (9 задач)
+
+### Окремі плани рефакторингу
+
+| Файл | Тема | Пріоритет | Статус |
+|------|------|-----------|--------|
+| [font-palette-role-fields-autogeneration.md](font-palette-role-fields-autogeneration.md) | Font palette role fields — авто-генерація з `font_palettes.fonts[]`, усунення дублювання з `sections` | 🟡 Medium | `[ ] TODO` |
 
 ---
 

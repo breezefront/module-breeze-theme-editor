@@ -454,6 +454,14 @@
 - **Пріоритет:** 🟢 Low
 - **Статус:** `[ ] TODO`
 
+### 4.21 Font palette role fields — дублювання між `font_palettes.fonts[]` і `sections`
+- **Файли:** `Model/Resolver/Query/AbstractConfigResolver.php`, `Model/Provider/ConfigProvider.php`, `view/adminhtml/web/js/editor/panel/sections/font-palette-section-renderer.js`, `view/adminhtml/web/js/editor/panel/config-loader.js`, `theme-frontend-breeze-evolution/etc/theme_editor/settings.json`
+- **Проблема:** Кожна роль шрифту (`primary`, `secondary`, `utility`) описується двічі: в `font_palettes.fonts[]` (UI-декларація) і в `sections[].settings[]` (storage binding). Однакові `property` і `default` значення дублюються. Ризик розсинхронізації. Плутанина для авторів тем — поля в `sections` фільтруються і не відображаються в акордеоні, але мусять там бути для збереження.
+- **Пропозиція:** Авто-генерація field-записів з `font_palettes.fonts[]` у `AbstractConfigResolver` у синтетичну секцію `_font_palette` (аналог `_palette` для кольорів). Видалити role entries з `sections` в `settings.json`.
+- **Пріоритет:** 🟡 Medium
+- **Статус:** `[ ] TODO`
+- **Документація:** [`refactoring/font-palette-role-fields-autogeneration.md`](font-palette-role-fields-autogeneration.md)
+
 ---
 
 ## 5. Magic numbers / Magic strings
