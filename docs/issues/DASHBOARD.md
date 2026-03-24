@@ -1,6 +1,6 @@
 # Issues Dashboard
 
-**Updated:** 2026-03-20
+**Updated:** 2026-03-24
 
 ---
 
@@ -8,11 +8,11 @@
 
 | | Count |
 |---|---|
-| Total issues | 22 |
+| Total issues | 23 |
 | Fixed / Closed | 20 |
-| Pending | 2 |
-| Bugs | 14 (13 closed, 1 open) |
-| Tasks | 8 (7 done, 1 pending) |
+| Pending | 3 |
+| Bugs | 15 (14 closed, 1 open) |
+| Tasks | 8 (7 done, 2 pending) |
 
 ---
 
@@ -34,6 +34,7 @@
 | [015](015-css-generator-published-bypasses-scope-chain.md) | `CssGenerator` PUBLISHED branch bypasses scope chain and theme hierarchy | `7013886` | **Closed** |
 | [018](018-f5-color-preview-dot-not-updated.md) | Color preview dot not updated after F5 in DRAFT mode | `6b186d9` | **Closed** |
 | [019](019-f5-save-counter-shows-zero.md) | "Save (0)" and disabled Reset button after F5 in DRAFT mode | `6dab435` | **Closed** |
+| [020](020-font-picker-default-cssvar-not-reactive-to-palette-change.md) | `font_picker` з `default: "--role"` не реагує на зміни палітри шрифтів | — | **Open** |
 
 ---
 
