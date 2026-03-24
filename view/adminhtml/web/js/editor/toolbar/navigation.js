@@ -292,41 +292,68 @@ define([
         },
 
         /**
-         * Initialize panel widget on first open (lazy loading)
+         * Initialize panel widget on first open (lazy loading).
+         *
+         * When panelConfig.require is set (an AMD module path), the module is
+         * loaded first via require() to guarantee the jQuery widget is
+         * registered on $.fn before we call it.  This eliminates the race
+         * condition where toolbar.js auto-activates a panel before an async
+         * <script> require() has finished loading the widget module.
+         *
          * @param {String} itemId - Navigation item ID (e.g., 'theme-editor')
-         * @return {Boolean} - True if initialized successfully
          */
         _initializePanel: function(itemId) {
             var panelConfig = this.options.panelWidgets[itemId];
 
             if (!panelConfig) {
                 log.warn('No panel widget config for: ' + itemId);
-                return false;
+                return;
             }
 
             var $panel = $(panelConfig.selector);
 
             if (!$panel.length) {
                 log.error('Panel element not found: ' + panelConfig.selector);
-                return false;
+                return;
             }
 
             // Check if already initialized
             if ($panel.data('panel-initialized')) {
                 log.info('Panel already initialized: ' + itemId);
-                return true;
+                return;
+            }
+
+            // If the widget is not yet on $.fn and we know which module provides it,
+            // load that module first, then initialize.
+            if (panelConfig.require && typeof $panel[panelConfig.widget] !== 'function') {
+                var modulePath = panelConfig.require;
+                log.info('Loading module for panel: ' + itemId + ' -> ' + modulePath);
+
+                require([modulePath], function () {
+                    if ($panel.data('panel-initialized')) {
+                        return; // initialized while we were loading
+                    }
+
+                    try {
+                        $panel[panelConfig.widget](panelConfig.config);
+                        $panel.data('panel-initialized', true);
+                        log.info('Panel initialized (async): ' + itemId + ' -> ' + panelConfig.widget);
+                    } catch (e) {
+                        log.error('Failed to initialize panel: ' + itemId + ' ' + e);
+                    }
+                });
+
+                return;
             }
 
             try {
-                // Initialize widget
+                // Initialize widget (synchronous — already loaded)
                 $panel[panelConfig.widget](panelConfig.config);
                 $panel.data('panel-initialized', true);
 
                 log.info('Panel initialized: ' + itemId + ' -> ' + panelConfig.widget);
-                return true;
             } catch (e) {
                 log.error('Failed to initialize panel: ' + itemId + ' ' + e);
-                return false;
             }
         },
 
