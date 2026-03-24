@@ -468,6 +468,39 @@ define([
         setIframeId: function(newIframeId) {
             iframeId = newIframeId;
             log.info('CSS Manager: iframe ID updated to ' + iframeId);
+        },
+
+        /**
+         * Re-initialize scope context and optionally reset status vars.
+         *
+         * Unlike panel/css-manager, this module does not cache DOM refs —
+         * switchTo() always reads _getCurrentIframeDoc() fresh. So flush=true
+         * only needs to reset the status/publication tracking vars so that
+         * the next switchTo() call starts from a clean state for the new scope.
+         *
+         * @param {Object|null} config - { scope, scopeId, themeId }; null = keep current vars
+         * @param {Boolean}     flush  - if true, reset currentStatus and currentPublicationId
+         */
+        reinit: function(config, flush) {
+            if (config) {
+                scope   = config.scope   || 'stores';
+                scopeId = config.scopeId;
+                themeId = config.themeId || null;
+            }
+            if (flush) {
+                currentStatus        = PUBLICATION_STATUS.DRAFT;
+                currentPublicationId = null;
+            }
+            log.info('CSS Manager: reinit scope=' + scope + ':' + scopeId + ' flush=' + !!flush);
         }
     };
+
+    // Automatically sync scope vars when the scope selector switches to a new
+    // store/website/default scope.  The flush resets status tracking so that
+    // the next switchTo() (triggered by bte:iframeReloaded) starts clean.
+    $(document).on('scopeChanged', function (e, newScope, newScopeId) {
+        module.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
+    });
+
+    return module;
 });
