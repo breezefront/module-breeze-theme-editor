@@ -2,8 +2,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/base',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/fields/color.html',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/color-utils',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function(BaseFieldRenderer, template, ColorUtils, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager'
+], function(BaseFieldRenderer, template, ColorUtils, Logger, PaletteManager) {
     'use strict';
 
     var log = Logger.for('panel/field-renderers/color');
@@ -64,53 +65,39 @@ define([
      * @returns {String} HEX color (defaults to fallbackDefault or #000000 if not found)
      */
     ColorRenderer._getPaletteHexFromMapping = function(paletteRef, fallbackDefault) {
-        // Check if require is available
-        if (typeof require === 'undefined') {
-            log.warn('require not available for palette resolution');
+        if (!PaletteManager || !PaletteManager.palettes) {
+            log.warn('PaletteManager not initialized');
             return fallbackDefault || '#000000';
         }
-        
-        try {
-            var PaletteManager = require('Swissup_BreezeThemeEditor/js/editor/panel/palette-manager');
-            
-            if (!PaletteManager || !PaletteManager.palettes) {
-                log.warn('PaletteManager not initialized');
-                return fallbackDefault || '#000000';
-            }
-            
-            // Look up in flat index: PaletteManager.palettes['--color-brand-amber-dark']
-            var color = PaletteManager.palettes[paletteRef];
-            
-            if (!color) {
-                log.warn('Palette color not found: ' + paletteRef + ' - using fallback: ' + (fallbackDefault || '#000000'));
-                return fallbackDefault || '#000000';
-            }
-            
-            // Return HEX value (already in HEX format in Breeze 3.0)
-            if (color.hex) {
-                log.debug('Resolved palette ref: ' + paletteRef + ' \u2192 ' + color.hex);
-                return color.hex;
-            }
-            
-            // Fallback to value (also HEX in Breeze 3.0)
-            if (color.value) {
-                log.debug('Using palette value: ' + paletteRef + ' \u2192 ' + color.value);
-                return color.value;
-            }
-            
-            // Fallback to default if available
-            if (color.default && color.default.startsWith('#')) {
-                log.debug('Using palette default: ' + paletteRef + ' \u2192 ' + color.default);
-                return color.default;
-            }
-            
-            log.warn('No valid color value found for: ' + paletteRef);
-            return fallbackDefault || '#000000';
-            
-        } catch (e) {
-            log.error('Error accessing PaletteManager: ' + e);
+
+        // Look up in flat index: PaletteManager.palettes['--color-brand-amber-dark']
+        var color = PaletteManager.palettes[paletteRef];
+
+        if (!color) {
+            log.warn('Palette color not found: ' + paletteRef + ' - using fallback: ' + (fallbackDefault || '#000000'));
             return fallbackDefault || '#000000';
         }
+
+        // Return HEX value (already in HEX format in Breeze 3.0)
+        if (color.hex) {
+            log.debug('Resolved palette ref: ' + paletteRef + ' \u2192 ' + color.hex);
+            return color.hex;
+        }
+
+        // Fallback to value (also HEX in Breeze 3.0)
+        if (color.value) {
+            log.debug('Using palette value: ' + paletteRef + ' \u2192 ' + color.value);
+            return color.value;
+        }
+
+        // Fallback to default if available
+        if (color.default && color.default.startsWith('#')) {
+            log.debug('Using palette default: ' + paletteRef + ' \u2192 ' + color.default);
+            return color.default;
+        }
+
+        log.warn('No valid color value found for: ' + paletteRef);
+        return fallbackDefault || '#000000';
     };
 
     return ColorRenderer;
