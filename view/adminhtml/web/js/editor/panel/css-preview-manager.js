@@ -169,7 +169,8 @@ define([
                 $trigger.find('.bte-color-preview').css('background-color', hexValue);
                 
                 // Update Pickr instance if exists
-                var pickrInstance = $trigger.data('pickr');
+                var popupInstance = $trigger.data('popup-instance');
+                var pickrInstance = popupInstance && popupInstance.pickr;
                 if (pickrInstance) {
                     // Set flag to prevent palette-ref removal
                     $input.data('is-palette-update', true);

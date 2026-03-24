@@ -63,6 +63,12 @@ define([
             // Initialize storage helper with scope/theme context
             StorageHelper.init(scopeId, themeId);
 
+            // Register BEFORE the retry loop so scope changes during iframe loading
+            // are never missed. off+on prevents duplicates on subsequent init() calls.
+            $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function (e, newScope, newScopeId) {
+                manager.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
+            });
+
             // Validate parameters
             if (!scopeId && scope !== 'default') {
                 log.error('CSS Manager: Invalid scopeId for scope=' + scope);
@@ -123,12 +129,6 @@ define([
                     currentStatus = data.status;
                     log.info('CSS Manager: currentStatus updated to: ' + currentStatus);
                 }
-            });
-
-            // Sync scope vars and flush stale DOM refs on scope switch.
-            // off+on prevents duplicate listeners if init() is called again.
-            $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function (e, newScope, newScopeId) {
-                manager.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
             });
 
             log.info('CSS Manager initialized (status: ' + currentStatus + ')');
@@ -265,9 +265,16 @@ define([
          * Show DRAFT CSS (enable draft and live-preview, remove publication)
          * Editable mode - editing allowed
          * Draft CSS is loaded from GraphQL and created dynamically
+         *
+         * @param {Object} [ctx] - Optional scope context { scope, scopeId }.
+         *                         Falls back to module-level vars when omitted.
          */
-        showDraft: function() {
+        showDraft: function(ctx) {
             var self = this;
+
+            // Capture scope context at call time to guard against stale async responses.
+            var effectiveScope   = (ctx && ctx.scope)   || scope;
+            var effectiveScopeId = (ctx && ctx.scopeId) || scopeId;
 
             // Refresh style references (may appear later)
             if (!$publishedStyle || !$publishedStyle.length) {
@@ -282,16 +289,24 @@ define([
 
             // Load draft CSS from GraphQL if not in DOM
             if (!$draftStyle || !$draftStyle.length) {
-                log.info('Loading draft CSS from GraphQL...');
-
-                return getCss(scope, scopeId, PUBLICATION_STATUS.DRAFT, null)
+                return getCss(effectiveScope, effectiveScopeId, PUBLICATION_STATUS.DRAFT, null)
                     .then(function(response) {
+                        // Stale-response guard: scope may have changed while the
+                        // request was in-flight — discard result if so.
+                        if (effectiveScopeId !== scopeId) {
+                            log.warn('CSS Manager: DRAFT response for scopeId=' + effectiveScopeId +
+                                ' discarded — current scope is now ' + scopeId);
+                            return false;
+                        }
+
                         if (response && response.getThemeEditorCss) {
                             var css = response.getThemeEditorCss.css || '';
 
                             // Create draft style element
                             $draftStyle = $('<style>', {
                                 id: 'bte-theme-css-variables-draft',
+                                'data-scope-id': effectiveScopeId,
+                                'data-created-by': 'panel/css-manager',
                                 type: 'text/css',
                                 media: 'all'
                             }).text(css);
@@ -359,15 +374,21 @@ define([
          * Read-only mode - viewing historical version
          *
          * @param {Number} publicationId
+         * @param {Object} [ctx] - Optional scope context { scope, scopeId }.
+         *                         Falls back to module-level vars when omitted.
          * @returns {Promise}
          */
-        showPublication: function(publicationId) {
+        showPublication: function(publicationId, ctx) {
             var self = this;
 
             if (!publicationId) {
                 log.error('CSS Manager: publicationId required');
                 return Promise.reject('publicationId required');
             }
+
+            // Capture scope context at call time to guard against stale async responses.
+            var effectiveScope   = (ctx && ctx.scope)   || scope;
+            var effectiveScopeId = (ctx && ctx.scopeId) || scopeId;
 
             log.info('Fetching publication CSS: ' + publicationId);
 
@@ -395,8 +416,16 @@ define([
             resetLivePreview();
 
             // Fetch publication CSS via GraphQL
-            return getCss(scope, scopeId, PUBLICATION_STATUS.PUBLICATION, publicationId)
+            return getCss(effectiveScope, effectiveScopeId, PUBLICATION_STATUS.PUBLICATION, publicationId)
                 .then(function(response) {
+                    // Stale-response guard: scope may have changed while the
+                    // request was in-flight — discard result if so.
+                    if (effectiveScopeId !== scopeId) {
+                        log.warn('CSS Manager: PUBLICATION response for scopeId=' + effectiveScopeId +
+                            ' discarded — current scope is now ' + scopeId);
+                        return false;
+                    }
+
                     // GraphQL client returns response.data, so response = {getThemeEditorCss: {...}}
                     if (!response || !response.getThemeEditorCss) {
                         throw new Error('Invalid response from GraphQL');
@@ -485,9 +514,11 @@ define([
          *
          * @param {String} status
          * @param {Number} publicationId - Required for PUBLICATION
+         * @param {Object} [ctx] - Optional scope context { scope, scopeId }.
+         *                         Passed through to showDraft/showPublication.
          * @returns {Promise}
          */
-        switchTo: function(status, publicationId) {
+        switchTo: function(status, publicationId, ctx) {
             log.info('CSS Manager: Switching to ' + status + ' ' + (publicationId || ''));
 
             switch (status) {
@@ -495,10 +526,9 @@ define([
                     this.showPublished();
                     return Promise.resolve(true);
                 case PUBLICATION_STATUS.DRAFT:
-                    this.showDraft();
-                    return Promise.resolve(true);
+                    return Promise.resolve(this.showDraft(ctx));
                 case PUBLICATION_STATUS.PUBLICATION:
-                    return this.showPublication(publicationId);
+                    return this.showPublication(publicationId, ctx);
                 default:
                     log.error('Invalid status: ' + status);
                     return Promise.reject('Invalid status');
@@ -612,6 +642,14 @@ define([
                 themeId = config.themeId || null;
             }
             if (flush) {
+                // Physically remove the draft style element from the iframe DOM before
+                // clearing JS refs. Without this, showDraft() would re-find the stale
+                // element via find('#bte-theme-css-variables-draft') and skip the GraphQL
+                // request, causing the previous scope's draft CSS to bleed into the new scope.
+                if (getIframeDocument()) {
+                    $(getIframeDocument()).find('#bte-theme-css-variables-draft').remove();
+                }
+
                 $publishedStyle   = null;
                 $draftStyle       = null;
                 $livePreviewStyle = null;

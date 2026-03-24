@@ -229,6 +229,10 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/action-executor-test',
             // CssStateRestorer Pure Logic Tests (п.3.4 pre-work) — determineCssMode/fallback/switchGuards
             'Swissup_BreezeThemeEditor/js/test/tests/css-state-restorer-test',
+            // Color Handler Swatch Tests (11 tests) — Bug A: wrong data key; Bug B: setTimeout/rAF race
+            'Swissup_BreezeThemeEditor/js/test/tests/color-handler-swatch-test',
+            // Scope-Switch CSS Race Condition Tests (18 tests) — stale-response guard + scopeCtx forwarding + reinit
+            'Swissup_BreezeThemeEditor/js/test/tests/scope-switch-css-race-test',
         ];
     }
 }

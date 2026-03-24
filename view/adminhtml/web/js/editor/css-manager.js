@@ -45,7 +45,13 @@ define([
             scopeId = config.scopeId;
             themeId = config.themeId;
             iframeId = config.iframeId || 'bte-iframe';
-            
+
+            // Register BEFORE the retry loop so scope changes during iframe loading
+            // are never missed. off+on prevents duplicates on subsequent init() calls.
+            $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function (e, newScope, newScopeId) {
+                manager.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
+            });
+
             // Validate parameters
             if (!scopeId && scope !== 'default') {
                 log.error('CSS Manager: Invalid scopeId for scope=' + scope);
@@ -104,12 +110,6 @@ define([
             
             // Trigger ready event for other components
             $(document).trigger('bte:cssManagerReady');
-
-            // Sync scope vars on scope switch; off+on prevents duplicates
-            // if init() is called again for a new scope.
-            $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function (e, newScope, newScopeId) {
-                manager.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
-            });
 
             return true;
         },
@@ -268,9 +268,11 @@ define([
          * 
          * @param {String} status - DRAFT | PUBLISHED | PUBLICATION
          * @param {Number} publicationId - Publication ID (required for PUBLICATION status)
+         * @param {Object} [ctx] - Optional scope context { scope, scopeId }.
+         *                         Falls back to module-level vars when omitted.
          * @returns {Promise}
          */
-        switchTo: function(status, publicationId) {
+        switchTo: function(status, publicationId, ctx) {
             log.info('CSS Manager: Switching to ' + status + ' ' + (publicationId || ''));
             
             var doc = this._getCurrentIframeDoc();
@@ -282,6 +284,14 @@ define([
             
             currentStatus = status;
             currentPublicationId = publicationId || null;
+
+            // Capture scope context at call time — caller may pass explicit ctx,
+            // otherwise fall back to module-level vars.
+            // Captured values are used throughout the async chain so that a scope
+            // change arriving while a GraphQL request is in-flight does not corrupt
+            // the result (stale-closure guard below).
+            var effectiveScope   = (ctx && ctx.scope)   || scope;
+            var effectiveScopeId = (ctx && ctx.scopeId) || scopeId;
             
             // Get style elements from current iframe document
             var $publishedStyle = $(doc).find('#bte-theme-css-variables');
@@ -293,14 +303,26 @@ define([
             switch (status) {
                 case PUBLICATION_STATUS.DRAFT:
                     // Load draft CSS via GraphQL and create style dynamically
-                    return getCss(scope, scopeId, PUBLICATION_STATUS.DRAFT, null)
+                    return getCss(effectiveScope, effectiveScopeId, PUBLICATION_STATUS.DRAFT, null)
                         .then(function(response) {
+                            // Stale-response guard: scope may have changed while the
+                            // request was in-flight — discard result if so.
+                            if (effectiveScopeId !== scopeId) {
+                                log.warn('CSS Manager: DRAFT response for scopeId=' + effectiveScopeId +
+                                    ' discarded — current scope is now ' + scopeId);
+                                return { status: PUBLICATION_STATUS.DRAFT, success: false, stale: true };
+                            }
+
                             if (response && response.getThemeEditorCss) {
                                 var css = response.getThemeEditorCss.css || '';
-                                
+
                                 // ALWAYS create/update draft style dynamically (not from PHP)
                                 self._updateStyleContent('bte-theme-css-variables-draft', css);
                                 $draftStyle = self._getOrCreateStyle('bte-theme-css-variables-draft');
+                                if ($draftStyle && $draftStyle.length) {
+                                    $draftStyle.attr('data-scope-id', effectiveScopeId);
+                                    $draftStyle.attr('data-created-by', 'editor/css-manager');
+                                }
                                 
                                 // Enable draft; published stays enabled (draft is inserted after it in DOM,
                                 // so CSS cascade gives draft priority without disabling published)
@@ -315,10 +337,6 @@ define([
                                 });
 
                                 // Re-create live preview style after iframe navigation.
-                                // Draft styles and live preview are separate: draft comes from GraphQL
-                                // (saved values), live preview holds unsaved in-progress changes.
-                                // After navigation the new page DOM has neither — draft is re-created
-                                // above, live preview must be re-created here so pending changes remain visible.
                                 require(['Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager'], function(CssPreviewManager) {
                                     CssPreviewManager.recreateLivePreviewStyle();
                                 });
@@ -357,8 +375,15 @@ define([
                     }
                     
                     // Load publication CSS via GraphQL
-                    return getCss(scope, scopeId, PUBLICATION_STATUS.PUBLICATION, publicationId)
+                    return getCss(effectiveScope, effectiveScopeId, PUBLICATION_STATUS.PUBLICATION, publicationId)
                         .then(function(response) {
+                            // Stale-response guard
+                            if (effectiveScopeId !== scopeId) {
+                                log.warn('CSS Manager: PUBLICATION response for scopeId=' + effectiveScopeId +
+                                    ' discarded — current scope is now ' + scopeId);
+                                return { status: PUBLICATION_STATUS.PUBLICATION, success: false, stale: true };
+                            }
+
                             if (response && response.getThemeEditorCss) {
                                 var css = response.getThemeEditorCss.css || '';
                                 var publicationStyleId = 'bte-publication-css-' + publicationId;

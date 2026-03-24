@@ -332,7 +332,16 @@ define([
                     
                     log.debug('Palette reference removed (manual change)');
                 } else {
+                    // Clear the flag now — this is the first change event after
+                    // swatch click (Pickr rAF constructor callback). Clearing here
+                    // instead of via setTimeout avoids the race where the timeout
+                    // could fire before Pickr's rAF, leaving the flag unset when
+                    // the rAF fires and causing a spurious change event with the
+                    // wrong (default) color.
+                    $textInput.removeData('is-palette-selection');
+                    $trigger.removeData('is-palette-selection');
                     log.debug('Palette reference preserved (palette selection)');
+                    return; // Don't trigger save — color was set programmatically
                 }
                 
                 // Trigger change event
@@ -393,14 +402,6 @@ define([
                 
                 // Trigger change event to save
                 self._handleColorChange($textInput, callback);
-                
-                // Clear flag after change is processed
-                // Use setTimeout to ensure flag is cleared after all events complete
-                setTimeout(function() {
-                    $textInput.removeData('is-palette-selection');
-                    $trigger.removeData('is-palette-selection');
-                    log.debug('Palette selection flag cleared');
-                }, 50);
                 
                 // Popup stays open (as per your preference)
             });

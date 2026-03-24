@@ -92,8 +92,10 @@ define([
             log.info('Restoring CSS state: mode=' + mode.mode +
                 (mode.publicationId ? ' id=' + mode.publicationId : ''));
 
+            var scopeCtx = { scope: ctx.scope, scopeId: ctx.scopeId };
+
             if (mode.mode === PUBLICATION_STATUS.PUBLICATION) {
-                cssManager.switchTo(PUBLICATION_STATUS.PUBLICATION, mode.publicationId)
+                cssManager.switchTo(PUBLICATION_STATUS.PUBLICATION, mode.publicationId, scopeCtx)
                     .then(function () {
                         log.info('Restored PUBLICATION mode: ' + mode.publicationId);
                     })
@@ -102,7 +104,7 @@ define([
                         self.fallbackToDraft(ctx);
                     });
             } else if (mode.mode === PUBLICATION_STATUS.PUBLISHED) {
-                cssManager.switchTo(PUBLICATION_STATUS.PUBLISHED)
+                cssManager.switchTo(PUBLICATION_STATUS.PUBLISHED, null, scopeCtx)
                     .then(function () {
                         log.info('Restored PUBLISHED mode');
                     })
@@ -110,7 +112,7 @@ define([
                         log.error('Failed to restore published state: ' + error);
                     });
             } else {
-                cssManager.switchTo(PUBLICATION_STATUS.DRAFT)
+                cssManager.switchTo(PUBLICATION_STATUS.DRAFT, null, scopeCtx)
                     .then(function () {
                         log.info('Restored DRAFT mode');
                     })
@@ -157,7 +159,9 @@ define([
 
             loading.show(ctx.element);
 
-            cssManager.switchTo(status).then(function () {
+            var scopeCtx = { scope: ctx.scope, scopeId: ctx.scopeId };
+
+            cssManager.switchTo(status, null, scopeCtx).then(function () {
                 ctx.options.currentStatus           = status;
                 ctx.options.currentPublicationId    = null;
                 ctx.options.currentPublicationTitle = null;
@@ -202,7 +206,9 @@ define([
 
             loading.show(ctx.element);
 
-            cssManager.switchTo(PUBLICATION_STATUS.PUBLICATION, publicationId).then(function () {
+            var scopeCtx = { scope: ctx.scope, scopeId: ctx.scopeId };
+
+            cssManager.switchTo(PUBLICATION_STATUS.PUBLICATION, publicationId, scopeCtx).then(function () {
                 ctx.options.currentStatus           = PUBLICATION_STATUS.PUBLICATION;
                 ctx.options.currentPublicationId    = publicationId;
                 ctx.options.currentPublicationTitle = publication.title;
