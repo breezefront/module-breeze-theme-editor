@@ -40,10 +40,10 @@ define([
         });
     }
 
-    return {
+    var module = {
         /**
          * Initialize CSS manager
-         * 
+         *
          * @param {Object} config - { scope, scopeId, themeId, iframeId }
          * @param {Number} retries - Internal retry counter
          */
@@ -55,20 +55,20 @@ define([
             }
             retries = retries || 0;
             var self = this;
-            
+
             scope   = config.scope   || 'stores';
             scopeId = config.scopeId;
             themeId = config.themeId;
-            
+
             // Initialize storage helper with scope/theme context
             StorageHelper.init(scopeId, themeId);
-            
+
             // Validate parameters
             if (!scopeId && scope !== 'default') {
                 log.error('CSS Manager: Invalid scopeId for scope=' + scope);
                 return false;
             }
-            
+
             if (!getIframeDocument()) {
                 if (retries < 20) {
                     log.info('CSS Manager: iframe not ready, retry ' + (retries + 1));
@@ -104,7 +104,7 @@ define([
                 }).text(':root {}');
                 $(getIframeDocument().head).append($publishedStyle);
             }
-            
+
             // Draft CSS will be created dynamically when switching to DRAFT
             if (!$draftStyle.length) {
                 log.info('Draft CSS not in DOM - will be created dynamically when needed');
@@ -112,7 +112,7 @@ define([
 
             // Check localStorage for current status
             currentStatus = this._getStoredStatus();
-            
+
             // Apply initial CSS based on stored status
             this._applyStoredState();
 
@@ -153,11 +153,11 @@ define([
          */
         _enableStyle: function($style) {
             if (!$style || !$style.length) return;
-            
+
             // Set attributes in correct order
             $style.prop('disabled', false);      // Set disabled first
             $style.attr('media', 'all');         // Then media attribute
-            
+
             // Force reflow to ensure changes are applied
             if (getIframeDocument() && getIframeDocument().body) {
                 getIframeDocument().body.offsetHeight; // Trigger reflow
@@ -170,11 +170,11 @@ define([
          */
         _disableStyle: function($style) {
             if (!$style || !$style.length) return;
-            
+
             // Set attributes in correct order
             $style.prop('disabled', true);       // Set disabled first
             $style.attr('media', 'not all');     // Then media attribute
-            
+
             // Force reflow to ensure changes are applied
             if (getIframeDocument() && getIframeDocument().body) {
                 getIframeDocument().body.offsetHeight; // Trigger reflow
@@ -239,7 +239,7 @@ define([
 
             // Disable live preview (NOT editable in PUBLISHED mode)
             this._disableStyle($livePreviewStyle);
-            
+
             // Clear live preview changes (unsaved changes should not persist)
             resetLivePreview();
 
@@ -248,10 +248,10 @@ define([
 
             currentStatus = PUBLICATION_STATUS.PUBLISHED;
             log.info('CSS Manager: Showing PUBLISHED (read-only mode)');
-            
+
             // ✅ Trigger event to notify panel about status change
             $(document).trigger('publicationStatusChanged', {status: PUBLICATION_STATUS.PUBLISHED});
-            
+
             return true;
         },
 
@@ -262,7 +262,7 @@ define([
          */
         showDraft: function() {
             var self = this;
-            
+
             // Refresh style references (may appear later)
             if (!$publishedStyle || !$publishedStyle.length) {
                 $publishedStyle = $(getIframeDocument()).find('#bte-theme-css-variables');
@@ -277,19 +277,19 @@ define([
             // Load draft CSS from GraphQL if not in DOM
             if (!$draftStyle || !$draftStyle.length) {
                 log.info('Loading draft CSS from GraphQL...');
-                
+
                 return getCss(scope, scopeId, PUBLICATION_STATUS.DRAFT, null)
                     .then(function(response) {
                         if (response && response.getThemeEditorCss) {
                             var css = response.getThemeEditorCss.css || '';
-                            
+
                             // Create draft style element
                             $draftStyle = $('<style>', {
                                 id: 'bte-theme-css-variables-draft',
                                 type: 'text/css',
                                 media: 'all'
                             }).text(css);
-                            
+
                             // Insert after published style
                             if ($publishedStyle && $publishedStyle.length) {
                                 $publishedStyle.after($draftStyle);
@@ -298,7 +298,7 @@ define([
                                 $(getIframeDocument().head).append($draftStyle);
                                 log.info('Draft CSS created in head');
                             }
-                            
+
                             // Enable published CSS (base)
                             self._enableStyle($publishedStyle);
 
@@ -313,10 +313,10 @@ define([
 
                             currentStatus = PUBLICATION_STATUS.DRAFT;
                             log.info('CSS Manager: Showing DRAFT (editable mode, created dynamically)');
-                            
+
                             // Trigger event to notify panel about status change
                             $(document).trigger('publicationStatusChanged', {status: PUBLICATION_STATUS.DRAFT});
-                            
+
                             return true;
                         }
                     })
@@ -341,17 +341,17 @@ define([
 
             currentStatus = PUBLICATION_STATUS.DRAFT;
             log.info('CSS Manager: Showing DRAFT (editable mode)');
-            
+
             // Trigger event to notify panel about status change
             $(document).trigger('publicationStatusChanged', {status: PUBLICATION_STATUS.DRAFT});
-            
+
             return Promise.resolve(true);
         },
 
         /**
          * Show PUBLICATION CSS (fetch via GraphQL, inject as live style)
          * Read-only mode - viewing historical version
-         * 
+         *
          * @param {Number} publicationId
          * @returns {Promise}
          */
@@ -384,7 +384,7 @@ define([
 
             // Disable live preview (NOT editable in PUBLICATION mode)
             this._disableStyle($livePreviewStyle);
-            
+
             // Clear live preview changes (unsaved changes should not persist)
             resetLivePreview();
 
@@ -408,13 +408,13 @@ define([
 
                     currentStatus = PUBLICATION_STATUS.PUBLICATION;
                     log.info('CSS Manager: Showing PUBLICATION ' + publicationId + ' (read-only mode)');
-                    
+
                     // ✅ Trigger event to notify panel about status change
                     $(document).trigger('publicationStatusChanged', {
                         status: PUBLICATION_STATUS.PUBLICATION,
                         publicationId: publicationId
                     });
-                    
+
                     return true;
                 })
                 .catch(function(error) {
@@ -443,7 +443,7 @@ define([
 
             // Insert AFTER draft but BEFORE live-preview (правильний порядок пріоритету)
             var $livePreview = $(getIframeDocument()).find('#bte-live-preview');
-            
+
             if ($livePreview && $livePreview.length) {
                 // Insert before live-preview (щоб live-preview мав найвищий пріоритет)
                 $livePreview.before($publicationStyle);
@@ -476,7 +476,7 @@ define([
 
         /**
          * Switch to status (PUBLISHED, DRAFT, PUBLICATION)
-         * 
+         *
          * @param {String} status
          * @param {Number} publicationId - Required for PUBLICATION
          * @returns {Promise}
@@ -498,7 +498,6 @@ define([
                     return Promise.reject('Invalid status');
             }
         },
-
         /**
          * Refresh published CSS layer from the server.
          *
@@ -562,13 +561,13 @@ define([
                 log.error('CSS Manager: Cannot refresh - iframe document not available');
                 return false;
             }
-            
+
             // Update style element references
             $publishedStyle = $(getIframeDocument()).find('#bte-theme-css-variables');
             $draftStyle = $(getIframeDocument()).find('#bte-theme-css-variables-draft');
             $livePreviewStyle = $(getIframeDocument()).find('#bte-live-preview');
             $publicationStyle = null; // Reset publication style
-            
+
             log.info('CSS Manager: iframe document refreshed');
             return true;
         },
@@ -583,11 +582,37 @@ define([
         /**
          * Check if editing is allowed in current mode
          * Only DRAFT mode allows editing
-         * 
+         *
          * @returns {Boolean}
          */
         isEditable: function() {
             return currentStatus === PUBLICATION_STATUS.DRAFT;
+        },
+
+        /**
+         * Re-initialize scope context and optionally flush stale DOM references.
+         *
+         * Use flush=true whenever the iframe is about to navigate to a new scope
+         * so that the next showDraft() / showPublished() call fetches fresh CSS
+         * from GraphQL instead of reusing dead DOM elements from the old document.
+         *
+         * @param {Object|null} config - { scope, scopeId, themeId }; null = keep current vars
+         * @param {Boolean}     flush  - if true, clear all cached DOM refs and reset status
+         */
+        reinit: function (config, flush) {
+            if (config) {
+                scope   = config.scope   || 'stores';
+                scopeId = config.scopeId;
+                themeId = config.themeId || null;
+            }
+            if (flush) {
+                $publishedStyle   = null;
+                $draftStyle       = null;
+                $livePreviewStyle = null;
+                $publicationStyle = null;
+                currentStatus     = null;
+            }
+            log.info('CSS Manager: reinit scope=' + scope + ':' + scopeId + ' flush=' + !!flush);
         },
 
         /**
@@ -602,4 +627,12 @@ define([
             log.info('CSS Manager destroyed');
         }
     };
+
+    // Automatically sync scope vars and flush stale DOM refs when the scope
+    // selector switches to a new store/website/default scope.
+    $(document).on('scopeChanged', function (e, newScope, newScopeId) {
+        module.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
+    });
+
+    return module;
 });
