@@ -90,8 +90,21 @@ define([
                 $dropdown.prop('hidden', false);
                 $trigger.attr('aria-expanded', 'true');
 
-                // Scroll selected option into view
-                var $selected = $dropdown.find('.bte-font-picker-option.is-selected');
+                // Sync is-selected to current $select.val() / data-default so that
+                // the dropdown always reflects the live field state regardless of
+                // which code path last mutated the value (Issue 020 follow-up).
+                var selectId   = $widget.attr('data-for');
+                var $select    = $('#' + selectId);
+                var currentVal = $select.val() || $select.attr('data-default') || '';
+                $dropdown.find('.bte-font-picker-option, .bte-font-picker-role-swatch')
+                    .each(function () {
+                        var isMatch = String($(this).data('value')) === String(currentVal);
+                        $(this).toggleClass('is-selected', isMatch)
+                               .attr('aria-selected', isMatch ? 'true' : 'false');
+                    });
+
+                // Scroll selected item into view
+                var $selected = $dropdown.find('.is-selected').first();
                 if ($selected.length) {
                     $selected[0].scrollIntoView({ block: 'nearest' });
                 }

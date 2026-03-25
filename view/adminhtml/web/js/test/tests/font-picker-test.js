@@ -82,6 +82,66 @@ define([
         $('link[href="' + FONT_MAP['Roboto, sans-serif'] + '"]').remove();
     }
 
+    /**
+     * Build a font-picker fixture that includes role-swatches in the dropdown.
+     * The native <select> has no option selected (val() returns null) but
+     * data-default points to "--primary-font" — the Issue 020 scenario.
+     *
+     * @param {String} [selectedVal] explicit val() for the hidden select, or omit for null
+     * @return {{$container, $select, $widget, $trigger, $dropdown, $options, $swatches}}
+     */
+    function buildFixtureWithRoles(selectedVal) {
+        var $container = $('<div class="bte-test-fp-roles-container"></div>').appendTo(document.body);
+
+        var selectedAttr = selectedVal ? ' selected' : '';
+        $('<select id="field-test-roles-font" class="bte-font-picker"' +
+            ' data-section="typography" data-field="body_font"' +
+            ' data-property="--body-font"' +
+            ' data-type="font_picker"' +
+            ' data-default="--primary-font"' +
+            ' data-font-stylesheets=\'{}\'' +
+            ' hidden>' +
+            '<option value="--primary-font"' + selectedAttr + '>Primary</option>' +
+            '<option value="--secondary-font">Secondary</option>' +
+            '<option value="Arial, sans-serif">Arial</option>' +
+          '</select>'
+        ).appendTo($container);
+
+        $('<div class="bte-font-picker-widget"' +
+            ' data-for="field-test-roles-font"' +
+            ' data-font-stylesheets=\'{}\'>' +
+            '<button type="button" class="bte-font-picker-trigger" aria-expanded="false">' +
+              '<span class="bte-font-picker-trigger-label"' +
+                ' style="font-family: system-ui;">Primary</span>' +
+              '<span class="bte-font-picker-trigger-arrow"></span>' +
+            '</button>' +
+            '<div class="bte-font-picker-dropdown" hidden>' +
+              '<div class="bte-font-picker-role-swatch is-selected"' +
+                ' data-value="--primary-font">Primary</div>' +
+              '<div class="bte-font-picker-role-swatch"' +
+                ' data-value="--secondary-font">Secondary</div>' +
+              '<div class="bte-font-picker-option"' +
+                ' data-value="Arial, sans-serif">Arial</div>' +
+            '</div>' +
+          '</div>'
+        ).appendTo($container);
+
+        return {
+            $container: $container,
+            $select:    $container.find('.bte-font-picker'),
+            $widget:    $container.find('.bte-font-picker-widget'),
+            $trigger:   $container.find('.bte-font-picker-trigger'),
+            $dropdown:  $container.find('.bte-font-picker-dropdown'),
+            $options:   $container.find('.bte-font-picker-option'),
+            $swatches:  $container.find('.bte-font-picker-role-swatch')
+        };
+    }
+
+    function tearDownRoles(fx) {
+        SimpleHandler.destroy(fx.$container);
+        fx.$container.remove();
+    }
+
     // ── Suite ────────────────────────────────────────────────────────────────
 
     return TestFramework.suite('Font Picker Dropdown Handler', {
@@ -312,6 +372,66 @@ define([
 
             fx.$select.off('change.fptest');
             tearDown(fx);
+        },
+
+        // ── is-selected lazy re-sync on dropdown open (Issue 020 follow-up) ──
+
+        'open dropdown syncs is-selected to native select val() — saved role value': function () {
+            // select has "--primary-font" explicitly selected → val() = "--primary-font"
+            var fx = buildFixtureWithRoles('--primary-font');
+            SimpleHandler.init(fx.$container, function () {});
+
+            fx.$trigger.trigger('click');
+
+            this.assertTrue(fx.$swatches.eq(0).hasClass('is-selected'),
+                'Primary swatch must be is-selected when val() is "--primary-font"');
+            this.assertFalse(fx.$swatches.eq(1).hasClass('is-selected'),
+                'Secondary swatch must not be is-selected');
+            this.assertFalse(fx.$options.eq(0).hasClass('is-selected'),
+                'Arial option must not be is-selected');
+            tearDownRoles(fx);
+        },
+
+        'open dropdown syncs is-selected via data-default when val() is null (Issue 020)': function () {
+            // select has NO option selected → val() returns null
+            // data-default="--primary-font" must drive is-selected
+            var fx = buildFixtureWithRoles();
+            // Ensure no option is pre-selected in the DOM
+            fx.$select.find('option').prop('selected', false);
+            SimpleHandler.init(fx.$container, function () {});
+
+            // Manually corrupt is-selected to simulate stale DOM state
+            fx.$swatches.eq(0).removeClass('is-selected').attr('aria-selected', 'false');
+            fx.$swatches.eq(1).addClass('is-selected').attr('aria-selected', 'true');
+
+            fx.$trigger.trigger('click');
+
+            this.assertTrue(fx.$swatches.eq(0).hasClass('is-selected'),
+                'Primary swatch must be restored via data-default when val() is null (Issue 020)');
+            this.assertFalse(fx.$swatches.eq(1).hasClass('is-selected'),
+                'Secondary swatch must lose is-selected after re-sync');
+            tearDownRoles(fx);
+        },
+
+        'open dropdown corrects stale is-selected after external value change': function () {
+            // Simulate the case where an external code path changed $select.val()
+            // (e.g. _updateConsumerFields cascade) but did not update is-selected.
+            var fx = buildFixtureWithRoles('--primary-font');
+            SimpleHandler.init(fx.$container, function () {});
+
+            // External change: user (or cascade) switched value to "--secondary-font"
+            fx.$select.val('--secondary-font');
+            // is-selected in DOM is still on Primary swatch (stale)
+            fx.$swatches.eq(0).addClass('is-selected').attr('aria-selected', 'true');
+            fx.$swatches.eq(1).removeClass('is-selected').attr('aria-selected', 'false');
+
+            fx.$trigger.trigger('click');
+
+            this.assertFalse(fx.$swatches.eq(0).hasClass('is-selected'),
+                'Stale is-selected on Primary swatch must be removed after open re-sync');
+            this.assertTrue(fx.$swatches.eq(1).hasClass('is-selected'),
+                'Secondary swatch must gain is-selected after open re-sync');
+            tearDownRoles(fx);
         }
     });
 });
