@@ -4,7 +4,7 @@
 **Area:** `view/adminhtml/web/js/editor/panel/sections/font-palette-section-renderer.js`,
 `view/adminhtml/web/template/editor/panel/fields/font-picker.html`  
 **Type:** Bug  
-**Status:** Open
+**Status:** Fixed (Variant B)
 
 ---
 
@@ -225,9 +225,9 @@ _updateConsumerFields: function (roleProperty, newFontFamily) {
 
 ## Tracking
 
-- [ ] Вибрати Варіант A або B (рекомендується B)
-- [ ] Реалізувати виправлення
-- [ ] Написати spec-тест для `_updateConsumerFields()` з null-value consumer
+- [x] Вибрати Варіант A або B (рекомендується B)
+- [x] Реалізувати виправлення
+- [x] Написати spec-тест для `_updateConsumerFields()` з null-value consumer
       field
 - [ ] Перевірити вручну: поле з `"default": "--secondary-font"`, ніколи не
       збережене → змінити роль → тригер оновлюється

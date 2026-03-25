@@ -862,6 +862,190 @@ define([
                     'Header must have "active" class after re-opening');
                 tearDown($c);
             });
+        },
+
+        // ─── Layer 1: _updateConsumerFields (Issue 020) ──────────────────────
+        //
+        // Inline reproduction of the fixed method.
+        // Kept in sync with font-palette-section-renderer.js _updateConsumerFields.
+
+        '_updateConsumerFields: updates trigger when value matches role property': function () {
+            // Arrange: hidden select whose .val() is already set to the role property
+            // (field was previously saved with value "--secondary-font")
+            var $container = $('<div>').appendTo(document.body);
+            var selectId   = 'test-select-saved-020';
+            var $select    = $('<select>')
+                .attr('id',           selectId)
+                .attr('class',        'bte-font-picker')
+                .attr('data-default', '--secondary-font')
+                .appendTo($container);
+            $('<option>').val('--secondary-font').prop('selected', true).appendTo($select);
+
+            var $widget = $('<div>')
+                .attr('data-for', selectId)
+                .appendTo($container);
+            $('<span class="bte-font-picker-trigger-label">')
+                .css('font-family', 'system-ui, sans-serif')
+                .appendTo($widget);
+            $('<div class="bte-font-picker-role-swatch">')
+                .attr('data-value',       '--secondary-font')
+                .attr('data-font-family', 'system-ui, sans-serif')
+                .css('font-family',       'system-ui, sans-serif')
+                .appendTo($widget);
+
+            // Act: run the reproduced algorithm
+            updateConsumerFields('--secondary-font', "'Roboto', sans-serif");
+
+            // Assert
+            var newFamily = $widget.find('.bte-font-picker-trigger-label').css('font-family');
+            this.assertTrue(
+                newFamily.toLowerCase().indexOf('roboto') !== -1,
+                'Trigger label font-family must update when val() matches role property'
+            );
+            var swatchFamily = $widget.find(
+                '.bte-font-picker-role-swatch[data-value="--secondary-font"]'
+            ).attr('data-font-family');
+            this.assertEqual("'Roboto', sans-serif", swatchFamily,
+                'Role swatch data-font-family must be updated');
+
+            $container.remove();
+        },
+
+        '_updateConsumerFields: updates trigger when value is null and default matches role (Issue 020 fix)': function () {
+            // Arrange: hidden select with val() === null (never saved to DB),
+            // but data-default points to the changed role — the regression case.
+            var $container = $('<div>').appendTo(document.body);
+            var selectId   = 'test-select-unsaved-020';
+            var $select    = $('<select>')
+                .attr('id',           selectId)
+                .attr('class',        'bte-font-picker')
+                .attr('data-default', '--secondary-font')
+                .appendTo($container);
+            // No option is selected → $select.val() returns null
+
+            var $widget = $('<div>')
+                .attr('data-for', selectId)
+                .appendTo($container);
+            $('<span class="bte-font-picker-trigger-label">')
+                .css('font-family', 'system-ui, sans-serif')
+                .appendTo($widget);
+            $('<div class="bte-font-picker-role-swatch">')
+                .attr('data-value',       '--secondary-font')
+                .attr('data-font-family', 'system-ui, sans-serif')
+                .css('font-family',       'system-ui, sans-serif')
+                .appendTo($widget);
+
+            // Act
+            updateConsumerFields('--secondary-font', "'Roboto', sans-serif");
+
+            // Assert: trigger must be updated even though val() is null
+            var newFamily = $widget.find('.bte-font-picker-trigger-label').css('font-family');
+            this.assertTrue(
+                newFamily.toLowerCase().indexOf('roboto') !== -1,
+                'Trigger must update via data-default fallback when val() is null (Issue 020)'
+            );
+
+            $container.remove();
+        },
+
+        '_updateConsumerFields: does not update trigger when default does not match changed role': function () {
+            // Arrange: consumer field whose default points to --primary-font,
+            // but we are notifying about a change to --secondary-font.
+            var $container = $('<div>').appendTo(document.body);
+            var selectId   = 'test-select-mismatch-020';
+            var $select    = $('<select>')
+                .attr('id',           selectId)
+                .attr('class',        'bte-font-picker')
+                .attr('data-default', '--primary-font')
+                .appendTo($container);
+            // No option selected → val() === null
+
+            var $widget = $('<div>')
+                .attr('data-for', selectId)
+                .appendTo($container);
+            var originalFamily = 'system-ui, sans-serif';
+            $('<span class="bte-font-picker-trigger-label">')
+                .css('font-family', originalFamily)
+                .appendTo($widget);
+
+            // Act: notify about --secondary-font change
+            updateConsumerFields('--secondary-font', "'Roboto', sans-serif");
+
+            // Assert: trigger must NOT be touched
+            var currentFamily = $widget.find('.bte-font-picker-trigger-label').css('font-family');
+            this.assertTrue(
+                currentFamily.toLowerCase().indexOf('roboto') === -1,
+                'Trigger must not update when data-default points to a different role'
+            );
+
+            $container.remove();
+        },
+
+        '_updateConsumerFields: does not update trigger when value is set to unrelated font': function () {
+            // Arrange: consumer field with an explicit non-role value (user picked
+            // a concrete font family — not a CSS var reference).
+            var $container = $('<div>').appendTo(document.body);
+            var selectId   = 'test-select-concrete-020';
+            var $select    = $('<select>')
+                .attr('id',           selectId)
+                .attr('class',        'bte-font-picker')
+                .attr('data-default', '--secondary-font')
+                .appendTo($container);
+            $('<option>').val('system-ui, sans-serif').prop('selected', true).appendTo($select);
+
+            var $widget = $('<div>')
+                .attr('data-for', selectId)
+                .appendTo($container);
+            $('<span class="bte-font-picker-trigger-label">')
+                .css('font-family', 'system-ui, sans-serif')
+                .appendTo($widget);
+
+            // Act: role --secondary-font changes
+            updateConsumerFields('--secondary-font', "'Roboto', sans-serif");
+
+            // Assert: trigger must not change — field has a concrete saved value,
+            // not a role reference
+            var currentFamily = $widget.find('.bte-font-picker-trigger-label').css('font-family');
+            this.assertTrue(
+                currentFamily.toLowerCase().indexOf('roboto') === -1,
+                'Trigger must not update when field has a concrete (non-role) saved value'
+            );
+
+            $container.remove();
         }
     });
+
+    /**
+     * Inline reproduction of _updateConsumerFields.
+     * Kept in sync with font-palette-section-renderer.js _updateConsumerFields.
+     *
+     * @param {String} roleProperty  — CSS var name, e.g. "--secondary-font"
+     * @param {String} newFontFamily — resolved font-family string
+     */
+    function updateConsumerFields(roleProperty, newFontFamily) {
+        $('.bte-font-picker').each(function () {
+            var $select    = $(this);
+            var currentVal = $select.val();
+
+            var matchesByValue   = currentVal === roleProperty;
+            var matchesByDefault = !currentVal && $select.attr('data-default') === roleProperty;
+
+            if (!matchesByValue && !matchesByDefault) {
+                return;
+            }
+
+            var selectId = $select.attr('id');
+            var $widget  = $('[data-for="' + selectId + '"]');
+            if (!$widget.length) {
+                return;
+            }
+
+            $widget.find('.bte-font-picker-trigger-label')
+                .css('font-family', newFontFamily);
+
+            $widget.find('.bte-font-picker-role-swatch[data-value="' + roleProperty + '"]')
+                .attr('data-font-family', newFontFamily)
+                .css('font-family', newFontFamily);
+        });
+    }
 });

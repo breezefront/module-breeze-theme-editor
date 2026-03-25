@@ -560,7 +560,16 @@ define([
         _updateConsumerFields: function (roleProperty, newFontFamily) {
             $('.bte-font-picker').each(function () {
                 var $select = $(this);
-                if ($select.val() !== roleProperty) {
+                var currentVal = $select.val();
+
+                // Primary match: field has been saved and its value is the role property.
+                // Fallback (Issue 020): field was never saved (value is null/empty) but its
+                // configured default points to this role property — use data-default attribute
+                // which is always rendered in the template regardless of saved value.
+                var matchesByValue   = currentVal === roleProperty;
+                var matchesByDefault = !currentVal && $select.attr('data-default') === roleProperty;
+
+                if (!matchesByValue && !matchesByDefault) {
                     return;
                 }
 
