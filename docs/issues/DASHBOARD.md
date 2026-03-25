@@ -1,6 +1,6 @@
 # Issues Dashboard
 
-**Updated:** 2026-03-24
+**Updated:** 2026-03-25
 
 ---
 
@@ -8,10 +8,10 @@
 
 | | Count |
 |---|---|
-| Total issues | 23 |
-| Fixed / Closed | 20 |
-| Pending | 3 |
-| Bugs | 15 (14 closed, 1 open) |
+| Total issues | 25 |
+| Fixed / Closed | 21 |
+| Pending | 4 |
+| Bugs | 17 (15 closed, 2 open) |
 | Tasks | 8 (7 done, 2 pending) |
 
 ---
@@ -35,6 +35,8 @@
 | [018](018-f5-color-preview-dot-not-updated.md) | Color preview dot not updated after F5 in DRAFT mode | `6b186d9` | **Closed** |
 | [019](019-f5-save-counter-shows-zero.md) | "Save (0)" and disabled Reset button after F5 in DRAFT mode | `6dab435` | **Closed** |
 | [020](020-font-picker-default-cssvar-not-reactive-to-palette-change.md) | `font_picker` з `default: "--role"` не реагує на зміни палітри шрифтів | — | **Open** |
+| [021](021-implicit-palette-link-inconsistent-preview.md) | Implicitly palette-linked color fields have inconsistent CSS preview | — | **Open** |
+| [022](022-draft-css-stale-after-discard-draft.md) | Draft CSS у iframe залишається застарілим після discardDraft | `b95dc02` | **Closed** |
 
 ---
 
