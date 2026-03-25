@@ -573,6 +573,50 @@ define([
         },
 
         /**
+         * Refresh draft CSS in the iframe after discardDraft succeeds.
+         *
+         * Fetches the current DRAFT CSS from GraphQL (which now reflects the
+         * discarded / default values) and writes it into the existing
+         * #bte-theme-css-variables-draft element.  If the element is gone
+         * (e.g. after an iframe navigation) it falls back to showDraft() which
+         * will create it from scratch.
+         *
+         * Mirrors refreshPublishedCss() for the DRAFT layer.
+         *
+         * @returns {Promise}
+         */
+        refreshDraftCss: function() {
+            var self = this;
+
+            return getCss(scope, scopeId, PUBLICATION_STATUS.DRAFT, null)
+                .then(function(response) {
+                    var css = (response &&
+                               response.getThemeEditorCss &&
+                               response.getThemeEditorCss.css) || '';
+
+                    // Refresh cached reference in case the iframe was navigated
+                    if (!$draftStyle || !$draftStyle.length) {
+                        $draftStyle = $(getIframeDocument()).find('#bte-theme-css-variables-draft');
+                    }
+
+                    if ($draftStyle && $draftStyle.length) {
+                        $draftStyle.text(css || ':root {}');
+                        log.info('CSS Manager: Draft CSS refreshed in iframe after discard');
+                    } else {
+                        // Element was removed (e.g. iframe navigated) — recreate it
+                        log.info('CSS Manager: #bte-theme-css-variables-draft not found, falling back to showDraft()');
+                        return self.showDraft();
+                    }
+
+                    return true;
+                })
+                .catch(function(error) {
+                    log.error('CSS Manager: Failed to refresh draft CSS: ' + error);
+                    return false;
+                });
+        },
+
+        /**
          * Refresh current status (re-fetch if PUBLICATION)
          */
         refresh: function() {

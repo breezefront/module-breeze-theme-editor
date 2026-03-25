@@ -220,6 +220,7 @@ define([
                 PanelState.reset();
                 PaletteManager.revertDirtyChanges();
                 CssPreviewManager.reset();
+                CssManager.refreshDraftCss();
                 self._loadConfig();
             });
         },
