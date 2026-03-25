@@ -8,10 +8,10 @@
 
 | | Count |
 |---|---|
-| Total issues | 25 |
+| Total issues | 27 |
 | Fixed / Closed | 21 |
-| Pending | 4 |
-| Bugs | 17 (15 closed, 2 open) |
+| Pending | 6 |
+| Bugs | 19 (15 closed, 4 open) |
 | Tasks | 8 (7 done, 2 pending) |
 
 ---
@@ -34,9 +34,10 @@
 | [015](015-css-generator-published-bypasses-scope-chain.md) | `CssGenerator` PUBLISHED branch bypasses scope chain and theme hierarchy | `7013886` | **Closed** |
 | [018](018-f5-color-preview-dot-not-updated.md) | Color preview dot not updated after F5 in DRAFT mode | `6b186d9` | **Closed** |
 | [019](019-f5-save-counter-shows-zero.md) | "Save (0)" and disabled Reset button after F5 in DRAFT mode | `6dab435` | **Closed** |
-| [020](020-font-picker-default-cssvar-not-reactive-to-palette-change.md) | `font_picker` з `default: "--role"` не реагує на зміни палітри шрифтів | — | **Fixed** |
+| [020](020-font-picker-default-cssvar-not-reactive-to-palette-change.md) | `font_picker` з `default: "--role"` не реагує на зміни палітри шрифтів | `021add7` `05af7e1` | **Fixed** |
 | [021](021-implicit-palette-link-inconsistent-preview.md) | Implicitly palette-linked color fields have inconsistent CSS preview | — | **Open** |
 | [022](022-draft-css-stale-after-discard-draft.md) | Draft CSS у iframe залишається застарілим після discardDraft | `b95dc02` | **Closed** |
+| [023](023-depends-field-visibility-not-implemented.md) | `dependsOn` field visibility — JS runtime not implemented | — | **Open** |
 
 ---
 
