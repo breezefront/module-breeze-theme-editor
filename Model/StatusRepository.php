@@ -120,7 +120,6 @@ class StatusRepository implements StatusRepositoryInterface
     {
         try {
             $statusId = $status->getStatusId();
-            $code = $status->getCode();
             $this->statusResource->delete($status);
 
             unset($this->instancesById[$statusId]);
