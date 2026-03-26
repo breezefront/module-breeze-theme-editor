@@ -28,6 +28,8 @@ use Swissup\BreezeThemeEditor\Model\StatusCode;
  */
 class Config extends AbstractConfigResolver
 {
+    use ResolvesValuesTrait;
+
     public function __construct(
         SerializerInterface $serializer,
         ConfigProvider $configProvider,
@@ -88,18 +90,7 @@ class Config extends AbstractConfigResolver
         // 6. Отримати збережені значення через InheritanceResolver
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row still display the published value, not the theme default.
-        if ($statusCode === StatusCode::PUBLISHED) {
-            $savedValues = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope, $statusId, null);
-        } else {
-            $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
-            $savedValues = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
-                $themeId,
-                $scope,
-                $statusId,
-                $publishedStatusId,
-                $userId
-            );
-        }
+        $savedValues = $this->resolveValues($statusCode, $themeId, $scope, $statusId, $userId);
 
         // 7. Build values map
         $valuesMap = [];

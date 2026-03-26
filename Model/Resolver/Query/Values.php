@@ -23,6 +23,8 @@ use Swissup\BreezeThemeEditor\Model\StatusCode;
  */
 class Values extends AbstractQueryResolver
 {
+    use ResolvesValuesTrait;
+
     public function __construct(
         private ValueInheritanceResolver $valueInheritanceResolver,
         private StatusProvider $statusProvider,
@@ -67,18 +69,7 @@ class Values extends AbstractQueryResolver
 
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row still return the published value, not the theme default.
-        if ($statusCode === StatusCode::PUBLISHED) {
-            $values = $this->valueInheritanceResolver->resolveAllValues($themeId, $scope, $statusId, null);
-        } else {
-            $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
-            $values = $this->valueInheritanceResolver->resolveAllValuesWithFallback(
-                $themeId,
-                $scope,
-                $statusId,
-                $publishedStatusId,
-                $userId
-            );
-        }
+        $values = $this->resolveValues($statusCode, $themeId, $scope, $statusId, $userId);
 
         // Фільтр по секціях
         if ($sectionCodes) {
