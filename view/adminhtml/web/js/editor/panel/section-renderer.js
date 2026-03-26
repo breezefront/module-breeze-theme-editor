@@ -155,7 +155,8 @@ define([
 
             ctx.$fontPaletteContainer.fontPaletteSection({
                 fontPalettes: ctx.config.fontPalettes,
-                sections:     ctx.config.sections || []
+                sections:     ctx.config.sections || [],
+                previewReady: ctx._previewReady
             });
 
             log.info('Font palette section initialized');

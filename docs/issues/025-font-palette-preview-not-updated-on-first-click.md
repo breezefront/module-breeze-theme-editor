@@ -4,7 +4,7 @@
 **Area:** `view/adminhtml/web/js/editor/panel/sections/font-palette-section-renderer.js`,
 `view/adminhtml/web/js/editor/panel/section-renderer.js`
 **Type:** Bug
-**Status:** Open
+**Status:** Fixed
 
 ---
 
@@ -225,8 +225,8 @@ Promise.resolve(self.options.previewReady).then(function () {
 
 ## Tracking
 
-- [ ] Реалізувати зміни у `section-renderer.js`
-- [ ] Реалізувати зміни у `font-palette-section-renderer.js` (3 місця)
+- [x] Реалізувати зміни у `section-renderer.js`
+- [x] Реалізувати зміни у `font-palette-section-renderer.js` (3 місця)
 - [ ] Перевірити вручну: перший клік на шрифт → preview оновлюється
 - [ ] Перевірити: Reset та Restore кнопки також оновлюють preview з першого разу
 - [ ] Перевірити: зміна кольорів не зламалась (регресія)

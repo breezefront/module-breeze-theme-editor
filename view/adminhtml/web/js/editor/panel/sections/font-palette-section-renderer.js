@@ -49,8 +49,9 @@ define([
      */
     $.widget('swissup.fontPaletteSection', $.swissup.baseSectionRenderer, {
         options: {
-            fontPalettes: [], // Array from config.fontPalettes
-            sections: []      // config.sections (to locate role field sectionCode + fieldCode)
+            fontPalettes:  [], // Array from config.fontPalettes
+            sections:      [], // config.sections (to locate role field sectionCode + fieldCode)
+            previewReady:  null // Promise resolved when the CSS preview iframe is ready
         },
 
         _create: function () {
@@ -296,8 +297,11 @@ define([
                     self._roleFields[item.property].currentValue = item.savedValue;
                     FontPaletteManager.setCurrentValue(item.property, item.savedValue);
                     self._updateRolePickerUI(item.property, item.savedValue);
-                    CssPreviewManager.setVariable(item.property, item.savedValue, 'font_picker');
                     self._updateConsumerFields(item.property, item.savedValue);
+                    // Deferred until iframe $styleElement is ready (fixes Issue 025)
+                    Promise.resolve(self.options.previewReady).then(function () {
+                        CssPreviewManager.setVariable(item.property, item.savedValue, 'font_picker');
+                    });
                 });
 
                 self._updateHeaderBadges();
@@ -324,11 +328,14 @@ define([
                     var defaultValue = state.defaultValue;
 
                     self._updateRolePickerUI(prop, defaultValue);
-                    CssPreviewManager.setVariable(prop, defaultValue, 'font_picker');
                     self._roleFields[prop].currentValue = defaultValue;
                     FontPaletteManager.setCurrentValue(prop, defaultValue);
                     self._updateConsumerFields(prop, defaultValue);
                     PanelState.restoreToDefault(rf.sectionCode, rf.fieldCode);
+                    // Deferred until iframe $styleElement is ready (fixes Issue 025)
+                    Promise.resolve(self.options.previewReady).then(function () {
+                        CssPreviewManager.setVariable(prop, defaultValue, 'font_picker');
+                    });
 
                     log.info('Role restored to default: ' + prop + ' -> ' + defaultValue);
                 });
@@ -427,9 +434,6 @@ define([
                     PanelState.setValue(sectionCode, fieldCode, val);
                 }
 
-                // Reflect change immediately in the CSS preview iframe
-                CssPreviewManager.setVariable(roleProperty, val, 'font_picker');
-
                 // Keep local role map and FontPaletteManager in sync for cascade,
                 // reset, and consumer-field initial render
                 if (self._roleFields[roleProperty]) {
@@ -446,6 +450,12 @@ define([
 
                 // Notify settings-editor to refresh save/reset button counts
                 $(document).trigger('paletteColorChanged');
+
+                // Reflect change in the CSS preview iframe — deferred until the
+                // iframe $styleElement is ready (fixes Issue 025: first-click miss)
+                Promise.resolve(self.options.previewReady).then(function () {
+                    CssPreviewManager.setVariable(roleProperty, val, 'font_picker');
+                });
 
                 log.info('Role font changed: ' + roleProperty + ' \u2192 ' + val);
             });

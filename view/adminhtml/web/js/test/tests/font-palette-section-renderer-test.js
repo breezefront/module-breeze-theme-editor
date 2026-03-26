@@ -19,8 +19,10 @@ define([
     'Swissup_BreezeThemeEditor/js/test/test-framework',
     'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
-    'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager'
-], function ($, TestFramework, FontPaletteManager, PanelState, CssPreviewManager) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
+    'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
+    'Swissup_BreezeThemeEditor/js/editor/panel/sections/font-palette-section-renderer'
+], function ($, TestFramework, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer) {
     'use strict';
 
     // =========================================================================
@@ -1143,346 +1145,355 @@ define([
             $container.remove();
         },
 
-        // ─── Issue 025: previewReady guard ──────────────────────────────────
+        // ─── Issue 025: previewReady guard (Layer 2 — real widget) ──────────
         //
-        // These tests verify that preview calls (CssPreviewManager.setVariable,
-        // loadFont, _updateConsumerFields) are gated behind the previewReady
-        // Promise so that the first click always reaches the iframe.
+        // Strategy: instantiate the real $.widget('swissup.fontPaletteSection')
+        // with a PENDING previewReady Promise (iframe not yet loaded), trigger
+        // DOM events, and assert that CssPreviewManager.setVariable is NOT called
+        // synchronously.  Then resolve the Promise and assert it IS called.
         //
-        // Each handler is reproduced in two flavours:
-        //   _buggy  — current behaviour: synchronous call, no previewReady guard
-        //   _fixed  — expected behaviour: wrapped in Promise.resolve().then()
+        // Tests that must FAIL on the current (unfixed) code:
+        //   025-A2, 025-A3 — option click
+        //   025-B2, 025-B3 — reset handler (via confirm-patched click)
+        //   025-C2, 025-C3 — restore handler
         //
-        // A1 / B1 / C1 — sync tests that PROVE the bug:
-        //   buggy handler calls setVariable immediately (bad).
-        // A2 / B2 / C2 — async tests that PROVE the fix works:
-        //   fixed handler calls setVariable after the Promise resolves.
-        // A3 / B3 / C3 — async tests for the "already resolved" path:
-        //   fixed handler with Promise.resolve() still calls setVariable
-        //   (no regression when iframe is already ready).
-        //
+        // Tests that pass on both old and new code (regression guards):
+        //   025-A1 — option click still fires when previewReady is already resolved
+        //   025-B1 — reset  still fires when previewReady is already resolved
+        //   025-C1 — restore still fires when previewReady is already resolved
+
+        // ── helpers shared by all 025 tests ──────────────────────────────────
+
         // ── Option click (A) ─────────────────────────────────────────────────
 
-        'option click (025-A1): setVariable called synchronously without previewReady guard — proves the bug': function () {
-            // Reproduce the CURRENT (buggy) option-click handler:
-            // no previewReady guard → setVariable fires immediately even
-            // when the iframe is not yet ready.
-            var calls = { setVariable: [], loadFont: [] };
+        'option click (025-A1): setVariable called when previewReady is already resolved': function (done) {
+            // Regression guard: when the iframe is already ready the fix must
+            // not break anything — setVariable must still reach CssPreviewManager.
+            var self = this;
 
-            optionClickBuggy('--primary-font', "'Roboto', sans-serif", null, calls);
+            build025Fixture(Promise.resolve(), function ($c, calls, destroy) {
+                var $widget  = $c.find('.bte-font-picker-widget[data-role-property="--primary-font"]');
+                var $trigger = $widget.find('.bte-font-picker-trigger');
+                var $roboto  = $widget.find('.bte-font-picker-option').last(); // Roboto
 
-            this.assertEqual(1, calls.setVariable.length,
-                'Buggy handler calls setVariable synchronously (this is the bug)');
+                $trigger.trigger('click');
+                $roboto.trigger('click');
+
+                self.waitFor(
+                    function () { return calls.setVariable.length > 0; },
+                    1000,
+                    function (err) {
+                        destroy();
+                        done(err);
+                    }
+                );
+            });
         },
 
-        'option click (025-A2): setVariable not called before previewReady resolves (fixed handler)': function (done) {
+        'option click (025-A2): setVariable NOT called synchronously when previewReady is pending': function (done) {
+            // This is the core bug test.
+            // With the current (unfixed) code: setVariable fires synchronously
+            // → calls.setVariable.length === 1 immediately after the click
+            // → assertEqual(0, …) FAILS.
+            // After the fix: setVariable is deferred → length stays 0.
+            var self = this;
+
+            build025Fixture(new Promise(function () {}), function ($c, calls, destroy) {
+                var $widget  = $c.find('.bte-font-picker-widget[data-role-property="--primary-font"]');
+                var $trigger = $widget.find('.bte-font-picker-trigger');
+                var $roboto  = $widget.find('.bte-font-picker-option').last();
+
+                $trigger.trigger('click');
+                $roboto.trigger('click');
+
+                // Synchronous check — setVariable must NOT have fired yet
+                self.assertEqual(0, calls.setVariable.length,
+                    '(025-A2) setVariable must not be called before previewReady resolves');
+
+                destroy();
+                done(null);
+            });
+        },
+
+        'option click (025-A3): setVariable called after previewReady resolves': function (done) {
+            // Companion to A2: resolve the Promise and wait for the microtask.
             var self    = this;
             var resolve;
             var previewReady = new Promise(function (r) { resolve = r; });
-            var calls = { setVariable: [], loadFont: [] };
 
-            optionClickFixed(previewReady, '--primary-font', "'Roboto', sans-serif", null, calls);
+            build025Fixture(previewReady, function ($c, calls, destroy) {
+                var $widget  = $c.find('.bte-font-picker-widget[data-role-property="--primary-font"]');
+                var $trigger = $widget.find('.bte-font-picker-trigger');
+                var $roboto  = $widget.find('.bte-font-picker-option').last();
 
-            // Immediately after the click: nothing should have fired yet
-            self.assertEqual(0, calls.setVariable.length,
-                'setVariable must not fire before previewReady resolves');
+                $trigger.trigger('click');
+                $roboto.trigger('click');
 
-            // Now resolve the Promise and wait for the microtask queue
-            resolve();
-            self.waitFor(
-                function () { return calls.setVariable.length > 0; },
-                1000,
-                function (err) {
-                    if (!err) {
-                        self.assertEqual('--primary-font', calls.setVariable[0].prop,
-                            'setVariable must receive the correct role property');
-                        self.assertEqual("'Roboto', sans-serif", calls.setVariable[0].val,
-                            'setVariable must receive the chosen font value');
+                // Still nothing fired
+                self.assertEqual(0, calls.setVariable.length,
+                    '(025-A3) setVariable must not fire before resolve');
+
+                resolve();
+
+                self.waitFor(
+                    function () { return calls.setVariable.length > 0; },
+                    1000,
+                    function (err) {
+                        if (!err) {
+                            self.assertEqual('--primary-font', calls.setVariable[0].prop,
+                                '(025-A3) setVariable must receive --primary-font');
+                        }
+                        destroy();
+                        done(err);
                     }
-                    done(err);
-                }
-            );
-        },
-
-        'option click (025-A3): setVariable called after microtask when previewReady already resolved': function (done) {
-            var self  = this;
-            var calls = { setVariable: [], loadFont: [] };
-
-            // previewReady is already resolved — simulates normal page load where
-            // the user clicks after the iframe has finished loading.
-            optionClickFixed(Promise.resolve(), '--primary-font', 'system-ui, sans-serif', null, calls);
-
-            self.waitFor(
-                function () { return calls.setVariable.length > 0; },
-                1000,
-                function (err) {
-                    if (!err) {
-                        self.assertEqual('--primary-font', calls.setVariable[0].prop,
-                            'setVariable must still be called when Promise was already resolved');
-                    }
-                    done(err);
-                }
-            );
-        },
-
-        'option click (025-A4): loadFont called after previewReady resolves when url is present': function (done) {
-            var self    = this;
-            var resolve;
-            var previewReady = new Promise(function (r) { resolve = r; });
-            var calls = { setVariable: [], loadFont: [] };
-            var robotoUrl = 'https://fonts.googleapis.com/css2?family=Roboto';
-
-            optionClickFixed(previewReady, '--primary-font', "'Roboto', sans-serif", robotoUrl, calls);
-
-            // Not called yet
-            self.assertEqual(0, calls.loadFont.length,
-                'loadFont must not fire before previewReady resolves');
-
-            resolve();
-            self.waitFor(
-                function () { return calls.loadFont.length > 0; },
-                1000,
-                function (err) {
-                    if (!err) {
-                        self.assertEqual(robotoUrl, calls.loadFont[0],
-                            'loadFont must receive the correct stylesheet URL');
-                    }
-                    done(err);
-                }
-            );
+                );
+            });
         },
 
         // ── Reset handler (B) ────────────────────────────────────────────────
+        // build025Fixture patches PanelState.getFieldState to return isDirty:true
+        // for typography/primary_font, so the reset handler's dirty-list is
+        // non-empty without a real PanelState.init().
+        //
+        // window.confirm is patched to return true to bypass the dialog.
+        //
+        // .bte-palette-reset-btn is NOT rendered automatically (it comes from
+        // BadgeRenderer.renderPaletteBadges which we stub to ''). We inject it
+        // manually into .bte-font-palette-badges before each click.
 
-        'reset handler (025-B1): setVariable called synchronously without previewReady guard — proves the bug': function () {
-            var calls  = { setVariable: [] };
-            var dirty  = [
-                { property: '--primary-font',   savedValue: 'system-ui, sans-serif' },
-                { property: '--secondary-font',  savedValue: "'Roboto', sans-serif" }
-            ];
+        'reset handler (025-B1): setVariable called when previewReady is already resolved': function (done) {
+            var self        = this;
+            var origConfirm = window.confirm;
+            window.confirm  = function () { return true; };
 
-            resetHandlerBuggy(dirty, calls);
+            build025Fixture(Promise.resolve(), function ($c, calls, destroy) {
+                $c.find('.bte-font-palette-badges').html(
+                    '<button class="bte-palette-reset-btn">Reset</button>'
+                );
+                $c.find('.bte-palette-reset-btn').trigger('click');
 
-            this.assertEqual(2, calls.setVariable.length,
-                'Buggy reset handler calls setVariable synchronously for each dirty item (this is the bug)');
+                self.waitFor(
+                    function () { return calls.setVariable.length > 0; },
+                    1000,
+                    function (err) {
+                        window.confirm = origConfirm;
+                        destroy();
+                        done(err);
+                    }
+                );
+            });
         },
 
-        'reset handler (025-B2): setVariable not called before previewReady resolves (fixed handler)': function (done) {
-            var self    = this;
+        'reset handler (025-B2): setVariable NOT called synchronously when previewReady is pending': function (done) {
+            var origConfirm = window.confirm;
+            window.confirm  = function () { return true; };
+
+            build025Fixture(new Promise(function () {}), function ($c, calls, destroy) {
+                $c.find('.bte-font-palette-badges').html(
+                    '<button class="bte-palette-reset-btn">Reset</button>'
+                );
+                $c.find('.bte-palette-reset-btn').trigger('click');
+
+                this.assertEqual(0, calls.setVariable.length,
+                    '(025-B2) setVariable must not fire before previewReady resolves');
+
+                window.confirm = origConfirm;
+                destroy();
+                done(null);
+            }.bind(this));
+        },
+
+        'reset handler (025-B3): setVariable called after previewReady resolves': function (done) {
+            var self        = this;
+            var origConfirm = window.confirm;
+            window.confirm  = function () { return true; };
             var resolve;
             var previewReady = new Promise(function (r) { resolve = r; });
-            var calls  = { setVariable: [] };
-            var dirty  = [
-                { property: '--primary-font',  savedValue: 'system-ui, sans-serif' },
-                { property: '--secondary-font', savedValue: "'Roboto', sans-serif" }
-            ];
 
-            resetHandlerFixed(previewReady, dirty, calls);
+            build025Fixture(previewReady, function ($c, calls, destroy) {
+                $c.find('.bte-font-palette-badges').html(
+                    '<button class="bte-palette-reset-btn">Reset</button>'
+                );
+                $c.find('.bte-palette-reset-btn').trigger('click');
 
-            self.assertEqual(0, calls.setVariable.length,
-                'setVariable must not fire before previewReady resolves');
+                self.assertEqual(0, calls.setVariable.length,
+                    '(025-B3) setVariable must not fire before resolve');
 
-            resolve();
-            self.waitFor(
-                function () { return calls.setVariable.length >= 2; },
-                1000,
-                function (err) {
-                    if (!err) {
-                        self.assertEqual(2, calls.setVariable.length,
-                            'setVariable must be called once per dirty item after resolve');
+                resolve();
+
+                self.waitFor(
+                    function () { return calls.setVariable.length > 0; },
+                    1000,
+                    function (err) {
+                        window.confirm = origConfirm;
+                        destroy();
+                        done(err);
                     }
-                    done(err);
-                }
-            );
-        },
-
-        'reset handler (025-B3): setVariable called for all dirty items when previewReady already resolved': function (done) {
-            var self  = this;
-            var calls = { setVariable: [] };
-            var dirty = [
-                { property: '--primary-font',  savedValue: 'system-ui, sans-serif' }
-            ];
-
-            resetHandlerFixed(Promise.resolve(), dirty, calls);
-
-            self.waitFor(
-                function () { return calls.setVariable.length > 0; },
-                1000,
-                function (err) {
-                    if (!err) {
-                        self.assertEqual(1, calls.setVariable.length,
-                            'setVariable must be called even when Promise was already resolved');
-                        self.assertEqual('--primary-font', calls.setVariable[0].prop,
-                            'setVariable must receive the correct property');
-                        self.assertEqual('system-ui, sans-serif', calls.setVariable[0].val,
-                            'setVariable must receive the saved value');
-                    }
-                    done(err);
-                }
-            );
+                );
+            });
         },
 
         // ── Restore handler (C) ──────────────────────────────────────────────
+        // build025Fixture patches PanelState.getFieldState to return isModified:true
+        // for typography/primary_font, so the restore handler's role loop finds
+        // a modified role without a real PanelState.init().
+        //
+        // .bte-font-palette-restore-btn is NOT rendered automatically
+        // (BadgeRenderer is stubbed). We inject it manually before each click.
 
-        'restore handler (025-C1): setVariable called synchronously without previewReady guard — proves the bug': function () {
-            var calls = { setVariable: [] };
+        'restore handler (025-C1): setVariable called when previewReady is already resolved': function (done) {
+            var self = this;
 
-            restoreHandlerBuggy('--primary-font', 'system-ui, sans-serif', calls);
+            build025Fixture(Promise.resolve(), function ($c, calls, destroy) {
+                $c.find('.bte-font-palette-badges').html(
+                    '<button class="bte-font-palette-restore-btn">×</button>'
+                );
+                $c.find('.bte-font-palette-restore-btn').trigger('click');
 
-            this.assertEqual(1, calls.setVariable.length,
-                'Buggy restore handler calls setVariable synchronously (this is the bug)');
+                self.waitFor(
+                    function () { return calls.setVariable.length > 0; },
+                    1000,
+                    function (err) {
+                        destroy();
+                        done(err);
+                    }
+                );
+            });
         },
 
-        'restore handler (025-C2): setVariable not called before previewReady resolves (fixed handler)': function (done) {
+        'restore handler (025-C2): setVariable NOT called synchronously when previewReady is pending': function (done) {
+            build025Fixture(new Promise(function () {}), function ($c, calls, destroy) {
+                $c.find('.bte-font-palette-badges').html(
+                    '<button class="bte-font-palette-restore-btn">×</button>'
+                );
+                $c.find('.bte-font-palette-restore-btn').trigger('click');
+
+                this.assertEqual(0, calls.setVariable.length,
+                    '(025-C2) setVariable must not fire before previewReady resolves');
+
+                destroy();
+                done(null);
+            }.bind(this));
+        },
+
+        'restore handler (025-C3): setVariable called after previewReady resolves': function (done) {
             var self    = this;
             var resolve;
             var previewReady = new Promise(function (r) { resolve = r; });
-            var calls   = { setVariable: [] };
 
-            restoreHandlerFixed(previewReady, '--primary-font', 'system-ui, sans-serif', calls);
+            build025Fixture(previewReady, function ($c, calls, destroy) {
+                $c.find('.bte-font-palette-badges').html(
+                    '<button class="bte-font-palette-restore-btn">×</button>'
+                );
+                $c.find('.bte-font-palette-restore-btn').trigger('click');
 
-            self.assertEqual(0, calls.setVariable.length,
-                'setVariable must not fire before previewReady resolves');
+                self.assertEqual(0, calls.setVariable.length,
+                    '(025-C3) setVariable must not fire before resolve');
 
-            resolve();
-            self.waitFor(
-                function () { return calls.setVariable.length > 0; },
-                1000,
-                function (err) {
-                    if (!err) {
-                        self.assertEqual('--primary-font', calls.setVariable[0].prop,
-                            'setVariable must receive the correct property');
-                        self.assertEqual('system-ui, sans-serif', calls.setVariable[0].val,
-                            'setVariable must receive the default value');
+                resolve();
+
+                self.waitFor(
+                    function () { return calls.setVariable.length > 0; },
+                    1000,
+                    function (err) {
+                        destroy();
+                        done(err);
                     }
-                    done(err);
-                }
-            );
-        },
-
-        'restore handler (025-C3): setVariable called after microtask when previewReady already resolved': function (done) {
-            var self  = this;
-            var calls = { setVariable: [] };
-
-            restoreHandlerFixed(Promise.resolve(), '--secondary-font', "'Roboto', sans-serif", calls);
-
-            self.waitFor(
-                function () { return calls.setVariable.length > 0; },
-                1000,
-                function (err) {
-                    if (!err) {
-                        self.assertEqual('--secondary-font', calls.setVariable[0].prop,
-                            'setVariable must still fire when previewReady was already resolved');
-                    }
-                    done(err);
-                }
-            );
+                );
+            });
         }
     });
 
     // =========================================================================
-    // Issue 025 — inline handler reproductions
-    //
-    // Each handler comes in two variants:
-    //   *Buggy — reproduces the current (unfixed) code: direct synchronous call
-    //   *Fixed — reproduces the expected (fixed) code: gated behind previewReady
+    // Issue 025 — Layer 2 helpers
     // =========================================================================
 
     /**
-     * Buggy option-click handler reproduction (no previewReady guard).
-     * Mirrors font-palette-section-renderer.js option click, lines ~418–441
-     * BEFORE the fix — setVariable and loadFont are called synchronously.
+     * Build a real fontPaletteSection widget instance with a given previewReady
+     * Promise, patch all external dependencies for call tracking, then invoke
+     * cb($container, calls, destroy).
      *
-     * @param {String} roleProperty
-     * @param {String} val
-     * @param {String|null} url
-     * @param {{setVariable: Array, loadFont: Array}} calls
+     * PanelState.getFieldState is patched to return isDirty:true AND
+     * isModified:true for the 'typography'/'primary_font' role so that both
+     * the reset handler (needs isDirty) and the restore handler (needs
+     * isModified) can iterate the role without a real PanelState.init().
+     *
+     * Calling destroy() tears down the widget, removes the DOM node, and
+     * restores all patched originals — even if cb throws.
+     *
+     * @param {Promise|null} previewReady
+     * @param {Function}     cb  — function($container, calls, destroy)
      */
-    function optionClickBuggy(roleProperty, val, url, calls) {
-        if (url) {
+    function build025Fixture(previewReady, cb) {
+        var calls = { setVariable: [], loadFont: [] };
+
+        var origSetVariable        = CssPreviewManager.setVariable;
+        var origLoadFont           = CssPreviewManager.loadFont;
+        var origPanelSetVal        = PanelState.setValue;
+        var origResetField         = PanelState.resetField;
+        var origRestoreToDefault   = PanelState.restoreToDefault;
+        var origGetFieldState      = PanelState.getFieldState;
+        var origRenderPaletteBadges = BadgeRenderer.renderPaletteBadges;
+
+        CssPreviewManager.setVariable = function (prop, val) {
+            calls.setVariable.push({ prop: prop, val: val });
+        };
+        CssPreviewManager.loadFont = function (url) {
             calls.loadFont.push(url);
-        }
-        calls.setVariable.push({ prop: roleProperty, val: val });
-    }
+        };
+        PanelState.setValue            = function () {};
+        PanelState.resetField          = function () {};
+        PanelState.restoreToDefault    = function () {};
+        BadgeRenderer.renderPaletteBadges = function () { return ''; };
 
-    /**
-     * Fixed option-click handler reproduction (with previewReady guard).
-     * Mirrors font-palette-section-renderer.js option click AFTER the fix —
-     * preview calls are wrapped in Promise.resolve(previewReady).then().
-     *
-     * @param {Promise|null} previewReady
-     * @param {String} roleProperty
-     * @param {String} val
-     * @param {String|null} url
-     * @param {{setVariable: Array, loadFont: Array}} calls
-     */
-    function optionClickFixed(previewReady, roleProperty, val, url, calls) {
-        Promise.resolve(previewReady).then(function () {
-            if (url) {
-                calls.loadFont.push(url);
+        // Make primary_font appear dirty AND modified so reset+restore handlers
+        // both find a non-empty work-list without a real PanelState.init().
+        PanelState.getFieldState = function (sectionCode, fieldCode) {
+            if (sectionCode === 'typography' && fieldCode === 'primary_font') {
+                return {
+                    isDirty:      true,
+                    isModified:   true,
+                    savedValue:   'system-ui, sans-serif',
+                    defaultValue: 'system-ui, sans-serif'
+                };
             }
-            calls.setVariable.push({ prop: roleProperty, val: val });
-        });
-    }
+            return origGetFieldState
+                ? origGetFieldState.call(PanelState, sectionCode, fieldCode)
+                : null;
+        };
 
-    /**
-     * Buggy reset handler reproduction (no previewReady guard).
-     * Mirrors font-palette-section-renderer.js reset handler, lines ~293–300
-     * BEFORE the fix — setVariable called synchronously inside dirty.forEach.
-     *
-     * @param {Array<{property: String, savedValue: String}>} dirty
-     * @param {{setVariable: Array}} calls
-     */
-    function resetHandlerBuggy(dirty, calls) {
-        dirty.forEach(function (item) {
-            calls.setVariable.push({ prop: item.property, val: item.savedValue });
-        });
-    }
+        FontPaletteManager.init(TEST_PALETTES);
 
-    /**
-     * Fixed reset handler reproduction (with previewReady guard).
-     * Mirrors font-palette-section-renderer.js reset handler AFTER the fix —
-     * setVariable wrapped in Promise.resolve(previewReady).then() per item.
-     *
-     * @param {Promise|null} previewReady
-     * @param {Array<{property: String, savedValue: String}>} dirty
-     * @param {{setVariable: Array}} calls
-     */
-    function resetHandlerFixed(previewReady, dirty, calls) {
-        dirty.forEach(function (item) {
-            Promise.resolve(previewReady).then(function () {
-                calls.setVariable.push({ prop: item.property, val: item.savedValue });
+        var $c = $('<div class="bte-font-palette-container-025">').appendTo(document.body);
+
+        function destroy() {
+            try {
+                if ($c.data('swissupFontPaletteSection')) {
+                    $c.fontPaletteSection('destroy');
+                }
+            } catch (e) { /* ignore widget teardown errors */ }
+            $c.remove();
+            FontPaletteManager.init([]);
+            CssPreviewManager.setVariable       = origSetVariable;
+            CssPreviewManager.loadFont          = origLoadFont;
+            PanelState.setValue                 = origPanelSetVal;
+            PanelState.resetField               = origResetField;
+            PanelState.restoreToDefault         = origRestoreToDefault;
+            PanelState.getFieldState            = origGetFieldState;
+            BadgeRenderer.renderPaletteBadges   = origRenderPaletteBadges;
+        }
+
+        try {
+            $c.fontPaletteSection({
+                fontPalettes: TEST_PALETTES,
+                sections:     TEST_SECTIONS,
+                previewReady: previewReady
             });
-        });
-    }
-
-    /**
-     * Buggy restore handler reproduction (no previewReady guard).
-     * Mirrors font-palette-section-renderer.js restore handler, lines ~325–331
-     * BEFORE the fix — setVariable called synchronously.
-     *
-     * @param {String} prop
-     * @param {String} defaultValue
-     * @param {{setVariable: Array}} calls
-     */
-    function restoreHandlerBuggy(prop, defaultValue, calls) {
-        calls.setVariable.push({ prop: prop, val: defaultValue });
-    }
-
-    /**
-     * Fixed restore handler reproduction (with previewReady guard).
-     * Mirrors font-palette-section-renderer.js restore handler AFTER the fix —
-     * setVariable wrapped in Promise.resolve(previewReady).then().
-     *
-     * @param {Promise|null} previewReady
-     * @param {String} prop
-     * @param {String} defaultValue
-     * @param {{setVariable: Array}} calls
-     */
-    function restoreHandlerFixed(previewReady, prop, defaultValue, calls) {
-        Promise.resolve(previewReady).then(function () {
-            calls.setVariable.push({ prop: prop, val: defaultValue });
-        });
+            cb($c, calls, destroy);
+        } catch (e) {
+            destroy();
+            throw e;
+        }
     }
 
     /**
