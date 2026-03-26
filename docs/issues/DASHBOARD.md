@@ -1,6 +1,6 @@
 # Issues Dashboard
 
-**Updated:** 2026-03-25
+**Updated:** 2026-03-26
 
 ---
 
@@ -9,9 +9,9 @@
 | | Count |
 |---|---|
 | Total issues | 29 |
-| Fixed / Closed | 21 |
-| Pending | 8 |
-| Bugs | 21 (15 closed, 6 open) |
+| Fixed / Closed | 22 |
+| Pending | 7 |
+| Bugs | 21 (16 closed, 5 open) |
 | Tasks | 8 (7 done, 2 pending) |
 
 ---
@@ -38,7 +38,7 @@
 | [021](021-implicit-palette-link-inconsistent-preview.md) | Implicitly palette-linked color fields have inconsistent CSS preview | — | **Open** |
 | [022](022-draft-css-stale-after-discard-draft.md) | Draft CSS у iframe залишається застарілим після discardDraft | `b95dc02` | **Closed** |
 | [023](023-depends-field-visibility-not-implemented.md) | `dependsOn` field visibility — JS runtime not implemented | — | **Open** |
-| [024](024-font-palette-role-default-ignored-when-field-default-differs.md) | `font_palettes.fonts[].default` ignored — field shows `settings[].default` instead | — | **Open** |
+| [024](024-font-palette-role-default-ignored-when-field-default-differs.md) | `font_palettes.fonts[].default` ignored — field shows `settings[].default` instead | `86e9b30` | **Fixed** |
 | [025](025-font-palette-preview-not-updated-on-first-click.md) | Preview iframe не оновлюється при першому кліку на шрифт у Font Palette | — | **Open** |
 
 ---

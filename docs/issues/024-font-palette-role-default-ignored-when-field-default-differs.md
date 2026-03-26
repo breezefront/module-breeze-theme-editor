@@ -3,7 +3,7 @@
 **Severity:** Medium  
 **Area:** `view/adminhtml/web/js/editor/panel/sections/font-palette-section-renderer.js`  
 **Type:** Bug  
-**Status:** Open
+**Status:** Fixed — `86e9b30`
 
 ---
 
@@ -164,8 +164,8 @@ var currentValue = (field.value !== null && field.value !== undefined)
 
 ## Tracking
 
-- [ ] Виправити `_buildRoleMap()` — пріоритизувати `role.default` над `field.default`
-- [ ] Spec-тест: `field.value = null`, `role.default ≠ field.default` → `setCurrentValue` отримує `role.default`
+- [x] Виправити `_buildRoleMap()` — пріоритизувати `role.default` над `field.default`
+- [x] Spec-тест: `field.value = null`, `role.default ≠ field.default` → `setCurrentValue` отримує `role.default`
 - [ ] Перевірити вручну: `role.default = "Arial"` → trigger показує Arial, `is-selected` на Arial
 - [ ] Перевірити: `field.value = "Roboto"` (збережено) → збережене значення не перезаписується
 - [ ] Перевірити: після Save → Reload → значення відновлюється коректно
