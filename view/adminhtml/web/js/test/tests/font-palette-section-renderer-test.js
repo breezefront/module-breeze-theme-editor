@@ -55,14 +55,18 @@ define([
         (sections || []).forEach(function (section) {
             (section.fields || []).forEach(function (field) {
                 if (field.property && FontPaletteManager.getRole(field.property)) {
+                    var role = FontPaletteManager.getRole(field.property);
                     var currentValue = (field.value !== null && field.value !== undefined)
                         ? field.value
-                        : (field.default || '');
+                        : (role ? role['default'] : (field['default'] || ''));
+
                     roleFields[field.property] = {
                         sectionCode:  section.code,
                         fieldCode:    field.code,
                         currentValue: currentValue
                     };
+
+                    FontPaletteManager.setCurrentValue(field.property, currentValue);
                 }
             });
         });
@@ -449,13 +453,138 @@ define([
                 'currentValue should be field.value when value is not null');
         },
 
-        '_buildRoleMap: falls back to field.default when value is null': function () {
+        '_buildRoleMap: falls back to field.default when value is null (legacy, role.default === field.default)': function () {
             FontPaletteManager.init(TEST_PALETTES);
             var map = buildRoleMap(TEST_SECTIONS);
 
-            // primary_font has value: null → falls back to default
+            // In TEST_PALETTES role.default === field.default === 'system-ui, sans-serif',
+            // so both the buggy and fixed paths return the same value here.
             this.assertEqual('system-ui, sans-serif', map['--primary-font'].currentValue,
-                'currentValue should fall back to field.default when value is null');
+                'currentValue should equal role.default when value is null');
+        },
+
+        // ─── Issue 024 ───────────────────────────────────────────────────────
+        //
+        // Scenario: theme developer overrides font_palettes.fonts[].default to
+        // "Arial, sans-serif" for the "primary" role, but the matching
+        // settings[].fields[].default still contains the old value
+        // "ui-sans-serif, system-ui, sans-serif".
+        //
+        // Expected: currentValue (and FontPaletteManager._currentValues) must
+        //           receive the authoritative role.default = "Arial, sans-serif".
+        // Actual (bug): currentValue = "ui-sans-serif, system-ui, sans-serif"
+        //               because field.default is used instead of role.default.
+
+        '_buildRoleMap: uses role.default when value is null and role.default differs from field.default (Issue 024)': function () {
+            // Palette where role.default = "Arial, sans-serif"
+            var palettes = [{
+                id: 'default',
+                label: 'Default',
+                options: [
+                    { value: 'Arial, sans-serif',                label: 'Arial' },
+                    { value: 'ui-sans-serif, system-ui, sans-serif', label: 'System UI' }
+                ],
+                fonts: [
+                    {
+                        id: 'primary',
+                        label: 'Primary',
+                        property: '--primary-font',
+                        'default': 'Arial, sans-serif'          // ← authoritative
+                    }
+                ]
+            }];
+
+            // settings[].fields[].default still has the old value
+            var sections = [{
+                code: 'typography',
+                fields: [{
+                    code: 'primary_font',
+                    property: '--primary-font',
+                    value: null,                                  // never saved
+                    'default': 'ui-sans-serif, system-ui, sans-serif'  // ← stale
+                }]
+            }];
+
+            FontPaletteManager.init(palettes);
+            var map = buildRoleMap(sections);
+
+            this.assertEqual(
+                'Arial, sans-serif',
+                map['--primary-font'].currentValue,
+                'currentValue must be role.default ("Arial") not field.default ("ui-sans-serif") — Issue 024'
+            );
+        },
+
+        '_buildRoleMap: setCurrentValue receives role.default not field.default when value is null (Issue 024)': function () {
+            var palettes = [{
+                id: 'default',
+                label: 'Default',
+                options: [
+                    { value: 'Arial, sans-serif',                    label: 'Arial' },
+                    { value: 'ui-sans-serif, system-ui, sans-serif', label: 'System UI' }
+                ],
+                fonts: [{
+                    id: 'primary',
+                    label: 'Primary',
+                    property: '--primary-font',
+                    'default': 'Arial, sans-serif'
+                }]
+            }];
+
+            var sections = [{
+                code: 'typography',
+                fields: [{
+                    code: 'primary_font',
+                    property: '--primary-font',
+                    value: null,
+                    'default': 'ui-sans-serif, system-ui, sans-serif'
+                }]
+            }];
+
+            FontPaletteManager.init(palettes);
+            buildRoleMap(sections);  // this calls FontPaletteManager.setCurrentValue internally
+
+            this.assertEqual(
+                'Arial, sans-serif',
+                FontPaletteManager.getCurrentValue('--primary-font'),
+                'FontPaletteManager.getCurrentValue must return role.default ("Arial"), not field.default ("ui-sans-serif") — Issue 024'
+            );
+        },
+
+        '_buildRoleMap: saved field.value overrides role.default even when they differ (Issue 024, no regression)': function () {
+            var palettes = [{
+                id: 'default',
+                label: 'Default',
+                options: [
+                    { value: 'Arial, sans-serif',        label: 'Arial' },
+                    { value: "'Roboto', sans-serif",      label: 'Roboto' }
+                ],
+                fonts: [{
+                    id: 'primary',
+                    label: 'Primary',
+                    property: '--primary-font',
+                    'default': 'Arial, sans-serif'
+                }]
+            }];
+
+            var sections = [{
+                code: 'typography',
+                fields: [{
+                    code: 'primary_font',
+                    property: '--primary-font',
+                    value: "'Roboto', sans-serif",        // user saved Roboto
+                    'default': 'ui-sans-serif, system-ui, sans-serif'
+                }]
+            }];
+
+            FontPaletteManager.init(palettes);
+            var map = buildRoleMap(sections);
+
+            this.assertEqual(
+                "'Roboto', sans-serif",
+                map['--primary-font'].currentValue,
+                'Saved field.value must always win over role.default — no regression'
+            );
         },
 
         '_buildRoleMap: fields without a property key are skipped': function () {
@@ -1012,8 +1141,349 @@ define([
             );
 
             $container.remove();
+        },
+
+        // ─── Issue 025: previewReady guard ──────────────────────────────────
+        //
+        // These tests verify that preview calls (CssPreviewManager.setVariable,
+        // loadFont, _updateConsumerFields) are gated behind the previewReady
+        // Promise so that the first click always reaches the iframe.
+        //
+        // Each handler is reproduced in two flavours:
+        //   _buggy  — current behaviour: synchronous call, no previewReady guard
+        //   _fixed  — expected behaviour: wrapped in Promise.resolve().then()
+        //
+        // A1 / B1 / C1 — sync tests that PROVE the bug:
+        //   buggy handler calls setVariable immediately (bad).
+        // A2 / B2 / C2 — async tests that PROVE the fix works:
+        //   fixed handler calls setVariable after the Promise resolves.
+        // A3 / B3 / C3 — async tests for the "already resolved" path:
+        //   fixed handler with Promise.resolve() still calls setVariable
+        //   (no regression when iframe is already ready).
+        //
+        // ── Option click (A) ─────────────────────────────────────────────────
+
+        'option click (025-A1): setVariable called synchronously without previewReady guard — proves the bug': function () {
+            // Reproduce the CURRENT (buggy) option-click handler:
+            // no previewReady guard → setVariable fires immediately even
+            // when the iframe is not yet ready.
+            var calls = { setVariable: [], loadFont: [] };
+
+            optionClickBuggy('--primary-font', "'Roboto', sans-serif", null, calls);
+
+            this.assertEqual(1, calls.setVariable.length,
+                'Buggy handler calls setVariable synchronously (this is the bug)');
+        },
+
+        'option click (025-A2): setVariable not called before previewReady resolves (fixed handler)': function (done) {
+            var self    = this;
+            var resolve;
+            var previewReady = new Promise(function (r) { resolve = r; });
+            var calls = { setVariable: [], loadFont: [] };
+
+            optionClickFixed(previewReady, '--primary-font', "'Roboto', sans-serif", null, calls);
+
+            // Immediately after the click: nothing should have fired yet
+            self.assertEqual(0, calls.setVariable.length,
+                'setVariable must not fire before previewReady resolves');
+
+            // Now resolve the Promise and wait for the microtask queue
+            resolve();
+            self.waitFor(
+                function () { return calls.setVariable.length > 0; },
+                1000,
+                function (err) {
+                    if (!err) {
+                        self.assertEqual('--primary-font', calls.setVariable[0].prop,
+                            'setVariable must receive the correct role property');
+                        self.assertEqual("'Roboto', sans-serif", calls.setVariable[0].val,
+                            'setVariable must receive the chosen font value');
+                    }
+                    done(err);
+                }
+            );
+        },
+
+        'option click (025-A3): setVariable called after microtask when previewReady already resolved': function (done) {
+            var self  = this;
+            var calls = { setVariable: [], loadFont: [] };
+
+            // previewReady is already resolved — simulates normal page load where
+            // the user clicks after the iframe has finished loading.
+            optionClickFixed(Promise.resolve(), '--primary-font', 'system-ui, sans-serif', null, calls);
+
+            self.waitFor(
+                function () { return calls.setVariable.length > 0; },
+                1000,
+                function (err) {
+                    if (!err) {
+                        self.assertEqual('--primary-font', calls.setVariable[0].prop,
+                            'setVariable must still be called when Promise was already resolved');
+                    }
+                    done(err);
+                }
+            );
+        },
+
+        'option click (025-A4): loadFont called after previewReady resolves when url is present': function (done) {
+            var self    = this;
+            var resolve;
+            var previewReady = new Promise(function (r) { resolve = r; });
+            var calls = { setVariable: [], loadFont: [] };
+            var robotoUrl = 'https://fonts.googleapis.com/css2?family=Roboto';
+
+            optionClickFixed(previewReady, '--primary-font', "'Roboto', sans-serif", robotoUrl, calls);
+
+            // Not called yet
+            self.assertEqual(0, calls.loadFont.length,
+                'loadFont must not fire before previewReady resolves');
+
+            resolve();
+            self.waitFor(
+                function () { return calls.loadFont.length > 0; },
+                1000,
+                function (err) {
+                    if (!err) {
+                        self.assertEqual(robotoUrl, calls.loadFont[0],
+                            'loadFont must receive the correct stylesheet URL');
+                    }
+                    done(err);
+                }
+            );
+        },
+
+        // ── Reset handler (B) ────────────────────────────────────────────────
+
+        'reset handler (025-B1): setVariable called synchronously without previewReady guard — proves the bug': function () {
+            var calls  = { setVariable: [] };
+            var dirty  = [
+                { property: '--primary-font',   savedValue: 'system-ui, sans-serif' },
+                { property: '--secondary-font',  savedValue: "'Roboto', sans-serif" }
+            ];
+
+            resetHandlerBuggy(dirty, calls);
+
+            this.assertEqual(2, calls.setVariable.length,
+                'Buggy reset handler calls setVariable synchronously for each dirty item (this is the bug)');
+        },
+
+        'reset handler (025-B2): setVariable not called before previewReady resolves (fixed handler)': function (done) {
+            var self    = this;
+            var resolve;
+            var previewReady = new Promise(function (r) { resolve = r; });
+            var calls  = { setVariable: [] };
+            var dirty  = [
+                { property: '--primary-font',  savedValue: 'system-ui, sans-serif' },
+                { property: '--secondary-font', savedValue: "'Roboto', sans-serif" }
+            ];
+
+            resetHandlerFixed(previewReady, dirty, calls);
+
+            self.assertEqual(0, calls.setVariable.length,
+                'setVariable must not fire before previewReady resolves');
+
+            resolve();
+            self.waitFor(
+                function () { return calls.setVariable.length >= 2; },
+                1000,
+                function (err) {
+                    if (!err) {
+                        self.assertEqual(2, calls.setVariable.length,
+                            'setVariable must be called once per dirty item after resolve');
+                    }
+                    done(err);
+                }
+            );
+        },
+
+        'reset handler (025-B3): setVariable called for all dirty items when previewReady already resolved': function (done) {
+            var self  = this;
+            var calls = { setVariable: [] };
+            var dirty = [
+                { property: '--primary-font',  savedValue: 'system-ui, sans-serif' }
+            ];
+
+            resetHandlerFixed(Promise.resolve(), dirty, calls);
+
+            self.waitFor(
+                function () { return calls.setVariable.length > 0; },
+                1000,
+                function (err) {
+                    if (!err) {
+                        self.assertEqual(1, calls.setVariable.length,
+                            'setVariable must be called even when Promise was already resolved');
+                        self.assertEqual('--primary-font', calls.setVariable[0].prop,
+                            'setVariable must receive the correct property');
+                        self.assertEqual('system-ui, sans-serif', calls.setVariable[0].val,
+                            'setVariable must receive the saved value');
+                    }
+                    done(err);
+                }
+            );
+        },
+
+        // ── Restore handler (C) ──────────────────────────────────────────────
+
+        'restore handler (025-C1): setVariable called synchronously without previewReady guard — proves the bug': function () {
+            var calls = { setVariable: [] };
+
+            restoreHandlerBuggy('--primary-font', 'system-ui, sans-serif', calls);
+
+            this.assertEqual(1, calls.setVariable.length,
+                'Buggy restore handler calls setVariable synchronously (this is the bug)');
+        },
+
+        'restore handler (025-C2): setVariable not called before previewReady resolves (fixed handler)': function (done) {
+            var self    = this;
+            var resolve;
+            var previewReady = new Promise(function (r) { resolve = r; });
+            var calls   = { setVariable: [] };
+
+            restoreHandlerFixed(previewReady, '--primary-font', 'system-ui, sans-serif', calls);
+
+            self.assertEqual(0, calls.setVariable.length,
+                'setVariable must not fire before previewReady resolves');
+
+            resolve();
+            self.waitFor(
+                function () { return calls.setVariable.length > 0; },
+                1000,
+                function (err) {
+                    if (!err) {
+                        self.assertEqual('--primary-font', calls.setVariable[0].prop,
+                            'setVariable must receive the correct property');
+                        self.assertEqual('system-ui, sans-serif', calls.setVariable[0].val,
+                            'setVariable must receive the default value');
+                    }
+                    done(err);
+                }
+            );
+        },
+
+        'restore handler (025-C3): setVariable called after microtask when previewReady already resolved': function (done) {
+            var self  = this;
+            var calls = { setVariable: [] };
+
+            restoreHandlerFixed(Promise.resolve(), '--secondary-font', "'Roboto', sans-serif", calls);
+
+            self.waitFor(
+                function () { return calls.setVariable.length > 0; },
+                1000,
+                function (err) {
+                    if (!err) {
+                        self.assertEqual('--secondary-font', calls.setVariable[0].prop,
+                            'setVariable must still fire when previewReady was already resolved');
+                    }
+                    done(err);
+                }
+            );
         }
     });
+
+    // =========================================================================
+    // Issue 025 — inline handler reproductions
+    //
+    // Each handler comes in two variants:
+    //   *Buggy — reproduces the current (unfixed) code: direct synchronous call
+    //   *Fixed — reproduces the expected (fixed) code: gated behind previewReady
+    // =========================================================================
+
+    /**
+     * Buggy option-click handler reproduction (no previewReady guard).
+     * Mirrors font-palette-section-renderer.js option click, lines ~418–441
+     * BEFORE the fix — setVariable and loadFont are called synchronously.
+     *
+     * @param {String} roleProperty
+     * @param {String} val
+     * @param {String|null} url
+     * @param {{setVariable: Array, loadFont: Array}} calls
+     */
+    function optionClickBuggy(roleProperty, val, url, calls) {
+        if (url) {
+            calls.loadFont.push(url);
+        }
+        calls.setVariable.push({ prop: roleProperty, val: val });
+    }
+
+    /**
+     * Fixed option-click handler reproduction (with previewReady guard).
+     * Mirrors font-palette-section-renderer.js option click AFTER the fix —
+     * preview calls are wrapped in Promise.resolve(previewReady).then().
+     *
+     * @param {Promise|null} previewReady
+     * @param {String} roleProperty
+     * @param {String} val
+     * @param {String|null} url
+     * @param {{setVariable: Array, loadFont: Array}} calls
+     */
+    function optionClickFixed(previewReady, roleProperty, val, url, calls) {
+        Promise.resolve(previewReady).then(function () {
+            if (url) {
+                calls.loadFont.push(url);
+            }
+            calls.setVariable.push({ prop: roleProperty, val: val });
+        });
+    }
+
+    /**
+     * Buggy reset handler reproduction (no previewReady guard).
+     * Mirrors font-palette-section-renderer.js reset handler, lines ~293–300
+     * BEFORE the fix — setVariable called synchronously inside dirty.forEach.
+     *
+     * @param {Array<{property: String, savedValue: String}>} dirty
+     * @param {{setVariable: Array}} calls
+     */
+    function resetHandlerBuggy(dirty, calls) {
+        dirty.forEach(function (item) {
+            calls.setVariable.push({ prop: item.property, val: item.savedValue });
+        });
+    }
+
+    /**
+     * Fixed reset handler reproduction (with previewReady guard).
+     * Mirrors font-palette-section-renderer.js reset handler AFTER the fix —
+     * setVariable wrapped in Promise.resolve(previewReady).then() per item.
+     *
+     * @param {Promise|null} previewReady
+     * @param {Array<{property: String, savedValue: String}>} dirty
+     * @param {{setVariable: Array}} calls
+     */
+    function resetHandlerFixed(previewReady, dirty, calls) {
+        dirty.forEach(function (item) {
+            Promise.resolve(previewReady).then(function () {
+                calls.setVariable.push({ prop: item.property, val: item.savedValue });
+            });
+        });
+    }
+
+    /**
+     * Buggy restore handler reproduction (no previewReady guard).
+     * Mirrors font-palette-section-renderer.js restore handler, lines ~325–331
+     * BEFORE the fix — setVariable called synchronously.
+     *
+     * @param {String} prop
+     * @param {String} defaultValue
+     * @param {{setVariable: Array}} calls
+     */
+    function restoreHandlerBuggy(prop, defaultValue, calls) {
+        calls.setVariable.push({ prop: prop, val: defaultValue });
+    }
+
+    /**
+     * Fixed restore handler reproduction (with previewReady guard).
+     * Mirrors font-palette-section-renderer.js restore handler AFTER the fix —
+     * setVariable wrapped in Promise.resolve(previewReady).then().
+     *
+     * @param {Promise|null} previewReady
+     * @param {String} prop
+     * @param {String} defaultValue
+     * @param {{setVariable: Array}} calls
+     */
+    function restoreHandlerFixed(previewReady, prop, defaultValue, calls) {
+        Promise.resolve(previewReady).then(function () {
+            calls.setVariable.push({ prop: prop, val: defaultValue });
+        });
+    }
 
     /**
      * Inline reproduction of _updateConsumerFields.

@@ -72,9 +72,10 @@ define([
             (this.options.sections || []).forEach(function (section) {
                 (section.fields || []).forEach(function (field) {
                     if (field.property && FontPaletteManager.getRole(field.property)) {
+                        var role = FontPaletteManager.getRole(field.property);
                         var currentValue = (field.value !== null && field.value !== undefined)
                             ? field.value
-                            : (field.default || '');
+                            : (role ? role['default'] : (field.default || ''));
 
                         this._roleFields[field.property] = {
                             sectionCode:  section.code,
