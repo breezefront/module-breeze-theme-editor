@@ -145,7 +145,7 @@
 - **Файл:** `Model/StatusRepository.php:123`
 - **Проблема:** `$code = $status->getCode()` присвоюється і одразу ігнорується.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `d62015b`
 
 ### 2.14 `FrontendPageUrlProvider` — порожній клас
 - **Файл:** `Model/Provider/FrontendPageUrlProvider.php`
@@ -339,14 +339,14 @@
 - **Проблема:** Ідентичний `if ($params['statusCode'] === 'PUBLISHED')` блок у двох місцях.
 - **Пропозиція:** Protected helper в `AbstractConfigResolver`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `80a8dab`
 
 ### 4.4 `$userIdForSave` — ідентичний one-liner у двох сервісах
 - **Файли:** `Model/Service/PresetService.php:97`, `Model/Service/ImportExportService.php:96`
 - **Проблема:** `$userIdForSave = ($params['statusCode'] ?? '') === 'DRAFT' ? ($params['userId'] ?? 0) : 0;`
 - **Пропозиція:** Винести в `AbstractMutationResolver` або shared utility.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `5680893` (documented with @see AbstractMutationResolver::getDraftUserIdForSave)
 
 ### 4.5 DRAFT ternary — 7+ повторень у mutation resolvers
 - **Файли:** `Model/Resolver/Mutation/ApplyPreset.php:67,105`, `ResetToDefaults.php:53,65,66`, `CopyFromStore.php:54,63`
@@ -601,7 +601,7 @@
 - **Проблема:** Маппінг `ValueInterface → GraphQL array` дубльований у всіх 4 resolver'ах.
 - **Пропозиція:** Protected `toGraphQlValue(ValueInterface $value): array` на `AbstractMutationResolver`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `d62f5b7`
 
 ### 6.5 `DraftUserIdResolver` abstraction
 - **Зачіпає:** 7+ місць (3 mutation resolver файли, 2 сервіси)
