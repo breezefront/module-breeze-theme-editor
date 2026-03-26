@@ -1025,7 +1025,7 @@ define([
                 .appendTo($widget);
 
             // Act: run the reproduced algorithm
-            updateConsumerFields('--secondary-font', "'Roboto', sans-serif");
+            updateConsumerFields('--secondary-font', "'Roboto', sans-serif", undefined, $container);
 
             // Assert
             var newFamily = $widget.find('.bte-font-picker-trigger-label').css('font-family');
@@ -1067,7 +1067,7 @@ define([
                 .appendTo($widget);
 
             // Act
-            updateConsumerFields('--secondary-font', "'Roboto', sans-serif");
+            updateConsumerFields('--secondary-font', "'Roboto', sans-serif", undefined, $container);
 
             // Assert: trigger must be updated even though val() is null
             var newFamily = $widget.find('.bte-font-picker-trigger-label').css('font-family');
@@ -1100,7 +1100,7 @@ define([
                 .appendTo($widget);
 
             // Act: notify about --secondary-font change
-            updateConsumerFields('--secondary-font', "'Roboto', sans-serif");
+            updateConsumerFields('--secondary-font', "'Roboto', sans-serif", undefined, $container);
 
             // Assert: trigger must NOT be touched
             var currentFamily = $widget.find('.bte-font-picker-trigger-label').css('font-family');
@@ -1132,7 +1132,8 @@ define([
                 .appendTo($widget);
 
             // Act: role --secondary-font changes
-            updateConsumerFields('--secondary-font', "'Roboto', sans-serif");
+            var setCalls = [];
+            updateConsumerFields('--secondary-font', "'Roboto', sans-serif", setCalls, $container);
 
             // Assert: trigger must not change — field has a concrete saved value,
             // not a role reference
@@ -1140,6 +1141,154 @@ define([
             this.assertTrue(
                 currentFamily.toLowerCase().indexOf('roboto') === -1,
                 'Trigger must not update when field has a concrete (non-role) saved value'
+            );
+
+            $container.remove();
+        },
+
+        // ─── Issue 026: consumer CSS preview cascade via _updateConsumerFields ──
+        //
+        // When a role font changes (e.g. --secondary-font → 'Open Sans'), fields
+        // whose value (or default) references that role must also have their own
+        // CSS variable written into #bte-live-preview so the theme cascade works:
+        //
+        //   :root {
+        //     --secondary-font:   'Open Sans', sans-serif;  ← role (written by caller)
+        //     --base-font-family: var(--secondary-font);    ← consumer (written here)
+        //   }
+        //
+        // Without this, the theme's hardcoded :root { --base-font-family: ui-sans-serif }
+        // wins and the storefront preview does not reflect the role change.
+
+        '_updateConsumerFields: calls setVariable for consumer property with role ref when value matches': function () {
+            // Arrange: field saved with value "--secondary-font" (role reference)
+            // and data-property="--base-font-family".
+            var $container = $('<div>').appendTo(document.body);
+            var selectId   = 'test-select-consumer-026a';
+            var $select    = $('<select>')
+                .attr('id',             selectId)
+                .attr('class',          'bte-font-picker')
+                .attr('data-default',   '--secondary-font')
+                .attr('data-property',  '--base-font-family')
+                .appendTo($container);
+            $('<option>').val('--secondary-font').prop('selected', true).appendTo($select);
+
+            var $widget = $('<div>').attr('data-for', selectId).appendTo($container);
+            $('<span class="bte-font-picker-trigger-label">')
+                .css('font-family', 'system-ui, sans-serif')
+                .appendTo($widget);
+
+            // Act
+            var setCalls = [];
+            updateConsumerFields('--secondary-font', "'Open Sans', sans-serif", setCalls, $container);
+
+            // Assert: setVariable must be called for the consumer property
+            var hit = setCalls.some(function (c) {
+                return c.prop === '--base-font-family' && c.val === '--secondary-font';
+            });
+            this.assertTrue(hit,
+                'setVariable must be called with (--base-font-family, --secondary-font) ' +
+                'so live-preview gets --base-font-family: var(--secondary-font)'
+            );
+
+            $container.remove();
+        },
+
+        '_updateConsumerFields: calls setVariable for consumer property via default-ref match (Issue 020 + 026)': function () {
+            // Arrange: field never saved (val() = null), default = "--secondary-font".
+            // This covers the main reported scenario: field with default="--secondary-font"
+            // that was never explicitly saved to DB.
+            var $container = $('<div>').appendTo(document.body);
+            var selectId   = 'test-select-consumer-026b';
+            var $select    = $('<select>')
+                .attr('id',             selectId)
+                .attr('class',          'bte-font-picker')
+                .attr('data-default',   '--secondary-font')
+                .attr('data-property',  '--base-font-family')
+                .appendTo($container);
+            // No option selected → val() returns null
+
+            var $widget = $('<div>').attr('data-for', selectId).appendTo($container);
+            $('<span class="bte-font-picker-trigger-label">')
+                .css('font-family', 'system-ui, sans-serif')
+                .appendTo($widget);
+
+            // Act
+            var setCalls = [];
+            updateConsumerFields('--secondary-font', "'Open Sans', sans-serif", setCalls, $container);
+
+            // Assert
+            var hit = setCalls.some(function (c) {
+                return c.prop === '--base-font-family' && c.val === '--secondary-font';
+            });
+            this.assertTrue(hit,
+                'setVariable must be called via data-default match for never-saved consumer field'
+            );
+
+            $container.remove();
+        },
+
+        '_updateConsumerFields: does NOT call setVariable when consumer has no data-property': function () {
+            // Arrange: field matched by val() but has no data-property attribute.
+            // Should not crash and should not produce a setVariable call.
+            var $container = $('<div>').appendTo(document.body);
+            var selectId   = 'test-select-noprop-026';
+            var $select    = $('<select>')
+                .attr('id',           selectId)
+                .attr('class',        'bte-font-picker')
+                .attr('data-default', '--secondary-font')
+                // intentionally NO data-property
+                .appendTo($container);
+            $('<option>').val('--secondary-font').prop('selected', true).appendTo($select);
+
+            var $widget = $('<div>').attr('data-for', selectId).appendTo($container);
+            $('<span class="bte-font-picker-trigger-label">')
+                .css('font-family', 'system-ui, sans-serif')
+                .appendTo($widget);
+
+            // Act — must not throw
+            var setCalls = [];
+            updateConsumerFields('--secondary-font', "'Open Sans', sans-serif", setCalls, $container);
+
+            // Assert
+            var consumerCall = setCalls.some(function (c) {
+                return c.prop !== '--secondary-font'; // any call that isn't for the role itself
+            });
+            this.assertFalse(consumerCall,
+                'No setVariable call for a consumer property must happen when data-property is absent'
+            );
+
+            $container.remove();
+        },
+
+        '_updateConsumerFields: does NOT call setVariable for unmatched consumer field': function () {
+            // Field whose default points to --primary-font, not --secondary-font.
+            // Changing --secondary-font must leave this field untouched.
+            var $container = $('<div>').appendTo(document.body);
+            var selectId   = 'test-select-mismatch-026';
+            var $select    = $('<select>')
+                .attr('id',             selectId)
+                .attr('class',          'bte-font-picker')
+                .attr('data-default',   '--primary-font')
+                .attr('data-property',  '--heading-font-family')
+                .appendTo($container);
+
+            var $widget = $('<div>').attr('data-for', selectId).appendTo($container);
+            $('<span class="bte-font-picker-trigger-label">')
+                .css('font-family', 'system-ui, sans-serif')
+                .appendTo($widget);
+
+            // Act: change --secondary-font
+            var setCalls = [];
+            updateConsumerFields('--secondary-font', "'Open Sans', sans-serif", setCalls, $container);
+
+            // Assert: --heading-font-family must not be touched
+            var hit = setCalls.some(function (c) {
+                return c.prop === '--heading-font-family';
+            });
+            this.assertFalse(hit,
+                '--heading-font-family must not receive a setVariable call ' +
+                'when its default points to a different role'
             );
 
             $container.remove();
@@ -1500,11 +1649,14 @@ define([
      * Inline reproduction of _updateConsumerFields.
      * Kept in sync with font-palette-section-renderer.js _updateConsumerFields.
      *
-     * @param {String} roleProperty  — CSS var name, e.g. "--secondary-font"
-     * @param {String} newFontFamily — resolved font-family string
+     * @param {String}   roleProperty  — CSS var name, e.g. "--secondary-font"
+     * @param {String}   newFontFamily — resolved font-family string
+     * @param {Array}    [setCalls]    — optional collector for setVariable calls
+     *                                   { prop, val } — injected for unit-test
+     *                                   isolation instead of the real module
      */
-    function updateConsumerFields(roleProperty, newFontFamily) {
-        $('.bte-font-picker').each(function () {
+    function updateConsumerFields(roleProperty, newFontFamily, setCalls, $scope) {
+        ($scope ? $scope.find('.bte-font-picker') : $('.bte-font-picker')).each(function () {
             var $select    = $(this);
             var currentVal = $select.val();
 
@@ -1527,6 +1679,22 @@ define([
             $widget.find('.bte-font-picker-role-swatch[data-value="' + roleProperty + '"]')
                 .attr('data-font-family', newFontFamily)
                 .css('font-family', newFontFamily);
+
+            // Reflect the role change in the CSS preview iframe for this consumer
+            // field so the theme's :root variable gets overridden in #bte-live-preview.
+            // We write the role reference, not the resolved font stack, so the cascade
+            // flows through the role var that was already set by the caller:
+            //   --base-font-family: var(--secondary-font)
+            //
+            // PanelState is intentionally NOT touched.
+            var consumerProperty = $select.data('property');
+            if (consumerProperty) {
+                if (setCalls) {
+                    setCalls.push({ prop: consumerProperty, val: roleProperty });
+                } else {
+                    CssPreviewManager.setVariable(consumerProperty, roleProperty, 'font_picker');
+                }
+            }
         });
     }
 });

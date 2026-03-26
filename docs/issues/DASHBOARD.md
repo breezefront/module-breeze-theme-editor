@@ -8,10 +8,10 @@
 
 | | Count |
 |---|---|
-| Total issues | 29 |
-| Fixed / Closed | 23 |
+| Total issues | 30 |
+| Fixed / Closed | 24 |
 | Pending | 6 |
-| Bugs | 21 (17 closed, 4 open) |
+| Bugs | 22 (18 closed, 4 open) |
 | Tasks | 8 (7 done, 2 pending) |
 
 ---
@@ -40,6 +40,7 @@
 | [023](023-depends-field-visibility-not-implemented.md) | `dependsOn` field visibility — JS runtime not implemented | — | **Open** |
 | [024](024-font-palette-role-default-ignored-when-field-default-differs.md) | `font_palettes.fonts[].default` ignored — field shows `settings[].default` instead | `86e9b30` | **Fixed** |
 | [025](025-font-palette-preview-not-updated-on-first-click.md) | Preview iframe не оновлюється при першому кліку на шрифт у Font Palette | `0ffbe27` | **Fixed** |
+| [026](026-consumer-font-preview-not-updated-on-role-change.md) | Consumer font fields не оновлюють CSS preview при зміні ролі у Font Palette | `—` | **Fixed** |
 
 ---
 

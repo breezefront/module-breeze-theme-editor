@@ -600,6 +600,23 @@ define([
                 $widget.find('.bte-font-picker-role-swatch[data-value="' + roleProperty + '"]')
                     .attr('data-font-family', newFontFamily)
                     .css('font-family', newFontFamily);
+
+                // Reflect the role change in the CSS preview iframe for this consumer
+                // field so that the theme's --base-font-family (or similar) resolves to
+                // the new font without the user having to manually interact with the field.
+                //
+                // We write the CSS-var reference (e.g. '--secondary-font'), NOT the
+                // resolved font stack, so the live-preview :root gets:
+                //   --base-font-family: var(--secondary-font)
+                // which cascades through the role variable that was already set by the
+                // caller (CssPreviewManager.setVariable(roleProperty, val, …)).
+                //
+                // PanelState is intentionally NOT touched — the consumer field should not
+                // become dirty just because the role it points to was changed.
+                var consumerProperty = $select.data('property');
+                if (consumerProperty) {
+                    CssPreviewManager.setVariable(consumerProperty, roleProperty, 'font_picker');
+                }
             });
 
             log.debug('Consumer fields updated for role: ' + roleProperty);
