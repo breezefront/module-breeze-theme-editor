@@ -66,21 +66,10 @@ class ResetToDefaults extends AbstractSaveMutation
             $this->getDraftUserId($params)
         );
 
-        $savedValues = [];
-        foreach ($values as $val) {
-            $savedValues[] = [
-                'sectionCode' => $val['section_code'],
-                'fieldCode' => $val['setting_code'],
-                'value' => $val['value'],
-                'isModified' => false, // Reset = not modified
-                'updatedAt' => $val['updated_at']
-            ];
-        }
-
         return [
             'success' => true,
             'message' => __('Reset to defaults successfully'),
-            'values' => $savedValues,
+            'values' => $this->valuesToGraphQl($values, false),
             'resetCount' => $resetCount
         ];
     }

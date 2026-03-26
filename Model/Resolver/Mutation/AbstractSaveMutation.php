@@ -56,4 +56,26 @@ abstract class AbstractSaveMutation extends AbstractMutationResolver
             'statusId' => $statusId
         ];
     }
+
+    /**
+     * Map raw service value rows to GraphQL response format.
+     *
+     * @param array $values     Raw rows from ValueService::getValuesByTheme()
+     * @param bool  $isModified Fixed isModified flag (true for apply/copy, false for reset)
+     * @return array
+     */
+    protected function valuesToGraphQl(array $values, bool $isModified = true): array
+    {
+        $result = [];
+        foreach ($values as $val) {
+            $result[] = [
+                'sectionCode' => $val['section_code'],
+                'fieldCode'   => $val['setting_code'],
+                'value'       => $val['value'],
+                'isModified'  => $isModified,
+                'updatedAt'   => $val['updated_at'],
+            ];
+        }
+        return $result;
+    }
 }

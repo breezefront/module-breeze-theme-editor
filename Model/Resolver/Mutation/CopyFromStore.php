@@ -63,25 +63,17 @@ class CopyFromStore extends AbstractSaveMutation
             $this->getDraftUserId($params)
         );
 
-        $copiedValues = [];
-        foreach ($values as $val) {
-            if ($sectionCodes && !in_array($val['section_code'], $sectionCodes)) {
-                continue;
-            }
-
-            $copiedValues[] = [
-                'sectionCode' => $val['section_code'],
-                'fieldCode' => $val['setting_code'],
-                'value' => $val['value'],
-                'isModified' => true,
-                'updatedAt' => $val['updated_at']
-            ];
+        // Фільтр по секціях якщо потрібно
+        if ($sectionCodes) {
+            $values = array_filter($values, function ($val) use ($sectionCodes) {
+                return in_array($val['section_code'], $sectionCodes);
+            });
         }
 
         return [
             'success' => true,
             'message' => __('Successfully copied settings from %1/%2 to %3/%4', $fromScopeVO->getType(), $fromScopeVO->getScopeId(), $toScopeVO->getType(), $toScopeVO->getScopeId()),
-            'values' => $copiedValues,
+            'values' => $this->valuesToGraphQl(array_values($values), true),
             'copiedCount' => $copiedCount
         ];
     }

@@ -105,21 +105,10 @@ class ApplyPreset extends AbstractSaveMutation
             $this->getDraftUserId($params)
         );
 
-        $savedValues = [];
-        foreach ($values as $val) {
-            $savedValues[] = [
-                'sectionCode' => $val['section_code'],
-                'fieldCode'   => $val['setting_code'],
-                'value'       => $val['value'],
-                'isModified'  => true,
-                'updatedAt'   => $val['updated_at']
-            ];
-        }
-
         return [
             'success'      => true,
             'message'      => __('Preset "%1" applied successfully', $presetId),
-            'values'       => $savedValues,
+            'values'       => $this->valuesToGraphQl($values, true),
             'appliedCount' => $appliedCount
         ];
     }
