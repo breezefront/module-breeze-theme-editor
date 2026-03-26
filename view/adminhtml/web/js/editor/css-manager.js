@@ -108,8 +108,9 @@ define([
             
             log.info('CSS Manager initialized scope=' + scope + ':' + scopeId + ' iframeId=' + iframeId + ' publishedStyleFound=true');
             
-            // Trigger ready event for other components
-            $(document).trigger('bte:cssManagerReady');
+            // Trigger ready event for other components (e.g. css-preview-manager).
+            // Pass iframeDoc so listeners can initialize without re-querying the iframe.
+            $(document).trigger('bte:cssManagerReady', { iframeDocument: iframeDoc });
 
             return true;
         },

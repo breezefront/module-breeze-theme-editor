@@ -4,7 +4,7 @@
 **Area:** `theme-frontend-breeze-evolution/etc/theme_editor/settings.json`,
 `view/adminhtml/web/js/editor/panel/css-preview-manager.js`  
 **Type:** Bug  
-**Status:** Open
+**Status:** Partially Fixed (race condition resolved; `settings.json` change pending)
 
 ---
 
@@ -42,7 +42,26 @@ the hex value and step 7 reproduces immediately.
 
 ---
 
-## Root Cause
+## Root Cause (full analysis)
+
+### Layer 0 — initialization race condition (fixed in module JS)
+
+A second, independent root cause was discovered during investigation:
+`css-preview-manager.init()` originally listened **only** for the iframe `load`
+event to detect when `#bte-theme-css-variables` appeared in the DOM.
+
+When `panel/css-manager.js` exhausted its 20-retry loop and created a synthetic
+`#bte-theme-css-variables` placeholder, the iframe `load` event had **already
+fired** — so `css-preview-manager`'s `tryInit()` was never re-triggered,
+`$styleElement` stayed `null`, and **all** palette changes were silently
+dropped regardless of `settings.json`.
+
+**Fix applied** — see *Affected Files* below and the test file
+`view/adminhtml/web/js/test/tests/css-preview-manager-init-race-test.js`.
+
+Additionally, `panel/css-manager.js` cached `$livePreviewStyle` pointing at
+`#bte-live-preview` during `init()` — before `css-preview-manager` had created
+that element — leaving a stale empty jQuery reference.  This cache was removed.
 
 ### Layer 1 — the implicit CSS link
 
@@ -195,17 +214,32 @@ needed to restore the palette link for such installations.
 
 ## Affected Files
 
+### Module (`module-breeze-theme-editor`) — Layer 0 race fix ✅
+
+| File | Change |
+|------|--------|
+| `view/adminhtml/web/js/editor/css-manager.js` | Added `iframeDocument` to `bte:cssManagerReady` payload |
+| `view/adminhtml/web/js/editor/panel/css-manager.js` | Added `bte:cssManagerReady` event after `init()` succeeds; removed stale `$livePreviewStyle` cache |
+| `view/adminhtml/web/js/editor/panel/css-preview-manager.js` | Rewrote `init()`: dual-trigger (`bte:cssManagerReady` primary + `#bte-iframe load` fallback), `resolved` guard |
+| `view/adminhtml/web/js/test/tests/css-preview-manager-init-race-test.js` | New: 6 tests covering all race-condition scenarios |
+
+### Evolution theme (`theme-frontend-breeze-evolution`) — Layer 1 fix ⏳
+
 | File | Repo | Change |
 |------|------|--------|
 | `etc/theme_editor/settings.json` | `theme-frontend-breeze-evolution` | Change `"default"` for unambiguous fields to palette var ref |
-
-No module files need to change.
 
 ---
 
 ## Tracking
 
+- [x] **Race condition fixed** — `bte:cssManagerReady` event added to both css-manager
+      files; `css-preview-manager.init()` uses it as primary trigger with
+      `resolved` guard; stale `$livePreviewStyle` cache removed from
+      `panel/css-manager.js`
+- [x] **Tests written** — `css-preview-manager-init-race-test.js` (6 tests)
 - [ ] Change `header-panel-bg` default: `#000d3a` → `--color-brand-secondary`
+      (`theme-frontend-breeze-evolution/etc/theme_editor/settings.json`)
 - [ ] Evaluate remaining unambiguous fields (`base-color`, `link-color`,
       `input-border-color`) — confirm the Less variable chain before changing
 - [ ] Decide policy for ambiguous fields (`#ffffff`, `#000000`)

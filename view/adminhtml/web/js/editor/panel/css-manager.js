@@ -87,10 +87,13 @@ define([
                 return false;
             }
 
-            // Find existing CSS elements
+            // Find existing CSS elements.
+            // NOTE: do NOT cache $livePreviewStyle here — css-preview-manager creates
+            // #bte-live-preview asynchronously in response to bte:cssManagerReady, so
+            // it does not exist yet at this point.  showDraft() / showPublished() /
+            // showPublication() already refresh the reference lazily before using it.
             $publishedStyle = $(getIframeDocument()).find('#bte-theme-css-variables');
             $draftStyle = $(getIframeDocument()).find('#bte-theme-css-variables-draft');
-            $livePreviewStyle = $(getIframeDocument()).find('#bte-live-preview');
 
             if (!$publishedStyle.length) {
                 if (retries < 20) {
@@ -132,6 +135,13 @@ define([
             });
 
             log.info('CSS Manager initialized (status: ' + currentStatus + ')');
+
+            // Notify css-preview-manager (and any other listener) that #bte-theme-css-variables
+            // is now guaranteed to be in the iframe DOM.  This resolves the race condition where
+            // css-preview-manager's tryInit() relied solely on the iframe 'load' event and could
+            // miss it when css-manager created a placeholder after 20 retries.
+            $(document).trigger('bte:cssManagerReady', { iframeDocument: getIframeDocument() });
+
             return true;
         },
 

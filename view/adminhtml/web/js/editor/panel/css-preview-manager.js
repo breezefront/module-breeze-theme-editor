@@ -38,14 +38,24 @@ define([
          * frontend page (detected by presence of #bte-theme-css-variables) and
          * live-preview changes have been loaded from localStorage.
          *
-         * Uses an event-based approach instead of a fixed setTimeout to avoid
-         * race conditions between GraphQL config load and localStorage restore.
+         * Listens for TWO signals so initialization is never missed:
+         *   1. bte:cssManagerReady — fired by css-manager after it guarantees that
+         *      #bte-theme-css-variables is in the iframe DOM (either found natively
+         *      or created as a placeholder after 20 retries).  This is the primary
+         *      trigger and fixes the race condition where the iframe 'load' event
+         *      could fire before css-manager finished its own retry loop.
+         *   2. #bte-iframe 'load' — kept as a fallback for same-page navigations
+         *      inside the iframe (user clicks a link in the frontend preview).
+         *
+         * Both paths share tryInit() and a resolved guard to prevent double-init.
          *
          * @returns {Promise<boolean>}
          */
         init: function() {
             var self = this;
             return new Promise(function(resolve) {
+                var resolved = false;
+
                 function tryInit() {
                     iframeDocument = IframeHelper.getDocument();
 
@@ -55,11 +65,18 @@ define([
                     // reliable "frontend is ready" signal (same check as panel/css-manager).
                     if (!iframeDocument ||
                             !$(iframeDocument).find('#bte-theme-css-variables').length) {
-                        return; // not ready yet — will be retried on the next load event
+                        return; // not ready yet — will be retried on the next signal
                     }
 
-                    // Frontend page is ready — clean up listener and finish init
+                    // Prevent double-initialization if both signals fire simultaneously.
+                    if (resolved) {
+                        return;
+                    }
+                    resolved = true;
+
+                    // Clean up both listeners — no longer needed for this init cycle.
                     $('#bte-iframe').off('load.bte-preview-init');
+                    $(document).off('bte:cssManagerReady.bte-preview-init');
 
                     self._createStyleElement();
 
@@ -73,9 +90,23 @@ define([
                     resolve(true);
                 }
 
-                // Subscribe first so we don't miss the load event, then try
-                // immediately in case the iframe is already on the frontend page.
+                // PRIMARY: css-manager fires this after it guarantees #bte-theme-css-variables
+                // is in the DOM — covers the case where iframe 'load' already fired before
+                // css-manager finished its retry loop (or created a placeholder at retry 20).
+                $(document).on('bte:cssManagerReady.bte-preview-init', function(e, data) {
+                    // Use the iframeDocument passed by css-manager to avoid a re-query race.
+                    if (data && data.iframeDocument) {
+                        iframeDocument = data.iframeDocument;
+                    }
+                    tryInit();
+                });
+
+                // SECONDARY: iframe 'load' handles navigations that happen after the initial
+                // boot cycle (user browses to a different page inside the iframe preview).
                 $('#bte-iframe').on('load.bte-preview-init', tryInit);
+
+                // Synchronous attempt: covers the edge case where css-manager already
+                // fired bte:cssManagerReady before this Promise was constructed.
                 tryInit();
             });
         },
