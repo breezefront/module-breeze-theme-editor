@@ -95,6 +95,8 @@ class PresetService
         }
 
         $statusId = $this->statusProvider->getStatusId($statusCode);
+        // Note: identical userId logic exists in AbstractMutationResolver::getDraftUserIdForSave()
+        // @see \Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver::getDraftUserIdForSave()
         $userIdForSave = ($statusCode === StatusCode::PUBLISHED) ? 0 : $userId;
 
         // Create ValueInterface models
