@@ -1,6 +1,6 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 2026-03-24  
+**Останнє оновлення:** 2026-03-26  
 **Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 25/108
 
 ---
@@ -105,7 +105,7 @@
 | Тип | Кількість | Статус |
 |-----|-----------|--------|
 | PHP Unit tests | 50 файлів | ✅ Проходять (710 tests, 2 skipped) |
-| JS Admin tests | 30 spec-файлів | ✅ Проходять (592 tests) |
+| JS Admin tests | 30 spec-файлів | ✅ Проходять (656 tests) |
 | GraphQL integration tests | наявні | ✅ |
 
 ---
@@ -129,10 +129,10 @@
 
 | Категорія | Всього | Закрито | Відкрито |
 |-----------|--------|---------|---------|
-| Bugs | 14 | 13 ✅ | 0 |
+| Bugs | 21 | 17 ✅ | 4 (021, 023, css-var pending) |
 | Tasks | 8 | 7 ✅ | 1 (css-var) |
 | Без номера | 1 | — | 1 (test-cov) |
-| **Всього** | **23** | **20 ✅** | **3** |
+| **Всього** | **29** | **23 ✅** | **6** |
 
 ---
 
@@ -154,9 +154,9 @@ Refactoring:
 🟢 Low          █░░░░░░░░░░░   4/48
 📋 Total        ██░░░░░░░░░░  25/108 (23%)
 
-Issues:        20/23 closed (3 open/deferred)
+Issues:        23/29 closed (6 open/deferred)
 PHP Tests:     50 файлів / 710 tests ✅
-JS Tests:      30 spec-файлів / 592 tests ✅
+JS Tests:      30 spec-файлів / 656 tests ✅
 ```
 
 ---
