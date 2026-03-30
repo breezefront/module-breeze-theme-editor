@@ -7,7 +7,10 @@
  * This eliminates code duplication between scope-selector.js and page-selector.js
  * where identical cookie management methods were previously defined.
  */
-define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logger) {
+define([
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function(Logger, Constants) {
     'use strict';
 
     var log = Logger.for('utils/browser/cookie-manager');
@@ -15,10 +18,7 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logge
     /**
      * Cookie names used by Magento
      */
-    var COOKIE_NAMES = {
-        STORE: 'store',
-        THEME_PREVIEW: 'preview_theme'
-    };
+    var COOKIE_NAMES = Constants.COOKIES;
     
     /**
      * Default cookie options

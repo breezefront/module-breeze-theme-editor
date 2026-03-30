@@ -9,7 +9,10 @@
  * - scope-selector.js (_updateUrlStoreParam)
  * - toolbar.js (_buildUrlWithParams)
  */
-define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logger) {
+define([
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function(Logger, Constants) {
     'use strict';
     
     var log = Logger.for('utils/browser/url-builder');
@@ -38,12 +41,12 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logge
                 
                 // Add store parameter
                 if (params.storeCode) {
-                    urlObj.searchParams.set('___store', params.storeCode);
+                    urlObj.searchParams.set(Constants.URL_PARAMS.STORE, params.storeCode);
                 }
                 
                 // Add theme parameter
                 if (params.themeId) {
-                    urlObj.searchParams.set('preview_theme', params.themeId);
+                    urlObj.searchParams.set(Constants.URL_PARAMS.THEME, params.themeId);
                 }
                 
                 // Add jstest parameter (for debugging)
@@ -75,7 +78,7 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logge
             
             try {
                 var urlObj = new URL(url, baseUrl || window.location.origin);
-                urlObj.searchParams.set('___store', storeCode);
+                urlObj.searchParams.set(Constants.URL_PARAMS.STORE, storeCode);
                 return urlObj.toString();
             } catch (e) {
                 log.error('Failed to update store param: ' + url + ' ' + e);
@@ -100,7 +103,7 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logge
             
             try {
                 var urlObj = new URL(url, baseUrl || window.location.origin);
-                urlObj.searchParams.set('preview_theme', themeId);
+                urlObj.searchParams.set(Constants.URL_PARAMS.THEME, themeId);
                 return urlObj.toString();
             } catch (e) {
                 log.error('Failed to update theme param: ' + url + ' ' + e);
@@ -123,8 +126,8 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logge
             try {
                 var urlObj = new URL(url, baseUrl || window.location.origin);
                 return {
-                    hasStore: urlObj.searchParams.has('___store'),
-                    hasTheme: urlObj.searchParams.has('preview_theme')
+                    hasStore: urlObj.searchParams.has(Constants.URL_PARAMS.STORE),
+                    hasTheme: urlObj.searchParams.has(Constants.URL_PARAMS.THEME)
                 };
             } catch (e) {
                 log.error('Failed to parse URL: ' + url + ' ' + e);
@@ -147,8 +150,8 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logge
             try {
                 var urlObj = new URL(url, baseUrl || window.location.origin);
                 return {
-                    storeCode: urlObj.searchParams.get('___store'),
-                    themeId: urlObj.searchParams.get('preview_theme')
+                    storeCode: urlObj.searchParams.get(Constants.URL_PARAMS.STORE),
+                    themeId: urlObj.searchParams.get(Constants.URL_PARAMS.THEME)
                 };
             } catch (e) {
                 log.error('Failed to get navigation params: ' + url + ' ' + e);
@@ -224,8 +227,8 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function(Logge
             
             try {
                 var urlObj = new URL(url, baseUrl || window.location.origin);
-                urlObj.searchParams.delete('___store');
-                urlObj.searchParams.delete('preview_theme');
+                urlObj.searchParams.delete(Constants.URL_PARAMS.STORE);
+                urlObj.searchParams.delete(Constants.URL_PARAMS.THEME);
                 return urlObj.toString();
             } catch (e) {
                 log.error('Failed to remove navigation params: ' + url + ' ' + e);

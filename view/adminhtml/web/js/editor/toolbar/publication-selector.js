@@ -137,7 +137,7 @@ define([
             var self = this;
 
             // Toggle dropdown
-            this.element.on('click', '.toolbar-select', function (e) {
+            this.element.on('click', Constants.SELECTORS.TOOLBAR_SELECT, function (e) {
                 e.preventDefault();
                 self._toggleDropdown();
             });
@@ -313,10 +313,10 @@ define([
          * Toggle dropdown visibility
          */
         _toggleDropdown: function () {
-            var $dropdown = this.element.find('.toolbar-dropdown');
+            var $dropdown = this.element.find(Constants.SELECTORS.TOOLBAR_DROPDOWN);
             var isVisible = $dropdown.is(':visible');
 
-            $('.toolbar-dropdown').not($dropdown).hide();
+            $(Constants.SELECTORS.TOOLBAR_DROPDOWN).not($dropdown).hide();
             $dropdown.toggle();
 
             log.info(isVisible ? 'Closing dropdown' : 'Opening dropdown');

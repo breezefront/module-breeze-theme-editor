@@ -12,8 +12,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder, StorageHelper, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder, StorageHelper, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/page-selector');
@@ -24,9 +25,8 @@ define([
             currentPageId: null,
             storeCode: '',
             jstest: false,
-            iframeSelector: '#bte-iframe',
+            iframeSelector: Constants.SELECTORS.IFRAME,
             themeId: null
-        },
 
         /**
          * Current URL parameters (store, jstest)
@@ -118,7 +118,7 @@ define([
             var self = this;
 
             // Toggle dropdown
-            this.element.on('click', '.toolbar-select', function(e) {
+            this.element.on('click', Constants.SELECTORS.TOOLBAR_SELECT, function(e) {
                 e.preventDefault();
                 self._toggleDropdown();
             });
@@ -143,13 +143,13 @@ define([
          * @private
          */
         _toggleDropdown: function() {
-            var $dropdown = this.element.find('.toolbar-dropdown');
-            var $button = this.element.find('.toolbar-select');
+            var $dropdown = this.element.find(Constants.SELECTORS.TOOLBAR_DROPDOWN);
+            var $button = this.element.find(Constants.SELECTORS.TOOLBAR_SELECT);
             var isVisible = $dropdown.is(':visible');
             
             // Close all other dropdowns first
-            $('.toolbar-dropdown').not($dropdown).hide();
-            $('.toolbar-select').not($button).removeClass('active');
+            $(Constants.SELECTORS.TOOLBAR_DROPDOWN).not($dropdown).hide();
+            $(Constants.SELECTORS.TOOLBAR_SELECT).not($button).removeClass('active');
             
             // Toggle this dropdown
             $dropdown.toggle();
@@ -163,8 +163,8 @@ define([
          * @private
          */
         _closeDropdown: function() {
-            this.element.find('.toolbar-dropdown').hide();
-            this.element.find('.toolbar-select').removeClass('active');
+            this.element.find(Constants.SELECTORS.TOOLBAR_DROPDOWN).hide();
+            this.element.find(Constants.SELECTORS.TOOLBAR_SELECT).removeClass('active');
         },
 
         /**
@@ -227,7 +227,7 @@ define([
             this._closeDropdown();
 
             // Trigger event
-            $(this.element).trigger('pageChanged', [pageId, pageData]);
+            $(this.element).trigger(Constants.EVENTS.PAGE_CHANGED, [pageId, pageData]);
             
             // Save page ID to localStorage
             StorageHelper.setCurrentPageId(pageId);

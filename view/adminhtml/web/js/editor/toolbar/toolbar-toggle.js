@@ -11,8 +11,9 @@ define([
     'text!Swissup_BreezeThemeEditor/template/editor/toolbar-toggle.html',
     'text!Swissup_BreezeThemeEditor/template/editor/compact-toggle-button.html',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper'
-], function ($, mageTemplate, widget, toggleTemplate, compactTemplate, Logger, StorageHelper) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function ($, mageTemplate, widget, toggleTemplate, compactTemplate, Logger, StorageHelper, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/toolbar-toggle');
@@ -100,8 +101,8 @@ define([
             document.documentElement.style.setProperty('--breeze-toolbar-height', '0px');
             
             // Close all dropdowns
-            $('.toolbar-dropdown').hide();
-            $('.toolbar-select').removeClass('active');
+            $(Constants.SELECTORS.TOOLBAR_DROPDOWN).hide();
+            $(Constants.SELECTORS.TOOLBAR_SELECT).removeClass('active');
             
             // Show compact button with animation
             this.$compactButton.fadeIn(200);

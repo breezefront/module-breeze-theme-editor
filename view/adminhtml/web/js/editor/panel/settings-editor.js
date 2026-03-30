@@ -83,7 +83,7 @@ define([
                     .replace('%2', this.themeName);
             }
 
-            this.$navigation = $('#toolbar-navigation');
+            this.$navigation = $(Constants.SELECTORS.NAVIGATION);
 
             if (this.themeId) {
                 StorageHelper.init(this.scopeId, this.themeId);

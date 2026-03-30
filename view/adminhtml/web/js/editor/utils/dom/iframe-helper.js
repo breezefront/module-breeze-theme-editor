@@ -15,8 +15,9 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, StorageHelper, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function ($, StorageHelper, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('utils/dom/iframe-helper');
@@ -29,10 +30,10 @@ define([
          * @returns {Document|null}
          */
         getDocument: function() {
-            var $iframe = $('#bte-iframe');
+            var $iframe = $(Constants.SELECTORS.IFRAME);
             
             if (!$iframe.length) {
-                log.warn('⚠️ Iframe Helper: #bte-iframe not found in DOM');
+                log.warn('⚠️ Iframe Helper: ' + Constants.SELECTORS.IFRAME + ' not found in DOM');
                 return null;
             }
             
@@ -59,10 +60,10 @@ define([
          * @returns {Window|null}
          */
         getWindow: function() {
-            var $iframe = $('#bte-iframe');
+            var $iframe = $(Constants.SELECTORS.IFRAME);
             
             if (!$iframe.length) {
-                log.warn('⚠️ Iframe Helper: #bte-iframe not found in DOM');
+                log.warn('⚠️ Iframe Helper: ' + Constants.SELECTORS.IFRAME + ' not found in DOM');
                 return null;
             }
             
@@ -80,7 +81,7 @@ define([
          * @returns {HTMLIFrameElement|null}
          */
         getIframe: function() {
-            var $iframe = $('#bte-iframe');
+            var $iframe = $(Constants.SELECTORS.IFRAME);
             return $iframe.length ? $iframe[0] : null;
         },
 

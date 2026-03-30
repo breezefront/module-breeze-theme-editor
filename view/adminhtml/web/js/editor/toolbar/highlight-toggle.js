@@ -9,8 +9,9 @@ define([
     'mage/template',
     'jquery-ui-modules/widget',
     'text!Swissup_BreezeThemeEditor/template/editor/highlight-toggle.html',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, mageTemplate, widget, highlightTemplate, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function ($, mageTemplate, widget, highlightTemplate, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/highlight-toggle');
@@ -18,7 +19,7 @@ define([
     $.widget('breeze.breezeHighlightToggle', {
         options: {
             enabled: false,
-            iframeSelector: '#bte-iframe'
+            iframeSelector: Constants.SELECTORS.IFRAME
         },
 
         /**
@@ -72,7 +73,7 @@ define([
             // $(this.options.iframeSelector).contents().find('body').toggleClass('bte-highlight-mode', this.options.enabled);
             
             // Trigger event for other components
-            $(this.element).trigger('highlightToggled', [this.options.enabled]);
+            $(this.element).trigger(Constants.EVENTS.HIGHLIGHT_TOGGLED, [this.options.enabled]);
         }
     });
 

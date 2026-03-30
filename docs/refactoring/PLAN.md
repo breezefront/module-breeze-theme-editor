@@ -189,7 +189,7 @@
 - **Файл:** `view/adminhtml/web/js/editor/constants.js`
 - **Проблема:** Весь модуль (PUBLICATION_STATUS, SELECTORS, EVENT_NAMES) імпортується тільки в тест-файлах. Production-код порівнює рядки `'DRAFT'`/`'PUBLISHED'` напряму та хардкодить `'#bte-iframe'`. Константи є, але не застосовуються.
 - **Пріоритет:** 🟠 High (або виправити використання, або видалити)
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — всі хардкодовані рядки замінено на Constants у 17 production-файлах; додано `SELECTORS.IFRAME_ID`
 
 ### 2.20 `palette-manager.js` — deprecated методи-обгортки
 - **Файл:** `view/adminhtml/web/js/editor/panel/palette-manager.js`

@@ -10,8 +10,9 @@ define([
     'jquery-ui-modules/widget',
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/editor/device-switcher.html',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, widget, mageTemplate, deviceSwitcherTemplate, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function ($, widget, mageTemplate, deviceSwitcherTemplate, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/device-switcher');
@@ -19,9 +20,9 @@ define([
     $.widget('swissup.breezeDeviceSwitcher', {
         options: {
             activeClass: 'active',
-            devices: ['desktop', 'tablet', 'mobile'],
-            activeDevice: 'desktop',
-            iframeSelector: '#bte-iframe',
+            devices: [Constants.DEVICES.DESKTOP, Constants.DEVICES.TABLET, Constants.DEVICES.MOBILE],
+            activeDevice: Constants.DEVICES.DESKTOP,
+            iframeSelector: Constants.SELECTORS.IFRAME,
             deviceConfig: {
                 desktop: {
                     icon: require.toUrl('Swissup_BreezeThemeEditor/images/Desktop.svg'),
@@ -132,7 +133,7 @@ define([
             this._applyDevice(device);
 
             // Trigger event for other components
-            this.element.trigger('deviceChanged', [device]);
+            this.element.trigger(Constants.EVENTS.DEVICE_CHANGED, [device]);
             
             log.info('📱 Device switched to:', device);
         },

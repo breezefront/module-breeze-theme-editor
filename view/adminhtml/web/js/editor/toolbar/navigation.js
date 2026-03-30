@@ -14,8 +14,9 @@ define([
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/editor/navigation.html',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry'
-], function ($, widget, mageTemplate, navigationTemplate, Logger, iconRegistry) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function ($, widget, mageTemplate, navigationTemplate, Logger, iconRegistry, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/navigation');
@@ -85,7 +86,7 @@ define([
             }
 
             // Toggle: Якщо вже активний → деактивувати
-            if ($item.hasClass('active')) {
+            if ($item.hasClass(Constants.CSS_CLASSES.ACTIVE)) {
                 log.info('Toggling off active navigation: ' + itemId);
                 this.deactivate(itemId);
                 return;
@@ -117,14 +118,14 @@ define([
             }
 
             // Деактивувати всі таби
-            this.$items.removeClass('active');
+            this.$items.removeClass(Constants.CSS_CLASSES.ACTIVE);
             this.options.items.forEach(function(i) {
                 i.active = false;
             });
 
             // Активувати вибраний таб
             var $activeItem = this.$items.filter('[data-id="' + itemId + '"]');
-            $activeItem.addClass('active');
+            $activeItem.addClass(Constants.CSS_CLASSES.ACTIVE);
             item.active = true;
 
             log.info('Navigation activated: ' + itemId);
@@ -162,7 +163,7 @@ define([
 
             // Видалити active клас
             var $item = this.$items.filter('[data-id="' + itemId + '"]');
-            $item.removeClass('active');
+            $item.removeClass(Constants.CSS_CLASSES.ACTIVE);
             item.active = false;
 
             log.info('Navigation deactivated: ' + itemId);
@@ -213,7 +214,7 @@ define([
                 
                 // Step 3: Add active class to trigger transform animation (slide in from LEFT)
                 setTimeout(function() {
-                    $panel.addClass('active');
+                    $panel.addClass(Constants.CSS_CLASSES.ACTIVE);
                 }, 10);
                 
                 log.info('Panel shown: ' + panelId);
@@ -254,16 +255,16 @@ define([
                 var self = this;
                 
                 // Step 1: Remove active class to trigger transform animation (slide out to LEFT)
-                $panel.removeClass('active');
+                $panel.removeClass(Constants.CSS_CLASSES.ACTIVE);
                 log.info('Panel hidden: ' + panelId);
 
                 // Step 2: Wait for animation to complete (300ms), then hide panel (display: none)
                 setTimeout(function() {
                     $panel.hide();
-                }, 300); // Match CSS transition duration
+                }, Constants.TIMEOUTS.DEBOUNCE); // Match CSS transition duration
 
                 // Видалити клас з body (якщо немає інших активних панелей)
-                if ($(this.options.panelSelector).find('.bte-panel.active').length === 0) {
+                if ($(this.options.panelSelector).find('.bte-panel.' + Constants.CSS_CLASSES.ACTIVE).length === 0) {
                     $('body').removeClass('bte-panel-active');
                 }
 
@@ -283,7 +284,7 @@ define([
             }
 
             var $panelContainer = $(this.options.panelSelector);
-            $panelContainer.children().removeClass('active').hide();
+            $panelContainer.children().removeClass(Constants.CSS_CLASSES.ACTIVE).hide();
 
             // Видалити клас з body
             $('body').removeClass('bte-panel-active');

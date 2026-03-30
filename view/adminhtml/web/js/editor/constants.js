@@ -14,6 +14,7 @@ define([], function() {
         SELECTORS: {
             // Main toolbar elements
             IFRAME: '#bte-iframe',
+            IFRAME_ID: 'bte-iframe',
             TOOLBAR: '#breeze-theme-editor-toolbar',
             PANELS: '#bte-panels-container',
             

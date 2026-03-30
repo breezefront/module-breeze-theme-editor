@@ -9,9 +9,9 @@
 | | Count |
 |---|---|
 | Total issues | 30 |
-| Fixed / Closed | 25 |
-| Pending | 5 |
-| Bugs | 22 (19 closed, 3 open) |
+| Fixed / Closed | 26 |
+| Pending | 4 |
+| Bugs | 22 (20 closed, 2 open) |
 | Tasks | 8 (7 done, 2 pending) |
 
 ---
@@ -35,7 +35,7 @@
 | [018](018-f5-color-preview-dot-not-updated.md) | Color preview dot not updated after F5 in DRAFT mode | `6b186d9` | **Closed** |
 | [019](019-f5-save-counter-shows-zero.md) | "Save (0)" and disabled Reset button after F5 in DRAFT mode | `6dab435` | **Closed** |
 | [020](020-font-picker-default-cssvar-not-reactive-to-palette-change.md) | `font_picker` з `default: "--role"` не реагує на зміни палітри шрифтів | `021add7` `05af7e1` | **Fixed** |
-| [021](021-implicit-palette-link-inconsistent-preview.md) | Implicitly palette-linked color fields have inconsistent CSS preview | `ab67685` | **Partially Fixed** |
+| [021](021-implicit-palette-link-inconsistent-preview.md) | Implicitly palette-linked color fields have inconsistent CSS preview | `ab67685` | **Closed** |
 | [022](022-draft-css-stale-after-discard-draft.md) | Draft CSS у iframe залишається застарілим після discardDraft | `b95dc02` | **Closed** |
 | [023](023-depends-field-visibility-not-implemented.md) | `dependsOn` field visibility — JS runtime not implemented | — | **Open** |
 | [024](024-font-palette-role-default-ignored-when-field-default-differs.md) | `font_palettes.fonts[].default` ignored — field shows `settings[].default` instead | `86e9b30` | **Fixed** |

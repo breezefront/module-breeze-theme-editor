@@ -50,7 +50,7 @@ define([
                 scope:   ctx.scope,
                 scopeId: ctx.scopeId,
                 themeId: ctx.themeId,
-                iframeId: 'bte-iframe'
+                iframeId: Constants.SELECTORS.IFRAME_ID
             });
         },
 

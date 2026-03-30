@@ -123,7 +123,7 @@ define([
             $dropdown.find('.item-check').remove();
             
             // Add active state and checkmark to current item
-            if (data.status === 'PUBLICATION') {
+            if (data.status === PUBLICATION_STATUS.PUBLICATION) {
                 // Find and mark publication item
                 var $pubItem = $dropdown.find('[data-publication-id="' + data.currentPublicationId + '"]');
                 $pubItem.addClass('active')
@@ -209,7 +209,7 @@ define([
          * @returns {string}
          */
         _getDisplayLabel: function(data) {
-            if (data.status === 'PUBLICATION' && data.currentPublicationTitle) {
+            if (data.status === PUBLICATION_STATUS.PUBLICATION && data.currentPublicationTitle) {
                 return data.currentPublicationTitle;
             }
             return $t(data.status);

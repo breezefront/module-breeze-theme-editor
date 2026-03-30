@@ -400,7 +400,7 @@ define([
                             return pub.id !== publicationId;
                         });
 
-                        if (ctx.options.currentStatus === 'PUBLICATION' &&
+                        if (ctx.options.currentStatus === PUBLICATION_STATUS.PUBLICATION &&
                                 ctx.options.currentPublicationId === publicationId) {
                             ctx._fallbackToDraft();
                         } else {

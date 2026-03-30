@@ -11,8 +11,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/cookie-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/scope-selector');
@@ -22,8 +23,8 @@ define([
             websites: [],            // Hierarchical store data from StoreDataProvider::getHierarchicalStores()
             currentScope: 'default',  // Active scope: 'default' | 'websites' | 'stores'
             currentScopeId: null,    // Active scope ID
-            iframeSelector: '#bte-iframe',
-            pageSelectorElement: '#bte-page-selector',
+            iframeSelector: Constants.SELECTORS.IFRAME,
+            pageSelectorElement: Constants.SELECTORS.PAGE_SELECTOR,
             themeId: null
         },
 
@@ -180,7 +181,7 @@ define([
             var self = this;
 
             // Toggle dropdown
-            this.element.on('click', '.toolbar-select', function (e) {
+            this.element.on('click', Constants.SELECTORS.TOOLBAR_SELECT, function (e) {
                 e.preventDefault();
                 self._toggleDropdown();
             });
@@ -241,13 +242,13 @@ define([
          * @private
          */
         _toggleDropdown: function () {
-            var $dropdown = this.element.find('.toolbar-dropdown');
-            var $button   = this.element.find('.toolbar-select');
+            var $dropdown = this.element.find(Constants.SELECTORS.TOOLBAR_DROPDOWN);
+            var $button   = this.element.find(Constants.SELECTORS.TOOLBAR_SELECT);
             var isVisible = $dropdown.is(':visible');
 
             // Close all other dropdowns first
-            $('.toolbar-dropdown').not($dropdown).hide();
-            $('.toolbar-select').not($button).removeClass('active');
+            $(Constants.SELECTORS.TOOLBAR_DROPDOWN).not($dropdown).hide();
+            $(Constants.SELECTORS.TOOLBAR_SELECT).not($button).removeClass('active');
 
             $dropdown.toggle();
             $button.toggleClass('active', !isVisible);
@@ -260,8 +261,8 @@ define([
          * @private
          */
         _closeDropdown: function () {
-            this.element.find('.toolbar-dropdown').hide();
-            this.element.find('.toolbar-select').removeClass('active');
+            this.element.find(Constants.SELECTORS.TOOLBAR_DROPDOWN).hide();
+            this.element.find(Constants.SELECTORS.TOOLBAR_SELECT).removeClass('active');
         },
 
         /**
@@ -404,7 +405,7 @@ define([
             });
 
             // Trigger event for toolbar.js and settings-editor.js
-            $(this.element).trigger('scopeChanged', [scope, scopeId, storeCode]);
+            $(this.element).trigger(Constants.EVENTS.SCOPE_CHANGED, [scope, scopeId, storeCode]);
             log.info('Scope switched to: ' + name);
         },
 

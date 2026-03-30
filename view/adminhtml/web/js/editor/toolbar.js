@@ -66,7 +66,7 @@ define([
             log.warn('Check backend logs for errors');
         }
         
-        var iframeSelector = config.iframeSelector || '#bte-iframe';
+        var iframeSelector = config.iframeSelector || Constants.SELECTORS.IFRAME;
         var $iframe = $(iframeSelector);
         if ($iframe.length && config.storeCode && config.themeId) {
             _setupLinkInterceptor($iframe, config);
@@ -76,11 +76,11 @@ define([
         // Render toolbar HTML from template
         var template = mageTemplate(toolbarTemplate);
         var html = template({ data: config });
-        $('#breeze-theme-editor-toolbar').html(html);
+        $(Constants.SELECTORS.TOOLBAR).html(html);
         
         // Initialize admin link widget
-        if ($('#bte-admin-link').length) {
-            $('#bte-admin-link').breezeAdminLink({
+        if ($(Constants.SELECTORS.ADMIN_LINK).length) {
+            $(Constants.SELECTORS.ADMIN_LINK).breezeAdminLink({
                 adminUrl: config.adminUrl || '/admin',
                 username: config.username || 'Admin'
             });
@@ -88,10 +88,10 @@ define([
         }
         
         // Initialize navigation widget
-        if ($('#toolbar-navigation').length && config.components && config.components.navigation) {
-            $('#toolbar-navigation').breezeNavigation({
+        if ($(Constants.SELECTORS.NAVIGATION).length && config.components && config.components.navigation) {
+            $(Constants.SELECTORS.NAVIGATION).breezeNavigation({
                 items: config.components.navigation.items || [],
-                panelSelector: '#bte-panels-container',
+                panelSelector: Constants.SELECTORS.PANELS,
                 panelWidgets: Object.assign({
                      'theme-editor': {
                         selector: '#theme-editor-panel',
@@ -112,7 +112,7 @@ define([
                 var _activatePanel = config.activatePanel;
                 // Defer until after the current call-stack so the widget is fully ready
                 setTimeout(function () {
-                    var $nav = $('#toolbar-navigation');
+                    var $nav = $(Constants.SELECTORS.NAVIGATION);
                     var navWidget = $nav.data('swissupBreezeNavigation');
                     if (navWidget && typeof navWidget.setActive === 'function') {
                         log.info('Auto-activating panel: ' + _activatePanel);
@@ -135,18 +135,18 @@ define([
         };
         
         // Initialize device switcher widget
-        if ($('#bte-device-switcher').length && config.components && config.components.deviceSwitcher) {
-            $('#bte-device-switcher').breezeDeviceSwitcher({
-                devices: config.components.deviceSwitcher.devices || ['desktop', 'tablet', 'mobile'],
-                activeDevice: config.components.deviceSwitcher.default || 'desktop',
-                iframeSelector: config.iframeSelector || '#bte-iframe'
+        if ($(Constants.SELECTORS.DEVICE_SWITCHER).length && config.components && config.components.deviceSwitcher) {
+            $(Constants.SELECTORS.DEVICE_SWITCHER).breezeDeviceSwitcher({
+                devices: config.components.deviceSwitcher.devices || [Constants.DEVICES.DESKTOP, Constants.DEVICES.TABLET, Constants.DEVICES.MOBILE],
+                activeDevice: config.components.deviceSwitcher.default || Constants.DEVICES.DESKTOP,
+                iframeSelector: config.iframeSelector || Constants.SELECTORS.IFRAME
             });
             log.info('Device switcher initialized');
         }
         
         // Initialize publication selector widget
-        if ($('#bte-publication-selector').length) {
-            $('#bte-publication-selector').breezePublicationSelector({
+        if ($(Constants.SELECTORS.PUBLICATION_SELECTOR).length) {
+            $(Constants.SELECTORS.PUBLICATION_SELECTOR).breezePublicationSelector({
                 publications:        config.publications || [],
                 currentStatus:       config.currentStatus || PUBLICATION_STATUS.DRAFT,
                 changesCount:        config.changesCount || 0,
@@ -159,42 +159,42 @@ define([
         }
         
         // Initialize scope selector widget
-        if ($('#bte-scope-selector').length) {
-            $('#bte-scope-selector').breezeScopeSelector({
+        if ($(Constants.SELECTORS.SCOPE_SELECTOR).length) {
+            $(Constants.SELECTORS.SCOPE_SELECTOR).breezeScopeSelector({
                 websites:       config.storeHierarchy || [],
                 currentScope:   config.scope || 'stores',
                 currentScopeId: config.scopeId || null,
-                iframeSelector: config.iframeSelector || '#bte-iframe',
+                iframeSelector: config.iframeSelector || Constants.SELECTORS.IFRAME,
                 themeId:        config.themeId || null
             });
             log.info('Scope selector initialized');
         }
         
         // Initialize page selector widget
-        if ($('#bte-page-selector').length) {
-            $('#bte-page-selector').breezePageSelector({
+        if ($(Constants.SELECTORS.PAGE_SELECTOR).length) {
+            $(Constants.SELECTORS.PAGE_SELECTOR).breezePageSelector({
                 pages: config.pageTypes || [],
                 currentPageId: config.currentPageId || null,
                 storeCode: config.storeCode || '',
                 jstest: config.jstest || false,
-                iframeSelector: config.iframeSelector || '#bte-iframe',
+                iframeSelector: config.iframeSelector || Constants.SELECTORS.IFRAME,
                 themeId: config.themeId || null
             });
             log.info('Page selector initialized');
         }
         
         // Initialize highlight toggle widget
-        if ($('#bte-highlight-toggle').length) {
-            $('#bte-highlight-toggle').breezeHighlightToggle({
+        if ($(Constants.SELECTORS.HIGHLIGHT_TOGGLE).length) {
+            $(Constants.SELECTORS.HIGHLIGHT_TOGGLE).breezeHighlightToggle({
                 enabled: false,
-                iframeSelector: config.iframeSelector || '#bte-iframe'
+                iframeSelector: config.iframeSelector || Constants.SELECTORS.IFRAME
             });
             log.info('Highlight toggle initialized');
         }
         
         // Initialize toolbar toggle widget
-        if ($('#bte-toolbar-toggle').length) {
-            $('#bte-toolbar-toggle').breezeToolbarToggle({
+        if ($(Constants.SELECTORS.TOOLBAR_TOGGLE).length) {
+            $(Constants.SELECTORS.TOOLBAR_TOGGLE).breezeToolbarToggle({
                 collapsed: false,
                 toolbarSelector: '.bte-toolbar'
             });
@@ -202,9 +202,9 @@ define([
         }
         
         // Initialize exit button widget
-        if ($('#bte-exit').length) {
+        if ($(Constants.SELECTORS.EXIT_BUTTON).length) {
             var exitUrl = config.exitUrl || window.location.href.split('?')[0];
-            $('#bte-exit').breezeExitButton({
+            $(Constants.SELECTORS.EXIT_BUTTON).breezeExitButton({
                 exitUrl: exitUrl,
                 label: 'Exit'
             });
@@ -313,7 +313,7 @@ define([
          * @param {Object} config - Toolbar configuration
          */
         function _initializePreview(config) {
-            var iframeSelector = config.iframeSelector || '#bte-iframe';
+            var iframeSelector = config.iframeSelector || Constants.SELECTORS.IFRAME;
             var $iframe = $(iframeSelector);
             
             if (!$iframe.length) {
@@ -347,7 +347,7 @@ define([
          * @param {Object} config - Toolbar configuration
          */
         function _bindGlobalEvents(config) {
-            var iframeSelector = config.iframeSelector || '#bte-iframe';
+            var iframeSelector = config.iframeSelector || Constants.SELECTORS.IFRAME;
             var iframeId = iframeSelector.replace('#', '');
             
             // Refresh CSS after status change (handled by publication-selector + css-manager)
@@ -360,7 +360,7 @@ define([
             // When scope changes: update global config so that lazy-initialized
             // panel widgets (settings-editor) pick up the new scope/scopeId on first open.
             // Also update the navigation panelWidgets config so re-init uses new scope.
-            $(document).on('scopeChanged', function(e, scope, scopeId, storeCode) {
+            $(document).on(Constants.EVENTS.SCOPE_CHANGED, function(e, scope, scopeId, storeCode) {
                 log.info('Toolbar: scope changed to ' + scope + ':' + scopeId + ' (' + storeCode + ')');
 
                 // Update global config read by settings-editor _create()
@@ -371,7 +371,7 @@ define([
                 }
 
                 // Update navigation panelWidget config (used on first lazy init)
-                var $nav = $('#toolbar-navigation');
+                var $nav = $(Constants.SELECTORS.NAVIGATION);
                 var navWidget = $nav.data('swissupBreezeNavigation');
                 if (navWidget && navWidget.options.panelWidgets['theme-editor']) {
                     navWidget.options.panelWidgets['theme-editor'].config.scope   = scope;
@@ -390,7 +390,7 @@ define([
                 log.debug('Page Type: ' + data.pageType);
                 
                 // Update page-selector widget
-                var $pageSelector = $('#bte-page-selector');
+                var $pageSelector = $(Constants.SELECTORS.PAGE_SELECTOR);
                 if ($pageSelector.length && $pageSelector.data('swissupBreezePageSelector')) {
                     var success = $pageSelector.breezePageSelector('updateCurrentPageType', data.pageType);
                     

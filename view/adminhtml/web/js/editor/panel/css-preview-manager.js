@@ -6,8 +6,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager',
-    'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager'
-], function ($, ColorUtils, IframeHelper, CssManager, StorageHelper, Logger, FontPaletteManager, PaletteManager) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function ($, ColorUtils, IframeHelper, CssManager, StorageHelper, Logger, FontPaletteManager, PaletteManager, Constants) {
     'use strict';
 
     var log = Logger.for('panel/css-preview-manager');
@@ -75,7 +76,7 @@ define([
                     resolved = true;
 
                     // Clean up both listeners — no longer needed for this init cycle.
-                    $('#bte-iframe').off('load.bte-preview-init');
+                    $(Constants.SELECTORS.IFRAME).off('load.bte-preview-init');
                     $(document).off('bte:cssManagerReady.bte-preview-init');
 
                     self._createStyleElement();
@@ -103,7 +104,7 @@ define([
 
                 // SECONDARY: iframe 'load' handles navigations that happen after the initial
                 // boot cycle (user browses to a different page inside the iframe preview).
-                $('#bte-iframe').on('load.bte-preview-init', tryInit);
+                $(Constants.SELECTORS.IFRAME).on('load.bte-preview-init', tryInit);
 
                 // Synchronous attempt: covers the edge case where css-manager already
                 // fired bte:cssManagerReady before this Promise was constructed.
@@ -611,7 +612,7 @@ define([
             
             // Get panel element if not provided
             if (!$panelElement || !$panelElement.length) {
-                $panelElement = $('#bte-panels-container');
+                $panelElement = $(Constants.SELECTORS.PANELS);
             }
             
             if (!$panelElement.length) {

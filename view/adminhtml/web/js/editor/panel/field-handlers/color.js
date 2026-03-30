@@ -6,8 +6,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/color',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/color-utils',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/partials/palette-grid.html',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, _, BaseHandler, PaletteManager, ColorRenderer, ColorUtils, paletteGridTemplate, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
+], function ($, _, BaseHandler, PaletteManager, ColorRenderer, ColorUtils, paletteGridTemplate, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('panel/field-handlers/color');
@@ -454,7 +455,7 @@ define([
             });
             
             // Detach iframe click listener
-            var $iframe = $('#bte-iframe');
+            var $iframe = $(Constants.SELECTORS.IFRAME);
             if ($iframe.length) {
                 var iframe = $iframe[0];
                 var iframeDoc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
@@ -477,7 +478,7 @@ define([
          */
         _attachIframeClickListener: function() {
             var self = this;
-            var $iframe = $('#bte-iframe');
+            var $iframe = $(Constants.SELECTORS.IFRAME);
             
             if (!$iframe.length) {
                 return; // No iframe present

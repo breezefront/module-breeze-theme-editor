@@ -1,10 +1,11 @@
 # Issue 021: Implicitly palette-linked color fields have inconsistent CSS preview
 
 **Severity:** Medium  
-**Area:** `theme-frontend-breeze-evolution/etc/theme_editor/settings.json`,
-`view/adminhtml/web/js/editor/panel/css-preview-manager.js`  
+**Area:** `view/adminhtml/web/js/editor/panel/css-preview-manager.js`,
+`view/adminhtml/web/js/editor/panel/css-manager.js`,
+`view/adminhtml/web/js/editor/css-manager.js`  
 **Type:** Bug  
-**Status:** Partially Fixed (race condition resolved; `settings.json` change pending)
+**Status:** Closed (race condition resolved; Layer 1 is theme responsibility — out of module scope)
 
 ---
 
@@ -63,7 +64,7 @@ Additionally, `panel/css-manager.js` cached `$livePreviewStyle` pointing at
 `#bte-live-preview` during `init()` — before `css-preview-manager` had created
 that element — leaving a stale empty jQuery reference.  This cache was removed.
 
-### Layer 1 — the implicit CSS link
+### Layer 1 — the implicit CSS link (theme responsibility — out of module scope)
 
 The evolution theme defines the variable chain in Less:
 
@@ -96,6 +97,18 @@ However, `settings.json` declares the field as:
 The editor only sees the hex default and never sets `data-palette-ref` on the
 input, so `_updateFieldsReferencingPalette()` in `css-preview-manager.js`
 never finds or updates this field.
+
+**This is by design** — the module's palette-linkage system is driven entirely
+by the `"default"` value in `settings.json`.  When a theme developer writes
+`"default": "--color-brand-secondary"`, the module correctly sets
+`data-palette-ref` and subscribes the field to palette updates.  When they
+write a hardcoded hex, the module treats the field as a standalone color.
+
+The module does not perform automatic hex→palette reverse-lookup because:
+- The same hex value may match multiple palette variables (ambiguous, e.g. `#ffffff`, `#000000`).
+- Silently creating implicit links would cause unexpected UI behaviour when the
+  palette is rearranged or new colors are added.
+- The theme developer is the authoritative source of this semantic relationship.
 
 ### Layer 2 — why the cascade is inconsistent
 
@@ -171,16 +184,27 @@ Fields whose hex is **ambiguous** (shared by multiple palette vars):
 
 ## Fix
 
+### Layer 0 — module fix (applied ✅)
+
+**Files changed in `module-breeze-theme-editor`** — see *Affected Files* below.
+
+The race condition that caused `$styleElement` to stay `null` is fully resolved.
+All palette changes now reliably reach the iframe in every session state.
+
+### Layer 1 — theme fix (theme developer's responsibility)
+
 **File:** `theme-frontend-breeze-evolution/etc/theme_editor/settings.json`
 
-Change the `"default"` for unambiguous fields from a hardcoded hex to the
-corresponding palette CSS variable reference:
+To make the palette cascade work for fields whose CSS variable is implicitly
+linked to a palette color via the compiled Less/CSS, the theme developer must
+declare the relationship explicitly in `settings.json` by using a palette
+variable reference as the `"default"`:
 
 ```json
-// BEFORE
+// BEFORE (hex — no palette link)
 { "id": "header-panel-bg", "type": "color", "default": "#000d3a", ... }
 
-// AFTER
+// AFTER (palette ref — module handles the rest automatically)
 { "id": "header-panel-bg", "type": "color", "default": "--color-brand-secondary", ... }
 ```
 
@@ -199,7 +223,7 @@ With this one-line change per field:
    correctly counts the field as a consumer of `--color-brand-secondary`.
 
 No changes are required in the module PHP or JS — both already handle
-`--color-*` reference defaults.
+`--color-*` reference defaults correctly.
 
 ### Caveat — existing saved values
 
@@ -223,11 +247,11 @@ needed to restore the palette link for such installations.
 | `view/adminhtml/web/js/editor/panel/css-preview-manager.js` | Rewrote `init()`: dual-trigger (`bte:cssManagerReady` primary + `#bte-iframe load` fallback), `resolved` guard |
 | `view/adminhtml/web/js/test/tests/css-preview-manager-init-race-test.js` | New: 6 tests covering all race-condition scenarios |
 
-### Evolution theme (`theme-frontend-breeze-evolution`) — Layer 1 fix ⏳
+### Evolution theme (`theme-frontend-breeze-evolution`) — Layer 1 (theme responsibility)
 
 | File | Repo | Change |
 |------|------|--------|
-| `etc/theme_editor/settings.json` | `theme-frontend-breeze-evolution` | Change `"default"` for unambiguous fields to palette var ref |
+| `etc/theme_editor/settings.json` | `theme-frontend-breeze-evolution` | Change `"default"` for unambiguous fields to palette var ref — **theme developer's responsibility, not this module** |
 
 ---
 
@@ -238,12 +262,7 @@ needed to restore the palette link for such installations.
       `resolved` guard; stale `$livePreviewStyle` cache removed from
       `panel/css-manager.js`
 - [x] **Tests written** — `css-preview-manager-init-race-test.js` (6 tests)
-- [ ] Change `header-panel-bg` default: `#000d3a` → `--color-brand-secondary`
-      (`theme-frontend-breeze-evolution/etc/theme_editor/settings.json`)
-- [ ] Evaluate remaining unambiguous fields (`base-color`, `link-color`,
-      `input-border-color`) — confirm the Less variable chain before changing
-- [ ] Decide policy for ambiguous fields (`#ffffff`, `#000000`)
-- [ ] Verify manually: change `--color-brand-secondary` → header panel updates
-      in all three session states (fresh / after edit / after F5)
-- [ ] Check dirty-state: field with palette-ref default is not marked as
-      "changed" on fresh open
+- [x] **Layer 1 scoped out** — the module does not perform automatic hex→palette
+      reverse-lookup; theme developer must declare `"default": "--color-xxx"` in
+      `settings.json` to enable palette reactivity for a field; ambiguous hex
+      values (`#ffffff`, `#000000`) cannot be auto-resolved without false positives
