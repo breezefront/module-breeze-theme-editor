@@ -70,7 +70,7 @@
 
 **Наступні кроки:**
 - ✅ Крок 6 — Medium/Low cleanup (4/4): пп. 4.3, 6.4, 4.4, 2.13
-- [ ] п. 4.21 — Font palette role fields авто-генерація ([детально](refactoring/font-palette-role-fields-autogeneration.md))
+- ✅ п. 4.21 — Font palette role fields авто-генерація ([детально](refactoring/font-palette-role-fields-autogeneration.md))
 
 ---
 
@@ -120,7 +120,7 @@
 | **Multi-scope support** | ✅ Завершено | [features/multi-scope.md](features/multi-scope.md) |
 | **Pickr + opacity** | ✅ Завершено | [features/palette-pickr-opacity.md](features/palette-pickr-opacity.md) |
 | **PHP Settings Reader** | 📋 Планується | [features/php-settings-reader.md](features/php-settings-reader.md) |
-| **Font Palette Role Fields Auto-gen** | 📋 Планується | [refactoring/font-palette-role-fields-autogeneration.md](refactoring/font-palette-role-fields-autogeneration.md) |
+| **Font Palette Role Fields Auto-gen** | ✅ Завершено | [refactoring/font-palette-role-fields-autogeneration.md](refactoring/font-palette-role-fields-autogeneration.md) |
 
 ---
 

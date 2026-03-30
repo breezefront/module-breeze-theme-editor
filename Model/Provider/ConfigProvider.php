@@ -286,6 +286,16 @@ class ConfigProvider
                 }
             }
         }
+        // Add defaults for font palette roles from font_palettes.fonts[]
+        // so that _font_palette.<fieldCode> keys resolve correctly.
+        foreach ($config['font_palettes'] ?? [] as $palette) {
+            foreach ($palette['fonts'] ?? [] as $role) {
+                $fieldCode = ltrim($role['property'] ?? '', '-');
+                if ($fieldCode !== '' && isset($role['default'])) {
+                    $defaults['_font_palette.' . $fieldCode] = $role['default'];
+                }
+            }
+        }
         return $defaults;
     }
 

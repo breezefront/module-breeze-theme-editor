@@ -459,7 +459,7 @@
 - **Проблема:** Кожна роль шрифту (`primary`, `secondary`, `utility`) описується двічі: в `font_palettes.fonts[]` (UI-декларація) і в `sections[].settings[]` (storage binding). Однакові `property` і `default` значення дублюються. Ризик розсинхронізації. Плутанина для авторів тем — поля в `sections` фільтруються і не відображаються в акордеоні, але мусять там бути для збереження.
 - **Пропозиція:** Авто-генерація field-записів з `font_palettes.fonts[]` у `AbstractConfigResolver` у синтетичну секцію `_font_palette` (аналог `_palette` для кольорів). Видалити role entries з `sections` в `settings.json`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 - **Документація:** [`refactoring/font-palette-role-fields-autogeneration.md`](font-palette-role-fields-autogeneration.md)
 
 ---

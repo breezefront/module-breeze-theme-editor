@@ -27,6 +27,7 @@ define([
             jstest: false,
             iframeSelector: Constants.SELECTORS.IFRAME,
             themeId: null
+        },
 
         /**
          * Current URL parameters (store, jstest)

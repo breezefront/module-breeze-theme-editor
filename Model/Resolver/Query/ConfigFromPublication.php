@@ -89,6 +89,13 @@ class ConfigFromPublication extends AbstractConfigResolver
             $themeId
         );
 
+        // 6b. Auto-generate _font_palette section from font_palettes.fonts[]
+        $fontPalettes = $this->formatFontPalettes($themeId);
+        $fontSection  = $this->mergeFontPaletteRolesAsFields($fontPalettes, $valuesMap);
+        if ($fontSection !== null) {
+            $sections[] = $fontSection;
+        }
+
         // 7. Metadata
         $metadata = $this->configProvider->getMetadata($themeId);
         $metadata['themeVersion'] = $config['version'] ?? null;

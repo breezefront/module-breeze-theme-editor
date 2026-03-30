@@ -2,7 +2,7 @@
 
 **Дата:** 2026-03-24  
 **Пріоритет:** 🟡 Medium  
-**Статус:** `[ ] TODO`  
+**Статус:** `[x] DONE`  
 **Категорія:** Code duplication / Missing abstraction  
 **PLAN.md:** п. 4.21
 
