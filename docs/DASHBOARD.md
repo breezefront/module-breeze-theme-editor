@@ -1,6 +1,6 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 2026-03-26  
+**Останнє оновлення:** 2026-03-30  
 **Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 29/108
 
 ---
@@ -69,7 +69,7 @@
 - ✅ Крок 6 — Medium/Low cleanup (4/4): пп. 4.3, 6.4, 4.4, 2.13
 
 **Наступні кроки:**
-- [ ] Крок 6 — Low priority cleanup (пп. 5.13–5.16 та ін.)
+- ✅ Крок 6 — Medium/Low cleanup (4/4): пп. 4.3, 6.4, 4.4, 2.13
 - [ ] п. 4.21 — Font palette role fields авто-генерація ([детально](refactoring/font-palette-role-fields-autogeneration.md))
 
 ---
@@ -106,7 +106,7 @@
 | Тип | Кількість | Статус |
 |-----|-----------|--------|
 | PHP Unit tests | 50 файлів | ✅ Проходять (710 tests, 2 skipped) |
-| JS Admin tests | 30 spec-файлів | ✅ Проходять (656 tests) |
+| JS Admin tests | 31 spec-файлів | ✅ Проходять (660 tests) |
 | GraphQL integration tests | наявні | ✅ |
 
 ---
@@ -130,10 +130,10 @@
 
 | Категорія | Всього | Закрито | Відкрито |
 |-----------|--------|---------|---------|
-| Bugs | 21 | 17 ✅ | 4 (021, 023, css-var pending) |
+| Bugs | 22 | 19 ✅ | 3 (021 partial, 023, css-var pending) |
 | Tasks | 8 | 7 ✅ | 1 (css-var) |
 | Без номера | 1 | — | 1 (test-cov) |
-| **Всього** | **29** | **23 ✅** | **6** |
+| **Всього** | **30** | **25 ✅** | **5** |
 
 ---
 
@@ -155,9 +155,9 @@ Refactoring:
 🟢 Low          █░░░░░░░░░░░   5/48
 📋 Total        ██░░░░░░░░░░  29/108 (27%)
 
-Issues:        23/29 closed (6 open/deferred)
+Issues:        25/30 closed (5 open/deferred)
 PHP Tests:     50 файлів / 710 tests ✅
-JS Tests:      30 spec-файлів / 656 tests ✅
+JS Tests:      31 spec-файлів / 660 tests ✅
 ```
 
 ---
