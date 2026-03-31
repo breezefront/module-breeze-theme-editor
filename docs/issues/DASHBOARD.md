@@ -1,6 +1,6 @@
 # Issues Dashboard
 
-**Updated:** 2026-03-30
+**Updated:** 2026-03-31
 
 ---
 
@@ -9,9 +9,9 @@
 | | Count |
 |---|---|
 | Total issues | 30 |
-| Fixed / Closed | 26 |
-| Pending | 4 |
-| Bugs | 22 (20 closed, 2 open) |
+| Fixed / Closed | 27 |
+| Pending | 3 |
+| Bugs | 22 (21 closed, 1 open) |
 | Tasks | 8 (7 done, 2 pending) |
 
 ---
@@ -37,7 +37,7 @@
 | [020](020-font-picker-default-cssvar-not-reactive-to-palette-change.md) | `font_picker` з `default: "--role"` не реагує на зміни палітри шрифтів | `021add7` `05af7e1` | **Fixed** |
 | [021](021-implicit-palette-link-inconsistent-preview.md) | Implicitly palette-linked color fields have inconsistent CSS preview | `ab67685` | **Closed** |
 | [022](022-draft-css-stale-after-discard-draft.md) | Draft CSS у iframe залишається застарілим після discardDraft | `b95dc02` | **Closed** |
-| [023](023-depends-field-visibility-not-implemented.md) | `dependsOn` field visibility — JS runtime not implemented | — | **Open** |
+| [023](023-depends-field-visibility-not-implemented.md) | `dependsOn` field visibility — JS runtime not implemented | pending commit | **Fixed** |
 | [024](024-font-palette-role-default-ignored-when-field-default-differs.md) | `font_palettes.fonts[].default` ignored — field shows `settings[].default` instead | `86e9b30` | **Fixed** |
 | [025](025-font-palette-preview-not-updated-on-first-click.md) | Preview iframe не оновлюється при першому кліку на шрифт у Font Palette | `0ffbe27` | **Fixed** |
 | [026](026-consumer-font-preview-not-updated-on-role-change.md) | Consumer font fields не оновлюють CSS preview при зміні ролі у Font Palette | `436a969` | **Fixed** |

@@ -7,7 +7,7 @@
 `view/adminhtml/web/js/editor/panel/panel-state.js`,
 `view/adminhtml/web/css/source/_theme-editor-fields.less`  
 **Type:** Feature / Missing implementation  
-**Status:** Open
+**Status:** Fixed
 
 ---
 
@@ -313,14 +313,14 @@ FieldHandlers.init(this.element, function (fieldData) {
 
 ## Tracking
 
-- [ ] `base.js` — додати `dependsOn` в `prepareData()`
-- [ ] `field-renderer.js` — `data-depends-*` атрибути на wrapper
-- [ ] Створити `depends-evaluator.js` з `applyInitialVisibility()` та `updateVisibility()`
-- [ ] `settings-editor.js` — викликати `applyInitialVisibility` після рендеру
-- [ ] `settings-editor.js` — викликати `updateVisibility` в change callback
-- [ ] `panel-state.js` — фільтрувати приховані поля при Save
-- [ ] LESS — `.bte-field-depends-hidden { display: none; }`
-- [ ] Написати spec-тест для `depends-evaluator.js`
+- [x] `base.js` — додати `dependsOn` в `prepareData()`
+- [x] `field-renderer.js` — `data-depends-*` атрибути на wrapper
+- [x] Створити `depends-evaluator.js` з `applyInitialVisibility()` та `updateVisibility()`
+- [x] `settings-editor.js` — викликати `applyInitialVisibility` після рендеру
+- [x] `settings-editor.js` — викликати `updateVisibility` в change callback
+- [x] `panel-state.js` — фільтрувати приховані поля при Save
+- [x] LESS — `.bte-field-depends-hidden { display: none; }`
+- [x] Написати spec-тест для `depends-evaluator.js`
 - [ ] Перевірити вручну: поле з `EQUALS` — показується/ховається при зміні контролюючого
 - [ ] Перевірити: поле з `NOT_EQUALS` — інвертована логіка
 - [ ] Перевірити: контролююче поле в іншій секції — залежність працює cross-section

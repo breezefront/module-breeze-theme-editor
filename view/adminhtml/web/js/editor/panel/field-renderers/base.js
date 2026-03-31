@@ -104,7 +104,8 @@ define([
                 badgesHtml: this.renderBadges(isDirty, isModified, sectionCode, fieldCode),
                 validation: field.validation || {},
                 params: field.params || {},
-                fieldId: 'field-' + fieldCode
+                fieldId: 'field-' + fieldCode,
+                dependsOn: field.dependsOn || null
             };
         },
 

@@ -31,7 +31,8 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-draft',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/panel/depends-evaluator'
 ], function (
     $,
     widget,
@@ -52,6 +53,8 @@ define([
     StorageHelper,
     Logger,
     Constants
+    // depends-evaluator is a side-effect import: it self-registers DOM event
+    // listeners for 'bte:sections-rendered' and 'bte:field-changed'.
 ) {
     'use strict';
 
@@ -165,6 +168,11 @@ define([
                 log.debug('Field change: ' + fieldData.sectionCode + '.' + fieldData.fieldCode);
                 self._updateChangesCount();
                 FieldHandlers.updateBadges(self.element, fieldData.sectionCode, fieldData.fieldCode);
+                $(document).trigger('bte:field-changed', [{
+                    element:   self.element,
+                    fieldCode: fieldData.fieldCode,
+                    value:     fieldData.value
+                }]);
             });
 
             PanelState.addListener(function (eventType, data) {
@@ -250,6 +258,7 @@ define([
 
             ConfigLoader.load(this, function (config) {
                 SectionRenderer.render(self, config.sections);
+                $(document).trigger('bte:sections-rendered', [{ element: self.element }]);
                 self._hideLoader();
             }, function (error) {
                 self._showError(error);
@@ -262,6 +271,7 @@ define([
 
             ConfigLoader.loadFromPublication(this, publicationId, function (config) {
                 SectionRenderer.render(self, config.sections);
+                $(document).trigger('bte:sections-rendered', [{ element: self.element }]);
                 self._hideLoader();
                 self._showToast('success', 'Loaded publication: ' + (config.metadata.lastPublished || 'Unknown date'));
             }, function (error) {
@@ -273,6 +283,7 @@ define([
 
         _renderSections: function (sections) {
             SectionRenderer.render(this, sections);
+            $(document).trigger('bte:sections-rendered', [{ element: this.element }]);
         },
 
         _updateFieldsEditability: function () {

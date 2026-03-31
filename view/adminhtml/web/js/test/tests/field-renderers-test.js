@@ -112,6 +112,19 @@ define([
             this.assertEquals(data.isModified, true);
         },
 
+        'BaseRenderer: dependsOn is passed through in prepareData': function () {
+            var dep = { fieldCode: 'font_source', value: 'custom', operator: 'EQUALS' };
+            var data = BaseRenderer.prepareData(field({ dependsOn: dep }), 'sec');
+            this.assertEquals(data.dependsOn.fieldCode, 'font_source', 'fieldCode');
+            this.assertEquals(data.dependsOn.value,     'custom',      'value');
+            this.assertEquals(data.dependsOn.operator,  'EQUALS',      'operator');
+        },
+
+        'BaseRenderer: dependsOn is null when not provided': function () {
+            var data = BaseRenderer.prepareData(field(), 'sec');
+            this.assertNull(data.dependsOn, 'dependsOn must be null when field has no dependsOn');
+        },
+
         // ─────────────────────────────────────────────────────────────────────
         // RangeRenderer
         // ─────────────────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 define([
+    'jquery',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function(Logger) {
+], function($, Logger) {
     'use strict';
 
     var log = Logger.for('panel/panel-state');
@@ -31,6 +32,13 @@ define([
         listeners: [],
 
         /**
+         * Fields hidden by dependsOn conditions.
+         * Plain object used as a set: { fieldCode: true }
+         * Reset on each init() to stay in sync with current DOM state.
+         */
+        hiddenFields: {},
+
+        /**
          * Initialize state with config
          *
          * @param {Object} config - Theme config from GraphQL
@@ -39,6 +47,7 @@ define([
             this.config = config;
             this.values = {};
             this.fieldsMap = {};
+            this.hiddenFields = {};
             // Don't reset listeners - they should persist across config reloads
 
             // Build values map and fields lookup
@@ -155,6 +164,13 @@ define([
                 var field = this.fieldsMap[key];
 
                 if (state.isDirty) {
+                    // Skip fields currently hidden by a dependsOn condition —
+                    // their values must not be persisted while invisible.
+                    if (this.hiddenFields[field.fieldCode]) {
+                        log.debug('getDirtyChanges: skipping hidden field ' + field.fieldCode);
+                        return;
+                    }
+
                     changes.push({
                         sectionCode: field.sectionCode,
                         fieldCode: field.fieldCode,
@@ -394,6 +410,7 @@ define([
             this.config = null;
             this.values = {};
             this.fieldsMap = {};
+            this.hiddenFields = {};
             this.listeners = [];
             log.info('State cleared');
         },
@@ -439,6 +456,27 @@ define([
             });
         }
     };
+
+    // ── DOM-event wiring ────────────────────────────────────────────────────
+    // Registered once at module load so hiddenFields stays in sync with
+    // DependsEvaluator without creating a circular AMD dependency.
+
+    $(document).on('bte:field-visibility-changed', function (e, data) {
+        if (!data || !data.fieldCode) {
+            return;
+        }
+
+        if (data.hidden) {
+            PanelState.hiddenFields[data.fieldCode] = true;
+        } else {
+            delete PanelState.hiddenFields[data.fieldCode];
+        }
+
+        log.debug(
+            'hiddenFields updated: "' + data.fieldCode + '" → ' +
+            (data.hidden ? 'hidden' : 'visible')
+        );
+    });
 
     return PanelState;
 });

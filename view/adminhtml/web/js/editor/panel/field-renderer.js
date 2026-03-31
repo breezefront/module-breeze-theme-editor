@@ -140,7 +140,13 @@ define([
                     return;
                 }
 
-                html += '<div class="bte-field-wrapper" data-field="' + (field.code || 'unknown') + '">';
+                var wrapperAttrs = 'class="bte-field-wrapper" data-field="' + (field.code || 'unknown') + '"';
+                if (field.dependsOn) {
+                    wrapperAttrs += ' data-depends-on-field="' + field.dependsOn.fieldCode + '"';
+                    wrapperAttrs += ' data-depends-on-value="' + field.dependsOn.value + '"';
+                    wrapperAttrs += ' data-depends-on-op="' + (field.dependsOn.operator || 'EQUALS') + '"';
+                }
+                html += '<div ' + wrapperAttrs + '>';
                 html += self.render(field, section.code);
                 html += '</div>';
             });
