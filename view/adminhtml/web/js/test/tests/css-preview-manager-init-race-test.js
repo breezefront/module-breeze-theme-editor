@@ -132,101 +132,104 @@ define([
         return $;
     }
 
-    // =========================================================================
-    // Inline copy of the fixed init() logic from css-preview-manager.js
-    // (mirrors production code exactly — keeps test honest)
-    // =========================================================================
+        // Inline copy of the fixed init() logic from css-preview-manager.js
+        // (mirrors production code exactly — keeps test honest)
+        // =========================================================================
 
-    /**
-     * Factory that builds an isolated css-preview-manager init() implementation.
-     *
-     * @param {Object}   opts
-     * @param {Function} opts.$             - jQuery stub
-     * @param {Object}   opts.IframeHelper  - { getDocument() }
-     * @returns {{ init, wasInitialized, styleElementCreated }}
-     */
-    function makeCssPreviewManagerInit(opts) {
-        var $            = opts.$;
-        var IframeHelper = opts.IframeHelper;
+        /**
+         * Factory that builds an isolated css-preview-manager init() implementation.
+         *
+         * @param {Object}   opts
+         * @param {Function} opts.$             - jQuery stub
+         * @param {Object}   opts.IframeHelper  - { getDocument() }
+         * @returns {{ init, wasInitialized, styleElementCreated }}
+         */
+        function makeCssPreviewManagerInit(opts) {
+            var $            = opts.$;
+            var IframeHelper = opts.IframeHelper;
 
-        var iframeDocument   = null;
-        var $styleElement    = null;
-        var initialized      = false;
-        var subscribeCalled  = false;
-        var localStorageCalled = false;
+            var iframeDocument   = null;
+            var $styleElement    = null;
+            var initialized      = false;
+            var subscribeCalled  = false;
+            var localStorageCalled = false;
 
-        function createStyleElement() {
-            $styleElement = { id: 'bte-live-preview' };
-        }
+            function createStyleElement() {
+                $styleElement = { id: 'bte-live-preview' };
+            }
 
-        function loadFromLocalStorage() {
-            localStorageCalled = true;
-        }
+            function loadFromLocalStorage() {
+                localStorageCalled = true;
+            }
 
-        function subscribeToPaletteChanges() {
-            subscribeCalled = true;
-        }
+            function subscribeToPaletteChanges() {
+                subscribeCalled = true;
+            }
 
-        // Inline copy of the fixed init() method
-        function init() {
-            return new Promise(function (resolve) {
-                var resolved = false;
+            // Inline copy of the fixed init() method
+            function init() {
+                return new Promise(function (resolve) {
+                    var resolved = false;
 
-                function tryInit() {
-                    iframeDocument = IframeHelper.getDocument();
+                    function tryInit() {
+                        // Only query IframeHelper when iframeDocument hasn't been
+                        // provided already (e.g. via the bte:cssManagerReady payload).
+                        if (!iframeDocument) {
+                            iframeDocument = IframeHelper.getDocument();
+                        }
 
-                    if (!iframeDocument ||
-                            !$(iframeDocument).find('#bte-theme-css-variables').length) {
-                        return;
+                        if (!iframeDocument ||
+                                !$(iframeDocument).find('#bte-theme-css-variables').length) {
+                            return;
+                        }
+
+                        if (resolved) {
+                            return;
+                        }
+                        resolved = true;
+
+                        $(document).off('bte:cssManagerReady.bte-preview-init');
+                        $('#bte-iframe').off('load.bte-preview-init');
+
+                        createStyleElement();
+                        loadFromLocalStorage();
+                        subscribeToPaletteChanges();
+
+                        initialized = true;
+                        resolve(true);
                     }
 
-                    if (resolved) {
-                        return;
-                    }
-                    resolved = true;
+                    // PRIMARY listener
+                    $(document).on('bte:cssManagerReady.bte-preview-init', function (e, data) {
+                        if (data && data.iframeDocument) {
+                            iframeDocument = data.iframeDocument;
+                        }
+                        tryInit();
+                    });
 
-                    $(document).off('bte:cssManagerReady.bte-preview-init');
-                    $('#bte-iframe').off('load.bte-preview-init');
+                    // SECONDARY listener
+                    $('#bte-iframe').on('load.bte-preview-init', tryInit);
 
-                    createStyleElement();
-                    loadFromLocalStorage();
-                    subscribeToPaletteChanges();
-
-                    initialized = true;
-                    resolve(true);
-                }
-
-                // PRIMARY listener
-                $(document).on('bte:cssManagerReady.bte-preview-init', function (e, data) {
-                    if (data && data.iframeDocument) {
-                        iframeDocument = data.iframeDocument;
-                    }
+                    // Synchronous attempt
                     tryInit();
                 });
+            }
 
-                // SECONDARY listener
-                $('#bte-iframe').on('load.bte-preview-init', tryInit);
-
-                // Synchronous attempt
-                tryInit();
-            });
+            return {
+                init:                init,
+                wasInitialized:      function () { return initialized; },
+                styleElementCreated: function () { return $styleElement !== null; },
+                subscribeCalled:     function () { return subscribeCalled; },
+                localStorageCalled:  function () { return localStorageCalled; },
+                getIframeDocument:   function () { return iframeDocument; }
+            };
         }
-
-        return {
-            init:                init,
-            wasInitialized:      function () { return initialized; },
-            styleElementCreated: function () { return $styleElement !== null; },
-            subscribeCalled:     function () { return subscribeCalled; },
-            localStorageCalled:  function () { return localStorageCalled; },
-            getIframeDocument:   function () { return iframeDocument; }
-        };
-    }
 
     // =========================================================================
     // Tests
     // =========================================================================
 
-    TestFramework.suite('CssPreviewManager Init Race-Condition (Issue 021 fix)', function (t) {
+    return TestFramework.suite('CssPreviewManager Init Race-Condition (Issue 021 fix)', function (t) {
 
         // ------------------------------------------------------------------
         // 1. PRIMARY path: bte:cssManagerReady fires AFTER 'load' was missed

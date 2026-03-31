@@ -102,7 +102,7 @@ define([
     // Tests
     // =========================================================================
 
-    TestFramework.suite('CssPreviewManager Subscribe (Bug C fix)', function (t) {
+    return TestFramework.suite('CssPreviewManager Subscribe (Bug C fix)', function (t) {
 
         // ------------------------------------------------------------------
         // 1. Subscriber registered synchronously
