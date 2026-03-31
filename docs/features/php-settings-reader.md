@@ -2,7 +2,7 @@
 
 **GitHub issue:** #13  
 **Date:** March 20, 2026  
-**Status:** Планується  
+**Status:** ✅ Завершено  
 
 ---
 

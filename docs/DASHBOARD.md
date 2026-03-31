@@ -119,7 +119,7 @@
 | **Font Palette System** | ✅ Завершено | — |
 | **Multi-scope support** | ✅ Завершено | [features/multi-scope.md](features/multi-scope.md) |
 | **Pickr + opacity** | ✅ Завершено | [features/palette-pickr-opacity.md](features/palette-pickr-opacity.md) |
-| **PHP Settings Reader** | 📋 Планується | [features/php-settings-reader.md](features/php-settings-reader.md) |
+| **PHP Settings Reader** | ✅ Завершено | [features/php-settings-reader.md](features/php-settings-reader.md) |
 | **Font Palette Role Fields Auto-gen** | ✅ Завершено | [refactoring/font-palette-role-fields-autogeneration.md](refactoring/font-palette-role-fields-autogeneration.md) |
 
 ---
