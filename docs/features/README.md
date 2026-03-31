@@ -65,7 +65,7 @@
 
 **Що реалізовано:**
 - `View/Helper/BreezeThemeEditor` — helper з `get('section/field')`, `is('section/field', 'value')`
-- Автоматичний inject `$breezeThemeEditor` у всі frontend `.phtml` шаблони через `blockVariables`
+- Автоматичний inject `$breezeThemeEditor` у всі frontend `.phtml` шаблони через `beforeRender` plugin (`Plugin/TemplateEngine/PhpPlugin`) — замість `blockVariables` у `di.xml` (уникає array-replace bug)
 - Lazy loading через `\Proxy` (той самий механізм що і `$secureRenderer`)
 - In-memory кешування per-request, scope + theme inheritance, fallback до `default` з `settings.json`
 - 8 юніт-тестів: 8/8 ✅

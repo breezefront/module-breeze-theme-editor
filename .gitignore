@@ -23,3 +23,6 @@ THEME_DEVELOPER_GUIDE.md
 
 # PHPStan
 phpstan.neon
+
+# Jest / Node
+view/adminhtml/web/js/test/node_modules/

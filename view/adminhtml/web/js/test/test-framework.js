@@ -522,6 +522,103 @@ define([
         }
     }
     
+    /**
+     * Jest dual-mode: реєструємо suite через describe/it якщо Jest доступний
+     */
+    function registerJestSuite(name, tests) {
+        // Адаптер для форми suite(name, function(t) { t.test(...) })
+        var jestAdapter = {
+            test: function(testName, fn) {
+                var jestIt = global.it || global.test;
+                if (fn.length > 0) {
+                    // async тест з done callback
+                    jestIt(testName, function(done) {
+                        var ctx = createTestContext();
+                        fn.call(ctx, done);
+                    });
+                } else {
+                    jestIt(testName, function() {
+                        var ctx = createTestContext();
+                        fn.call(ctx);
+                    });
+                }
+            },
+            // Прокидаємо assertion методи прямо на адаптер для форми t.assertXxx()
+            assert: function() { createTestContext().assert.apply(null, arguments); },
+            assertEquals: function() {
+                var ctx = createTestContext();
+                ctx.assertEquals.apply(ctx, arguments);
+            },
+            assertEqual: function() {
+                var ctx = createTestContext();
+                ctx.assertEqual.apply(ctx, arguments);
+            },
+            assertTrue: function() {
+                var ctx = createTestContext();
+                ctx.assertTrue.apply(ctx, arguments);
+            },
+            assertFalse: function() {
+                var ctx = createTestContext();
+                ctx.assertFalse.apply(ctx, arguments);
+            },
+            assertNull: function() {
+                var ctx = createTestContext();
+                ctx.assertNull.apply(ctx, arguments);
+            },
+            assertNotNull: function() {
+                var ctx = createTestContext();
+                ctx.assertNotNull.apply(ctx, arguments);
+            },
+            assertContains: function() {
+                var ctx = createTestContext();
+                ctx.assertContains.apply(ctx, arguments);
+            },
+            assertStringContains: function() {
+                var ctx = createTestContext();
+                ctx.assertStringContains.apply(ctx, arguments);
+            },
+            fail: function() {
+                var ctx = createTestContext();
+                ctx.fail.apply(ctx, arguments);
+            }
+        };
+
+        var jestDescribe = global.describe;
+
+        jestDescribe(name, function() {
+            if (typeof tests === 'function') {
+                // Форма: suite(name, function(t) { t.test(...) })
+                tests(jestAdapter);
+            } else {
+                // Форма: suite(name, { 'test name': fn })
+                Object.keys(tests).forEach(function(testName) {
+                    var fn = tests[testName];
+                    var jestIt = global.it || global.test;
+
+                    if (fn.length > 0) {
+                        // async — приймає done callback
+                        jestIt(testName, function(done) {
+                            var ctx = createTestContext();
+                            fn.call(ctx, done);
+                        });
+                    } else {
+                        jestIt(testName, function() {
+                            var ctx = createTestContext();
+                            fn.call(ctx);
+                        });
+                    }
+                });
+            }
+        });
+
+        // Повертаємо no-op suite об'єкт (браузерний runner не буде його використовувати)
+        return {
+            name: name,
+            tests: tests,
+            run: function(callback) { if (callback) callback(); }
+        };
+    }
+
     return {
         /**
          * Initialize framework with config
@@ -531,34 +628,76 @@ define([
         },
         
         /**
-         * Create test suite
+         * Create test suite.
+         * Dual-mode: в Jest середовищі реєструє describe/it,
+         * в браузері повертає об'єкт з методом run().
          */
         suite: function(name, tests) {
+            // Jest середовище — describe/it доступні глобально
+            if (typeof describe === 'function' && typeof it === 'function' &&
+                    typeof module !== 'undefined') {
+                return registerJestSuite(name, tests);
+            }
+
+            // Браузерний режим
+            // Підтримує дві форми:
+            //   object style:    suite(name, { 'test name': fn, ... })
+            //   functional style: suite(name, function(t) { t.test('name', fn) })
+            var collectedTests = [];
+
+            if (typeof tests === 'function') {
+                // Збираємо тести через адаптер (та сама логіка, що й у registerJestSuite)
+                var browserAdapter = {
+                    test: function (testName, fn) {
+                        collectedTests.push({ name: testName, fn: fn });
+                    }
+                };
+                // Прокидаємо assertion-методи на адаптер
+                var assertCtx = createTestContext();
+                [
+                    'assert', 'assertEquals', 'assertEqual', 'assertTrue',
+                    'assertFalse', 'assertNull', 'assertNotNull',
+                    'assertContains', 'assertStringContains', 'fail'
+                ].forEach(function (m) {
+                    if (typeof assertCtx[m] === 'function') {
+                        browserAdapter[m] = assertCtx[m].bind(assertCtx);
+                    }
+                });
+                try {
+                    tests(browserAdapter);
+                } catch (e) {
+                    // Якщо реєстрація впала — повертаємо пустий suite
+                }
+            } else {
+                // Object style — collect same way for uniform run() logic
+                Object.keys(tests).forEach(function (testName) {
+                    collectedTests.push({ name: testName, fn: tests[testName] });
+                });
+            }
+
             return {
                 name: name,
                 tests: tests,
-                
+
                 /**
-                 * Run all tests in suite
+                 * Run all tests in suite (both object and functional style)
                  */
-                run: function(callback) {
+                run: function (callback) {
                     currentSuite = this;
-                    var testList = Object.keys(tests);
                     var index = 0;
-                    
+
                     function runNext() {
-                        if (index >= testList.length) {
+                        if (index >= collectedTests.length) {
                             callback();
                             return;
                         }
-                        
-                        var testName = testList[index];
-                        var testFn = tests[testName];
+
+                        var entry = collectedTests[index];
                         index++;
-                        
-                        runTest(name + ': ' + testName, testFn, runNext);
+
+                        runTest(name + ': ' + entry.name, entry.fn, runNext);
                     }
-                    
+
                     runNext();
                 }
             };

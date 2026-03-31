@@ -58,7 +58,11 @@ define([
                 var resolved = false;
 
                 function tryInit() {
-                    iframeDocument = IframeHelper.getDocument();
+                    // Only query IframeHelper when iframeDocument hasn't been
+                    // provided already (e.g. via the bte:cssManagerReady payload).
+                    if (!iframeDocument) {
+                        iframeDocument = IframeHelper.getDocument();
+                    }
 
                     // Wait until the frontend page is loaded.
                     // #bte-theme-css-variables is injected by the Breeze theme in <head>

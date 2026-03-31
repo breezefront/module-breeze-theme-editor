@@ -1,0 +1,15 @@
+{
+  "name": "breeze-theme-editor-js-tests",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29",
+    "jest-environment-jsdom": "^29",
+    "jquery": "^3"
+  },
+  "dependencies": {
+    "underscore": "^1.13.8"
+  }
+}

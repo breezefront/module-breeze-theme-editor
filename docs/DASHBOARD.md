@@ -1,6 +1,6 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 2026-03-30  
+**Останнє оновлення:** 2026-03-31  
 **Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 29/108
 
 ---
@@ -68,9 +68,14 @@
 - ✅ Крок 5 — Missing abstractions + Magic strings (5/5): пп. 6.1, 6.2, 6.3, 5.11, 5.12
 - ✅ Крок 6 — Medium/Low cleanup (4/4): пп. 4.3, 6.4, 4.4, 2.13
 
-**Наступні кроки:**
-- ✅ Крок 6 — Medium/Low cleanup (4/4): пп. 4.3, 6.4, 4.4, 2.13
-- ✅ п. 4.21 — Font palette role fields авто-генерація ([детально](refactoring/font-palette-role-fields-autogeneration.md))
+**Наступні кроки (Крок 7):**
+- [ ] Dead code cleanup (категорія 2): пп. 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 2.10, 2.11, 2.12, 2.14, 2.15, 2.19, 2.20, 2.22, 2.23, 2.24, 2.25, 2.26, 2.27, 2.29, 2.30, 2.31
+- [ ] Code duplication (категорія 4): пп. 4.6, 4.8, 4.9, 4.10, 4.11, 4.12, 4.13, 4.14, 4.15, 4.16, 4.17, 4.18, 4.19, 4.20
+- [ ] Missing abstractions (категорія 6): пп. 6.5, 6.6, 6.7, 6.8
+- [ ] Magic numbers/strings (категорія 5): пп. 5.2, 5.3, 5.4, 5.6, 5.7, 5.8, 5.9, 5.10, 5.13, 5.14, 5.15, 5.16, 5.17
+- [ ] Tight coupling (категорія 7): пп. 7.1–7.9
+- [ ] setTimeout audit (категорія 8): пп. 8.1–8.13
+- [ ] AbstractConfigResolver — God abstract class (п. 3.5)
 
 ---
 
@@ -130,10 +135,10 @@
 
 | Категорія | Всього | Закрито | Відкрито |
 |-----------|--------|---------|---------|
-| Bugs | 22 | 19 ✅ | 3 (021 partial, 023, css-var pending) |
+| Bugs | 22 | 20 ✅ | 2 (023, css-var) |
 | Tasks | 8 | 7 ✅ | 1 (css-var) |
 | Без номера | 1 | — | 1 (test-cov) |
-| **Всього** | **30** | **25 ✅** | **5** |
+| **Всього** | **30** | **26 ✅** | **4** |
 
 ---
 
@@ -155,7 +160,7 @@ Refactoring:
 🟢 Low          █░░░░░░░░░░░   5/48
 📋 Total        ██░░░░░░░░░░  29/108 (27%)
 
-Issues:        25/30 closed (5 open/deferred)
+Issues:        26/30 closed (4 open/deferred)
 PHP Tests:     50 файлів / 710 tests ✅
 JS Tests:      31 spec-файлів / 660 tests ✅
 ```
@@ -170,7 +175,7 @@ docs/
 ├── README.md                         # Індекс
 │
 ├── issues/                           # Issue tracker
-│   ├── DASHBOARD.md                  # ✅ 16/16 closed
+│   ├── DASHBOARD.md                  # ✅ 26/30 closed
 │   └── 001–016 *.md                  # Детальні описи
 │
 ├── features/                         # Реалізовані фічі

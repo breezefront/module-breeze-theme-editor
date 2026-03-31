@@ -10,11 +10,12 @@
  * - Navigation widget handles panel hiding and state management
  */
 define([
-    'jquery'
-], function ($) {
+    'jquery',
+    'Swissup_BreezeThemeEditor/js/test/test-framework'
+], function ($, TestFramework) {
     'use strict';
 
-    return {
+    return TestFramework.suite('Panel Close Integration', {
         /**
          * Test 1: Navigation widget should be accessible from settings editor
          */
@@ -237,5 +238,5 @@ define([
                 return false;
             }
         }
-    };
+    });
 });

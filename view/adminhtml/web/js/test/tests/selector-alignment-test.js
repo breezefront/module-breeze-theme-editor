@@ -20,7 +20,8 @@
 
 define([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/test/test-framework'
+    'Swissup_BreezeThemeEditor/js/test/test-framework',
+    'Swissup_BreezeThemeEditor/js/editor/toolbar/navigation'
 ], function($, TestFramework) {
     'use strict';
 

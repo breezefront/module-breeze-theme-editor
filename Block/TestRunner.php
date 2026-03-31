@@ -235,6 +235,12 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/css-preview-manager-subscribe-test',
             // Scope-Switch CSS Race Condition Tests (18 tests) — stale-response guard + scopeCtx forwarding + reinit
             'Swissup_BreezeThemeEditor/js/test/tests/scope-switch-css-race-test',
+            // CssPreviewManager Init Race-Condition Tests (6 tests) — Issue 021 fix: bte:cssManagerReady event
+            'Swissup_BreezeThemeEditor/js/test/tests/css-preview-manager-init-race-test',
+            // PanelState hiddenFields & getDirtyChanges filtering Tests (7 tests)
+            'Swissup_BreezeThemeEditor/js/test/tests/panel-state-test',
+            // DependsEvaluator Tests (12 tests) — _evaluate/applyInitialVisibility/updateVisibility
+            'Swissup_BreezeThemeEditor/js/test/tests/depends-evaluator-test',
         ];
     }
 }

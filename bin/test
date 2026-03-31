@@ -15,6 +15,13 @@ run_unit() {
         "cd vendor/swissup/module-breeze-theme-editor && ../../bin/phpunit -c phpunit.xml.dist")
 }
 
+run_jest() {
+    local JS_TEST_DIR="${SCRIPT_DIR}/../view/adminhtml/web/js/test"
+    (cd "$JS_TEST_DIR" && \
+        [ -d node_modules ] || npm install --silent && \
+        npx jest "$@")
+}
+
 run_graphql() {
     (cd "$MAGENTO_ROOT" && bin/clinotty bash -c \
         "cd dev/tests/api-functional && php ../../../vendor/bin/phpunit \
@@ -24,8 +31,9 @@ run_graphql() {
 }
 
 case "${1:-all}" in
+    jest)    run_jest "${@:2}" ;;
     unit)    run_unit ;;
     graphql) fix_hosts; run_graphql ;;
     all)     fix_hosts; run_unit; run_graphql ;;
-    *)       echo "Usage: $(basename "$0") [unit|graphql|all]"; exit 1 ;;
+    *)       echo "Usage: $(basename "$0") [jest|unit|graphql|all]"; exit 1 ;;
 esac

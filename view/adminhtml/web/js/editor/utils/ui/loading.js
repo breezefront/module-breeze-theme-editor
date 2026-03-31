@@ -30,8 +30,9 @@ define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], func
             // Add loading class for CSS styling
             $el.addClass('bte-loading');
             
-            // Disable all interactive elements
-            $el.find('button, input, select, textarea, a').prop('disabled', true);
+            // Disable all interactive elements and mark them for later re-enabling
+            var $interactive = $el.find('button, input, select, textarea, a');
+            $interactive.attr('data-bte-disabled', '1').prop('disabled', true);
             
             // Add spinner if not already present
             if (!$el.find('.bte-spinner').length) {
@@ -57,8 +58,9 @@ define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], func
             // Remove loading class
             $el.removeClass('bte-loading');
             
-            // Re-enable interactive elements
-            $el.find('button, input, select, textarea, a').prop('disabled', false);
+            // Re-enable interactive elements that were disabled by show()
+            var $interactive = $el.find('[data-bte-disabled]');
+            $interactive.removeAttr('data-bte-disabled').prop('disabled', false);
             
             // Remove spinner
             $el.find('.bte-spinner').remove();
