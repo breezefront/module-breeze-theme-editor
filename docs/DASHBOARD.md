@@ -1,6 +1,6 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 2026-03-31  
+**Останнє оновлення:** 2026-04-01  
 **Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 29/108
 
 ---
@@ -9,8 +9,9 @@
 
 ### ✅ Проект практично завершений
 
-Всі 16 issues закриті. Всі фази міграції завершені (1–5 в процесі release prep).  
-Єдиний відкритий пункт — **Manual GraphQL E2E тестування** у Phase 5.
+27/30 issues закрито. Всі фази міграції завершені (1–5 в процесі release prep).  
+Відкрито: `css-var` shim cleanup (Medium), `error-log` stub (Low), `highlight` (Deferred).  
+Єдиний блокуючий пункт — **Manual GraphQL E2E тестування** у Phase 5.
 
 ---
 
@@ -135,10 +136,10 @@
 
 | Категорія | Всього | Закрито | Відкрито |
 |-----------|--------|---------|---------|
-| Bugs | 22 | 20 ✅ | 2 (023, css-var) |
+| Bugs | 22 | 21 ✅ | 1 (css-var) |
 | Tasks | 8 | 7 ✅ | 1 (css-var) |
 | Без номера | 1 | — | 1 (test-cov) |
-| **Всього** | **30** | **26 ✅** | **4** |
+| **Всього** | **30** | **27 ✅** | **3** |
 
 ---
 
@@ -160,7 +161,7 @@ Refactoring:
 🟢 Low          █░░░░░░░░░░░   5/48
 📋 Total        ██░░░░░░░░░░  29/108 (27%)
 
-Issues:        26/30 closed (4 open/deferred)
+Issues:        27/30 closed (3 open/deferred)
 PHP Tests:     50 файлів / 710 tests ✅
 JS Tests:      31 spec-файлів / 660 tests ✅
 ```
@@ -175,7 +176,7 @@ docs/
 ├── README.md                         # Індекс
 │
 ├── issues/                           # Issue tracker
-│   ├── DASHBOARD.md                  # ✅ 26/30 closed
+│   ├── DASHBOARD.md                  # ✅ 27/30 closed
 │   └── 001–016 *.md                  # Детальні описи
 │
 ├── features/                         # Реалізовані фічі
