@@ -1,6 +1,6 @@
 # Issues Dashboard
 
-**Updated:** 2026-03-31
+**Updated:** 2026-04-01
 
 ---
 
@@ -12,7 +12,7 @@
 | Fixed / Closed | 27 |
 | Pending | 3 |
 | Bugs | 22 (21 closed, 1 open) |
-| Tasks | 8 (7 done, 2 pending) |
+| Tasks | 8 (7 done, 1 open + 1 deferred) |
 
 ---
 
