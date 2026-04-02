@@ -43,8 +43,8 @@ class GetCss extends AbstractQueryResolver
         Field $field,
         $context,
         ResolveInfo $info,
-        array $value = null,
-        array $args = null
+        ?array $value = null,
+        ?array $args = null
     ) {
         // 1. Get scope and scopeId
         $scope = $this->scopeFactory->fromInput($args['scope'] ?? []);

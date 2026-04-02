@@ -29,8 +29,8 @@ class Compare extends AbstractQueryResolver
         Field $field,
         $context,
         ResolveInfo $info,
-        array $value = null,
-        array $args = null
+        ?array $value = null,
+        ?array $args = null
     ) {
         // Отримати userId з токена
         $userId = $this->userResolver->getCurrentUserId($context);

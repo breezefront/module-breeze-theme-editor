@@ -29,8 +29,8 @@ class Presets extends AbstractQueryResolver
         Field $field,
         $context,
         ResolveInfo $info,
-        array $value = null,
-        array $args = null
+        ?array $value = null,
+        ?array $args = null
     ) {
         $scope = $this->scopeFactory->fromInput($args['scope'] ?? []);
         $themeId = $this->themeResolver->getThemeIdByScope($scope);

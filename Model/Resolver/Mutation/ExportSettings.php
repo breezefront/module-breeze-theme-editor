@@ -43,8 +43,8 @@ class ExportSettings extends AbstractMutationResolver
         Field $field,
         $context,
         ResolveInfo $info,
-        array $value = null,
-        array $args = null
+        ?array $value = null,
+        ?array $args = null
     ) {
         // Auth
         $userId = $this->userResolver->getCurrentUserId($context);

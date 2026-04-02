@@ -50,8 +50,8 @@ class Config extends AbstractConfigResolver
         Field $field,
         $context,
         ResolveInfo $info,
-        array $value = null,
-        array $args = null
+        ?array $value = null,
+        ?array $args = null
     ) {
         // 1. Отримати userId
         $userId = $this->userResolver->getCurrentUserId($context);

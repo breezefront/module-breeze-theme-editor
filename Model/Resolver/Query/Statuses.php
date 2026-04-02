@@ -25,8 +25,8 @@ class Statuses extends AbstractQueryResolver
         Field $field,
         $context,
         ResolveInfo $info,
-        array $value = null,
-        array $args = null
+        ?array $value = null,
+        ?array $args = null
     ) {
         $criteria = $this->searchCriteriaBuilder->create();
         $searchResults = $this->statusRepository->getList($criteria);

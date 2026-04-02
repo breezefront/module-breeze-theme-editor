@@ -39,8 +39,8 @@ class DiscardPublished extends AbstractMutationResolver
         Field $field,
         $context,
         ResolveInfo $info,
-        array $value = null,
-        array $args = null
+        ?array $value = null,
+        ?array $args = null
     ) {
         $scope = $this->scopeFactory->fromInput($args['scope'] ?? []);
         $themeId = isset($args['themeId'])

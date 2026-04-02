@@ -45,8 +45,8 @@ class ConfigFromPublication extends AbstractConfigResolver
         Field $field,
         $context,
         ResolveInfo $info,
-        array $value = null,
-        array $args = null
+        ?array $value = null,
+        ?array $args = null
     ) {
         // 1. Validate publicationId
         if (!isset($args['publicationId']) || !$args['publicationId']) {

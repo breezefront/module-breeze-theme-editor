@@ -14,7 +14,7 @@ class StatusProvider
     private const CACHE_TAG = 'breeze_theme_editor';
     private const CACHE_LIFETIME = 86400; // 24 години
 
-    private ? array $statusMap = null;
+    private ?array $statusMap = null;
 
     public function __construct(
         private ResourceConnection $resource,
