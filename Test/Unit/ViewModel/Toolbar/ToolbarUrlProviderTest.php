@@ -12,23 +12,25 @@ use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarUrlProvider;
 /**
  * Unit tests for ToolbarUrlProvider
  *
- * Covers: getAdminUrl(), getGraphqlEndpoint()
+ * Covers: getAdminUrl(), getAdminBasePath(), getGraphqlEndpoint()
  */
 class ToolbarUrlProviderTest extends TestCase
 {
     private UrlInterface $urlBuilder;
     private StoreManagerInterface $storeManager;
+    private FrontNameResolver $frontNameResolver;
     private ToolbarUrlProvider $provider;
 
     protected function setUp(): void
     {
-        $this->urlBuilder   = $this->createMock(UrlInterface::class);
-        $this->storeManager = $this->createMock(StoreManagerInterface::class);
+        $this->urlBuilder        = $this->createMock(UrlInterface::class);
+        $this->storeManager      = $this->createMock(StoreManagerInterface::class);
+        $this->frontNameResolver = $this->createMock(FrontNameResolver::class);
 
         $this->provider = new ToolbarUrlProvider(
             $this->urlBuilder,
             $this->storeManager,
-            $this->createMock(FrontNameResolver::class)
+            $this->frontNameResolver
         );
     }
 
@@ -64,13 +66,41 @@ class ToolbarUrlProviderTest extends TestCase
     }
 
     // =========================================================================
+    // getAdminBasePath()
+    // =========================================================================
+
+    /** @test */
+    public function testGetAdminBasePathReturnsStandardAdminPath(): void
+    {
+        $this->frontNameResolver->method('getFrontName')->willReturn('admin');
+
+        $this->assertSame('/admin/', $this->provider->getAdminBasePath());
+    }
+
+    /** @test */
+    public function testGetAdminBasePathReturnsCustomFrontNameWithSlashes(): void
+    {
+        $this->frontNameResolver->method('getFrontName')->willReturn('tryit2531');
+
+        $this->assertSame('/tryit2531/', $this->provider->getAdminBasePath());
+    }
+
+    /** @test */
+    public function testGetAdminBasePathFallsBackToAdminOnException(): void
+    {
+        $this->frontNameResolver->method('getFrontName')
+            ->willThrowException(new \Exception('Config not found'));
+
+        $this->assertSame('/admin/', $this->provider->getAdminBasePath());
+    }
+
+    // =========================================================================
     // getGraphqlEndpoint()
     // =========================================================================
 
     /** @test */
     public function testGetGraphqlEndpointAppendsGraphqlToBaseUrl(): void
     {
-        // Store model: getBaseUrl() is a real method → onlyMethods()
         $storeMock = $this->getMockBuilder(\Magento\Store\Model\Store::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getBaseUrl'])
