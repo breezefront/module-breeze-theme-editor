@@ -18,11 +18,15 @@ $toolbarConfig = $viewModel ? $viewModel->getToolbarConfig() : [];
 $requestedUrl = $block->getRequest()->getParam('url', '/');
 
 // Build iframe URL (theme is determined automatically from store config)
-$iframeUrl = $block->getUrl('breeze_editor/editor/iframe', [
-    'store' => $storeId,
-    'url' => $requestedUrl,
-    'jstest' => $jstest
-]);
+// The 'url' path param is encoded with Magento's uenc scheme
+// (strtr(base64_encode(), '+/=', '-_~')) so that characters like '/' survive
+// through Cloudflare and any other proxy that decodes %2F before reaching origin.
+$encodedUrl   = strtr(base64_encode($requestedUrl), '+/=', '-_~');
+$iframeParams = ['store' => $storeId, 'url' => $encodedUrl];
+if ($jstest) {
+    $iframeParams['jstest'] = 1;
+}
+$iframeUrl = $block->getUrl('breeze_editor/editor/iframe', $iframeParams);
 ?>
 
 <!-- Minimal HTML structure - components will render their own UI -->
@@ -67,8 +71,9 @@ $iframeUrl = $block->getUrl('breeze_editor/editor/iframe', [
 <script>
 require([
     'jquery',
-    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper'
-], function($, StorageHelper) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder'
+], function($, StorageHelper, urlBuilder) {
     'use strict';
     
     // Initialize StorageHelper with current store/theme
@@ -81,17 +86,14 @@ require([
     var urlParams = new URLSearchParams(window.location.search);
     var urlParam = urlParams.get('url');
 
-    if (!urlParam || urlParam === '/' || urlParam === '%2F') {
+    if (!urlParam || urlParam === '/') {
         var savedUrl = StorageHelper.getCurrentUrl();
 
-        // Validate: reject any URL that looks like an admin/proxy URL or is
-        // corrupted (double/triple-encoded slashes are a sure sign of a
-        // previously saved proxy URL that got URL-encoded recursively).
+        // Validate: reject any URL that looks like an admin/proxy URL or is corrupted.
         var adminBasePath = toolbarConfig.adminBasePath || '/admin/';
         var isCorrupted = !savedUrl
             || savedUrl === '/'
             || savedUrl.indexOf(adminBasePath) !== -1
-            || savedUrl.indexOf('%2F') !== -1
             || savedUrl.indexOf('%25') !== -1;
 
         if (isCorrupted && savedUrl && savedUrl !== '/') {
@@ -101,12 +103,12 @@ require([
         }
 
         if (savedUrl && savedUrl !== '/') {
-            // Update iframe src with saved URL
+            // Update iframe src with saved URL.
+            // Encode with uenc (same as PHP strtr(base64_encode(), '+/=', '-_~'))
+            // so slashes in path are not decoded by Cloudflare or Apache.
             var $iframe = $('#bte-iframe');
             var currentSrc = $iframe.attr('src');
-
-            // Replace /url/%2F/ or /url/.../ with /url/{encoded_path}/
-            var encodedUrl = encodeURIComponent(savedUrl);
+            var encodedUrl = urlBuilder.encodePathParam(savedUrl);
             var newSrc = currentSrc.replace(/\/url\/[^\/]+\//, '/url/' + encodedUrl + '/');
 
             $iframe.attr('src', newSrc);

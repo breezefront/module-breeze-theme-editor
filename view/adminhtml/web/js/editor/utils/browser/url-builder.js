@@ -234,6 +234,53 @@ define([
                 log.error('Failed to remove navigation params: ' + url + ' ' + e);
                 return url;
             }
+        },
+
+        /**
+         * Encode a frontend path for use in Magento admin URL path segments.
+         *
+         * Mirrors PHP: strtr(base64_encode($url), '+/=', '-_~')
+         *
+         * Standard encodeURIComponent() produces %2F for '/' which Cloudflare
+         * decodes back to '/' before the request reaches the origin server,
+         * breaking Magento's router. This encoding uses only [A-Za-z0-9-_~]
+         * which is safe through any proxy or CDN without modification.
+         *
+         * @param  {string} path - frontend path, e.g. '/' or '/catalog/category/view/id/2/'
+         * @returns {string}     - encoded string, e.g. 'Lw~~'
+         */
+        encodePathParam: function(path) {
+            try {
+                return btoa(unescape(encodeURIComponent(path || '/')))
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=/g, '~');
+            } catch (e) {
+                log.error('encodePathParam failed: ' + e);
+                return 'Lw~~'; // fallback: encoded '/'
+            }
+        },
+
+        /**
+         * Decode a uenc-encoded path param back to a frontend path.
+         *
+         * Mirrors PHP: base64_decode(strtr($encoded, '-_~', '+/='))
+         *
+         * @param  {string} encoded - e.g. 'Lw~~'
+         * @returns {string}        - decoded path, e.g. '/'
+         */
+        decodePathParam: function(encoded) {
+            if (!encoded) {
+                return '/';
+            }
+            try {
+                return decodeURIComponent(escape(atob(
+                    encoded.replace(/-/g, '+').replace(/_/g, '/').replace(/~/g, '=')
+                )));
+            } catch (e) {
+                log.error('decodePathParam failed: ' + e);
+                return '/';
+            }
         }
     };
 });

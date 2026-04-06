@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Controller\Adminhtml\Editor;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\Controller\Result\Raw;
 use Magento\Framework\Controller\Result\RawFactory;
+use Magento\Framework\Url\DecoderInterface;
 use Magento\Framework\UrlInterface;
 use Psr\Log\LoggerInterface;
 
@@ -21,6 +22,11 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
     private $blockFactory;
 
     /**
+     * @var DecoderInterface
+     */
+    private $urlDecoder;
+
+    /**
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
@@ -29,6 +35,7 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
      * @param LoggerInterface $logger
      * @param RawFactory $rawResultFactory
      * @param \Magento\Framework\View\Element\BlockFactory $blockFactory
+     * @param DecoderInterface $urlDecoder
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
@@ -38,11 +45,13 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
         \Swissup\BreezeThemeEditor\Model\Session\BackendSession $backendSession,
         LoggerInterface $logger,
         RawFactory $rawResultFactory,
-        \Magento\Framework\View\Element\BlockFactory $blockFactory
+        \Magento\Framework\View\Element\BlockFactory $blockFactory,
+        DecoderInterface $urlDecoder
     ) {
         parent::__construct($context, $resultPageFactory, $storeManager, $scopeConfig, $backendSession, $logger);
         $this->rawResultFactory = $rawResultFactory;
-        $this->blockFactory = $blockFactory;
+        $this->blockFactory     = $blockFactory;
+        $this->urlDecoder       = $urlDecoder;
     }
 
     /**
@@ -52,9 +61,10 @@ class Iframe extends AbstractEditor implements HttpGetActionInterface
      */
     public function execute()
     {
-        $storeId = $this->getStoreId();
-        $previewUrl = $this->getRequest()->getParam('url', '/');
-        $jstest = $this->isJstestMode();
+        $storeId    = $this->getStoreId();
+        $rawUrl     = $this->getRequest()->getParam('url', '');
+        $previewUrl = $rawUrl ? $this->urlDecoder->decode($rawUrl) : '/';
+        $jstest     = $this->isJstestMode();
 
         $frontendUrl = $this->buildFrontendUrl($storeId, $previewUrl, $jstest);
 

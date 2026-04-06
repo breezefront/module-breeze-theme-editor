@@ -3,6 +3,7 @@
 namespace Swissup\BreezeThemeEditor\ViewModel;
 
 use Magento\Framework\View\Element\Block\ArgumentInterface;
+use Magento\Framework\Url\DecoderInterface;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarAuthProvider;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarPermissionsProvider;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarScopeProvider;
@@ -66,6 +67,11 @@ class AdminToolbar implements ArgumentInterface
     private $themeProvider;
 
     /**
+     * @var DecoderInterface
+     */
+    private $urlDecoder;
+
+    /**
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider $pageUrlProvider
      * @param \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider
@@ -74,6 +80,7 @@ class AdminToolbar implements ArgumentInterface
      * @param ToolbarPermissionsProvider $permissionsProvider
      * @param ToolbarUrlProvider $urlProvider
      * @param ToolbarThemeProvider $themeProvider
+     * @param DecoderInterface $urlDecoder
      */
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
@@ -83,7 +90,8 @@ class AdminToolbar implements ArgumentInterface
         ToolbarAuthProvider $authProvider,
         ToolbarPermissionsProvider $permissionsProvider,
         ToolbarUrlProvider $urlProvider,
-        ToolbarThemeProvider $themeProvider
+        ToolbarThemeProvider $themeProvider,
+        DecoderInterface $urlDecoder
     ) {
         $this->request             = $request;
         $this->pageUrlProvider     = $pageUrlProvider;
@@ -93,6 +101,7 @@ class AdminToolbar implements ArgumentInterface
         $this->permissionsProvider = $permissionsProvider;
         $this->urlProvider         = $urlProvider;
         $this->themeProvider       = $themeProvider;
+        $this->urlDecoder          = $urlDecoder;
     }
 
     // =========================================================================
@@ -280,7 +289,8 @@ class AdminToolbar implements ArgumentInterface
      */
     public function getCurrentPageId()
     {
-        $url = $this->request->getParam('url', '/');
+        $rawUrl = $this->request->getParam('url', '');
+        $url    = $rawUrl ? $this->urlDecoder->decode($rawUrl) : '/';
 
         if (empty($url) || $url === '/') {
             return 'cms_index_index';

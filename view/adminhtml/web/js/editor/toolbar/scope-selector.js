@@ -328,10 +328,11 @@ define([
             var currentSrc = $iframe.attr('src');
 
             // Replace /store/OLD_ID/ with /store/NEW_ID/
-            // Also reset URL to homepage
+            // Also reset URL to homepage — encode '/' with uenc so it survives
+            // Cloudflare / Apache without being decoded before reaching PHP.
             var newSrc = currentSrc
                 .replace(/\/store\/\d+\//, '/store/' + defaultStoreId + '/')
-                .replace(/\/url\/[^\/]*\//, '/url/%2F/');
+                .replace(/\/url\/[^\/]+\//, '/url/' + urlBuilder.encodePathParam('/') + '/');
 
             log.info('Updating iframe src');
             log.debug('Old: ' + currentSrc);

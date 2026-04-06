@@ -15,10 +15,11 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants'
-], function ($, StorageHelper, configManager, Logger, Constants) {
+], function ($, StorageHelper, urlBuilder, configManager, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('utils/dom/iframe-helper');
@@ -215,7 +216,9 @@ define([
             
             try {
                 var cleanPath = this.extractPath(currentUrl);
-                var encodedPath = encodeURIComponent(cleanPath);
+                // Encode with uenc (mirrors PHP strtr(base64_encode(), '+/=', '-_~'))
+                // so slashes survive Cloudflare which decodes %2F before the origin.
+                var encodedPath = urlBuilder.encodePathParam(cleanPath);
                 
                 // Replace /url/{old}/ with /url/{new}/
                 var currentAdminUrl = window.location.href;
