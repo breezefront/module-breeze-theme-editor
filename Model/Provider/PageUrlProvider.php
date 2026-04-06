@@ -135,7 +135,7 @@ class PageUrlProvider
                 ->getFirstItem();
 
             if ($category->getId()) {
-                return $this->buildUrl('catalog/category/view', ['id' => $category->getId()]);
+                return $category->getUrl();
             }
         } catch (\Exception $e) {
             // Silent fail
@@ -170,7 +170,7 @@ class PageUrlProvider
                 ->getFirstItem();
 
             if ($product->getId()) {
-                return $this->buildUrl('catalog/product/view', ['id' => $product->getId()]);
+                return $product->getUrlModel()->getUrl($product);
             }
         } catch (\Exception $e) {
             // Silent fail
