@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Test\Unit\ViewModel;
 
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Url\DecoderInterface;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider;
@@ -51,7 +52,8 @@ class AdminToolbarTest extends TestCase
             $this->createMock(ToolbarAuthProvider::class),
             $this->createMock(ToolbarPermissionsProvider::class),
             $this->createMock(ToolbarUrlProvider::class),
-            $this->createMock(ToolbarThemeProvider::class)
+            $this->createMock(ToolbarThemeProvider::class),
+            $this->createMock(DecoderInterface::class)
         );
     }
 

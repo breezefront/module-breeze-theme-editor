@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Test\Unit\ViewModel\Toolbar;
 
+use Magento\Backend\App\Area\FrontNameResolver;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -26,7 +27,8 @@ class ToolbarUrlProviderTest extends TestCase
 
         $this->provider = new ToolbarUrlProvider(
             $this->urlBuilder,
-            $this->storeManager
+            $this->storeManager,
+            $this->createMock(FrontNameResolver::class)
         );
     }
 
