@@ -80,24 +80,35 @@ require([
     // If URL parameter is '/' (default), try to restore from localStorage
     var urlParams = new URLSearchParams(window.location.search);
     var urlParam = urlParams.get('url');
-    
+
     if (!urlParam || urlParam === '/' || urlParam === '%2F') {
         var savedUrl = StorageHelper.getCurrentUrl();
-        
+
+        // Validate: reject any URL that looks like an admin/proxy URL or is
+        // corrupted (double/triple-encoded slashes are a sure sign of a
+        // previously saved proxy URL that got URL-encoded recursively).
+        var adminBasePath = toolbarConfig.adminBasePath || '/admin/';
+        var isCorrupted = !savedUrl
+            || savedUrl === '/'
+            || savedUrl.indexOf(adminBasePath) !== -1
+            || savedUrl.indexOf('%2F') !== -1
+            || savedUrl.indexOf('%25') !== -1;
+
+        if (isCorrupted && savedUrl && savedUrl !== '/') {
+            // Clear the bad value so it doesn't cause problems on future loads
+            StorageHelper.setCurrentUrl('/');
+            savedUrl = '/';
+        }
+
         if (savedUrl && savedUrl !== '/') {
-            console.log('🔄 Restoring URL from localStorage:', savedUrl);
-            
             // Update iframe src with saved URL
             var $iframe = $('#bte-iframe');
             var currentSrc = $iframe.attr('src');
-            
+
             // Replace /url/%2F/ or /url/.../ with /url/{encoded_path}/
             var encodedUrl = encodeURIComponent(savedUrl);
             var newSrc = currentSrc.replace(/\/url\/[^\/]+\//, '/url/' + encodedUrl + '/');
-            
-            console.log('   Old src:', currentSrc);
-            console.log('   New src:', newSrc);
-            
+
             $iframe.attr('src', newSrc);
         }
     }

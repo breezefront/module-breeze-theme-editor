@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\ViewModel\Toolbar;
 
+use Magento\Backend\App\Area\FrontNameResolver;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -26,15 +27,23 @@ class ToolbarUrlProvider
     private $storeManager;
 
     /**
+     * @var FrontNameResolver
+     */
+    private $frontNameResolver;
+
+    /**
      * @param UrlInterface $urlBuilder
      * @param StoreManagerInterface $storeManager
+     * @param FrontNameResolver $frontNameResolver
      */
     public function __construct(
         UrlInterface $urlBuilder,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        FrontNameResolver $frontNameResolver
     ) {
-        $this->urlBuilder   = $urlBuilder;
-        $this->storeManager = $storeManager;
+        $this->urlBuilder        = $urlBuilder;
+        $this->storeManager      = $storeManager;
+        $this->frontNameResolver = $frontNameResolver;
     }
 
     /**
@@ -54,35 +63,22 @@ class ToolbarUrlProvider
     }
 
     /**
-     * Get admin base path (e.g. '/admin/' or '/tryit2531/admin/').
+     * Get admin base path (e.g. '/admin/' or '/tryit2531/').
      *
-     * Extracts the URL path up to and including the admin frontName so that
-     * the JS iframe-helper can detect admin URLs correctly regardless of
-     * subfolder installs (where the path starts with a non-/admin/ prefix).
+     * Uses FrontNameResolver to read the admin frontName directly from
+     * env.php (backend/frontName), which is exactly what Magento uses as
+     * the first URL segment for all admin routes.
      *
-     * Strategy: generate the URL for 'admin' route (no controller/action),
-     * parse its path, and strip any trailing segments beyond the frontName.
-     * The admin route URL looks like:
-     *   /admin/                          (standard)
-     *   /tryit2531/admin/                (subfolder)
-     *   /tryit2531/myadmin/              (custom frontName + subfolder)
+     * Examples:
+     *   standard install  → frontName='admin'      → '/admin/'
+     *   subfolder install → frontName='tryit2531'  → '/tryit2531/'
      *
-     * @return string  Path with leading and trailing slash, e.g. '/tryit2531/admin/'
+     * @return string  Path with leading and trailing slash.
      */
     public function getAdminBasePath(): string
     {
         try {
-            // getUrl('admin') gives us the bare admin frontName URL without
-            // controller/action segments, e.g. https://site.com/tryit2531/admin/
-            $adminUrl = $this->urlBuilder->getUrl('admin', ['_nosid' => true]);
-            $path     = parse_url($adminUrl, PHP_URL_PATH);
-
-            if (!$path) {
-                return '/admin/';
-            }
-
-            // Ensure trailing slash
-            return rtrim($path, '/') . '/';
+            return '/' . $this->frontNameResolver->getFrontName() . '/';
         } catch (\Exception $e) {
             return '/admin/';
         }
