@@ -9,7 +9,6 @@ use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarPermissionsProvider;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarScopeProvider;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarThemeProvider;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarUrlProvider;
-use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * ViewModel for Theme Editor admin toolbar
@@ -436,11 +435,6 @@ class AdminToolbar implements ArgumentInterface
             }, $this->getPageSelectorData()),
 
             'currentPageId' => $this->getCurrentPageId(),
-
-            // ===== Publications (loaded via GraphQL at runtime) =====
-            'publications'         => [],
-            'currentPublicationId' => null,
-            'currentStatus'        => StatusCode::DRAFT,
         ];
     }
 }
