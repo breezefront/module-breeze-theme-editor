@@ -52,7 +52,8 @@ define([
             scopeId:         config.scopeId,
             storeCode:       config.storeCode,
             themeId:         config.themeId,
-            graphqlEndpoint: config.graphqlEndpoint
+            graphqlEndpoint: config.graphqlEndpoint,
+            adminBasePath:   config.adminBasePath || '/admin/'
         });
         
         // Initialize Bearer token for GraphQL authentication

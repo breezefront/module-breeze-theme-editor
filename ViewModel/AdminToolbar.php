@@ -223,6 +223,16 @@ class AdminToolbar implements ArgumentInterface
     }
 
     /**
+     * Get admin base path for JS iframe-helper admin URL detection.
+     *
+     * @return string  e.g. '/admin/' or '/tryit2531/admin/'
+     */
+    public function getAdminBasePath(): string
+    {
+        return $this->urlProvider->getAdminBasePath();
+    }
+
+    /**
      * Get GraphQL endpoint URL (frontend endpoint, not admin-prefixed).
      *
      * @return string
@@ -360,6 +370,7 @@ class AdminToolbar implements ArgumentInterface
             'jstest'          => $this->isJstestMode(),
             'username'        => $this->getAdminUsername(),
             'adminUrl'        => $this->getAdminUrl(),
+            'adminBasePath'   => $this->getAdminBasePath(),
             'graphqlEndpoint' => $this->getGraphqlEndpoint(),
             'iframeSelector'  => '#bte-iframe',
 

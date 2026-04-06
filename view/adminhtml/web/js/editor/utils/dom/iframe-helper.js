@@ -15,9 +15,10 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants'
-], function ($, StorageHelper, Logger, Constants) {
+], function ($, StorageHelper, configManager, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('utils/dom/iframe-helper');
@@ -96,12 +97,27 @@ define([
 
         /**
          * Check if a URL path is an admin URL (should not be saved/synced)
-         * 
+         *
+         * Uses adminBasePath from configManager when available so that
+         * subfolder installs (e.g. /tryit2531/admin/) are detected correctly.
+         * Also treats the breeze_editor iframe proxy route as an admin URL —
+         * it is an internal admin proxy that should never be persisted as a
+         * frontend URL.
+         * Falls back to checking for '/admin/' as a last resort.
+         *
          * @param {String} path - Path to check
          * @returns {Boolean}
          */
         isAdminUrl: function(path) {
-            return path && path.indexOf('/admin/') === 0;
+            if (!path) return false;
+            var adminBasePath = configManager.get().adminBasePath || '/admin/';
+            // Match the admin frontName path (e.g. /admin/ or /tryit2531/admin/)
+            if (path.indexOf(adminBasePath) === 0) return true;
+            // Also treat the breeze_editor iframe proxy as an admin URL —
+            // it lives under the admin router and should never be saved as a
+            // frontend page URL regardless of subfolder prefix.
+            if (path.indexOf('breeze_editor/') !== -1) return true;
+            return false;
         },
 
         /**
