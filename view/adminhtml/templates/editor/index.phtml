@@ -70,50 +70,15 @@ $iframeUrl = $block->getUrl('breeze_editor/editor/iframe', $iframeParams);
 <!-- URL restoration from localStorage -->
 <script>
 require([
-    'jquery',
-    'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder'
-], function($, StorageHelper, urlBuilder) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-restoration'
+], function (restoreUrl) {
     'use strict';
-    
-    // Initialize StorageHelper with current store/theme
-    var toolbarConfig = <?= /* @noEscape */ json_encode($toolbarConfig) ?>;
-    if (toolbarConfig.storeId && toolbarConfig.themeId) {
-        StorageHelper.init(toolbarConfig.storeId, toolbarConfig.themeId);
-    }
-    
-    // If URL parameter is '/' (default), try to restore from localStorage
-    var urlParams = new URLSearchParams(window.location.search);
-    var urlParam = urlParams.get('url');
 
-    if (!urlParam || urlParam === '/') {
-        var savedUrl = StorageHelper.getCurrentUrl();
-
-        // Validate: reject any URL that looks like an admin/proxy URL or is corrupted.
-        var adminBasePath = toolbarConfig.adminBasePath || '/admin/';
-        var isCorrupted = !savedUrl
-            || savedUrl === '/'
-            || savedUrl.indexOf(adminBasePath) !== -1
-            || savedUrl.indexOf('%25') !== -1;
-
-        if (isCorrupted && savedUrl && savedUrl !== '/') {
-            // Clear the bad value so it doesn't cause problems on future loads
-            StorageHelper.setCurrentUrl('/');
-            savedUrl = '/';
-        }
-
-        if (savedUrl && savedUrl !== '/') {
-            // Update iframe src with saved URL.
-            // Encode with uenc (same as PHP strtr(base64_encode(), '+/=', '-_~'))
-            // so slashes in path are not decoded by Cloudflare or Apache.
-            var $iframe = $('#bte-iframe');
-            var currentSrc = $iframe.attr('src');
-            var encodedUrl = urlBuilder.encodePathParam(savedUrl);
-            var newSrc = currentSrc.replace(/\/url\/[^\/]+\//, '/url/' + encodedUrl + '/');
-
-            $iframe.attr('src', newSrc);
-        }
-    }
+    restoreUrl({
+        storeId:       <?= (int)($toolbarConfig['storeId'] ?? 0) ?>,
+        themeId:       <?= (int)($toolbarConfig['themeId'] ?? 0) ?>,
+        adminBasePath: <?= /* @noEscape */ json_encode($toolbarConfig['adminBasePath'] ?? '/admin/') ?>
+    });
 });
 </script>
 
