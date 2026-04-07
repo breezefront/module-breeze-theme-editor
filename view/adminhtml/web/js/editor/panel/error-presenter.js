@@ -10,9 +10,11 @@
  */
 define([
     'Swissup_BreezeThemeEditor/js/lib/toastify',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
 ], function (
     Toastify,
+    configManager,
     Logger
 ) {
     'use strict';
@@ -38,8 +40,8 @@ define([
             var displayMessage = this._getFriendlyMessage(
                 errorInfo.message,
                 errorInfo.debugMessage,
-                ctx.scope,
-                ctx.themeName
+                configManager.getScope(),
+                configManager.getThemeName()
             );
             log.debug('Display message: ' + displayMessage.message + ' Friendly: ' + displayMessage.isFriendly);
 
@@ -238,8 +240,8 @@ define([
 
             if (isThemeConfigError) {
                 var toastMessage = this._getNoSettingsToastMessage(
-                    ctx.scope,
-                    ctx.themeName,
+                    configManager.getScope(),
+                    configManager.getThemeName(),
                     searchText
                 );
 

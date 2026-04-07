@@ -15,6 +15,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config-from-publication',
@@ -25,6 +26,7 @@ define([
     FontPaletteManager,
     CssPreviewManager,
     StorageHelper,
+    configManager,
     Logger,
     getConfig,
     getConfigFromPublication,
@@ -46,20 +48,20 @@ define([
         load: function (ctx, onSuccess, onError) {
             log.info('Loading config with status: ' + ctx.options.status);
 
-            getConfig(ctx.scope, ctx.scopeId, ctx.options.status)
+            getConfig(configManager.getScope(), configManager.getScopeId(), ctx.options.status)
                 .then(function (data) {
                     log.info('Config loaded for status "' + ctx.options.status + '"');
                     var config = data.breezeThemeEditorConfig;
 
                     // Update themeId / themeName resolved by the backend (e.g. after scope switch)
                     if (config.metadata && config.metadata.themeId) {
-                        ctx.themeId = config.metadata.themeId;
-                        StorageHelper.init(ctx.scopeId, ctx.themeId);
-                        log.info('themeId resolved from metadata: ' + ctx.themeId);
+                        configManager.update({ themeId: config.metadata.themeId });
+                        StorageHelper.init(configManager.getScopeId(), configManager.getThemeId());
+                        log.info('themeId resolved from metadata: ' + configManager.getThemeId());
                     }
                     if (config.metadata && config.metadata.themeName) {
-                        ctx.themeName = config.metadata.themeName;
-                        log.info('themeName resolved from metadata: ' + ctx.themeName);
+                        configManager.update({ themeName: config.metadata.themeName });
+                        log.info('themeName resolved from metadata: ' + configManager.getThemeName());
                     }
 
                     ctx.config = config;
@@ -68,9 +70,9 @@ define([
                     if (config.palettes && config.palettes.length > 0) {
                         PaletteManager.init({
                             palettes: config.palettes,
-                            scope:    ctx.scope,
-                            scopeId:  ctx.scopeId,
-                            themeId:  ctx.themeId
+                            scope:    configManager.getScope(),
+                            scopeId:  configManager.getScopeId(),
+                            themeId:  configManager.getThemeId()
                         });
                         log.info('PaletteManager initialized with ' + config.palettes.length + ' palette(s)');
                     }
@@ -121,9 +123,9 @@ define([
                     if (config.palettes && config.palettes.length > 0) {
                         PaletteManager.init({
                             palettes: config.palettes,
-                            scope:    ctx.scope,
-                            scopeId:  ctx.scopeId,
-                            themeId:  ctx.themeId
+                            scope:    configManager.getScope(),
+                            scopeId:  configManager.getScopeId(),
+                            themeId:  configManager.getThemeId()
                         });
                         log.info('PaletteManager initialized with ' + config.palettes.length + ' palette(s)');
                     }

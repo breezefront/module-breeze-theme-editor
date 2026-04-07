@@ -15,6 +15,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/panel/sections/palette-section-renderer',
     'Swissup_BreezeThemeEditor/js/editor/panel/sections/font-palette-section-renderer'
@@ -24,6 +25,7 @@ define([
     CssPreviewManager,
     IconRegistry,
     StorageHelper,
+    configManager,
     Logger
     // palette-section-renderer and font-palette-section-renderer are side-effect
     // only imports: they register $.fn.paletteSection / $.fn.fontPaletteSection
@@ -125,9 +127,9 @@ define([
 
             ctx.$paletteContainer.paletteSection({
                 palettes: ctx.config.palettes,
-                scope:    ctx.scope,
-                scopeId:  ctx.scopeId,
-                themeId:  ctx.themeId
+                scope:    configManager.getScope(),
+                scopeId:  configManager.getScopeId(),
+                themeId:  configManager.getThemeId()
             });
 
             log.info('Palette section initialized');
@@ -186,9 +188,9 @@ define([
             }
 
             ctx.$presetContainer.presetSelector({
-                scope:    ctx.scope,
-                scopeId:  ctx.scopeId,
-                themeId:  ctx.themeId,
+                scope:    configManager.getScope(),
+                scopeId:  configManager.getScopeId(),
+                themeId:  configManager.getThemeId(),
                 onApply:  $.proxy(ctx._onPresetApplied, ctx)
             });
 

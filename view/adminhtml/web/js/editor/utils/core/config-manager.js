@@ -124,6 +124,17 @@ define(['jquery', 'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], func
                 ? config.themeId
                 : (fallback || null);
         },
+
+        /**
+         * Get theme name with optional fallback
+         *
+         * @param {string} fallback
+         * @returns {string|null}
+         */
+        getThemeName: function(fallback) {
+            var config = this.get();
+            return config.themeName || fallback || null;
+        },
         
         /**
          * Get GraphQL endpoint URL with optional fallback
