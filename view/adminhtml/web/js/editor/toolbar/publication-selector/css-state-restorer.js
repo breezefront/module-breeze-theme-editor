@@ -18,16 +18,20 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/error-handler',
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/loading',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state'
 ], function (
     $,
     cssManager,
     errorHandler,
     loading,
     StorageHelper,
+    configManager,
     Logger,
-    Constants
+    Constants,
+    PublicationState
 ) {
     'use strict';
 
@@ -47,9 +51,9 @@ define([
          */
         initCssManager: function (ctx) {
             cssManager.init({
-                scope:   ctx.scope,
-                scopeId: ctx.scopeId,
-                themeId: ctx.themeId,
+                scope:   configManager.getScope(),
+                scopeId: configManager.getScopeId(),
+                themeId: configManager.getThemeId(),
                 iframeId: Constants.SELECTORS.IFRAME_ID
             });
         },
@@ -92,7 +96,7 @@ define([
             log.info('Restoring CSS state: mode=' + mode.mode +
                 (mode.publicationId ? ' id=' + mode.publicationId : ''));
 
-            var scopeCtx = { scope: ctx.scope, scopeId: ctx.scopeId };
+            var scopeCtx = { scope: configManager.getScope(), scopeId: configManager.getScopeId() };
 
             if (mode.mode === PUBLICATION_STATUS.PUBLICATION) {
                 cssManager.switchTo(PUBLICATION_STATUS.PUBLICATION, mode.publicationId, scopeCtx)
@@ -128,11 +132,11 @@ define([
          * @param {Object} ctx - Widget context
          */
         fallbackToDraft: function (ctx) {
-            ctx.options.currentStatus           = PUBLICATION_STATUS.DRAFT;
+            PublicationState.set(PUBLICATION_STATUS.DRAFT);
+            ctx.options.currentStatus           = PublicationState.get();
             ctx.options.currentPublicationId    = null;
             ctx.options.currentPublicationTitle = null;
 
-            StorageHelper.setCurrentStatus(PUBLICATION_STATUS.DRAFT);
             StorageHelper.clearCurrentPublication();
 
             ctx.renderer.render(ctx._getState());
@@ -159,24 +163,19 @@ define([
 
             loading.show(ctx.element);
 
-            var scopeCtx = { scope: ctx.scope, scopeId: ctx.scopeId };
+            var scopeCtx = { scope: configManager.getScope(), scopeId: configManager.getScopeId() };
 
             cssManager.switchTo(status, null, scopeCtx).then(function () {
-                ctx.options.currentStatus           = status;
+                PublicationState.set(status);
+                ctx.options.currentStatus           = PublicationState.get();
                 ctx.options.currentPublicationId    = null;
                 ctx.options.currentPublicationTitle = null;
 
-                StorageHelper.setCurrentStatus(status);
                 StorageHelper.clearCurrentPublication();
 
                 ctx.renderer.render(ctx._getState());
                 ctx._applyPermissions();
                 ctx.renderer.closeDropdown();
-
-                $(document).trigger('publicationStatusChanged', {
-                    status:        status,
-                    publicationId: null
-                });
 
                 log.info('Switched to ' + status);
                 loading.hide(ctx.element);
@@ -206,25 +205,20 @@ define([
 
             loading.show(ctx.element);
 
-            var scopeCtx = { scope: ctx.scope, scopeId: ctx.scopeId };
+            var scopeCtx = { scope: configManager.getScope(), scopeId: configManager.getScopeId() };
 
             cssManager.switchTo(PUBLICATION_STATUS.PUBLICATION, publicationId, scopeCtx).then(function () {
-                ctx.options.currentStatus           = PUBLICATION_STATUS.PUBLICATION;
+                PublicationState.set(PUBLICATION_STATUS.PUBLICATION);
+                ctx.options.currentStatus           = PublicationState.get();
                 ctx.options.currentPublicationId    = publicationId;
                 ctx.options.currentPublicationTitle = publication.title;
 
-                StorageHelper.setCurrentStatus(PUBLICATION_STATUS.PUBLICATION);
                 StorageHelper.setCurrentPublicationId(publicationId);
                 StorageHelper.setCurrentPublicationTitle(publication.title);
 
                 ctx.renderer.render(ctx._getState());
                 ctx._applyPermissions();
                 ctx.renderer.closeDropdown();
-
-                $(document).trigger('publicationStatusChanged', {
-                    status:        PUBLICATION_STATUS.PUBLICATION,
-                    publicationId: publicationId
-                });
 
                 log.info('Publication loaded: ' + publication.title);
                 loading.hide(ctx.element);

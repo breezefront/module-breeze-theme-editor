@@ -33,6 +33,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state',
     'Swissup_BreezeThemeEditor/js/editor/panel/depends-evaluator'
 ], function (
     $,
@@ -54,7 +55,8 @@ define([
     StorageHelper,
     configManager,
     Logger,
-    Constants
+    Constants,
+    PublicationState
     // depends-evaluator is a side-effect import: it self-registers DOM event
     // listeners for 'bte:sections-rendered' and 'bte:field-changed'.
 ) {
@@ -110,12 +112,11 @@ define([
             this._initPreview();
             this._initPanelTheme();
 
-            var currentStatus = StorageHelper.getCurrentStatus();
-            this.options.status = currentStatus;
+            this.options.status = PublicationState.get();
 
-            log.info('Settings Editor initializing with mode: ' + currentStatus);
+            log.info('Settings Editor initializing with mode: ' + this.options.status);
 
-            if (currentStatus === PUBLICATION_STATUS.PUBLICATION) {
+            if (this.options.status === PUBLICATION_STATUS.PUBLICATION) {
                 var publicationId = StorageHelper.getCurrentPublicationId();
                 if (publicationId && !isNaN(publicationId)) {
                     this._loadConfigFromPublication(publicationId);
@@ -248,7 +249,7 @@ define([
         _initPreview: function () {
             this._previewReady = CssPreviewManager.init();
 
-            if (!CssManager.getCurrentStatus()) {
+            if (!CssManager.isReady()) {
                 CssManager.init({
                     scope:   configManager.getScope(),
                     scopeId: configManager.getScopeId(),

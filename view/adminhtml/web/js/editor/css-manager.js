@@ -478,7 +478,7 @@ define([
          * @returns {String}
          */
         getCurrentStatus: function() {
-            return currentStatus;
+            return PublicationState.get();
         },
         
         /**
@@ -497,7 +497,7 @@ define([
          * @returns {Boolean}
          */
         isEditable: function() {
-            return currentStatus === PUBLICATION_STATUS.DRAFT;
+            return PublicationState.isEditable();
         },
         
         /**
@@ -522,11 +522,11 @@ define([
          *
          * @param {Object|null} _config - Ignored (kept for call-site compatibility); scope is
          *                                read from configManager.
-         * @param {Boolean}     flush   - if true, reset currentStatus and currentPublicationId
+         * @param {Boolean}     flush   - if true, reset PublicationState and currentPublicationId
          */
         reinit: function(_config, flush) {
             if (flush) {
-                currentStatus        = PUBLICATION_STATUS.DRAFT;
+                PublicationState.reset();
                 currentPublicationId = null;
             }
             log.info('CSS Manager: reinit scope=' + configManager.getScope() + ':' + configManager.getScopeId() + ' flush=' + !!flush);

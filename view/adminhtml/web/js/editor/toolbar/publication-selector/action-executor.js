@@ -26,8 +26,10 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-published',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/delete-publication',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state'
 ], function (
     $,
     $t,
@@ -42,8 +44,10 @@ define([
     discardPublishedMutation,
     deletePublicationMutation,
     StorageHelper,
+    configManager,
     Logger,
-    Constants
+    Constants,
+    PublicationState
 ) {
     'use strict';
 
@@ -100,8 +104,8 @@ define([
             loading.show(ctx.element);
 
             publishMutation(
-                ctx.scope,
-                parseInt(ctx.scopeId),
+                configManager.getScope(),
+                configManager.getScopeId(),
                 title,
                 null,
                 false
@@ -109,7 +113,8 @@ define([
                 var result = response && response.publishBreezeThemeEditor;
 
                 if (result && result.success) {
-                    ctx.options.currentStatus = PUBLICATION_STATUS.PUBLISHED;
+                    PublicationState.set(PUBLICATION_STATUS.PUBLISHED);
+                    ctx.options.currentStatus = PublicationState.get();
                     ctx.options.changesCount  = 0;
                     ctx.renderer.render(ctx._getState());
                     ctx._applyPermissions();
@@ -118,9 +123,9 @@ define([
 
                     $(document).trigger('bte:published', {
                         publication: result.publication,
-                        scope:   ctx.scope,
-                        scopeId: ctx.scopeId,
-                        themeId: ctx.themeId
+                        scope:   configManager.getScope(),
+                        scopeId: configManager.getScopeId(),
+                        themeId: configManager.getThemeId()
                     });
 
                     ctx.renderer.closeDropdown();
@@ -205,7 +210,8 @@ define([
                     var result = response && response.rollbackBreezeThemeEditor;
 
                     if (result && result.success) {
-                        ctx.options.currentStatus = PUBLICATION_STATUS.PUBLISHED;
+                        PublicationState.set(PUBLICATION_STATUS.PUBLISHED);
+                        ctx.options.currentStatus = PublicationState.get();
                         ctx.options.changesCount  = 0;
                         ctx.renderer.render(ctx._getState());
                         ctx._applyPermissions();
@@ -214,9 +220,9 @@ define([
 
                         $(document).trigger('bte:published', {
                             publication: result.publication,
-                            scope:   ctx.scope,
-                            scopeId: ctx.scopeId,
-                            themeId: ctx.themeId,
+                            scope:   configManager.getScope(),
+                            scopeId: configManager.getScopeId(),
+                            themeId: configManager.getThemeId(),
                             isRollback: true
                         });
 
@@ -263,8 +269,8 @@ define([
             loading.show(ctx.element);
 
             discardDraftMutation(
-                ctx.scope,
-                parseInt(ctx.scopeId),
+                configManager.getScope(),
+                configManager.getScopeId(),
                 null
             ).then(function (response) {
                 var result = response && response.discardBreezeThemeEditorDraft;
@@ -277,9 +283,9 @@ define([
                     Toastify.show('success', $t('Draft changes discarded'));
 
                     $(document).trigger('bte:draftDiscarded', {
-                        scope:   ctx.scope,
-                        scopeId: ctx.scopeId,
-                        themeId: ctx.themeId
+                        scope:   configManager.getScope(),
+                        scopeId: configManager.getScopeId(),
+                        themeId: configManager.getThemeId()
                     });
 
                     ctx.renderer.closeDropdown();
@@ -331,16 +337,16 @@ define([
             loading.show(ctx.element);
 
             discardPublishedMutation(
-                ctx.scope,
-                parseInt(ctx.scopeId)
+                configManager.getScope(),
+                configManager.getScopeId()
             ).then(function (response) {
                 var result = response && response.discardBreezeThemeEditorPublished;
 
                 if (result && result.success) {
                     ctx.options.publishedModifiedCount   = 0;
-                    StorageHelper.setCurrentStatus(PUBLICATION_STATUS.PUBLISHED);
+                    PublicationState.set(PUBLICATION_STATUS.PUBLISHED);
                     StorageHelper.clearCurrentPublication();
-                    ctx.options.currentStatus            = PUBLICATION_STATUS.PUBLISHED;
+                    ctx.options.currentStatus            = PublicationState.get();
                     ctx.options.currentPublicationId     = null;
                     ctx.options.currentPublicationTitle  = null;
 
@@ -350,9 +356,9 @@ define([
                     Toastify.show('success', $t('Published customizations reset to defaults'));
 
                     $(document).trigger('bte:publishedDiscarded', {
-                        scope:   ctx.scope,
-                        scopeId: ctx.scopeId,
-                        themeId: ctx.themeId
+                        scope:   configManager.getScope(),
+                        scopeId: configManager.getScopeId(),
+                        themeId: configManager.getThemeId()
                     });
 
                     ctx.renderer.closeDropdown();

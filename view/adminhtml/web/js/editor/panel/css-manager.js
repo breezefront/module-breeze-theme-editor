@@ -655,6 +655,15 @@ define([
         },
 
         /**
+         * Check if CSS Manager has been initialized (style elements cached).
+         *
+         * @returns {Boolean}
+         */
+        isReady: function() {
+            return !!($publishedStyle && $publishedStyle.length);
+        },
+
+        /**
          * Re-initialize and optionally flush stale DOM references.
          *
          * Use flush=true whenever the iframe is about to navigate to a new scope
