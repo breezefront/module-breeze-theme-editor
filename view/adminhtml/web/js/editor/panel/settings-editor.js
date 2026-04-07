@@ -239,7 +239,7 @@ define([
             this._previewReady = CssPreviewManager.init();
 
             if (!CssManager.getCurrentStatus()) {
-                CssManager.init(this.scopeId, this.themeId);
+                CssManager.init({ scope: this.scope, scopeId: this.scopeId, themeId: this.themeId });
             }
         },
 
