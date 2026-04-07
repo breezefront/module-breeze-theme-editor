@@ -56,6 +56,13 @@ define([
 
             ctx.$sectionsContainer.html(html);
 
+            // Hide accordion sections that have no rendered fields
+            ctx.$sectionsContainer.find('.bte-accordion-section').each(function () {
+                if ($(this).find('.bte-field-wrapper').length === 0) {
+                    $(this).hide();
+                }
+            });
+
             // Clear search when sections are re-rendered
             if (ctx.$searchInput) {
                 ctx.$searchInput.val('');
