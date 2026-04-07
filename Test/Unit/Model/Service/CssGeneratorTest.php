@@ -2,8 +2,12 @@
 
 namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Service;
 
+use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
+use Swissup\BreezeThemeEditor\Model\Data\Scope;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Service\CssGenerator;
 use Swissup\BreezeThemeEditor\Model\Service\ValueService;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
@@ -11,6 +15,7 @@ use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
+use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Service\Css\CssValueFormatter;
 use Swissup\BreezeThemeEditor\Model\Service\Css\CssVariableBuilder;
 use Swissup\BreezeThemeEditor\Model\Service\Css\CssFontImportBuilder;
@@ -2048,12 +2053,228 @@ class CssGeneratorTest extends TestCase
         );
     }
 
+    // -------------------------------------------------------------------------
+    // Helpers for E2E scope-inheritance tests (Tests 46–47)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Build a real ValueInheritanceResolver wired with a StoreManager mock that
+     * maps $storeId → $websiteId, and the shared value-service / config mocks.
+     *
+     * Using a real resolver (not a mock) is the whole point of these tests:
+     * it lets us verify the full chain
+     *   CssGenerator → ValueInheritanceResolver → buildScopeChain → ValueService
+     * without stub short-circuits.
+     */
+    private function createRealResolverWithStoreManager(
+        int $storeId,
+        int $websiteId
+    ): ValueInheritanceResolver {
+        $storeMock = $this->createMock(StoreInterface::class);
+        $storeMock->method('getWebsiteId')->willReturn($websiteId);
+
+        $storeManagerMock = $this->createMock(StoreManagerInterface::class);
+        $storeManagerMock->method('getStore')->with($storeId)->willReturn($storeMock);
+
+        $themeResolverMock = $this->createMock(ThemeResolver::class);
+        // Single-theme hierarchy — scope chain, not theme inheritance, is under test
+        $themeResolverMock->method('getThemeHierarchy')
+            ->willReturn([['theme_id' => 10, 'theme_code' => 'test-theme', 'level' => 0]]);
+
+        // inheritParent=false so getThemeHierarchy is never called (keeps scope chain as focus)
+        $this->configProviderMock->method('getConfiguration')
+            ->willReturn(['inheritParent' => false]);
+
+        return new ValueInheritanceResolver(
+            $this->valueServiceMock,
+            $themeResolverMock,
+            $this->configProviderMock,
+            new ScopeFactory(),
+            $storeManagerMock
+        );
+    }
+
+    /**
+     * Build a CssGenerator that uses a *real* ValueInheritanceResolver.
+     */
+    private function createCssGeneratorWithRealResolver(
+        ValueInheritanceResolver $resolver
+    ): CssGenerator {
+        $colorFormatResolver = new ColorFormatResolver(new ColorConverter());
+        $formatter           = new CssValueFormatter($colorFormatResolver);
+        $variableBuilder     = new CssVariableBuilder($formatter);
+        $fontImportBuilder   = new CssFontImportBuilder($variableBuilder);
+
+        return new CssGenerator(
+            $resolver,
+            $this->statusProviderMock,
+            $this->configProviderMock,
+            $variableBuilder,
+            $fontImportBuilder
+        );
+    }
+
+    /**
+     * Minimal one-field config used by E2E tests.
+     * The field is a color stored under ':root' with CSS var '--header-color'.
+     */
+    private function makeHeaderColorConfig(): array
+    {
+        return [
+            'sections' => [
+                [
+                    'id'       => 'header',
+                    'settings' => [
+                        [
+                            'id'       => 'header_color',
+                            'type'     => 'color',
+                            'property' => '--header-color',
+                            'default'  => '#000000',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    // -------------------------------------------------------------------------
+    // Tests 46–47: E2E scope-inheritance (real ValueInheritanceResolver)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Test 46: PUBLISHED — value saved at default/0 scope is inherited by stores/1.
+     *
+     * E2E regression test for Issue #015 + #016.
+     *
+     * Uses a *real* ValueInheritanceResolver (not a mock) to verify the full chain:
+     *   CssGenerator::generate(stores/1, PUBLISHED)
+     *     → resolver::resolveAllValues()
+     *       → buildScopeChain(stores/1)  → [default/0, websites/2, stores/1]
+     *       → valueService::getValuesByTheme(default/0)  → [header_color: #ff0000]
+     *       → valueService::getValuesByTheme(websites/2) → []
+     *       → valueService::getValuesByTheme(stores/1)   → []
+     *     → CSS contains '--header-color: #ff0000;'
+     */
+    public function testPublishedCssInheritsColorFromDefaultScopeToStoreView(): void
+    {
+        // --- StatusProvider: PUBLISHED = 2 -----------------------------------
+        $this->statusProviderMock
+            ->method('getStatusId')
+            ->with('PUBLISHED')
+            ->willReturn(2);
+
+        // --- ValueService: only default/0 has data ---------------------------
+        $this->valueServiceMock
+            ->method('getValuesByTheme')
+            ->willReturnCallback(function (
+                int $themeId,
+                ScopeInterface $scope,
+                int $statusId,
+                ?int $userId
+            ): array {
+                if ($scope->getType() === 'default' && $statusId === 2) {
+                    return [[
+                        'section_code' => 'header',
+                        'setting_code' => 'header_color',
+                        'value'        => '#ff0000',
+                    ]];
+                }
+                return [];
+            });
+
+        // --- ConfigProvider --------------------------------------------------
+        $this->configProviderMock
+            ->method('getConfigurationWithInheritance')
+            ->willReturn($this->makeHeaderColorConfig());
+
+        // --- Real resolver wired to store 1 → website 2 ----------------------
+        $resolver = $this->createRealResolverWithStoreManager(storeId: 1, websiteId: 2);
+
+        // --- CssGenerator using the real resolver ----------------------------
+        $generator = $this->createCssGeneratorWithRealResolver($resolver);
+
+        // --- Scope: stores/1 -------------------------------------------------
+        $storesScope = (new ScopeFactory())->create('stores', 1);
+
+        $css = $generator->generate(themeId: 10, scope: $storesScope, status: 'PUBLISHED');
+
+        $this->assertStringContainsString(
+            '--header-color: #ff0000;',
+            $css,
+            'PUBLISHED CSS for stores/1 must contain the color saved only at default/0 scope'
+        );
+    }
+
+    /**
+     * Test 47: DRAFT — value saved at default/0 scope (PUBLISHED status) is inherited by stores/1.
+     *
+     * E2E regression test for Issue #015 + #016, DRAFT branch.
+     *
+     * Uses a *real* ValueInheritanceResolver.  The DRAFT branch calls
+     * resolveAllValuesWithFallback(draftId, publishedId) which internally calls
+     * resolveAllValues() twice — once for PUBLISHED (base layer) and once for DRAFT
+     * (override layer).  Both must walk the full scope chain so that the value
+     * saved at default/0 with PUBLISHED status is visible in the draft preview.
+     */
+    public function testDraftCssInheritsColorFromDefaultScopeToStoreView(): void
+    {
+        // --- StatusProvider: DRAFT = 1, PUBLISHED = 2 ------------------------
+        $this->statusProviderMock
+            ->method('getStatusId')
+            ->willReturnMap([
+                ['DRAFT',      1],
+                ['PUBLISHED',  2],
+            ]);
+
+        // --- ValueService: only default/0 has PUBLISHED data; DRAFT is empty -
+        $this->valueServiceMock
+            ->method('getValuesByTheme')
+            ->willReturnCallback(function (
+                int $themeId,
+                ScopeInterface $scope,
+                int $statusId,
+                ?int $userId
+            ): array {
+                if ($scope->getType() === 'default' && $statusId === 2 /*PUBLISHED*/) {
+                    return [[
+                        'section_code' => 'header',
+                        'setting_code' => 'header_color',
+                        'value'        => '#ff0000',
+                    ]];
+                }
+                return [];  // no DRAFT rows, no websites/stores rows
+            });
+
+        // --- ConfigProvider --------------------------------------------------
+        $this->configProviderMock
+            ->method('getConfigurationWithInheritance')
+            ->willReturn($this->makeHeaderColorConfig());
+
+        // --- Real resolver wired to store 1 → website 2 ----------------------
+        $resolver = $this->createRealResolverWithStoreManager(storeId: 1, websiteId: 2);
+
+        // --- CssGenerator using the real resolver ----------------------------
+        $generator = $this->createCssGeneratorWithRealResolver($resolver);
+
+        // --- Scope: stores/1 -------------------------------------------------
+        $storesScope = (new ScopeFactory())->create('stores', 1);
+
+        $css = $generator->generate(themeId: 10, scope: $storesScope, status: 'DRAFT');
+
+        $this->assertStringContainsString(
+            '--header-color: #ff0000;',
+            $css,
+            'DRAFT CSS for stores/1 must contain the color saved only at default/0 scope with PUBLISHED status'
+        );
+    }
+
     /**
      * Test 43: Local theme font (url is a relative path, not http) → no @import generated
      *
      * When an option carries a theme-relative url like 'web/fonts/MyFont.woff2',
      * the CSS generator must NOT emit an @import — the font is already loaded by
      * the theme's own @font-face rules.  Only external http(s) URLs get @import.
+     *
      */
     public function testLocalFontUrlProducesNoImport(): void
     {
