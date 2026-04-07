@@ -5,47 +5,62 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Provider;
 
 use Magento\Catalog\Model\CategoryFactory;
 use Magento\Catalog\Model\ProductFactory;
+use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator;
+use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\Cms\Model\PageFactory;
+use Magento\Framework\Url as FrontendUrlBuilder;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\UrlRewrite\Model\UrlFinderInterface;
+use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider;
+use Swissup\BreezeThemeEditor\Model\Provider\AdminPageUrlProvider;
 
 /**
- * Unit tests for PageUrlProvider
+ * Unit tests for AdminPageUrlProvider
  *
  * Covers:
- * - getCategoryUrl() / getProductUrl() URL-rewrite fixes (commit 9f8c7d9)
  * - getCategoryUrl() cascading fallback strategy (children_count → level → any active)
+ * - getCategoryUrl() urlFinder lookup for correct frontend URL
+ * - getCategoryUrl() hard fallback when all attempts fail
  */
-class PageUrlProviderTest extends TestCase
+class AdminPageUrlProviderTest extends TestCase
 {
     private UrlInterface|MockObject $urlBuilder;
     private CategoryFactory|MockObject $categoryFactory;
     private ProductFactory|MockObject $productFactory;
     private PageFactory|MockObject $pageFactory;
     private StoreManagerInterface|MockObject $storeManager;
-    private PageUrlProvider $provider;
+    private FrontendUrlBuilder|MockObject $frontendUrlBuilder;
+    private UrlFinderInterface|MockObject $urlFinder;
+    private AdminPageUrlProvider $provider;
 
     protected function setUp(): void
     {
-        $this->urlBuilder      = $this->createMock(UrlInterface::class);
-        $this->categoryFactory = $this->createMock(CategoryFactory::class);
-        $this->productFactory  = $this->createMock(ProductFactory::class);
-        $this->pageFactory     = $this->createMock(PageFactory::class);
-        $this->storeManager    = $this->createMock(StoreManagerInterface::class);
+        $this->urlBuilder         = $this->createMock(UrlInterface::class);
+        $this->categoryFactory    = $this->createMock(CategoryFactory::class);
+        $this->productFactory     = $this->createMock(ProductFactory::class);
+        $this->pageFactory        = $this->createMock(PageFactory::class);
+        $this->storeManager       = $this->createMock(StoreManagerInterface::class);
+        $this->frontendUrlBuilder = $this->getMockBuilder(FrontendUrlBuilder::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['setScope', 'getDirectUrl', 'getUrl'])
+            ->getMock();
+        $this->urlFinder          = $this->createMock(UrlFinderInterface::class);
 
         $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
         $storeMock->method('getId')->willReturn(1);
         $this->storeManager->method('getStore')->willReturn($storeMock);
 
-        $this->provider = new PageUrlProvider(
+        $this->provider = new AdminPageUrlProvider(
             $this->urlBuilder,
             $this->categoryFactory,
             $this->productFactory,
             $this->pageFactory,
-            $this->storeManager
+            $this->storeManager,
+            $this->frontendUrlBuilder,
+            $this->urlFinder
         );
     }
 
@@ -54,9 +69,7 @@ class PageUrlProviderTest extends TestCase
     // =========================================================================
 
     /**
-     * Build a fluent collection stub that returns $firstItem from getFirstItem().
-     * All chained methods (setStoreId, addAttributeToSelect, addAttributeToFilter,
-     * setOrder, setPageSize) return $this so the chain works.
+     * Build a fluent category collection stub that returns $firstItem.
      */
     private function makeCategoryCollectionMock(MockObject $firstItem): MockObject
     {
@@ -83,28 +96,13 @@ class PageUrlProviderTest extends TestCase
     }
 
     /**
-     * Build a fluent product collection stub.
+     * Build a URL rewrite stub with a given request_path.
      */
-    private function makeProductCollectionMock(MockObject $firstItem): MockObject
+    private function makeRewriteMock(string $requestPath): MockObject
     {
-        $collection = $this->getMockBuilder(\Magento\Catalog\Model\ResourceModel\Product\Collection::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods([
-                'setStoreId',
-                'addAttributeToSelect',
-                'addAttributeToFilter',
-                'setPageSize',
-                'getFirstItem',
-            ])
-            ->getMock();
-
-        $collection->method('setStoreId')->willReturnSelf();
-        $collection->method('addAttributeToSelect')->willReturnSelf();
-        $collection->method('addAttributeToFilter')->willReturnSelf();
-        $collection->method('setPageSize')->willReturnSelf();
-        $collection->method('getFirstItem')->willReturn($firstItem);
-
-        return $collection;
+        $rewrite = $this->createMock(UrlRewrite::class);
+        $rewrite->method('getRequestPath')->willReturn($requestPath);
+        return $rewrite;
     }
 
     // =========================================================================
@@ -112,29 +110,37 @@ class PageUrlProviderTest extends TestCase
     // =========================================================================
 
     /**
-     * Level 1 (ideal): first attempt (children_count > 0) returns a category.
+     * Level 1 (ideal): first attempt (children_count > 0) returns a category
+     * and urlFinder finds a rewrite → returns the frontend URL.
      *
      * @test
      */
-    public function testGetCategoryUrlUsesCategoryGetUrl(): void
+    public function testGetCategoryUrlUsesUrlRewriteOnFirstAttempt(): void
     {
         $category = $this->createMock(\Magento\Catalog\Model\Category::class);
         $category->method('getId')->willReturn(5);
-        $category->method('getUrl')->willReturn('https://example.com/headphones.html');
 
         $categoryModel = $this->createMock(\Magento\Catalog\Model\Category::class);
         $categoryModel->method('getCollection')->willReturn(
             $this->makeCategoryCollectionMock($category)
         );
-        // create() is called once per attempt; first attempt succeeds here.
         $this->categoryFactory->method('create')->willReturn($categoryModel);
+
+        $this->urlFinder->method('findOneByData')->willReturn(
+            $this->makeRewriteMock('headphones.html')
+        );
+
+        $this->frontendUrlBuilder->method('setScope')->with(1);
+        $this->frontendUrlBuilder->method('getDirectUrl')
+            ->with('headphones.html')
+            ->willReturn('https://example.com/headphones.html');
 
         $this->assertSame('https://example.com/headphones.html', $this->provider->getCategoryUrl());
     }
 
     /**
      * Level 2 fallback: first attempt (children_count > 0) returns empty,
-     * second attempt (level > 1, no children_count) returns a leaf category.
+     * second attempt (level > 1) returns a leaf category with a valid rewrite.
      *
      * @test
      */
@@ -145,7 +151,6 @@ class PageUrlProviderTest extends TestCase
 
         $leaf = $this->createMock(\Magento\Catalog\Model\Category::class);
         $leaf->method('getId')->willReturn(7);
-        $leaf->method('getUrl')->willReturn('https://example.com/speakers.html');
 
         $emptyModel = $this->createMock(\Magento\Catalog\Model\Category::class);
         $emptyModel->method('getCollection')->willReturn(
@@ -157,17 +162,25 @@ class PageUrlProviderTest extends TestCase
             $this->makeCategoryCollectionMock($leaf)
         );
 
-        // create() is called once per attempt: attempt 1 → empty, attempt 2 → leaf
+        // attempt 1 → empty, attempt 2 → leaf
         $this->categoryFactory->expects($this->exactly(2))
             ->method('create')
             ->willReturnOnConsecutiveCalls($emptyModel, $leafModel);
+
+        $this->urlFinder->method('findOneByData')->willReturn(
+            $this->makeRewriteMock('speakers.html')
+        );
+
+        $this->frontendUrlBuilder->method('getDirectUrl')
+            ->with('speakers.html')
+            ->willReturn('https://example.com/speakers.html');
 
         $this->assertSame('https://example.com/speakers.html', $this->provider->getCategoryUrl());
     }
 
     /**
      * Level 3 fallback: first two attempts return empty,
-     * third attempt (any active category) returns a result.
+     * third attempt (any active category) returns a result with a valid rewrite.
      *
      * @test
      */
@@ -178,7 +191,6 @@ class PageUrlProviderTest extends TestCase
 
         $anyCategory = $this->createMock(\Magento\Catalog\Model\Category::class);
         $anyCategory->method('getId')->willReturn(3);
-        $anyCategory->method('getUrl')->willReturn('https://example.com/root-category.html');
 
         $emptyModel = $this->createMock(\Magento\Catalog\Model\Category::class);
         $emptyModel->method('getCollection')->willReturn(
@@ -190,20 +202,29 @@ class PageUrlProviderTest extends TestCase
             $this->makeCategoryCollectionMock($anyCategory)
         );
 
-        // create() called 3 times: attempt 1 → empty, attempt 2 → empty, attempt 3 → found
+        // attempt 1 → empty, attempt 2 → empty, attempt 3 → found
         $this->categoryFactory->expects($this->exactly(3))
             ->method('create')
             ->willReturnOnConsecutiveCalls($emptyModel, $emptyModel, $anyModel);
+
+        $this->urlFinder->method('findOneByData')->willReturn(
+            $this->makeRewriteMock('root-category.html')
+        );
+
+        $this->frontendUrlBuilder->method('getDirectUrl')
+            ->with('root-category.html')
+            ->willReturn('https://example.com/root-category.html');
 
         $this->assertSame('https://example.com/root-category.html', $this->provider->getCategoryUrl());
     }
 
     /**
-     * Hard fallback: all three attempts return empty → falls back to buildUrl().
+     * Hard fallback: all three attempts return empty → falls back to buildUrl()
+     * which uses frontendUrlBuilder (AdminPageUrlProvider overrides buildUrl).
      *
      * @test
      */
-    public function testGetCategoryUrlFallsBackWhenNoCategoryFound(): void
+    public function testGetCategoryUrlHardFallbackWhenNoCategoryFound(): void
     {
         $empty = $this->createMock(\Magento\Catalog\Model\Category::class);
         $empty->method('getId')->willReturn(null);
@@ -213,13 +234,18 @@ class PageUrlProviderTest extends TestCase
             $this->makeCategoryCollectionMock($empty)
         );
 
-        // create() called 3 times (all 3 attempts), all return empty
+        // create() called 3 times, all return empty
         $this->categoryFactory->expects($this->exactly(3))
             ->method('create')
             ->willReturn($emptyModel);
 
-        $this->urlBuilder->method('getUrl')
-            ->with('catalog/category/view', ['id' => 2])
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getId')->willReturn(1);
+        $storeMock->method('getBaseUrl')->willReturn('https://example.com/');
+        $this->storeManager->method('getStore')->willReturn($storeMock);
+
+        $this->frontendUrlBuilder->method('setScope');
+        $this->frontendUrlBuilder->method('getUrl')
             ->willReturn('https://example.com/catalog/category/view/id/2/');
 
         $this->assertSame(
@@ -228,49 +254,32 @@ class PageUrlProviderTest extends TestCase
         );
     }
 
-    // =========================================================================
-    // getProductUrl()
-    // =========================================================================
-
-    /** @test */
-    public function testGetProductUrlUsesUrlModel(): void
+    /**
+     * Category found but no URL rewrite exists → falls back to buildUrl().
+     *
+     * @test
+     */
+    public function testGetCategoryUrlFallsBackWhenNoRewriteFound(): void
     {
-        $product = $this->createMock(\Magento\Catalog\Model\Product::class);
-        $product->method('getId')->willReturn(10);
+        $category = $this->createMock(\Magento\Catalog\Model\Category::class);
+        $category->method('getId')->willReturn(5);
 
-        $urlModel = $this->createMock(\Magento\Catalog\Model\Product\Url::class);
-        $urlModel->method('getUrl')->with($product)->willReturn('https://example.com/widget.html');
-
-        $product->method('getUrlModel')->willReturn($urlModel);
-
-        $productModel = $this->createMock(\Magento\Catalog\Model\Product::class);
-        $productModel->method('getCollection')->willReturn(
-            $this->makeProductCollectionMock($product)
+        $categoryModel = $this->createMock(\Magento\Catalog\Model\Category::class);
+        $categoryModel->method('getCollection')->willReturn(
+            $this->makeCategoryCollectionMock($category)
         );
-        $this->productFactory->method('create')->willReturn($productModel);
+        $this->categoryFactory->method('create')->willReturn($categoryModel);
 
-        $this->assertSame('https://example.com/widget.html', $this->provider->getProductUrl());
-    }
+        // urlFinder returns null → no rewrite found
+        $this->urlFinder->method('findOneByData')->willReturn(null);
 
-    /** @test */
-    public function testGetProductUrlFallsBackWhenNoProductFound(): void
-    {
-        $product = $this->createMock(\Magento\Catalog\Model\Product::class);
-        $product->method('getId')->willReturn(null);
-
-        $productModel = $this->createMock(\Magento\Catalog\Model\Product::class);
-        $productModel->method('getCollection')->willReturn(
-            $this->makeProductCollectionMock($product)
-        );
-        $this->productFactory->method('create')->willReturn($productModel);
-
-        $this->urlBuilder->method('getUrl')
-            ->with('catalog/product/view', ['id' => 1])
-            ->willReturn('https://example.com/catalog/product/view/id/1/');
+        $this->frontendUrlBuilder->method('setScope');
+        $this->frontendUrlBuilder->method('getUrl')
+            ->willReturn('https://example.com/catalog/category/view/id/2/');
 
         $this->assertSame(
-            'https://example.com/catalog/product/view/id/1/',
-            $this->provider->getProductUrl()
+            'https://example.com/catalog/category/view/id/2/',
+            $this->provider->getCategoryUrl()
         );
     }
 }

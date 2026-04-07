@@ -116,25 +116,21 @@ class PageUrlProvider
     /**
      * Get category page URL (first active category)
      *
+     * Uses a cascading fallback strategy to handle stores with different
+     * category tree structures:
+     *   1. Active category with level > 1 that has sub-categories (ideal)
+     *   2. Any active category with level > 1 (covers leaf-only trees)
+     *   3. Any active category at any level (last resort)
+     *
      * @return string
      */
     public function getCategoryUrl()
     {
         try {
             $storeId = $this->storeManager->getStore()->getId();
+            $category = $this->findCategory($storeId);
 
-            $category = $this->categoryFactory->create()
-                ->getCollection()
-                ->setStoreId($storeId)
-                ->addAttributeToSelect('url_key')
-                ->addAttributeToFilter('is_active', 1)
-                ->addAttributeToFilter('level', ['gt' => 1])
-                ->addAttributeToFilter('children_count', ['gt' => 0])
-                ->setOrder('level', 'ASC')
-                ->setPageSize(1)
-                ->getFirstItem();
-
-            if ($category->getId()) {
+            if ($category && $category->getId()) {
                 return $category->getUrl();
             }
         } catch (\Exception $e) {
@@ -142,6 +138,54 @@ class PageUrlProvider
         }
 
         return $this->buildUrl('catalog/category/view', ['id' => 2]);
+    }
+
+    /**
+     * Find first suitable category using cascading filter fallbacks.
+     *
+     * @param  int $storeId
+     * @return \Magento\Catalog\Model\Category|null
+     */
+    protected function findCategory($storeId)
+    {
+        $attempts = [
+            // Level 1 — ideal: active parent category (has sub-categories)
+            [
+                'is_active'      => 1,
+                'level'          => ['gt' => 1],
+                'children_count' => ['gt' => 0],
+            ],
+            // Level 2 — active leaf category (no sub-categories required)
+            [
+                'is_active' => 1,
+                'level'     => ['gt' => 1],
+            ],
+            // Level 3 — any active category regardless of level
+            [
+                'is_active' => 1,
+            ],
+        ];
+
+        foreach ($attempts as $filters) {
+            $collection = $this->categoryFactory->create()
+                ->getCollection()
+                ->setStoreId($storeId)
+                ->addAttributeToSelect('url_key')
+                ->setOrder('level', 'ASC')
+                ->setPageSize(1);
+
+            foreach ($filters as $attribute => $condition) {
+                $collection->addAttributeToFilter($attribute, $condition);
+            }
+
+            $category = $collection->getFirstItem();
+
+            if ($category->getId()) {
+                return $category;
+            }
+        }
+
+        return null;
     }
 
     /**

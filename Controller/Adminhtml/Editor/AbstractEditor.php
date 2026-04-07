@@ -97,6 +97,7 @@ abstract class AbstractEditor extends Action
                 $store = $this->storeManager->getStore($storeId);
                 // Valid store found - save to cookie for next time
                 $this->backendSession->setStoreId($storeId);
+                $this->storeManager->setCurrentStore($store->getCode());
                 $this->logger->info(sprintf('[BTE Controller] Using store from URL: %d (%s)', $storeId, $store->getCode()));
                 return $storeId;
             } catch (\Exception $e) {
@@ -110,6 +111,7 @@ abstract class AbstractEditor extends Action
         if ($lastStoreId) {
             try {
                 $store = $this->storeManager->getStore($lastStoreId);
+                $this->storeManager->setCurrentStore($store->getCode());
                 $this->logger->info(sprintf('[BTE Controller] Using store from cookie: %d (%s)', $lastStoreId, $store->getCode()));
                 return $lastStoreId;
             } catch (\Exception $e) {
@@ -121,6 +123,7 @@ abstract class AbstractEditor extends Action
         // Priority 3: Use default store view
         $defaultStore = $this->storeManager->getDefaultStoreView();
         $defaultStoreId = $defaultStore->getId();
+        $this->storeManager->setCurrentStore($defaultStore->getCode());
         $this->logger->info(sprintf('[BTE Controller] Using default store: %d (%s)', $defaultStoreId, $defaultStore->getCode()));
         return $defaultStoreId;
     }

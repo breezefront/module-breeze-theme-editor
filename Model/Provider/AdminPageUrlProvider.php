@@ -83,29 +83,24 @@ class AdminPageUrlProvider extends PageUrlProvider
      * Overrides parent to avoid $category->getUrl() which uses the admin-scoped
      * URL builder and produces admin URLs in admin context.
      *
+     * Uses the same cascading fallback strategy as the parent findCategory():
+     *   1. Active category with level > 1 that has sub-categories (ideal)
+     *   2. Any active category with level > 1 (covers leaf-only trees)
+     *   3. Any active category at any level (last resort)
+     *
      * @return string
      */
     public function getCategoryUrl()
     {
         try {
             $storeId = $this->storeManager->getStore()->getId();
+            $category = $this->findCategory($storeId);
 
-            $category = $this->categoryFactory->create()
-                ->getCollection()
-                ->setStoreId($storeId)
-                ->addAttributeToSelect('url_key')
-                ->addAttributeToFilter('is_active', 1)
-                ->addAttributeToFilter('level', ['gt' => 1])
-                ->addAttributeToFilter('children_count', ['gt' => 0])
-                ->setOrder('level', 'ASC')
-                ->setPageSize(1)
-                ->getFirstItem();
-
-            if ($category->getId()) {
+            if ($category && $category->getId()) {
                 $rewrite = $this->urlFinder->findOneByData([
-                    UrlRewrite::ENTITY_ID   => $category->getId(),
-                    UrlRewrite::ENTITY_TYPE => CategoryUrlRewriteGenerator::ENTITY_TYPE,
-                    UrlRewrite::STORE_ID    => $storeId,
+                    UrlRewrite::ENTITY_ID     => $category->getId(),
+                    UrlRewrite::ENTITY_TYPE   => CategoryUrlRewriteGenerator::ENTITY_TYPE,
+                    UrlRewrite::STORE_ID      => $storeId,
                     UrlRewrite::REDIRECT_TYPE => 0,
                 ]);
 
