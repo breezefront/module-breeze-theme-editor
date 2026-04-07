@@ -6,9 +6,10 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-publications',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants'
-], function($, getPublications, getConfig, Logger, Constants) {
+], function($, getPublications, getConfig, configManager, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector/metadata-loader');
@@ -18,19 +19,16 @@ define([
         /**
          * Initialize loader
          * @param {Object} options
-         * @param {string} options.scope
-         * @param {number} options.scopeId
-         * @param {number} options.themeId
          * @param {number} options.pageSize
          */
         init: function(options) {
-            this.scope   = options.scope   || 'stores';
-            this.scopeId = options.scopeId;
-            this.themeId = options.themeId;
-            this.pageSize = options.pageSize || 10;
-            
-            log.debug('Metadata loader initialized: scope=' + this.scope + ' scopeId=' + this.scopeId + ' themeId=' + this.themeId + ' pageSize=' + this.pageSize);
-            
+            this.pageSize = (options && options.pageSize) || 10;
+
+            log.debug('Metadata loader initialized: scope=' + configManager.getScope() +
+                ' scopeId=' + configManager.getScopeId() +
+                ' themeId=' + configManager.getThemeId() +
+                ' pageSize=' + this.pageSize);
+
             return this;
         },
 
@@ -42,15 +40,17 @@ define([
          * @returns {Promise<Object>} Promise with {draftChangesCount, modifiedCount, lastPublished}
          */
         loadMetadata: function() {
-            if (!this.scopeId && this.scope !== 'default') {
+            var scope   = configManager.getScope();
+            var scopeId = configManager.getScopeId();
+
+            if (!scopeId && scope !== 'default') {
                 log.warn('Cannot load metadata: scopeId missing');
                 return $.Deferred().reject('Scope ID missing').promise();
             }
 
             log.info('Loading draft + published metadata...');
 
-            var scope   = this.scope;
-            var scopeId = parseInt(this.scopeId) || 0;
+            scopeId = parseInt(scopeId) || 0;
 
             var draftRequest     = getConfig(scope, scopeId, PUBLICATION_STATUS.DRAFT);
             var publishedRequest = getConfig(scope, scopeId, PUBLICATION_STATUS.PUBLISHED);
@@ -84,28 +84,31 @@ define([
          * @returns {Promise<Object>} Promise with {items, total_count, page_info}
          */
         loadPublications: function(page, search) {
+             var scope   = configManager.getScope();
+             var scopeId = configManager.getScopeId();
+
              page = page || 1;
              search = search || null;
-             
-             if (!this.scopeId && this.scope !== 'default') {
+
+             if (!scopeId && scope !== 'default') {
                  log.warn('Cannot load publications: scopeId missing');
                  return $.Deferred().reject('Scope ID missing').promise();
              }
-             
+
              log.info('Loading publications (page ' + page + ')...');
-             
+
              var self = this;
-             
+
              // Use getPublications function
              return getPublications(
-                 this.scope,
-                 parseInt(this.scopeId) || 0,
+                 scope,
+                 parseInt(scopeId) || 0,
                  this.pageSize,
                  page,
                  search
              ).then(function(data) {
                 log.debug('Publications loaded: page=' + page + ' count=' + (data.items ? data.items.length : 0) + ' total=' + data.total_count);
-                
+
                 // Format publications for UI
                 return {
                     items: self._formatPublications(data.items || []),

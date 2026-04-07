@@ -10,19 +10,17 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
     'Swissup_BreezeThemeEditor/js/editor/preview-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
-], function($, getCss, previewManager, Logger, Constants) {
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state'
+], function($, getCss, previewManager, configManager, Logger, Constants, PublicationState) {
     'use strict';
 
     var log = Logger.for('css-manager');
     var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
     
-    var currentStatus = PUBLICATION_STATUS.DRAFT;
     var currentPublicationId = null;
-    var scope   = null;
-    var scopeId = null;
-    var themeId = null;
     var iframeId = null;
     
     var manager = {
@@ -30,9 +28,10 @@ define([
          * Initialize CSS Manager
          *
          * @param {Object} config - Configuration object
-         * @param {String} config.scope - Scope ('default'|'websites'|'stores')
-         * @param {Number} config.scopeId - Scope ID
-         * @param {Number} config.themeId - Theme ID
+         * @param {String} config.scope - Scope ('default'|'websites'|'stores'); written to
+         *                                configManager if not already set (first-init fallback)
+         * @param {Number} config.scopeId - Scope ID (same fallback)
+         * @param {Number} config.themeId - Theme ID (same fallback)
          * @param {String} config.iframeId - Preview iframe ID
          * @param {Number} retries - Internal retry counter (for iframe load waiting)
          * @returns {Boolean}
@@ -40,21 +39,30 @@ define([
         init: function(config, retries) {
             retries = retries || 0;
             var self = this;
-            
-            scope   = config.scope   || 'stores';
-            scopeId = config.scopeId;
-            themeId = config.themeId;
+
+            // Bootstrap configManager if it hasn't been initialised yet
+            // (publication-selector is the canonical first initialiser, but
+            //  editor/css-manager may be the entry point in some flows).
+            if (!configManager.exists()) {
+                configManager.set({
+                    scope:   config.scope   || 'stores',
+                    scopeId: config.scopeId,
+                    themeId: config.themeId || null
+                });
+            }
+
             iframeId = config.iframeId || 'bte-iframe';
 
             // Register BEFORE the retry loop so scope changes during iframe loading
             // are never missed. off+on prevents duplicates on subsequent init() calls.
-            $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function (e, newScope, newScopeId) {
-                manager.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
+            $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function () {
+                // configManager already updated by scope-selector.js before this event fires.
+                manager.reinit(null, true);
             });
 
             // Validate parameters
-            if (!scopeId && scope !== 'default') {
-                log.error('CSS Manager: Invalid scopeId for scope=' + scope);
+            if (!configManager.getScopeId() && configManager.getScope() !== 'default') {
+                log.error('CSS Manager: Invalid scopeId for scope=' + configManager.getScope());
                 return false;
             }
             
@@ -106,7 +114,7 @@ define([
             // Draft CSS will be created dynamically when switching to DRAFT
             // No need to check for it in init()
             
-            log.info('CSS Manager initialized scope=' + scope + ':' + scopeId + ' iframeId=' + iframeId + ' publishedStyleFound=true');
+            log.info('CSS Manager initialized scope=' + configManager.getScope() + ':' + configManager.getScopeId() + ' iframeId=' + iframeId + ' publishedStyleFound=true');
             
             // Trigger ready event for other components (e.g. css-preview-manager).
             // Pass iframeDoc so listeners can initialize without re-querying the iframe.
@@ -120,7 +128,7 @@ define([
          * @returns {Boolean}
          */
         isReady: function() {
-            return !!(scopeId !== null && this._getCurrentIframeDoc());
+            return !!(configManager.getScopeId() !== null && this._getCurrentIframeDoc());
         },
         
         /**
@@ -278,21 +286,21 @@ define([
             
             var doc = this._getCurrentIframeDoc();
             
-            if ((!scopeId && scope !== 'default') || !doc) {
+            if ((!configManager.getScopeId() && configManager.getScope() !== 'default') || !doc) {
                 log.error('CSS Manager not initialized or iframe document not available');
                 return Promise.reject(new Error('CSS Manager not initialized'));
             }
             
-            currentStatus = status;
+            PublicationState.set(status);
             currentPublicationId = publicationId || null;
 
             // Capture scope context at call time — caller may pass explicit ctx,
-            // otherwise fall back to module-level vars.
+            // otherwise fall back to configManager (single source of truth).
             // Captured values are used throughout the async chain so that a scope
             // change arriving while a GraphQL request is in-flight does not corrupt
             // the result (stale-closure guard below).
-            var effectiveScope   = (ctx && ctx.scope)   || scope;
-            var effectiveScopeId = (ctx && ctx.scopeId) || scopeId;
+            var effectiveScope   = (ctx && ctx.scope)   || configManager.getScope();
+            var effectiveScopeId = (ctx && ctx.scopeId != null) ? ctx.scopeId : configManager.getScopeId();
             
             // Get style elements from current iframe document
             var $publishedStyle = $(doc).find('#bte-theme-css-variables');
@@ -308,9 +316,9 @@ define([
                         .then(function(response) {
                             // Stale-response guard: scope may have changed while the
                             // request was in-flight — discard result if so.
-                            if (effectiveScopeId !== scopeId) {
+                            if (effectiveScopeId !== configManager.getScopeId()) {
                                 log.warn('CSS Manager: DRAFT response for scopeId=' + effectiveScopeId +
-                                    ' discarded — current scope is now ' + scopeId);
+                                    ' discarded — current scope is now ' + configManager.getScopeId());
                                 return { status: PUBLICATION_STATUS.DRAFT, success: false, stale: true };
                             }
 
@@ -379,9 +387,9 @@ define([
                     return getCss(effectiveScope, effectiveScopeId, PUBLICATION_STATUS.PUBLICATION, publicationId)
                         .then(function(response) {
                             // Stale-response guard
-                            if (effectiveScopeId !== scopeId) {
+                            if (effectiveScopeId !== configManager.getScopeId()) {
                                 log.warn('CSS Manager: PUBLICATION response for scopeId=' + effectiveScopeId +
-                                    ' discarded — current scope is now ' + scopeId);
+                                    ' discarded — current scope is now ' + configManager.getScopeId());
                                 return { status: PUBLICATION_STATUS.PUBLICATION, success: false, stale: true };
                             }
 
@@ -461,7 +469,7 @@ define([
          */
         refresh: function() {
             log.info('CSS Manager: Refreshing current status');
-            return this.switchTo(currentStatus, currentPublicationId);
+            return this.switchTo(PublicationState.get(), currentPublicationId);
         },
         
         /**
@@ -503,27 +511,25 @@ define([
         },
 
         /**
-         * Re-initialize scope context and optionally reset status vars.
+         * Re-initialize and optionally reset status vars.
          *
          * Unlike panel/css-manager, this module does not cache DOM refs —
          * switchTo() always reads _getCurrentIframeDoc() fresh. So flush=true
          * only needs to reset the status/publication tracking vars so that
          * the next switchTo() call starts from a clean state for the new scope.
          *
-         * @param {Object|null} config - { scope, scopeId, themeId }; null = keep current vars
-         * @param {Boolean}     flush  - if true, reset currentStatus and currentPublicationId
+         * scope/scopeId/themeId are always read from configManager (single source of truth).
+         *
+         * @param {Object|null} _config - Ignored (kept for call-site compatibility); scope is
+         *                                read from configManager.
+         * @param {Boolean}     flush   - if true, reset currentStatus and currentPublicationId
          */
-        reinit: function(config, flush) {
-            if (config) {
-                scope   = config.scope   || 'stores';
-                scopeId = config.scopeId;
-                themeId = config.themeId || null;
-            }
+        reinit: function(_config, flush) {
             if (flush) {
                 currentStatus        = PUBLICATION_STATUS.DRAFT;
                 currentPublicationId = null;
             }
-            log.info('CSS Manager: reinit scope=' + scope + ':' + scopeId + ' flush=' + !!flush);
+            log.info('CSS Manager: reinit scope=' + configManager.getScope() + ':' + configManager.getScopeId() + ' flush=' + !!flush);
         }
     };
 

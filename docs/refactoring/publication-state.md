@@ -293,7 +293,7 @@ this.options.status = PublicationState.get();
 
 ## Тести, які потрібно написати
 
-- `tests/js/utils/publication-state-test.js` (новий файл):
+- `test/tests/publication-state-test.js` (новий файл):
   - `get()` повертає `'DRAFT'` при першому виклику (localStorage порожній)
   - `get()` повертає збережений статус з localStorage
   - `set()` оновлює статус, зберігає в storage, тригерить подію
@@ -302,10 +302,30 @@ this.options.status = PublicationState.get();
   - `reset()` + `get()` — перечитує з localStorage
   - Зовнішній `publicationStatusChanged` оновлює внутрішній `_status`
 
-- `tests/js/panel/css-manager-test.js`:
-  - `getCurrentStatus()` після init — повертає значення з `PublicationState`, не `null`
-  - `showDraft()` встановлює `PublicationState.get() === 'DRAFT'`
-  - `showPublished()` встановлює `PublicationState.get() === 'PUBLISHED'`
+---
+
+## Деталі реалізації тестів
+
+### Ізоляція StorageHelper
+
+`StorageHelper` потребує `init(storeId, themeId)` перед використанням. Тести
+використовують **реальний** `StorageHelper` з `jsdom`-localStorage (без моків) —
+це відповідає підходу `panel-state-test.js`. На початку suite: `StorageHelper.init(1, 1)`.
+На початку кожного кейсу: `PublicationState.reset()` + очищення localStorage.
+
+### Ізоляція singleton між кейсами
+
+`publication-state.js` — AMD-модуль, його стан живе на рівні модуля (`_status`,
+`_initialized`). Оскільки Jest кешує AMD-модулі протягом suite, кожен тест мусить
+викликати `PublicationState.reset()` першою дією — це скидає `_initialized = false`
+і `_status = null`, змушуючи `get()` перечитати localStorage заново.
+
+### Ризик подвійного тригера в `css-state-restorer.js`
+
+`switchStatus()` (рядки 176–179) вручну тригерить `publicationStatusChanged` після
+switch. Після рефакторингу `PublicationState.set()` тригерить подію сам — тому
+дублікат `$(document).trigger(...)` у `switchStatus()` треба **видалити**.
+Аналогічно для `loadPublication()` (рядки 220–226 в оригіналі).
 
 ---
 

@@ -21,6 +21,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/metadata-loader',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/css-state-restorer',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/action-executor',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function (
@@ -35,6 +36,7 @@ define([
     MetadataLoader,
     CssStateRestorer,
     ActionExecutor,
+    configManager,
     Logger,
     Constants
 ) {
@@ -51,9 +53,6 @@ define([
             publishedModifiedCount: 0,
             currentPublicationId: null,
             currentPublicationTitle: null,
-            scope: 'stores',
-            scopeId: null,
-            themeId: null,
             publicationsPage: 1,
             publicationsPageSize: 10
         },
@@ -64,11 +63,17 @@ define([
         _create: function () {
             log.info('Initializing publication selector');
 
-            // Get scope and theme IDs
-            var config = window.breezeThemeEditorConfig || {};
-            this.scope   = config.scope   || this.options.scope   || 'stores';
-            this.scopeId = config.scopeId || this.options.scopeId;
-            this.themeId = config.themeId || this.options.themeId;
+            // Initialize configManager from window.breezeThemeEditorConfig if not yet set
+            if (!configManager.exists()) {
+                var config = window.breezeThemeEditorConfig || {};
+                configManager.set({
+                    scope:   config.scope   || this.options.scope   || 'stores',
+                    scopeId: config.scopeId != null ? config.scopeId : (this.options.scopeId != null ? this.options.scopeId : null),
+                    themeId: config.themeId || this.options.themeId || null,
+                    storeCode:        config.storeCode        || 'default',
+                    graphqlEndpoint:  config.graphqlEndpoint  || '/graphql'
+                });
+            }
 
             // Initialize modules
             this._initModules();
@@ -99,8 +104,10 @@ define([
          */
         _initModules: function () {
             // Initialize StorageHelper
-            if (this.scopeId && this.themeId) {
-                StorageHelper.init(this.scopeId, this.themeId);
+            var scopeId = configManager.getScopeId();
+            var themeId = configManager.getThemeId();
+            if (scopeId && themeId) {
+                StorageHelper.init(scopeId, themeId);
             }
 
             // Initialize Renderer
@@ -111,9 +118,6 @@ define([
 
             // Initialize MetadataLoader
             this.metadataLoader = Object.create(MetadataLoader).init({
-                scope:    this.scope,
-                scopeId:  this.scopeId,
-                themeId:  this.themeId,
                 pageSize: this.options.publicationsPageSize
             });
         },
@@ -251,15 +255,7 @@ define([
                 log.info('Scope changed to ' + scope + ':' + scopeId +
                     ', reloading publication selector data...');
 
-                self.scope   = scope;
-                self.scopeId = scopeId;
-                self.themeId = null;
-
-                // Update metadataLoader with new scope context
-                self.metadataLoader.scope   = scope;
-                self.metadataLoader.scopeId = scopeId;
-                self.metadataLoader.themeId = null;
-
+                // configManager already updated by scope-selector.js before this event fires.
                 // Re-init StorageHelper for the new scope to restore persisted state
                 StorageHelper.init(scopeId, null);
 

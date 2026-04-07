@@ -3,9 +3,11 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-css',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
-], function ($, IframeHelper, getCss, StorageHelper, Logger, Constants) {
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state'
+], function ($, IframeHelper, getCss, StorageHelper, configManager, Logger, Constants, PublicationState) {
     'use strict';
 
     var log = Logger.for('panel/css-manager');
@@ -15,10 +17,6 @@ define([
     var $draftStyle = null;
     var $livePreviewStyle = null;
     var $publicationStyle = null;
-    var currentStatus = null;
-    var scope   = null;
-    var scopeId = null;
-    var themeId = null;
 
     /**
      * Get current iframe document (always fresh from IframeHelper)
@@ -44,34 +42,33 @@ define([
         /**
          * Initialize CSS manager
          *
-         * @param {Object} config - { scope, scopeId, themeId, iframeId }
+         * @param {Object} [config] - Optional overrides { iframeId }; scope/scopeId/themeId
+         *                            are read from configManager (single source of truth).
          * @param {Number} retries - Internal retry counter
          */
         init: function(config, retries) {
-            // Support legacy call: init(scopeId, themeId) → convert to object
+            // Support legacy call: init(scopeId, themeId) → treat as no-op (configManager owns scope)
             if (typeof config === 'number' || typeof config === 'string') {
-                config = { scopeId: config, themeId: retries };
                 retries = 0;
+                config = {};
             }
             retries = retries || 0;
+            config = config || {};
             var self = this;
 
-            scope   = config.scope   || 'stores';
-            scopeId = config.scopeId;
-            themeId = config.themeId;
-
-            // Initialize storage helper with scope/theme context
-            StorageHelper.init(scopeId, themeId);
+            // Initialize storage helper with scope/theme context from configManager
+            StorageHelper.init(configManager.getScopeId(), configManager.getThemeId());
 
             // Register BEFORE the retry loop so scope changes during iframe loading
             // are never missed. off+on prevents duplicates on subsequent init() calls.
             $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function (e, newScope, newScopeId) {
-                manager.reinit({ scope: newScope, scopeId: newScopeId, themeId: null }, true);
+                // configManager already updated by scope-selector.js before this event fires.
+                manager.reinit(null, true);
             });
 
             // Validate parameters
-            if (!scopeId && scope !== 'default') {
-                log.error('CSS Manager: Invalid scopeId for scope=' + scope);
+            if (!configManager.getScopeId() && configManager.getScope() !== 'default') {
+                log.error('CSS Manager: Invalid scopeId for scope=' + configManager.getScope());
                 return false;
             }
 
@@ -119,22 +116,15 @@ define([
                 log.info('Draft CSS not in DOM - will be created dynamically when needed');
             }
 
-            // Check localStorage for current status
-            currentStatus = this._getStoredStatus();
+            // Check localStorage for current status — PublicationState handles this lazily,
+            // but we call get() here to trigger initialization within the correct
+            // StorageHelper scope (StorageHelper.init was called just above).
+            PublicationState.get();
 
             // Apply initial CSS based on stored status
             this._applyStoredState();
 
-            // Listen for publication status changes to keep currentStatus in sync
-            // This ensures isEditable() returns correct value when status changes
-            $(document).on('publicationStatusChanged', function(e, data) {
-                if (data && data.status) {
-                    currentStatus = data.status;
-                    log.info('CSS Manager: currentStatus updated to: ' + currentStatus);
-                }
-            });
-
-            log.info('CSS Manager initialized (status: ' + currentStatus + ')');
+            log.info('CSS Manager initialized (status: ' + PublicationState.get() + ')');
 
             // Notify css-preview-manager (and any other listener) that #bte-theme-css-variables
             // is now guaranteed to be in the iframe DOM.  This resolves the race condition where
@@ -262,11 +252,8 @@ define([
             // Remove publication CSS
             this._removePublicationStyle();
 
-            currentStatus = PUBLICATION_STATUS.PUBLISHED;
+            PublicationState.set(PUBLICATION_STATUS.PUBLISHED);
             log.info('CSS Manager: Showing PUBLISHED (read-only mode)');
-
-            // ✅ Trigger event to notify panel about status change
-            $(document).trigger('publicationStatusChanged', {status: PUBLICATION_STATUS.PUBLISHED});
 
             return true;
         },
@@ -277,14 +264,14 @@ define([
          * Draft CSS is loaded from GraphQL and created dynamically
          *
          * @param {Object} [ctx] - Optional scope context { scope, scopeId }.
-         *                         Falls back to module-level vars when omitted.
+         *                         Falls back to configManager when omitted.
          */
         showDraft: function(ctx) {
             var self = this;
 
             // Capture scope context at call time to guard against stale async responses.
-            var effectiveScope   = (ctx && ctx.scope)   || scope;
-            var effectiveScopeId = (ctx && ctx.scopeId) || scopeId;
+            var effectiveScope   = (ctx && ctx.scope)   || configManager.getScope();
+            var effectiveScopeId = (ctx && ctx.scopeId != null) ? ctx.scopeId : configManager.getScopeId();
 
             // Refresh style references (may appear later)
             if (!$publishedStyle || !$publishedStyle.length) {
@@ -303,9 +290,9 @@ define([
                     .then(function(response) {
                         // Stale-response guard: scope may have changed while the
                         // request was in-flight — discard result if so.
-                        if (effectiveScopeId !== scopeId) {
+                        if (effectiveScopeId !== configManager.getScopeId()) {
                             log.warn('CSS Manager: DRAFT response for scopeId=' + effectiveScopeId +
-                                ' discarded — current scope is now ' + scopeId);
+                                ' discarded — current scope is now ' + configManager.getScopeId());
                             return false;
                         }
 
@@ -342,11 +329,8 @@ define([
                             // Remove publication CSS
                             self._removePublicationStyle();
 
-                            currentStatus = PUBLICATION_STATUS.DRAFT;
+                            PublicationState.set(PUBLICATION_STATUS.DRAFT);
                             log.info('CSS Manager: Showing DRAFT (editable mode, created dynamically)');
-
-                            // Trigger event to notify panel about status change
-                            $(document).trigger('publicationStatusChanged', {status: PUBLICATION_STATUS.DRAFT});
 
                             return true;
                         }
@@ -370,11 +354,8 @@ define([
             // Remove publication CSS
             this._removePublicationStyle();
 
-            currentStatus = PUBLICATION_STATUS.DRAFT;
+            PublicationState.set(PUBLICATION_STATUS.DRAFT);
             log.info('CSS Manager: Showing DRAFT (editable mode)');
-
-            // Trigger event to notify panel about status change
-            $(document).trigger('publicationStatusChanged', {status: PUBLICATION_STATUS.DRAFT});
 
             return Promise.resolve(true);
         },
@@ -385,7 +366,7 @@ define([
          *
          * @param {Number} publicationId
          * @param {Object} [ctx] - Optional scope context { scope, scopeId }.
-         *                         Falls back to module-level vars when omitted.
+         *                         Falls back to configManager when omitted.
          * @returns {Promise}
          */
         showPublication: function(publicationId, ctx) {
@@ -397,8 +378,8 @@ define([
             }
 
             // Capture scope context at call time to guard against stale async responses.
-            var effectiveScope   = (ctx && ctx.scope)   || scope;
-            var effectiveScopeId = (ctx && ctx.scopeId) || scopeId;
+            var effectiveScope   = (ctx && ctx.scope)   || configManager.getScope();
+            var effectiveScopeId = (ctx && ctx.scopeId != null) ? ctx.scopeId : configManager.getScopeId();
 
             log.info('Fetching publication CSS: ' + publicationId);
 
@@ -430,9 +411,9 @@ define([
                 .then(function(response) {
                     // Stale-response guard: scope may have changed while the
                     // request was in-flight — discard result if so.
-                    if (effectiveScopeId !== scopeId) {
+                    if (effectiveScopeId !== configManager.getScopeId()) {
                         log.warn('CSS Manager: PUBLICATION response for scopeId=' + effectiveScopeId +
-                            ' discarded — current scope is now ' + scopeId);
+                            ' discarded — current scope is now ' + configManager.getScopeId());
                         return false;
                     }
 
@@ -451,14 +432,8 @@ define([
                     // Inject publication CSS as <style> element
                     self._injectPublicationStyle(result.css);
 
-                    currentStatus = PUBLICATION_STATUS.PUBLICATION;
+                    PublicationState.set(PUBLICATION_STATUS.PUBLICATION);
                     log.info('CSS Manager: Showing PUBLICATION ' + publicationId + ' (read-only mode)');
-
-                    // ✅ Trigger event to notify panel about status change
-                    $(document).trigger('publicationStatusChanged', {
-                        status: PUBLICATION_STATUS.PUBLICATION,
-                        publicationId: publicationId
-                    });
 
                     return true;
                 })
@@ -556,7 +531,7 @@ define([
         refreshPublishedCss: function() {
             var self = this;
 
-            return getCss(scope, scopeId, PUBLICATION_STATUS.PUBLISHED, null)
+            return getCss(configManager.getScope(), configManager.getScopeId(), PUBLICATION_STATUS.PUBLISHED, null)
                 .then(function(response) {
                     var css = (response &&
                                response.getThemeEditorCss &&
@@ -598,7 +573,7 @@ define([
         refreshDraftCss: function() {
             var self = this;
 
-            return getCss(scope, scopeId, PUBLICATION_STATUS.DRAFT, null)
+            return getCss(configManager.getScope(), configManager.getScopeId(), PUBLICATION_STATUS.DRAFT, null)
                 .then(function(response) {
                     var css = (response &&
                                response.getThemeEditorCss &&
@@ -630,7 +605,7 @@ define([
          * Refresh current status (re-fetch if PUBLICATION)
          */
         refresh: function() {
-            if (currentStatus === 'PUBLICATION') {
+            if (PublicationState.get() === 'PUBLICATION') {
                 var publicationId = this._getStoredPublicationId();
                 if (publicationId) {
                     return this.showPublication(publicationId);
@@ -666,7 +641,7 @@ define([
          * Get current status
          */
         getCurrentStatus: function() {
-            return currentStatus;
+            return PublicationState.get();
         },
 
         /**
@@ -676,25 +651,23 @@ define([
          * @returns {Boolean}
          */
         isEditable: function() {
-            return currentStatus === PUBLICATION_STATUS.DRAFT;
+            return PublicationState.isEditable();
         },
 
         /**
-         * Re-initialize scope context and optionally flush stale DOM references.
+         * Re-initialize and optionally flush stale DOM references.
          *
          * Use flush=true whenever the iframe is about to navigate to a new scope
          * so that the next showDraft() / showPublished() call fetches fresh CSS
          * from GraphQL instead of reusing dead DOM elements from the old document.
          *
-         * @param {Object|null} config - { scope, scopeId, themeId }; null = keep current vars
-         * @param {Boolean}     flush  - if true, clear all cached DOM refs and reset status
+         * scope/scopeId/themeId are always read from configManager (single source of truth).
+         *
+         * @param {Object|null} _config - Ignored (kept for call-site compatibility); scope is
+         *                                read from configManager.
+         * @param {Boolean}     flush   - if true, clear all cached DOM refs and reset status
          */
-        reinit: function (config, flush) {
-            if (config) {
-                scope   = config.scope   || 'stores';
-                scopeId = config.scopeId;
-                themeId = config.themeId || null;
-            }
+        reinit: function (_config, flush) {
             if (flush) {
                 // Physically remove the draft style element from the iframe DOM before
                 // clearing JS refs. Without this, showDraft() would re-find the stale
@@ -708,9 +681,9 @@ define([
                 $draftStyle       = null;
                 $livePreviewStyle = null;
                 $publicationStyle = null;
-                currentStatus     = null;
+                PublicationState.reset();
             }
-            log.info('CSS Manager: reinit scope=' + scope + ':' + scopeId + ' flush=' + !!flush);
+            log.info('CSS Manager: reinit scope=' + configManager.getScope() + ':' + configManager.getScopeId() + ' flush=' + !!flush);
         },
 
         /**
@@ -721,7 +694,7 @@ define([
             $publishedStyle = null;
             $draftStyle = null;
             $livePreviewStyle = null;
-            currentStatus = null;
+            PublicationState.reset();
             $(document).off('scopeChanged.cssManager');
             log.info('CSS Manager destroyed');
         }
