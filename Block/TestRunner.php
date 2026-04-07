@@ -241,6 +241,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/panel-state-test',
             // DependsEvaluator Tests (12 tests) — _evaluate/applyInitialVisibility/updateVisibility
             'Swissup_BreezeThemeEditor/js/test/tests/depends-evaluator-test',
+            // CSS Manager Live Preview Bug Tests (14 tests) — toolbar switchTo() must disable+clear livePreview
+            'Swissup_BreezeThemeEditor/js/test/tests/css-manager-live-preview-bug-test',
         ];
     }
 }
