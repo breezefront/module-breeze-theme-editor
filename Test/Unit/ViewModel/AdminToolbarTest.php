@@ -5,6 +5,8 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\ViewModel;
 
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Url\DecoderInterface;
+use Magento\Framework\Url\EncoderInterface;
+use Magento\Framework\UrlInterface;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider;
@@ -31,16 +33,26 @@ class AdminToolbarTest extends TestCase
 {
     private RequestInterface $request;
     private BackendSession $backendSession;
+    private EncoderInterface $urlEncoder;
+    private UrlInterface $urlBuilder;
     private AdminToolbar $viewModel;
 
     protected function setUp(): void
     {
         $this->request        = $this->createMock(RequestInterface::class);
         $this->backendSession = $this->createMock(BackendSession::class);
+        $this->urlEncoder     = $this->createMock(EncoderInterface::class);
+        $this->urlBuilder     = $this->createMock(UrlInterface::class);
+
+        $defaultStore = $this->createMock(\Magento\Store\Api\Data\StoreInterface::class);
+        $defaultStore->method('getId')->willReturn(0);
+
+        $storeManager = $this->createMock(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeManager->method('getStore')->willReturn($defaultStore);
 
         $scopeProvider = new ToolbarScopeProvider(
             $this->backendSession,
-            $this->createMock(\Magento\Store\Model\StoreManagerInterface::class),
+            $storeManager,
             $this->request
         );
 
@@ -53,7 +65,9 @@ class AdminToolbarTest extends TestCase
             $this->createMock(ToolbarPermissionsProvider::class),
             $this->createMock(ToolbarUrlProvider::class),
             $this->createMock(ToolbarThemeProvider::class),
-            $this->createMock(DecoderInterface::class)
+            $this->createMock(DecoderInterface::class),
+            $this->urlEncoder,
+            $this->urlBuilder
         );
     }
 
@@ -128,5 +142,92 @@ class AdminToolbarTest extends TestCase
             ->willReturn('bogus_scope');
 
         $this->assertSame('default', $this->viewModel->getScope());
+    }
+
+    // -------------------------------------------------------------------------
+    // getIframeUrl()
+    // -------------------------------------------------------------------------
+
+    /**
+     * @test
+     */
+    public function testIframeUrlUsesEncoderForDefaultUrl(): void
+    {
+        $this->request->method('getParam')
+            ->willReturnMap([['url', '/', '/'], ['jstest', false, false]]);
+
+        $this->urlEncoder->expects($this->once())
+            ->method('encode')
+            ->with('/')
+            ->willReturn('Lw~~');
+
+        $this->urlBuilder->expects($this->once())
+            ->method('getUrl')
+            ->with('breeze_editor/editor/iframe', ['store' => 0, 'url' => 'Lw~~'])
+            ->willReturn('https://example.com/admin/breeze_editor/editor/iframe/store/0/url/Lw~~/');
+
+        $result = $this->viewModel->getIframeUrl();
+
+        $this->assertSame(
+            'https://example.com/admin/breeze_editor/editor/iframe/store/0/url/Lw~~/',
+            $result
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function testIframeUrlEncodesCustomPath(): void
+    {
+        $this->request->method('getParam')
+            ->willReturnMap([['url', '/', '/catalog/category/view.html'], ['jstest', false, false]]);
+
+        $encoded = strtr(base64_encode('/catalog/category/view.html'), '+/=', '-_~');
+
+        $this->urlEncoder->method('encode')
+            ->with('/catalog/category/view.html')
+            ->willReturn($encoded);
+
+        $this->urlBuilder->method('getUrl')
+            ->with('breeze_editor/editor/iframe', ['store' => 0, 'url' => $encoded])
+            ->willReturn('https://example.com/admin/breeze_editor/editor/iframe/store/0/url/' . $encoded . '/');
+
+        $this->assertStringContainsString($encoded, $this->viewModel->getIframeUrl());
+    }
+
+    /**
+     * @test
+     */
+    public function testIframeUrlAddsJstestParamWhenEnabled(): void
+    {
+        $this->request->method('getParam')
+            ->willReturnMap([['url', '/', '/'], ['jstest', false, '1']]);
+
+        $this->urlEncoder->method('encode')->willReturn('Lw~~');
+
+        $this->urlBuilder->expects($this->once())
+            ->method('getUrl')
+            ->with('breeze_editor/editor/iframe', ['store' => 0, 'url' => 'Lw~~', 'jstest' => 1])
+            ->willReturn('https://example.com/admin/breeze_editor/editor/iframe/store/0/url/Lw~~/jstest/1/');
+
+        $this->viewModel->getIframeUrl();
+    }
+
+    /**
+     * @test
+     */
+    public function testIframeUrlOmitsJstestParamWhenDisabled(): void
+    {
+        $this->request->method('getParam')
+            ->willReturnMap([['url', '/', '/'], ['jstest', false, false]]);
+
+        $this->urlEncoder->method('encode')->willReturn('Lw~~');
+
+        $this->urlBuilder->expects($this->once())
+            ->method('getUrl')
+            ->with('breeze_editor/editor/iframe', ['store' => 0, 'url' => 'Lw~~'])
+            ->willReturn('https://example.com/admin/breeze_editor/editor/iframe/store/0/url/Lw~~/');
+
+        $this->viewModel->getIframeUrl();
     }
 }

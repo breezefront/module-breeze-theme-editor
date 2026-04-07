@@ -8,25 +8,13 @@ $viewModel = $block->getData('view_model');
 // Get store ID from ViewModel (same source as toolbar config for consistency)
 // Uses priority: URL param ?store=X → Cookie → Default store
 $storeId = $viewModel ? $viewModel->getStoreId() : 1;
-$jstest = $block->getData('jstest') ?: false;
 
 // Get full toolbar configuration from ViewModel
 $toolbarConfig = $viewModel ? $viewModel->getToolbarConfig() : [];
 
-// Read 'url' parameter from GET (priority for URL sharing)
-// If not present, will be restored from localStorage via JavaScript
-$requestedUrl = $block->getRequest()->getParam('url', '/');
-
-// Build iframe URL (theme is determined automatically from store config)
-// The 'url' path param is encoded with Magento's uenc scheme
-// (strtr(base64_encode(), '+/=', '-_~')) so that characters like '/' survive
-// through Cloudflare and any other proxy that decodes %2F before reaching origin.
-$encodedUrl   = strtr(base64_encode($requestedUrl), '+/=', '-_~');
-$iframeParams = ['store' => $storeId, 'url' => $encodedUrl];
-if ($jstest) {
-    $iframeParams['jstest'] = 1;
-}
-$iframeUrl = $block->getUrl('breeze_editor/editor/iframe', $iframeParams);
+// Build iframe URL: reads ?url= param, encodes it with Magento's uenc scheme,
+// and appends store + optional jstest params.
+$iframeUrl = $viewModel ? $viewModel->getIframeUrl() : $block->getUrl('breeze_editor/editor/iframe');
 ?>
 
 <!-- Minimal HTML structure - components will render their own UI -->

@@ -4,6 +4,8 @@ namespace Swissup\BreezeThemeEditor\ViewModel;
 
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Framework\Url\DecoderInterface;
+use Magento\Framework\Url\EncoderInterface;
+use Magento\Framework\UrlInterface;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarAuthProvider;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarPermissionsProvider;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarScopeProvider;
@@ -71,6 +73,16 @@ class AdminToolbar implements ArgumentInterface
     private $urlDecoder;
 
     /**
+     * @var EncoderInterface
+     */
+    private $urlEncoder;
+
+    /**
+     * @var UrlInterface
+     */
+    private $urlBuilder;
+
+    /**
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider $pageUrlProvider
      * @param \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider
@@ -80,6 +92,8 @@ class AdminToolbar implements ArgumentInterface
      * @param ToolbarUrlProvider $urlProvider
      * @param ToolbarThemeProvider $themeProvider
      * @param DecoderInterface $urlDecoder
+     * @param EncoderInterface $urlEncoder
+     * @param UrlInterface $urlBuilder
      */
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
@@ -90,7 +104,9 @@ class AdminToolbar implements ArgumentInterface
         ToolbarPermissionsProvider $permissionsProvider,
         ToolbarUrlProvider $urlProvider,
         ToolbarThemeProvider $themeProvider,
-        DecoderInterface $urlDecoder
+        DecoderInterface $urlDecoder,
+        EncoderInterface $urlEncoder,
+        UrlInterface $urlBuilder
     ) {
         $this->request             = $request;
         $this->pageUrlProvider     = $pageUrlProvider;
@@ -101,6 +117,8 @@ class AdminToolbar implements ArgumentInterface
         $this->urlProvider         = $urlProvider;
         $this->themeProvider       = $themeProvider;
         $this->urlDecoder          = $urlDecoder;
+        $this->urlEncoder          = $urlEncoder;
+        $this->urlBuilder          = $urlBuilder;
     }
 
     // =========================================================================
@@ -267,6 +285,26 @@ class AdminToolbar implements ArgumentInterface
     // =========================================================================
     // Orchestrator methods — remain in AdminToolbar
     // =========================================================================
+
+    /**
+     * Build the iframe preview URL for the editor page.
+     *
+     * The 'url' path param is encoded with Magento's uenc scheme
+     * (EncoderInterface: strtr(base64_encode(), '+/=', '-_~')) so that
+     * characters like '/' survive through Cloudflare and any proxy that
+     * decodes %2F before reaching origin.
+     *
+     * @return string
+     */
+    public function getIframeUrl(): string
+    {
+        $requestedUrl = $this->request->getParam('url', '/');
+        $params       = ['store' => $this->getStoreId(), 'url' => $this->urlEncoder->encode($requestedUrl)];
+        if ($this->isJstestMode()) {
+            $params['jstest'] = 1;
+        }
+        return $this->urlBuilder->getUrl('breeze_editor/editor/iframe', $params);
+    }
 
     /**
      * Check if jstest mode is enabled.
