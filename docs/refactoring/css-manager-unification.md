@@ -2,7 +2,7 @@
 
 **Дата:** 2026-04-07  
 **Пріоритет:** 🟠 High  
-**Статус:** `[ ] TODO`  
+**Статус:** `[x] DONE ✓`  
 **Категорія:** Code duplication / Tight coupling  
 **PLAN.md:** п. 7 (Tight coupling)
 

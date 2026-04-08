@@ -32,9 +32,9 @@
 | Файл | Тема | Пріоритет | Статус |
 |------|------|-----------|--------|
 | [font-palette-role-fields-autogeneration.md](font-palette-role-fields-autogeneration.md) | Font palette role fields — авто-генерація з `font_palettes.fonts[]`, усунення дублювання з `sections` | 🟡 Medium | `[ ] TODO` |
-| [publication-state.md](publication-state.md) | `currentStatus` — єдине джерело правди через новий singleton `publication-state.js`; усуває desync між двома css-manager і `null` default | 🟠 High | `[ ] TODO` |
-| [scope-single-source-of-truth.md](scope-single-source-of-truth.md) | `scope/scopeId/themeId` — замінити 7 незалежних копій на читання через існуючий `configManager` | 🟠 High | `[ ] TODO` |
-| [css-manager-unification.md](css-manager-unification.md) | Об'єднати `editor/css-manager.js` і `editor/panel/css-manager.js` в один; усунути баг з live preview при перемиканні через toolbar | 🟠 High | `[ ] TODO` |
+| [publication-state.md](publication-state.md) | `currentStatus` — єдине джерело правди через новий singleton `publication-state.js`; усуває desync між двома css-manager і `null` default | 🟠 High | `[x] DONE ✓` |
+| [scope-single-source-of-truth.md](scope-single-source-of-truth.md) | `scope/scopeId/themeId` — замінити 7 незалежних копій на читання через існуючий `configManager` | 🟠 High | `[x] DONE ✓` |
+| [css-manager-unification.md](css-manager-unification.md) | Об'єднати `editor/css-manager.js` і `editor/panel/css-manager.js` в один; усунути баг з live preview при перемиканні через toolbar | 🟠 High | `[x] DONE ✓` |
 
 ---
 
