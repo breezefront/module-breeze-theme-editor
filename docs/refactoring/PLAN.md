@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 29 / 108 завершено  
+**Статус виконання:** 33 / 108 завершено  
 
 ---
 
@@ -374,7 +374,7 @@
 - **Проблема:** `showPublished()`, `showDraft()`, `showPublication()` — всі три містять ідентичний блок, що знаходить 3 іменованих `<style>` елементи, видаляє та перевставляє їх.
 - **Пропозиція:** Private `_refreshStyleElements()` helper.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміти `5a97541` `8e59dac` (panel/css-manager.js видалено, злито з editor/css-manager.js; дублювання усунуто через уніфікований модуль)
 
 ### 4.9 Scope traversal — 3 рази в `scope-selector.js`
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/scope-selector.js`
@@ -641,7 +641,7 @@
 - **Проблема:** Toolbar записує конфіг у `window.breezeThemeEditorConfig`, кілька компонентів читають звідти. Невидима залежність між toolbar та будь-яким компонентом, що читає цей глобал.
 - **Пропозиція:** Замінити на shared AMD-модуль (config store).
 - **Пріоритет:** 🟠 High
-- **Статус:** `[ ] TODO`
+- **Статус:** 🔄 Частково — коміти `5b62abf` `cdbdfc1` вводять `configManager` як єдине джерело scope/scopeId/themeId; `window.breezeThemeEditorConfig` залишається у `toolbar.js` (запис), `settings-editor.js`, `publication-selector.js`, `permissions.js` (читання як fallback). Потребує завершення.
 
 ### 7.2 `AdminToolbar` — 15 constructor-залежностей
 - **Файл:** `ViewModel/AdminToolbar.php`
@@ -827,16 +827,16 @@
 | Категорія | Всього | 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low |
 |-----------|--------|------------|--------|----------|-------|
 | 1. Мертвий код — баги | 4 | 3 | 1 | — | — | ✅ 4/4 |
-| 2. Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 6/31 |
-| 3. God classes | 5 | — | 4 | 1 | — | ✅ 4/4 |
-| 4. Code duplication | 20 | — | 5 | 9 | 6 | 4/20 |
+| 2. Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 9/31 |
+| 3. God classes | 5 | — | 4 | 1 | — | 4/5 |
+| 4. Code duplication | 21 | — | 5 | 10 | 6 | 8/21 |
 | 5. Magic numbers/strings | 17 | 1 | — | 4 | 12 | 4/17 |
-| 6. Missing abstractions | 8 | — | 1 | 7 | — | 3/8 |
+| 6. Missing abstractions | 8 | — | 1 | 7 | — | 4/8 |
 | 7. Tight coupling | 9 | — | 2 | 4 | 3 | 0/9 |
 | 8. setTimeout audit | 13 | — | — | 3 | 10 | 0/13 |
-| **Всього** | **107** | **5** | **16** | **38** | **48** |
-| **Виконано** | **25** | **5** | **10** | **6** | **4** |
-| **Залишилось** | **82** | **0** | **6** | **32** | **44** |
+| **Всього** | **108** | **5** | **16** | **39** | **48** |
+| **Виконано** | **33** | **5** | **10** | **12** | **6** |
+| **Залишилось** | **75** | **0** | **6** | **27** | **42** |
 
 > Примітка: деякі пункти перетинаються між категоріями (напр. п. 3.2 і п. 7.2, або п. 6.3 і п. 7.3).
 
@@ -879,6 +879,17 @@
 
 ### Крок 6 — Low priority cleanup
 - Решта магічних чисел, low-priority dead code, коментарі
+
+### Виконано поза кроками (нові рефакторинги)
+25. `[x]` **п. 2.19** — Замінити хардкодовані рядки на Constants у 17 production-файлах — `365a3dd`
+26. `[x]` **п. 4.21** — Авто-генерація font_palette role fields із `font_palettes.fonts[]` — `a3238b8`
+27. `[x]` **п. 4.8** — css-manager уніфікований: `panel/css-manager.js` видалено, злито з `editor/css-manager.js` — `5a97541` `8e59dac`
+28. `[x]` **publication-state singleton** — `utils/core/publication-state.js` як єдине джерело `currentStatus` — `26b3ee9` `65a4ede`
+29. `[x]` **configManager scope source** — `utils/core/config-manager.js` як єдине джерело scope/scopeId/themeId — `5b62abf` `cdbdfc1`
+30. `[x]` **url-restoration module** — `utils/browser/url-restoration.js` витягнутий як AMD-модуль — `df54e47` `6f9f7dd`
+31. `[x]` **getIframeUrl()** — витягнутий в `AdminToolbar::getIframeUrl()` — `9a96e9c`
+32. `[x]` **getToolbarConfig() cleanup** — видалено pre-populated publications fields — `f35b5d4`
+33. `[x]` **PHP 8.4 nullable types** — explicit nullable types для сумісності — `3946582`
 
 ---
 
