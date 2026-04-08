@@ -146,6 +146,8 @@ class ThemeResolver
 
     /**
      * Get theme info by ID
+     *
+     * @internal Used by tests only; not part of the public API.
      */
     public function getThemeInfo(int $themeId): array
     {
@@ -167,6 +169,8 @@ class ThemeResolver
 
     /**
      * Check if theme has parent
+     *
+     * @internal Used by tests only; not part of the public API.
      */
     public function hasParentTheme(int $themeId): bool
     {
@@ -178,6 +182,8 @@ class ThemeResolver
 
     /**
      * Get direct parent theme ID
+     *
+     * @internal Used by tests only; not part of the public API.
      */
     public function getParentThemeId(int $themeId): ? int
     {

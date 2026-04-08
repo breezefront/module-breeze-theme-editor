@@ -115,16 +115,6 @@ class StoreDataProvider
     }
 
     /**
-     * Check if we have multiple stores
-     *
-     * @return bool
-     */
-    public function hasMultipleStores()
-    {
-        return count($this->getAvailableStores()) > 1;
-    }
-
-    /**
      * Get store switch mode (stores or groups)
      *
      * @return string
@@ -267,30 +257,6 @@ class StoreDataProvider
         }
 
         return $result;
-    }
-
-    /**
-     * Get path to active store (website_id, group_id, store_id)
-     * Used to auto-expand tree to active store
-     *
-     * @return array
-     */
-    public function getActiveStorePath()
-    {
-        try {
-            $store = $this->storeManager->getStore();
-            return [
-                'website_id' => (int)$store->getWebsiteId(),
-                'group_id' => (int)$store->getGroupId(),
-                'store_id' => (int)$store->getId()
-            ];
-        } catch (\Exception $e) {
-            return [
-                'website_id' => 0,
-                'group_id' => 0,
-                'store_id' => 0
-            ];
-        }
     }
 
     /**

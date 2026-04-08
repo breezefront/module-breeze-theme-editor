@@ -336,57 +336,6 @@ class ConfigProviderTest extends TestCase
     }
 
     /**
-     * Test 12: clearCache removes specific theme from cache
-     */
-    public function testClearCacheRemovesSpecificTheme(): void
-    {
-        // Test cache clearing by using reflection to access configCache
-        $reflection = new \ReflectionClass($this->configProvider);
-        $cacheProperty = $reflection->getProperty('configCache');
-        $cacheProperty->setAccessible(true);
-
-        // Manually populate cache
-        $cacheProperty->setValue($this->configProvider, [
-            10 => ['version' => '1.0'],
-            20 => ['version' => '2.0'],
-            'inherited_10' => ['version' => '1.0 inherited']
-        ]);
-
-        // Clear cache for theme 10
-        $this->configProvider->clearCache(10);
-
-        $cache = $cacheProperty->getValue($this->configProvider);
-
-        $this->assertArrayNotHasKey(10, $cache);
-        $this->assertArrayNotHasKey('inherited_10', $cache);
-        $this->assertArrayHasKey(20, $cache); // Other theme still in cache
-    }
-
-    /**
-     * Test 13: clearCache removes all themes when no ID specified
-     */
-    public function testClearCacheRemovesAllThemesWhenNoIdSpecified(): void
-    {
-        $reflection = new \ReflectionClass($this->configProvider);
-        $cacheProperty = $reflection->getProperty('configCache');
-        $cacheProperty->setAccessible(true);
-
-        // Manually populate cache
-        $cacheProperty->setValue($this->configProvider, [
-            10 => ['version' => '1.0'],
-            20 => ['version' => '2.0'],
-            'inherited_10' => ['version' => '1.0 inherited']
-        ]);
-
-        // Clear all cache
-        $this->configProvider->clearCache();
-
-        $cache = $cacheProperty->getValue($this->configProvider);
-
-        $this->assertEmpty($cache);
-    }
-
-    /**
      * Test 14: mergeSections handles empty settings arrays
      */
     public function testMergeSectionsHandlesEmptySettingsArrays(): void

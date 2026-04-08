@@ -40,26 +40,6 @@ class PaletteProvider
     }
 
     /**
-     * Get single palette by ID
-     *
-     * @param int $themeId
-     * @param string $paletteId
-     * @param array $valuesMap - Map of 'section.setting' => value (for usage count)
-     * @return array|null
-     */
-    public function getPaletteById(int $themeId, string $paletteId, array $valuesMap = []): ?array
-    {
-        $config = $this->configProvider->getConfigurationWithInheritance($themeId);
-        $palettes = $config['palettes'] ?? [];
-
-        if (!isset($palettes[$paletteId])) {
-            return null;
-        }
-
-        return $this->processPalette($themeId, $paletteId, $palettes[$paletteId], $valuesMap);
-    }
-
-    /**
      * Process palette data and calculate usage counts
      *
      * @param int $themeId

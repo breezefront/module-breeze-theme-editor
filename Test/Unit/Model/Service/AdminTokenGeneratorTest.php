@@ -243,58 +243,6 @@ class AdminTokenGeneratorTest extends TestCase
         $this->adminTokenGenerator->generateForCurrentAdmin();
     }
 
-    public function testForceRefreshCreatesNewTokenEvenIfCached(): void
-    {
-        // Arrange
-        $oldToken = 'old-cached-token';
-        $newToken = 'force-refreshed-token';
-        $newJwtExpiration = time() + 3600;
-        
-        $user = $this->createMock(\Magento\User\Model\User::class);
-        $user->method('getId')->willReturn(42);
-        $user->method('getUsername')->willReturn('admin');
-        
-        $this->backendSession->method('getUser')->willReturn($user);
-        
-        // Mock getData to return null (no cached token)
-        // After clearCachedToken(), there should be no cached token
-        $this->backendSession->method('getData')
-            ->willReturn(null);
-        
-        // Mock token parameters
-        $tokenParams = $this->createMock(\Magento\Integration\Api\Data\UserTokenParametersInterface::class);
-        $this->tokenParamsFactory->method('create')->willReturn($tokenParams);
-        
-        // Mock token issuer - should be called once
-        $this->tokenIssuer->expects($this->once())
-            ->method('create')
-            ->willReturn($newToken);
-        
-        // Mock JWT reading for new token
-        $mockJwt = $this->createMockJwt($newJwtExpiration);
-        $this->jwtManager->expects($this->once())
-            ->method('read')
-            ->with($newToken, $this->anything())
-            ->willReturn($mockJwt);
-        
-        $this->settingsProvider->method('prepareAllAccepted')->willReturn([]);
-        
-        // Expect unsetData to be called (clearing old token)
-        $this->backendSession->expects($this->exactly(2))
-            ->method('unsetData');
-        
-        // Expect session to store new token
-        $this->backendSession->expects($this->exactly(2))
-            ->method('setData')
-            ->willReturnSelf();
-
-        // Act
-        $result = $this->adminTokenGenerator->forceRefresh();
-
-        // Assert
-        $this->assertEquals($newToken, $result);
-    }
-
     public function testTokenExpirationIsReadFromJwt(): void
     {
         // Arrange

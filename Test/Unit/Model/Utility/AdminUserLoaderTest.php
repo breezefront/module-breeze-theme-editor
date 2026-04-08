@@ -81,27 +81,6 @@ class AdminUserLoaderTest extends TestCase
     }
 
     // =========================================================================
-    // getUserFullName
-    // =========================================================================
-
-    public function testGetUserFullNameReturnsFullname(): void
-    {
-        $this->connection->method('fetchRow')->willReturn([
-            'username' => 'jdoe', 'email' => 'j@d.com',
-            'firstname' => 'Jane', 'lastname' => 'Doe',
-        ]);
-
-        $this->assertSame('Jane Doe', $this->loader->getUserFullName(1));
-    }
-
-    public function testGetUserFullNameReturnsNullWhenUserNotFound(): void
-    {
-        $this->connection->method('fetchRow')->willReturn(false);
-
-        $this->assertNull($this->loader->getUserFullName(999));
-    }
-
-    // =========================================================================
     // getMultipleUsersData
     // =========================================================================
 

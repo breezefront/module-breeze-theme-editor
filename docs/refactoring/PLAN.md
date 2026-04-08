@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 33 / 108 завершено  
+**Статус виконання:** 44 / 108 завершено  
 
 ---
 
@@ -81,65 +81,65 @@
 - **Файл:** `Model/Provider/StoreDataProvider.php`
 - **Проблема:** `getAvailableGroups()` та `getAvailableStores()` недосяжні, бо `getSwitchMode()` завжди повертає `'hierarchical'`. `hasMultipleStores()` та `getActiveStorePath()` — не викликаються з production.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — видалено `hasMultipleStores()`, `getActiveStorePath()`
 
 ### 2.3 `BackendSession` — невикористані сеттери
 - **Файл:** `Model/Session/BackendSession.php`
 - **Проблема:** `setScopeType()` та `setScopeId()` ніколи не викликаються з production-коду.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — видалено `setScopeType()`, `setScopeId()`
 
 ### 2.4 `ColorFormatResolver` — методи тільки для тестів
 - **Файл:** `Model/Utility/ColorFormatResolver.php`
 - **Проблема:** `isAutoDetectable()` (рядки 95–109) та `getFormatFromValue()` (рядки 129–150) — викликаються тільки з тест-файлів, не з production.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — `isAutoDetectable()` позначено `@internal` (getFormatFromValue використовується в ColorPipeline — залишено)
 
 ### 2.5 `AdminUserLoader::clearCache()` — тільки тести
 - **Файл:** `Model/Utility/AdminUserLoader.php`
 - **Проблема:** `clearCache()` викликається тільки з тест-файлів.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — видалено `getUserFullName()`, `getUserEmail()`, `clearCache()`
 
 ### 2.6 `PresetService::applyPreset()` — тільки тести
 - **Файл:** `Model/Service/PresetService.php:81–131`
 - **Проблема:** Resolver `ApplyPreset.php` виконує логіку inline, не делегуючи до цього методу. Метод викликається тільки з unit-тестів.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — `getPresetValues()` викликається з production (Presets.php, ApplyPreset.php) — залишено як є; `@internal` не додавалось (N/A)
 
 ### 2.7 `ConfigProvider` — методи тільки для тестів
 - **Файл:** `Model/Provider/ConfigProvider.php`
 - **Проблема:** `getPresets()` (рядок 243), `getPreset()` (рядок 252), `clearCache()` (рядок 389) — тільки тести.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — видалено `getSections()`, `getSection()`, `getPresets()`, `getPreset()`, `clearCache()`; `getField()` перероблено з inline lookup
 
 ### 2.8 `StatusProvider` — методи тільки для тестів
 - **Файл:** `Model/Provider/StatusProvider.php`
 - **Проблема:** `getStatusCode()` (рядок 43), `getAllStatuses()` (рядок 59), `clearCache()` (рядок 136) — тільки тести.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — видалено `getStatusCode()`, `getAllStatuses()`, `clearCache()`
 
 ### 2.9 `ValueInheritanceResolver` — методи тільки для тестів
 - **Файл:** `Model/Service/ValueInheritanceResolver.php`
 - **Проблема:** `isValueInherited()` (рядок 203), `getInheritedFromTheme()` (рядок 241) — тільки тести.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — позначено `@internal`
 
 ### 2.10 `ThemeResolver` — методи тільки для тестів
 - **Файл:** `Model/Utility/ThemeResolver.php`
 - **Проблема:** `getThemeInfo()` (рядок 150), `hasParentTheme()` (рядок 171), `getParentThemeId()` — тільки тести або взагалі не викликаються.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — позначено `@internal`
 
 ### 2.11 `PaletteProvider::getPaletteById()` — тільки тести
 - **Файл:** `Model/Config/PaletteProvider.php:50`
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — видалено `getPaletteById()`
 
 ### 2.12 `AdminTokenGenerator::forceRefresh()` — тільки тести
 - **Файл:** `Model/Service/AdminTokenGenerator.php:150`
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — видалено `forceRefresh()`
 
 ### 2.13 `StatusRepository::delete()` — мертва змінна `$code`
 - **Файл:** `Model/StatusRepository.php:123`
@@ -161,7 +161,7 @@
   - `Model/ResourceModel/Changelog/Collection.php` — `addPublicationFilter()`, `addSectionFilter()`, `addSettingFilter()`
 - **Проблема:** Всі ці query-builder методи написані спекулятивно, ніколи не викликаються з production-коду.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — `Publication/Collection.php` очищено (всі 5 методів видалено); інші колекції — TODO
 
 ---
 

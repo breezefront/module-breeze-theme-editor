@@ -199,6 +199,8 @@ class ValueInheritanceResolver
 
     /**
      * Перевірити чи значення inherited
+     *
+     * @internal Used by tests only; not part of the public API.
      */
     public function isValueInherited(
         int $themeId,
@@ -237,6 +239,8 @@ class ValueInheritanceResolver
 
     /**
      * Отримати theme з якої inherited значення
+     *
+     * @internal Used by tests only; not part of the public API.
      */
     public function getInheritedFromTheme(
         int $themeId,

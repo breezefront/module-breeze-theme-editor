@@ -142,18 +142,6 @@ class AdminTokenGenerator
     }
 
     /**
-     * Force refresh token (clear cache and generate new)
-     * 
-     * @return string New token
-     * @throws \Exception If no admin user logged in
-     */
-    public function forceRefresh(): string
-    {
-        $this->clearCachedToken();
-        return $this->generateForCurrentAdmin();
-    }
-
-    /**
      * Get cached token from admin session
      * 
      * @return string|null

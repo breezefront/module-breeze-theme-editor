@@ -176,15 +176,6 @@ class ConfigProvider
     }
 
     /**
-     * Отримати тільки секції
-     */
-    public function getSections(int $themeId): array
-    {
-        $config = $this->getConfiguration($themeId);
-        return $config['sections'] ?? [];
-    }
-
-    /**
      * Отримати metadata
      *
      * Спочатку спробувати з settings.json (підтримує кастомні поля від розробника теми),
@@ -207,54 +198,19 @@ class ConfigProvider
     }
 
     /**
-     * Отримати конкретну секцію
-     */
-    public function getSection(int $themeId, string $sectionCode): ?array
-    {
-        $sections = $this->getSections($themeId);
-        foreach ($sections as $section) {
-            if ($section['id'] === $sectionCode) {
-                return $section;
-            }
-        }
-        return null;
-    }
-
-    /**
      * Отримати конкретне поле
      */
     public function getField(int $themeId, string $sectionCode, string $fieldCode): ?array
     {
-        $section = $this->getSection($themeId, $sectionCode);
-        if (!$section) {
-            return null;
-        }
-        foreach ($section['settings'] as $setting) {
-            if ($setting['id'] === $fieldCode) {
-                return $setting;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Отримати presets
-     */
-    public function getPresets(int $themeId): array
-    {
         $config = $this->getConfiguration($themeId);
-        return $config['presets'] ?? [];
-    }
-
-    /**
-     * Отримати конкретний preset
-     */
-    public function getPreset(int $themeId, string $presetId): ?array
-    {
-        $presets = $this->getPresets($themeId);
-        foreach ($presets as $preset) {
-            if ($preset['id'] === $presetId) {
-                return $preset;
+        foreach ($config['sections'] ?? [] as $section) {
+            if ($section['id'] === $sectionCode) {
+                foreach ($section['settings'] ?? [] as $setting) {
+                    if ($setting['id'] === $fieldCode) {
+                        return $setting;
+                    }
+                }
+                return null;
             }
         }
         return null;
@@ -390,19 +346,6 @@ class ConfigProvider
         }
         if (!isset($config['sections']) || !is_array($config['sections'])) {
             throw new LocalizedException(__('Missing or invalid "sections" in theme configuration'));
-        }
-    }
-
-    /**
-     * Очистити кеш
-     */
-    public function clearCache(?int $themeId = null): void
-    {
-        if ($themeId) {
-            unset($this->configCache[$themeId]);
-            unset($this->configCache['inherited_' . $themeId]);
-        } else {
-            $this->configCache = [];
         }
     }
 }

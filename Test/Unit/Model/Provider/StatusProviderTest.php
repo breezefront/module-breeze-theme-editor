@@ -83,60 +83,6 @@ class StatusProviderTest extends TestCase
         $this->statusProvider->getStatusId('INVALID');
     }
 
-    public function testGetStatusCodeReturnsDraft(): void
-    {
-        // Arrange
-        $this->setupDatabaseMock();
-
-        // Act
-        $result = $this->statusProvider->getStatusCode(1);
-
-        // Assert
-        $this->assertEquals('DRAFT', $result);
-    }
-
-    public function testGetStatusCodeReturnsPublished(): void
-    {
-        // Arrange
-        $this->setupDatabaseMock();
-
-        // Act
-        $result = $this->statusProvider->getStatusCode(2);
-
-        // Assert
-        $this->assertEquals('PUBLISHED', $result);
-    }
-
-    public function testGetStatusCodeThrowsExceptionForInvalidId(): void
-    {
-        // Arrange
-        $this->setupDatabaseMock();
-
-        $this->expectException(NoSuchEntityException::class);
-        $this->expectExceptionMessage('Status ID "999" not found');
-
-        // Act
-        $this->statusProvider->getStatusCode(999);
-    }
-
-    public function testGetAllStatusesReturnsFormattedArray(): void
-    {
-        // Arrange
-        $this->setupDatabaseMock();
-
-        // Act
-        $result = $this->statusProvider->getAllStatuses();
-
-        // Assert
-        $this->assertCount(2, $result);
-        $this->assertEquals('DRAFT', $result[0]['code']);
-        $this->assertEquals('Draft', $result[0]['label']);
-        $this->assertEquals(10, $result[0]['sortOrder']);
-        $this->assertEquals('PUBLISHED', $result[1]['code']);
-        $this->assertEquals('Published', $result[1]['label']);
-        $this->assertEquals(20, $result[1]['sortOrder']);
-    }
-
     public function testUsesInMemoryCacheAfterFirstLoad(): void
     {
         // Arrange
@@ -217,24 +163,6 @@ class StatusProviderTest extends TestCase
 
         // Act
         $this->statusProvider->getStatusId('DRAFT');
-    }
-
-    public function testClearCacheRemovesCacheAndResetsInMemory(): void
-    {
-        // Arrange
-        $this->cache->expects($this->once())
-            ->method('remove')
-            ->with('breeze_theme_editor_status_map');
-
-        // Act
-        $this->statusProvider->clearCache();
-
-        // After clearing cache, next call should reload from DB
-        $this->setupDatabaseMock();
-        $result = $this->statusProvider->getStatusId('DRAFT');
-
-        // Assert
-        $this->assertEquals(1, $result);
     }
 
     /**

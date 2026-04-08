@@ -66,37 +66,6 @@ class AdminUserLoader
     }
 
     /**
-     * Get admin user full name by user ID
-     *
-     * @param int $userId
-     * @return string|null
-     */
-    public function getUserFullName(int $userId): ?string
-    {
-        $userData = $this->getUserData($userId);
-        
-        if (!$userData) {
-            return null;
-        }
-
-        // Return fullname if available, otherwise username
-        return $userData['fullname'] ?: $userData['username'];
-    }
-
-    /**
-     * Get admin user email by user ID
-     *
-     * @param int $userId
-     * @return string|null
-     */
-    public function getUserEmail(int $userId): ?string
-    {
-        $userData = $this->getUserData($userId);
-        
-        return $userData['email'] ?? null;
-    }
-
-    /**
      * Get multiple users data at once (optimized for batch loading)
      *
      * @param int[] $userIds
@@ -152,13 +121,4 @@ class AdminUserLoader
         return $result;
     }
 
-    /**
-     * Clear cache (useful for testing)
-     *
-     * @return void
-     */
-    public function clearCache(): void
-    {
-        $this->cache = [];
-    }
 }

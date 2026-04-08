@@ -78,17 +78,18 @@ class ColorFormatResolver
 
     /**
      * Check if format can be auto-detected from default value
-     * 
+     *
      * Returns true if default value is a recognizable color format
      * (RGB, HEX, or palette reference) that can be used for format detection.
-     * 
+     *
      * Examples:
      * - isAutoDetectable('rgb(17, 24, 39)') → true
      * - isAutoDetectable('#111827') → true
      * - isAutoDetectable('--color-brand-primary') → true
      * - isAutoDetectable(null) → false
      * - isAutoDetectable('invalid') → false
-     * 
+     *
+     * @internal Used by tests only; not part of the public API.
      * @param string|null $defaultValue Default value to check
      * @return bool True if format is detectable
      */

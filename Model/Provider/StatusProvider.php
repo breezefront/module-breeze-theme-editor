@@ -38,41 +38,6 @@ class StatusProvider
     }
 
     /**
-     * Отримати code по status_id
-     */
-    public function getStatusCode(int $statusId): string
-    {
-        $map = $this->getStatusMap();
-
-        foreach ($map as $code => $data) {
-            if ((int)$data['status_id'] === $statusId) {
-                return strtoupper($code); // Повертаємо у форматі DRAFT, PUBLISHED
-            }
-        }
-
-        throw new NoSuchEntityException(__('Status ID "%1" not found', $statusId));
-    }
-
-    /**
-     * Отримати всі статуси
-     */
-    public function getAllStatuses(): array
-    {
-        $map = $this->getStatusMap();
-        $result = [];
-
-        foreach ($map as $data) {
-            $result[] = [
-                'code' => strtoupper($data['code']),
-                'label' => $data['label'],
-                'sortOrder' => $data['sort_order']
-            ];
-        }
-
-        return $result;
-    }
-
-    /**
      * Отримати мапінг з кешу або БД
      */
     private function getStatusMap(): array
@@ -128,14 +93,5 @@ class StatusProvider
         }
 
         return $map;
-    }
-
-    /**
-     * Очистити кеш
-     */
-    public function clearCache(): void
-    {
-        $this->cache->remove(self::CACHE_KEY);
-        $this->statusMap = null;
     }
 }

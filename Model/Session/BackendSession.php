@@ -113,33 +113,6 @@ class BackendSession
     }
 
     /**
-     * Save scope type to session cookie
-     *
-     * @param string $scope One of 'default', 'websites', 'stores'
-     * @return void
-     */
-    public function setScopeType(string $scope): void
-    {
-        try {
-            $metadata = $this->cookieMetadataFactory->createPublicCookieMetadata()
-                ->setPath('/')
-                ->setDuration(self::COOKIE_LIFETIME)
-                ->setHttpOnly(false)
-                ->setSameSite('Lax');
-
-            $this->cookieManager->setPublicCookie(
-                self::COOKIE_NAME_SCOPE,
-                $scope,
-                $metadata
-            );
-
-            $this->logger->info(sprintf('[BTE BackendSession] Saved scope: %s', $scope));
-        } catch (\Exception $e) {
-            $this->logger->error(sprintf('[BTE BackendSession] Failed to save scope: %s', $e->getMessage()));
-        }
-    }
-
-    /**
      * Get scope type from session cookie
      *
      * @return string|null
@@ -157,33 +130,6 @@ class BackendSession
         }
 
         return null;
-    }
-
-    /**
-     * Save scope ID to session cookie
-     *
-     * @param int $scopeId
-     * @return void
-     */
-    public function setScopeId(int $scopeId): void
-    {
-        try {
-            $metadata = $this->cookieMetadataFactory->createPublicCookieMetadata()
-                ->setPath('/')
-                ->setDuration(self::COOKIE_LIFETIME)
-                ->setHttpOnly(false)
-                ->setSameSite('Lax');
-
-            $this->cookieManager->setPublicCookie(
-                self::COOKIE_NAME_SCOPE_ID,
-                (string)$scopeId,
-                $metadata
-            );
-
-            $this->logger->info(sprintf('[BTE BackendSession] Saved scope ID: %d', $scopeId));
-        } catch (\Exception $e) {
-            $this->logger->error(sprintf('[BTE BackendSession] Failed to save scope ID: %s', $e->getMessage()));
-        }
     }
 
     /**
