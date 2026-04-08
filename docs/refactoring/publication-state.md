@@ -2,7 +2,7 @@
 
 **Дата:** 2026-04-07  
 **Пріоритет:** 🟠 High  
-**Статус:** `[x] DONE`  
+**Статус:** `[x] DONE ✓`  
 **Категорія:** Missing abstraction / Tight coupling  
 **PLAN.md:** п. 6 (Missing abstractions)
 
