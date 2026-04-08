@@ -1,7 +1,7 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 2026-04-01  
-**Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 31/108
+**Останнє оновлення:** 2026-04-08  
+**Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 32/108
 
 ---
 
@@ -46,20 +46,20 @@
 ### 🔧 2. Рефакторинг (Code Quality)
 
 **Мета:** Усунення технічної заборгованості після завершення Admin Migration  
-**Статус:** 🔄 В процесі (31 / 108 завершено)  
+**Статус:** 🔄 В процесі (32 / 108 завершено)  
 **Документація:** [`docs/refactoring/PLAN.md`](refactoring/PLAN.md)
 
 | Категорія | Задач | 🔴 | 🟠 | 🟡 | 🟢 | Виконано |
 |-----------|-------|----|----|----|----|----------|
 | Мертвий код — баги | 4 | 3 | 1 | — | — | ✅ 4/4 |
-| Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 9/31 |
+| Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 10/31 |
 | God classes/widgets | 5 | — | 4 | 1 | — | 4/5 |
 | Code duplication | 21 | — | 5 | 10 | 6 | 7/21 |
 | Magic numbers/strings | 17 | 1 | — | 4 | 12 | 4/17 |
 | Missing abstractions | 8 | — | 1 | 7 | — | 4/8 |
 | Tight coupling | 9 | — | 2 | 4 | 3 | 0/9 |
 | setTimeout audit | 13 | — | — | 3 | 10 | 0/13 |
-| **Всього** | **108** | **5** | **16** | **39** | **48** | **31/108** |
+| **Всього** | **108** | **5** | **16** | **39** | **48** | **32/108** |
 
 **Завершені кроки:**
 - ✅ Крок 1 — Критичні баги (6/6): пп. 1.1, 1.2, 1.3, 1.4, 2.21, 5.1
@@ -84,6 +84,10 @@
 
 | Задача | Статус | Дата | Коміт(и) |
 |--------|--------|------|----------|
+| css-manager unification (panel + editor → єдиний модуль) | ✅ | 08.04 | `5a97541` `8e59dac` |
+| publication-state singleton (єдине джерело currentStatus) | ✅ | 08.04 | `26b3ee9` `65a4ede` |
+| configManager — єдине джерело scope/scopeId/themeId | ✅ | 08.04 | `5b62abf` `cdbdfc1` |
+| url-restoration — окремий AMD модуль | ✅ | 08.04 | `df54e47` `6f9f7dd` |
 | Multi-scope (Default/Website/Store View) | ✅ | 10.03 | `5d43943` + серія |
 | Light panel theme + toggle (issue-006) | ✅ | ~12.03 | `7c74231` |
 | Phosphor Icons (nav + config sections) | ✅ | ~12.03 | `ad05a7b` `689c6e3` |
@@ -111,8 +115,8 @@
 
 | Тип | Кількість | Статус |
 |-----|-----------|--------|
-| PHP Unit tests | 50 файлів | ✅ Проходять (710 tests, 2 skipped) |
-| JS Admin tests | 31 spec-файлів | ✅ Проходять (700 tests) |
+| PHP Unit tests | 50 файлів | ✅ Проходять (754 tests, 2 skipped) |
+| JS Admin tests | 31 spec-файлів | ✅ Проходять (758 tests) |
 | GraphQL integration tests | наявні | ✅ |
 
 ---
@@ -159,11 +163,11 @@ Refactoring:
 🟠 High         ██████████░░  10/16 ✅ Кроки 2+3+4 завершено
 🟡 Medium       ██░░░░░░░░░░   7/38 ✅ Крок 6 завершено
 🟢 Low          █░░░░░░░░░░░   5/48
-📋 Total        ██░░░░░░░░░░  31/108 (29%)
+📋 Total        ██░░░░░░░░░░  32/108 (30%)
 
 Issues:        27/30 closed (3 open/deferred)
-PHP Tests:     50 файлів / 710 tests ✅
-JS Tests:      31 spec-файлів / 700 tests ✅
+PHP Tests:     50 файлів / 754 tests ✅
+JS Tests:      31 spec-файлів / 758 tests ✅
 ```
 
 ---
