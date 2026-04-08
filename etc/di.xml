@@ -45,14 +45,4 @@
     <preference for="Swissup\BreezeThemeEditor\Api\Data\StatusSearchResultsInterface"
                 type="Swissup\BreezeThemeEditor\Model\StatusSearchResults" />
 
-    <!-- Wire StoreManagerInterface into ValueInheritanceResolver so that
-         buildScopeChain() can resolve websiteId for stores/N scopes and build
-         the full [default/0 → websites/W → stores/N] inheritance chain.
-         Without this entry Magento DI leaves the optional $storeManager = null
-         and scope-chain inheritance silently stops working (issue #017). -->
-    <type name="Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver">
-        <arguments>
-            <argument name="storeManager" xsi:type="object">Magento\Store\Model\StoreManagerInterface</argument>
-        </arguments>
-    </type>
 </config>
