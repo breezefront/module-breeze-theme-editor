@@ -62,7 +62,9 @@ with the Breeze theme packages:
 
 ## Tracking
 
-- [ ] Audit Breeze theme packages for remaining `css_var` usage
-- [ ] Remove `CssGenerator.php:141` fallback
-- [ ] Remove `AbstractConfigResolver.php:92` fallback
-- [ ] Remove deprecated `cssVar` from GraphQL schema
+- [x] Audit Breeze theme packages for remaining `css_var` usage — **0 occurrences** in both `breeze-evolution` and `breeze-blank` `settings.json`. Ready to remove shim.
+- [ ] Remove `CssVariableBuilder.php` fallbacks (2 places: lines 89, 184)
+- [ ] Remove `AbstractConfigResolver.php` fallback (line 105)
+- [ ] Remove `PaletteProvider.php` fallbacks (lines 75, 132, 133)
+- [ ] Remove `PaletteResolver.php` fallback (line 114)
+- [ ] Remove deprecated `cssVar` from GraphQL schema (`schema.graphqls`)
