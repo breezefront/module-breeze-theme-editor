@@ -232,29 +232,193 @@ isReady: function() {
 
 ---
 
+## Архітектурне рішення: повністю stateless (без module-level DOM refs)
+
+Після аналізу обох файлів — підхід `editor/css-manager` (stateless, `_getCurrentIframeDoc()` на кожен виклик)
+виявився **правильнішим**, ніж `panel/css-manager` (stateful cached refs). Причини:
+
+- Немає stale refs після iframe navigation
+- Не потрібен `refreshIframeDocument()`
+- Не потрібен `registerLivePreviewLayer()` — `$(doc).find('#bte-live-preview')` завжди свіжий
+- `reinit(flush=true)` скидає тільки стан (PublicationState), не DOM refs — бо їх немає
+- `_removePublicationStyle()` → `$(doc).find('#bte-publication-css').remove()` — без ref
+
+Єдиний виняток де можна тримати state — `currentPublicationId` (вже є) для `refresh()`.
+
+**Це означає:** переносимо **логіку** з `panel/css-manager`, але **не переносимо** stateful ref-кешування.
+
+---
+
 ## Порядок виконання
 
-1. Переконатись що `publication-state.md` і `scope-single-source-of-truth.md` виконані — тоді обидва css-manager вже читають `PublicationState` і `configManager`, що сильно спрощує злиття
-2. Додати `registerLivePreviewLayer()` в `editor/css-manager.js` + виклик в `css-preview-manager.js` — без видалення `panel/css-manager` (ізольований крок, легко перевірити)
-3. Виправити live preview bug в `editor/css-manager.switchTo(PUBLISHED/PUBLICATION)` — `_disableStyle($livePreviewStyle)` + `_resetLivePreview()`
-4. Перенести унікальні методи panel → editor: `refreshPublishedCss`, `refreshDraftCss`, `refreshIframeDocument`, `destroy`, `_injectPublicationStyle`, `_removePublicationStyle`
-5. Перевести `editor/css-manager` на stateful DOM refs (додати `$publishedStyle`, `$draftStyle` як module vars, оновити `reinit`)
-6. Оновити `settings-editor.js` і `css-state-restorer.js` — обидва тепер `require` один і той самий модуль
-7. Видалити `editor/panel/css-manager.js`
-8. (Опціонально) переіменувати або залишити як `editor/css-manager.js`
+### Крок 1 — Bug fix: `switchTo(PUBLISHED/PUBLICATION)` — вимкнути live preview
+
+**Файл:** `editor/css-manager.js`
+
+В `case PUBLICATION_STATUS.PUBLISHED` після `self._disableStyle($draftStyle)`:
+```js
+var $livePreviewStyle = $(doc).find('#bte-live-preview');
+self._disableStyle($livePreviewStyle);
+require(['Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager'], function(pm) {
+    pm.reset();
+});
+```
+
+В `case PUBLICATION_STATUS.PUBLICATION` у `.then()` після `self._disableStyle($draftStyle)` — те саме.
+
+Ризик: 🟢 мінімальний. `_disableStyle` has null-guard. `find()` на живому doc.
+
+---
+
+### Крок 2 — Додати `showPublished()` як аліас
+
+**Файл:** `editor/css-manager.js`
+
+`settings-editor.js` рядок 232 викликає `CssManager.showPublished()` напряму.
+Потрібно додати аліас:
+```js
+showPublished: function() {
+    return this.switchTo(PUBLICATION_STATUS.PUBLISHED);
+},
+```
+
+Ризик: 🟢 мінімальний.
+
+---
+
+### Крок 3 — Перенести `refreshPublishedCss()` і `refreshDraftCss()`
+
+**Файл:** `editor/css-manager.js`
+
+Скопіювати з `panel/css-manager`, адаптувати:
+- замінити `getIframeDocument()` → `this._getCurrentIframeDoc()`
+- замінити stateful `$publishedStyle` / `$draftStyle` → `$(doc).find('#...')`
+- `refreshDraftCss()` fallback до `this.switchTo(PUBLICATION_STATUS.DRAFT)` замість `this.showDraft()`
+
+Ризик: 🟢 низький. Нові методи, ізольовані.
+
+---
+
+### Крок 4 — Перенести `_injectPublicationStyle()`, `_removePublicationStyle()`
+
+**Файл:** `editor/css-manager.js`
+
+Стратегія: **один** `#bte-publication-css` (panel strategy), замість множинних `bte-publication-css-{id}`.
+Адаптація:
+- `_injectPublicationStyle(css)` — stateless: `$(doc).find('#bte-live-preview')` для insertion point
+- `_removePublicationStyle()` — stateless: `$(doc).find('#bte-publication-css').remove()`
+
+Оновити `switchTo(PUBLICATION)`: замість `querySelectorAll('style[id^="bte-publication-css-"]')` —
+викликати `self._injectPublicationStyle(css)` (remove + create в одному методі).
+
+Оновити `switchTo(PUBLISHED)` і `switchTo(DRAFT)`: замінити `querySelectorAll` disable-loop →
+`self._removePublicationStyle()`.
+
+Видалити `_getOrCreateStyle()` і `_getStyleId()` — більше не потрібні.
+
+Ризик: 🟠 середній. Publication strategy змінюється. Зовнішніх readers `bte-publication-css-{id}` — немає (grep підтвердив).
+
+---
+
+### Крок 5 — Перенести `destroy()` і додати `StorageHelper` + `_applyStoredState()`
+
+**Файл:** `editor/css-manager.js`
+
+`destroy()` з `panel/css-manager` — адаптувати: без null'ення refs (stateless), тільки:
+```js
+destroy: function() {
+    this._removePublicationStyle();
+    PublicationState.reset();
+    $(document).off('scopeChanged.cssManager');
+    log.info('CSS Manager destroyed');
+},
+```
+
+Додати `StorageHelper` в `define([...])` залежності.
+
+Додати `_applyStoredState()` — скопіювати з `panel/css-manager` без змін (викликає `this.switchTo()`).
+
+Оновити `init()`:
+- додати `StorageHelper.init(configManager.getScopeId(), configManager.getThemeId())`
+- додати `this._applyStoredState()` в кінці (після знаходження `$publishedStyle`)
+- зробити idempotent: `if (retries === 0 && this.isReady()) { log.info('already ready'); return true; }`
+  (захист від подвійного init: toolbar init → `isReady()=true` → panel init → пропускається)
+
+Ризик: 🟡 низький-середній. Зміна поведінки `init()`. `_applyStoredState()` робить GraphQL запит — переконатись що не дублює запит toolbar'а. Idempotent guard вирішує це.
+
+---
+
+### Крок 6 — Оновити `settings-editor.js`: змінити require path
+
+**Файл:** `editor/panel/settings-editor.js`
+
+Змінити рядок 23:
+```js
+// Було:
+'Swissup_BreezeThemeEditor/js/editor/panel/css-manager'
+// Стало:
+'Swissup_BreezeThemeEditor/js/editor/css-manager'
+```
+
+API не змінюється — всі методи (`init`, `isReady`, `showPublished`, `refreshPublishedCss`, `refreshDraftCss`) вже є в unified manager після кроків 1–5.
+
+Ризик: 🟠 середній. Зміна AMD dependency. Перевірити що RequireJS підхоплює новий path.
+
+---
+
+### Крок 7 — Оновити `css-preview-manager.js`: змінити require path
+
+**Файл:** `editor/panel/css-preview-manager.js`
+
+Змінити рядок 5:
+```js
+// Було:
+'Swissup_BreezeThemeEditor/js/editor/panel/css-manager'
+// Стало:
+'Swissup_BreezeThemeEditor/js/editor/css-manager'
+```
+
+`css-preview-manager` використовує `CssManager.isEditable()` і `CssManager.getCurrentStatus()` — обидва є.
+Circular dependency залишається (editor/css-manager lazy-requires css-preview-manager) — це нормально, вже є.
+
+Ризик: 🟠 середній. AMD circular dep. Перевірити порядок завантаження.
+
+---
+
+### Крок 8 — Видалити `editor/panel/css-manager.js`
+
+Перед видаленням: grep по всіх JS файлах на `panel/css-manager` — переконатись що 0 залишкових references.
+
+Ризик: 🟠 середній. Якщо пропустити один require — 404 в AMD loader.
+
+---
+
+### Крок 9 — Оновити тести
+
+- `tests/js/editor/css-manager-test.js` або `css-manager-live-preview-bug-test.js`:
+  - `switchTo(PUBLISHED)` — `#bte-live-preview` вимикається, `CssPreviewManager.reset()` викликається
+  - `switchTo(PUBLICATION, id)` — те саме
+  - `switchTo(DRAFT)` — `#bte-live-preview` вмикається (через `recreateLivePreviewStyle`)
+  - `refreshPublishedCss()` — оновлює контент `#bte-theme-css-variables`
+  - `refreshDraftCss()` — оновлює або fallback до `switchTo(DRAFT)`
+  - `_injectPublicationStyle(css)` — створює `#bte-publication-css` в правильному місці каскаду
+  - `_removePublicationStyle()` — видаляє `#bte-publication-css` з DOM
+
+- `discard-published-preview-test.js` — оновити mock path
+
+- `tests/js/panel/css-manager-test.js` — **видалити**
 
 ---
 
 ## Тести, які потрібно написати / оновити
 
 - `tests/js/editor/css-manager-test.js` (новий або оновлений):
-  - `switchTo(PUBLISHED)` — `$livePreviewStyle` вимикається, `CssPreviewManager.reset()` викликається
+  - `switchTo(PUBLISHED)` — `#bte-live-preview` вимикається, `CssPreviewManager.reset()` викликається
   - `switchTo(PUBLICATION, id)` — те саме
-  - `switchTo(DRAFT)` — `$livePreviewStyle` вмикається
-  - `registerLivePreviewLayer($el)` — зберігає ref, використовується в switchTo
-  - `reinit(null, true)` — скидає всі 4 DOM refs включно з `$livePreviewStyle`
+  - `switchTo(DRAFT)` — `#bte-live-preview` вмикається
+  - `reinit(null, true)` — скидає `PublicationState`, `currentPublicationId`; не торкається DOM refs (stateless)
   - `refreshPublishedCss()` — оновлює контент `#bte-theme-css-variables`
-  - `refreshDraftCss()` — оновлює або fallback до `showDraft()`
+  - `refreshDraftCss()` — оновлює або fallback до `switchTo(DRAFT)`
 
 - `tests/js/panel/css-manager-test.js` — **видалити** (або перетворити на інтеграційний)
 
@@ -269,3 +433,4 @@ isReady: function() {
 3. **Менше файлів** — -1 модуль, -1 set тестів.
 4. **Простіша mental model** — є один CSS Manager що знає про всі шари: published, draft, publication, live-preview.
 5. **Симетрія** — `css-state-restorer` (toolbar) і `settings-editor` (panel) використовують один і той самий модуль.
+6. **Немає ref-кешування** — `_getCurrentIframeDoc()` скрізь, немає stale refs, немає `refreshIframeDocument()`.

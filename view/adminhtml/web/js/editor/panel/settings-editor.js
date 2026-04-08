@@ -20,7 +20,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
-    'Swissup_BreezeThemeEditor/js/editor/panel/css-manager',
+    'Swissup_BreezeThemeEditor/js/editor/css-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers',
     'Swissup_BreezeThemeEditor/js/editor/panel/config-loader',
     'Swissup_BreezeThemeEditor/js/editor/panel/section-renderer',

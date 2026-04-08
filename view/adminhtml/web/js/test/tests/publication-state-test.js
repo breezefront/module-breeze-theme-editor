@@ -187,7 +187,7 @@ define([
             // Ініціалізуємо
             PublicationState.get(); // lazy init → DRAFT
 
-            // Тригеримо подію зовні (як робить panel/css-manager або інший модуль)
+            // Тригеримо подію зовні (як робить css-manager або інший модуль)
             $(document).trigger('publicationStatusChanged', { status: PUBLICATION_STATUS.PUBLISHED });
 
             this.assertEquals(

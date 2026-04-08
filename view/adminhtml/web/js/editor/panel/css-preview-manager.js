@@ -2,7 +2,7 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/color-utils',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
-    'Swissup_BreezeThemeEditor/js/editor/panel/css-manager',
+    'Swissup_BreezeThemeEditor/js/editor/css-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager',
@@ -67,7 +67,7 @@ define([
                     // Wait until the frontend page is loaded.
                     // #bte-theme-css-variables is injected by the Breeze theme in <head>
                     // and is absent on the admin redirect page — we use it as a
-                    // reliable "frontend is ready" signal (same check as panel/css-manager).
+                    // reliable "frontend is ready" signal (same check as css-manager).
                     if (!iframeDocument ||
                             !$(iframeDocument).find('#bte-theme-css-variables').length) {
                         return; // not ready yet — will be retried on the next signal

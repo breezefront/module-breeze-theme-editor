@@ -1,42 +1,37 @@
 /**
- * CSS Manager Live Preview Bug — Regression Tests
+ * CSS Manager Live Preview — Regression Tests
  *
- * Validates that switching to PUBLISHED or PUBLICATION via the toolbar
- * correctly disables and clears the #bte-live-preview style element.
+ * Validates that switching to PUBLISHED or PUBLICATION correctly disables
+ * and clears the #bte-live-preview style element.
  *
- * BUG SCENARIO
- * ─────────────
+ * STATUS: Fixed in css-manager-unification refactoring.
+ *   - editor/css-manager.js and panel/css-manager.js merged into one.
+ *   - switchTo(PUBLISHED/PUBLICATION) now calls _disableStyle(#bte-live-preview)
+ *     + _resetLivePreview() in all code paths.
+ *
+ * ORIGINAL BUG SCENARIO (kept for documentation)
+ * ────────────────────────────────────────────────
  *  1. User is in DRAFT mode — panel makes unsaved changes → live preview CSS active
  *     #bte-live-preview:  :root { --header-panel-bg: var(--color-red); }
  *  2. User clicks "Published" in toolbar dropdown → switchTo(PUBLISHED) is called
- *  3. editor/css-manager.js switchTo(PUBLISHED):
+ *  3. OLD editor/css-manager.js switchTo(PUBLISHED):
  *       _enableStyle($publishedStyle)   ← OK
  *       _disableStyle($draftStyle)      ← OK
  *       // #bte-live-preview — NEVER TOUCHED ← BUG
- *  4. Live preview CSS remains active → red header visible over published CSS
+ *  4. Live preview CSS remained active → red header visible over published CSS
  *
- *  Same bug applies to switchTo(PUBLICATION).
- *
- * ROOT CAUSE
- * ──────────
- *  editor/css-manager.js (stateless toolbar manager) does NOT hold a reference
- *  to #bte-live-preview and does not call resetLivePreview() when leaving DRAFT.
- *  panel/css-manager.js (stateful panel manager) does this correctly via
- *  _disableStyle($livePreviewStyle) + resetLivePreview().
- *
- * FIX (planned — css-manager-unification.md)
- * ───────────────────────────────────────────
- *  Unify both css-manager files or add registerLivePreviewLayer() API so the
- *  toolbar css-manager knows about #bte-live-preview and clears it on exit.
+ * ROOT CAUSE (resolved)
+ * ──────────────────────
+ *  Two separate css-manager files existed: editor/css-manager.js (toolbar, stateless,
+ *  did not know about live preview) and panel/css-manager.js (panel, handled live
+ *  preview correctly). After unification — one file, one switchTo(), all layers handled.
  *
  *  GROUP 1 — State matrix (pure logic)
  *    Expected CSS layer enable/disable state for each status transition.
  *
  *  GROUP 2 — Bug reproduction (DOM simulation with $('<style>'))
- *    BEFORE (buggy — editor/css-manager behaviour):
- *      switchTo(PUBLISHED) leaves $livePreviewStyle unchanged → red CSS stays
- *    AFTER (fixed — panel/css-manager behaviour):
- *      switchTo(PUBLISHED) disables livePreview + clears it to ':root {}'
+ *    BEFORE (buggy — old editor/css-manager behaviour): documented for history.
+ *    AFTER (fixed — unified css-manager behaviour): the actual regression guard.
  *
  *  GROUP 3 — Regression guards
  *    Explicit assertions that live preview is disabled/cleared for all
