@@ -18,7 +18,7 @@ class ValueInheritanceResolver
         private ThemeResolver $themeResolver,
         private ConfigProvider $configProvider,
         private ScopeFactory $scopeFactory,
-        private ?StoreManagerInterface $storeManager = null
+        private StoreManagerInterface $storeManager
     ) {}
 
     // ========================================================================
@@ -282,7 +282,7 @@ class ValueInheritanceResolver
             return $scope->getScopeId();
         }
         // stores/N — треба йти через StoreManager
-        if ($scope->getType() === ValueInterface::SCOPE_STORES && $this->storeManager !== null) {
+        if ($scope->getType() === ValueInterface::SCOPE_STORES) {
             try {
                 return (int) $this->storeManager->getStore($scope->getScopeId())->getWebsiteId();
             } catch (\Exception) {

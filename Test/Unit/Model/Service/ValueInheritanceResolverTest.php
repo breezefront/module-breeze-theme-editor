@@ -22,6 +22,7 @@ class ValueInheritanceResolverTest extends TestCase
     private ThemeResolver|MockObject $themeResolverMock;
     private ConfigProvider|MockObject $configProviderMock;
     private ScopeFactory|MockObject $scopeFactoryMock;
+    private StoreManagerInterface|MockObject $storeManagerMock;
 
     protected function setUp(): void
     {
@@ -31,12 +32,16 @@ class ValueInheritanceResolverTest extends TestCase
         $this->scopeFactoryMock = $this->createMock(ScopeFactory::class);
         $this->scopeFactoryMock->method('create')
             ->willReturnCallback(fn($type, $id) => new Scope($type, $id));
+        $this->storeManagerMock = $this->createMock(StoreManagerInterface::class);
+        $this->storeManagerMock->method('getStore')
+            ->willThrowException(new \Exception('Store not available in test context'));
 
         $this->resolver = new ValueInheritanceResolver(
             $this->valueServiceMock,
             $this->themeResolverMock,
             $this->configProviderMock,
-            $this->scopeFactoryMock
+            $this->scopeFactoryMock,
+            $this->storeManagerMock
         );
     }
 
@@ -661,71 +666,7 @@ class ValueInheritanceResolverTest extends TestCase
     // ========================================================================
 
     /**
-     * Issue-014 / Test A (documents current broken behaviour — PASS before fix):
-     * Without StoreManager injected, buildScopeChain for stores/3 returns a
-     * single-entry chain [stores/3] because websiteId defaults to 0.
-     */
-    public function testBuildScopeChainForStoreWithoutStoreManagerReturnsSingleEntry(): void
-    {
-        // Resolver constructed without StoreManager (current state)
-        $resolver = new ValueInheritanceResolver(
-            $this->valueServiceMock,
-            $this->themeResolverMock,
-            $this->configProviderMock,
-            $this->scopeFactoryMock
-            // no StoreManagerInterface
-        );
-
-        $scope = new Scope('stores', 3);
-        $chain = $resolver->buildScopeChain($scope);
-
-        // Bug: should be 3, but is 1 without StoreManager
-        $this->assertCount(1, $chain, 'Without StoreManager the chain is a single entry (current broken behaviour)');
-        $this->assertEquals('stores', $chain[0]->getType());
-        $this->assertEquals(3, $chain[0]->getScopeId());
-    }
-
-    /**
-     * Issue-014 / Test B (documents current broken behaviour — PASS before fix):
-     * A value saved at default/0 is NOT visible to a store view when
-     * StoreManager is not injected — inheritance chain never includes default.
-     */
-    public function testDefaultScopeValueNotInheritedByStoreViewWithoutStoreManager(): void
-    {
-        $resolver = new ValueInheritanceResolver(
-            $this->valueServiceMock,
-            $this->themeResolverMock,
-            $this->configProviderMock,
-            $this->scopeFactoryMock
-        );
-
-        $themeId  = 10;
-        $storeId  = 3;
-        $statusId = 2;
-
-        $hierarchy = [['theme_id' => $themeId, 'theme_code' => 'child', 'level' => 0]];
-        $this->themeResolverMock->method('getThemeHierarchy')->willReturn($hierarchy);
-
-        // Only stores/3 scope is queried — default/0 is never reached
-        $this->valueServiceMock->expects($this->once())
-            ->method('getValuesByTheme')
-            ->with(
-                $themeId,
-                $this->callback(fn(ScopeInterface $s) => $s->getType() === 'stores' && $s->getScopeId() === $storeId),
-                $statusId,
-                null
-            )
-            ->willReturn([]); // nothing at stores/3
-
-        $result = $resolver->resolveAllValues($themeId, new Scope('stores', $storeId), $statusId);
-
-        // Bug confirmed: value from default/0 never consulted, result is empty
-        $this->assertEmpty($result, 'Without StoreManager default-scope values are not inherited (current broken behaviour)');
-    }
-
-    /**
-     * Issue-014 / Test C (FAIL before fix, PASS after fix):
-     * With StoreManager injected, buildScopeChain for stores/3 (website 2)
+     * Issue-014 / Test C: With StoreManager injected, buildScopeChain for stores/3 (website 2)
      * must return [default/0, websites/2, stores/3].
      */
     public function testBuildScopeChainForStoreWithStoreManagerReturnsFullChain(): void
@@ -885,22 +826,13 @@ class ValueInheritanceResolverTest extends TestCase
 
     /**
      * Issue-014 bonus / Test G:
-     * buildScopeChain for websites/2 returns [default/0, websites/2]
-     * WITHOUT StoreManager — websiteId is already in scopeId.
+     * buildScopeChain for websites/2 returns [default/0, websites/2].
+     * StoreManager is not called for websites scope — websiteId is in scopeId.
      */
     public function testBuildScopeChainForWebsiteScopeReturnsChainWithDefault(): void
     {
-        // Resolver without StoreManager — websites scope must still resolve correctly
-        $resolver = new ValueInheritanceResolver(
-            $this->valueServiceMock,
-            $this->themeResolverMock,
-            $this->configProviderMock,
-            $this->scopeFactoryMock
-            // no StoreManagerInterface
-        );
-
         $scope = new Scope('websites', 2);
-        $chain = $resolver->buildScopeChain($scope);
+        $chain = $this->resolver->buildScopeChain($scope);
 
         $this->assertCount(2, $chain, 'websites/W chain must have 2 entries: default/0, websites/2');
         $this->assertEquals('default',  $chain[0]->getType());
@@ -911,19 +843,11 @@ class ValueInheritanceResolverTest extends TestCase
 
     /**
      * Issue-014 bonus / Test H:
-     * A value saved at default/0 must be inherited by websites/2
-     * WITHOUT StoreManager — websiteId is resolved directly from scopeId.
+     * A value saved at default/0 must be inherited by websites/2.
+     * StoreManager is not called for websites scope.
      */
     public function testDefaultScopeValueIsInheritedByWebsiteScopeWithoutStoreManager(): void
     {
-        // Resolver without StoreManager
-        $resolver = new ValueInheritanceResolver(
-            $this->valueServiceMock,
-            $this->themeResolverMock,
-            $this->configProviderMock,
-            $this->scopeFactoryMock
-        );
-
         $themeId  = 10;
         $statusId = 2;
         $defaultValue = ['section_code' => 'header', 'setting_code' => 'color', 'value' => 'green'];
@@ -936,7 +860,7 @@ class ValueInheritanceResolverTest extends TestCase
                 return ($s->getType() === 'default') ? [$defaultValue] : [];
             });
 
-        $result = $resolver->resolveAllValues($themeId, new Scope('websites', 2), $statusId);
+        $result = $this->resolver->resolveAllValues($themeId, new Scope('websites', 2), $statusId);
 
         $this->assertCount(1, $result, 'Value from default/0 must be inherited by websites/2');
         $this->assertEquals('green', $result[0]['value']);
