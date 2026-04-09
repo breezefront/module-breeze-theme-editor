@@ -161,7 +161,7 @@
   - `Model/ResourceModel/Changelog/Collection.php` — `addPublicationFilter()`, `addSectionFilter()`, `addSettingFilter()`
 - **Проблема:** Всі ці query-builder методи написані спекулятивно, ніколи не викликаються з production-коду.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[x] DONE` — `Publication/Collection.php` очищено (всі 5 методів видалено); інші колекції — TODO
+- **Статус:** `[x] DONE` — `Publication/Collection.php` очищено (всі 5 методів видалено); `Value/Collection.php` (5), `Status/Collection.php` (2), `Changelog/Collection.php` (3) — коміт `b1d5539`
 
 ---
 
@@ -242,7 +242,7 @@
 - **Файли:** `view/adminhtml/web/js/editor/graphql/mutation/save-values.js`, `etc/schema.graphqls:412–413`
 - **Проблема:** Параметри передаються в мутацію та визначені в схемі, але `SaveValues.php` resolver їх ніколи не читає. Схемний dead code.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `b1d5539` (видалено `autoPublish`, `publicationTitle` зі схеми; також видалено `notifyUsers` з `PublishBreezeThemeEditorInput`)
 
 ---
 
@@ -478,7 +478,7 @@
 - **Файли:** `ViewModel/ThemeCssVariables.php:~72`, `Model/Resolver/Query/GetCss.php:~92,~112`
 - **Проблема:** Хардкодоване представлення "порожнього CSS". Потрібна константа `CssGenerator::EMPTY_CSS_OUTPUT`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `526342e` (`EMPTY_CSS_OUTPUT` + `hasRealCssContent()` static method перенесено в `CssGenerator`)
 
 ### 5.3 `'#bte-iframe'` — не використовує SELECTORS константу
 - **Файли:** `view/adminhtml/web/js/editor/toolbar.js` (7 разів), `color.js`, `css-preview-manager.js`
@@ -993,11 +993,11 @@
 - `[ ]` **п. 6.5** — `DraftUserIdResolver::resolve()` abstraction (7+ inline occurrences)
 - `[ ]` **п. 6.8** — `ThemeResolver` per-request cache (`getThemeCollection()`)
 - `[ ]` **п. 3.5** — `AbstractConfigResolver` god class decomposition
-- `[ ]` **п. 5.2** — `CssGenerator::EMPTY_CSS_OUTPUT` constant
+- `[x]` **п. 5.2** — `CssGenerator::EMPTY_CSS_OUTPUT` constant — коміт `526342e`
 - `[x] N/A` **п. 7.4** — `db_schema.xml` FK `onDelete="SET NULL"` — адміни рідко видаляються, `NO ACTION` є захистом від випадкового видалення
 - `[ ]` **п. 7.5** — `AclAuthorization` silent bypass fix
-- `[ ]` **п. 2.15** *(залишок)* — `Value/Collection.php`, `Status/Collection.php`, `Changelog/Collection.php` мертві query-builder методи
-- `[ ]` **п. 2.27** — `autoPublish`/`publicationTitle` мертві GraphQL params (schema + resolver)
+- `[x]` **п. 2.15** *(залишок)* — `Value/Collection.php`, `Status/Collection.php`, `Changelog/Collection.php` мертві query-builder методи — коміт `b1d5539`
+- `[x]` **п. 2.27** — `autoPublish`/`publicationTitle` мертві GraphQL params (schema + resolver) — коміт `b1d5539`
 
 ### Крок 9 — JS duplication cleanup
 
