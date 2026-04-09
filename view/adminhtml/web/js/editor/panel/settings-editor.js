@@ -540,7 +540,7 @@ define([
          */
         _applyFieldResetToPreview: function (data) {
             var $field      = this.element.find('[data-section="' + data.sectionCode + '"][data-field="' + data.fieldCode + '"]').first();
-            var fieldCssVar = $field.attr('data-property') || $field.attr('data-css-var');
+            var fieldCssVar = $field.attr('data-property');
             var fieldType   = ($field.attr('data-type') || '').toLowerCase();
 
             if (!fieldCssVar || data.value === undefined) {

@@ -196,7 +196,7 @@ define([
                 var $trigger = $input.siblings('.bte-color-trigger');
                 
                 // Get field's CSS variable
-                var fieldCssVar = $input.attr('data-css-var');
+                var fieldCssVar = $input.attr('data-property');
 
                 
                 // Update input value
