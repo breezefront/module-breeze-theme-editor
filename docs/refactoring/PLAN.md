@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 48 / 108 завершено  
+**Статус виконання:** 49 / 108 завершено  
 
 ---
 
@@ -759,7 +759,7 @@
 - **Файл:** `etc/db_schema.xml:63`
 - **Проблема:** Видалення admin user провалиться якщо в нього є збережені draft values. Краще `onDelete="SET NULL"` + nullable `user_id`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] N/A` — адміни в Magento рідко видаляються (зазвичай деактивують `is_active=0`). `NO ACTION` є фактичним захистом від випадкового видалення адміна з активними даними. Ризик регресії від міграції схеми перевищує практичну цінність fix.
 
 ### 7.5 ACL plugin — мовчазне ігнорування при відсутності interface
 - **Файл:** `Plugin/GraphQL/AclAuthorization.php`, `etc/graphql/di.xml`
@@ -934,8 +934,8 @@
 | 7. Tight coupling | 9 | — | 2 | 4 | 3 | 1/9 |
 | 8. setTimeout audit | 13 | — | — | 3 | 10 | 0/13 |
 | **Всього** | **108** | **5** | **16** | **39** | **48** |
-| **Виконано** | **48** | **5** | **12** | **18** | **13** |
-| **Залишилось** | **60** | **0** | **4** | **21** | **35** |
+| **Виконано** | **49** | **5** | **12** | **19** | **13** |
+| **Залишилось** | **59** | **0** | **4** | **20** | **35** |
 
 > Примітка: деякі пункти перетинаються між категоріями (напр. п. 3.2 і п. 7.2, або п. 6.3 і п. 7.3).
 
@@ -994,7 +994,7 @@
 - `[ ]` **п. 6.8** — `ThemeResolver` per-request cache (`getThemeCollection()`)
 - `[ ]` **п. 3.5** — `AbstractConfigResolver` god class decomposition
 - `[ ]` **п. 5.2** — `CssGenerator::EMPTY_CSS_OUTPUT` constant
-- `[ ]` **п. 7.4** — `db_schema.xml` FK `onDelete="SET NULL"` для `user_id`
+- `[x] N/A` **п. 7.4** — `db_schema.xml` FK `onDelete="SET NULL"` — адміни рідко видаляються, `NO ACTION` є захистом від випадкового видалення
 - `[ ]` **п. 7.5** — `AclAuthorization` silent bypass fix
 - `[ ]` **п. 2.15** *(залишок)* — `Value/Collection.php`, `Status/Collection.php`, `Changelog/Collection.php` мертві query-builder методи
 - `[ ]` **п. 2.27** — `autoPublish`/`publicationTitle` мертві GraphQL params (schema + resolver)
