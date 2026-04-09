@@ -409,8 +409,6 @@ input SaveBreezeThemeEditorValuesInput {
     scope: BreezeThemeEditorScopeInput
     status: BreezeThemeEditorStatusCode!
     values: [BreezeThemeEditorValueInput!]!
-    autoPublish: Boolean @doc(description: "Publish immediately after save")
-    publicationTitle: String @doc(description: "Required if autoPublish=true")
 }
 
 input SaveBreezeThemeEditorValueInput {
@@ -431,7 +429,6 @@ input PublishBreezeThemeEditorInput {
     scope: BreezeThemeEditorScopeInput
     title: String!
     description: String
-    notifyUsers: Boolean @doc(description: "Send notification to other admins")
 }
 
 input RollbackBreezeThemeEditorInput {

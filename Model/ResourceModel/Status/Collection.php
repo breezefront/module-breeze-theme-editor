@@ -16,21 +16,4 @@ class Collection extends AbstractCollection
     {
         $this->_init(Status::class, StatusResource::class);
     }
-
-    /**
-     * Add order by sort_order
-     */
-    public function addSortOrderSort(): self
-    {
-        return $this->setOrder(StatusInterface::SORT_ORDER, 'ASC');
-    }
-
-    /**
-     * Filter by code
-     */
-    public function addCodeFilter(string $code): self
-    {
-        $this->addFieldToFilter(StatusInterface::CODE, $code);
-        return $this;
-    }
 }
