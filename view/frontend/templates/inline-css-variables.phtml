@@ -10,7 +10,7 @@ $viewModel = $block->getViewModel();
 $inlineCssContent = $viewModel->getInlineCssContent();
 
 // Skip rendering if module disabled or no CSS content
-if (empty($inlineCssContent) || $inlineCssContent === ":root {\n}\n") {
+if (empty($inlineCssContent) || $inlineCssContent === \Swissup\BreezeThemeEditor\Model\Service\CssGenerator::EMPTY_CSS_OUTPUT) {
     return;
 }
 ?>

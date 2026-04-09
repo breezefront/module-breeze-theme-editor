@@ -23,6 +23,8 @@ use Swissup\BreezeThemeEditor\Model\StatusCode;
  */
 class CssGenerator
 {
+    public const EMPTY_CSS_OUTPUT = ":root {\n}\n";
+
     public function __construct(
         private ValueInheritanceResolver $valueInheritanceResolver,
         private StatusProvider $statusProvider,
@@ -177,5 +179,18 @@ class CssGenerator
         $css .= "    $cssVar-rgb: $rgbValue;  /* Palette: $label (RGB) */\n";
 
         return $css;
+    }
+
+    /**
+     * Check if CSS string contains real content (custom CSS variables).
+     *
+     * Returns false for empty strings and for the empty :root block produced
+     * when no theme values are saved.
+     */
+    public static function hasRealCssContent(string $css): bool
+    {
+        return !empty($css)
+            && $css !== self::EMPTY_CSS_OUTPUT
+            && str_contains($css, '--');
     }
 }

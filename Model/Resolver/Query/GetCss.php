@@ -74,21 +74,8 @@ class GetCss extends AbstractQueryResolver
         return [
             'css' => $css,
             'status' => $status,
-            'hasContent' => $this->hasRealCssContent($css)
+            'hasContent' => CssGenerator::hasRealCssContent($css)
         ];
-    }
-
-    /**
-     * Check if CSS has real content (contains CSS variables)
-     *
-     * @param string $css
-     * @return bool
-     */
-    private function hasRealCssContent(string $css): bool
-    {
-        return !empty($css)
-            && $css !== ":root {\n}\n"
-            && str_contains($css, '--'); // Contains CSS variables
     }
 
     /**
@@ -107,7 +94,7 @@ class GetCss extends AbstractQueryResolver
 
             if (empty($changelog)) {
                 // No changes in publication, return empty CSS
-                return ":root {\n}\n";
+                return CssGenerator::EMPTY_CSS_OUTPUT;
             }
 
             // Build values map: 'section.setting' => 'value'

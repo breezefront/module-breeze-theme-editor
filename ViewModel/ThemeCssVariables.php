@@ -56,23 +56,10 @@ class ThemeCssVariables implements ArgumentInterface
     {
         try {
             $css = $this->getInlineCssContent();
-            return !empty($css) && $css !== ":root {\n}\n";
+            return !empty($css) && $css !== CssGenerator::EMPTY_CSS_OUTPUT;
         } catch (\Exception $e) {
             return false;
         }
-    }
-
-    /**
-     * Check if CSS has real content (contains CSS variables)
-     *
-     * @param string $css
-     * @return bool
-     */
-    public function hasRealCssContent(string $css): bool
-    {
-        return !empty($css)
-            && $css !== ":root {\n}\n"
-            && str_contains($css, '--'); // Contains CSS variables
     }
 
     /**
