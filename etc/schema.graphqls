@@ -471,7 +471,6 @@ input ImportBreezeThemeEditorSettingsInput {
 
 input SaveBreezeThemeEditorPaletteValueInput {
     scope: BreezeThemeEditorScopeInput
-    cssVar: String! @doc(description: "CSS variable name (e.g., '--color-brand-primary')") @deprecated(reason: "Use 'property' instead")
     property: String! @doc(description: "CSS variable name (e.g., '--color-brand-primary')")
     value: String! @doc(description: "HEX value (e.g., '#1979c3') or RGB (auto-converted for backward compatibility)")
 }
