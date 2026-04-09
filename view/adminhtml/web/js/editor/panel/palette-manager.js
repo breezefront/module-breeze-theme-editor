@@ -337,26 +337,6 @@ define([
         },
 
         /**
-         * Convert HEX to RGB string
-         * @deprecated Use ColorUtils.hexToRgb() directly
-         * @param {String} hex - "#1979c3"
-         * @returns {String} - "25, 121, 195"
-         */
-        hexToRgb: function(hex) {
-            return ColorUtils.hexToRgb(hex);
-        },
-
-        /**
-         * Convert RGB string to HEX
-         * @deprecated Use ColorUtils.rgbToHex() directly
-         * @param {String} rgb - "25, 121, 195"
-         * @returns {String} - "#1979c3"
-         */
-        rgbToHex: function(rgb) {
-            return ColorUtils.rgbToHex(rgb);
-        },
-
-        /**
          * Check if color value matches any palette color
          * 
          * @param {String} colorValue - HEX or RGB value

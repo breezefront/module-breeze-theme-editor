@@ -67,24 +67,6 @@
     }
 }
 
-.permission-notice {
-    padding: 10px 15px;
-    background: #fff3cd;
-    border: 1px solid #ffc107;
-    border-radius: 4px;
-    margin: 10px 0;
-    font-size: 13px;
-    line-height: 1.5;
-    
-    .help-text {
-        display: block;
-        font-size: 12px;
-        color: #666;
-        margin-top: 5px;
-        font-style: italic;
-    }
-}
-
 //
 //  Button States with Permissions
 //  _____________________________________________
@@ -97,17 +79,3 @@ a.bte-permission-denied {
     }
 }
 
-//
-//  Tooltip Enhancement for Disabled Elements
-//  _____________________________________________
-
-[title][disabled],
-.bte-permission-denied[title] {
-    cursor: help !important;
-    position: relative;
-    
-    &:hover::after {
-        // Native browser tooltip will show
-        // No need for custom tooltip overlay
-    }
-}

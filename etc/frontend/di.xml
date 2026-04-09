@@ -2,10 +2,6 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
 
-    <!-- Use frontend-specific PageUrlProvider -->
-    <preference for="Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider"
-                type="Swissup\BreezeThemeEditor\Model\Provider\FrontendPageUrlProvider"/>
-
     <!-- Inject $breezeThemeEditor into all frontend .phtml templates via plugin.
          Plugin is used instead of blockVariables to avoid DI compile issue:
          declaring blockVariables in a module's di.xml replaces (not merges)
