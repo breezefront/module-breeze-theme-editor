@@ -77,7 +77,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => '--color-brand-primary',
+                'property' => '--color-brand-primary',
                 'value' => '#1979c3'
             ]
         ];
@@ -127,7 +127,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => '--color-secondary',
+                'property' => '--color-secondary',
                 'value' => 'ff5733'
             ]
         ];
@@ -170,7 +170,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => '--color-accent',
+                'property' => '--color-accent',
                 'value' => '#f5a'
             ]
         ];
@@ -213,7 +213,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => '--color-legacy',
+                'property' => '--color-legacy',
                 'value' => '25, 121, 195'
             ]
         ];
@@ -257,7 +257,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => '--brand-primary', // Missing "--color-" prefix
+                'property' => '--brand-primary', // Missing "--color-" prefix
                 'value' => '#1979c3'
             ]
         ];
@@ -284,7 +284,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => 'brand-primary',
+                'property' => 'brand-primary',
                 'value' => '#1979c3'
             ]
         ];
@@ -311,7 +311,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => '--color-invalid',
+                'property' => '--color-invalid',
                 'value' => 'not-a-color'
             ]
         ];
@@ -337,7 +337,7 @@ class SavePaletteValueTest extends TestCase
         $args = [
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
-                'cssVar' => '--color-auto',
+                'property' => '--color-auto',
                 'value' => '#123456'
             ]
         ];
@@ -384,7 +384,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 15,
-                'cssVar' => '--color-explicit',
+                'property' => '--color-explicit',
                 'value' => '#abcdef'
             ]
         ];
@@ -430,7 +430,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => '--color-error',
+                'property' => '--color-error',
                 'value' => '#ff0000'
             ]
         ];
@@ -477,7 +477,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => '--color-unused',
+                'property' => '--color-unused',
                 'value' => '#999999'
             ]
         ];
@@ -523,7 +523,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => '--color-popular',
+                'property' => '--color-popular',
                 'value' => '#0066cc'
             ]
         ];
@@ -577,7 +577,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => '--color-test',
+                'property' => '--color-test',
                 'value' => '#000000'
             ]
         ];
@@ -619,7 +619,7 @@ class SavePaletteValueTest extends TestCase
             'input' => [
                 'scope' => ['type' => 'stores', 'scopeId' => 1],
                 'themeId' => 10,
-                'cssVar' => '--color-test',
+                'property' => '--color-test',
                 'value' => '#ffffff'
             ]
         ];

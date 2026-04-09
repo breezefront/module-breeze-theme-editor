@@ -11,23 +11,22 @@
  *   so fieldCssVar was always undefined → the if (fieldCssVar && ...) guard failed
  *   silently → CssPreviewManager.setVariable/removeVariable was never called.
  *
- * Fixes applied (both field-reset and field-restore blocks):
- *   1. $field.attr('data-css-var')
- *        → $field.attr('data-property') || $field.attr('data-css-var')
- *      Matches how BaseHandler.extractFieldData() already reads it.
+ * Fix applied (both field-reset and field-restore blocks):
+ *   $field.attr('data-css-var')  →  $field.attr('data-property')
  *
- *   2. $field.attr('data-default-value')
- *        → $field.attr('data-default')
- *      The template renders data-default, not data-default-value.
+ * Additional fix:
+ *   $field.attr('data-default-value')  →  $field.attr('data-default')
+ *   The template renders data-default, not data-default-value.
  *
- *   3. Added .first() to the selector — a color field renders two elements
- *      with [data-section][data-field] (trigger div + input), so jQuery's
- *      .attr() must read from the first match only.
+ * Additional fix:
+ *   Added .first() to the selector — a color field renders two elements
+ *   with [data-section][data-field] (trigger div + input), so jQuery's
+ *   .attr() must read from the first match only.
  *
  * Test layers:
- *   1–4   Attribute-reading logic  — isolated with real jQuery DOM nodes
- *   5–8   Dispatch routing logic   — routing between setVariable / removeVariable
- *   9–10  Regression guards        — exact before/after proof of the two attribute bugs
+ *   1–3   Attribute-reading logic  — isolated with real jQuery DOM nodes
+ *   4–7   Dispatch routing logic   — routing between setVariable / removeVariable
+ *   8–9   Regression guards        — exact before/after proof of the two attribute bugs
  */
 define([
     'jquery',
@@ -39,13 +38,12 @@ define([
 
     /**
      * Create a jQuery element that mimics a rendered color field node.
-     * Uses data-property (not data-css-var) — exactly like color.html template.
+     * Uses data-property — exactly like color.html template.
      *
      * @param {Object} opts
      * @param {String} [opts.sectionCode]
      * @param {String} [opts.fieldCode]
      * @param {String} [opts.property]   - renders as data-property (the standard)
-     * @param {String} [opts.cssVar]     - renders as data-css-var  (legacy fallback)
      * @param {String} [opts.type]
      * @param {String} [opts.format]
      * @param {String} [opts.defaultValue] - renders as data-default
@@ -61,9 +59,6 @@ define([
         if (opts.property !== undefined) {
             $el.attr('data-property', opts.property);
         }
-        if (opts.cssVar !== undefined) {
-            $el.attr('data-css-var', opts.cssVar);
-        }
         if (opts.format !== undefined) {
             $el.attr('data-format', opts.format);
         }
@@ -78,20 +73,20 @@ define([
 
     /**
      * Inline reproduction of the CSS-var resolution from the fixed handler.
-     * Production code: $field.attr('data-property') || $field.attr('data-css-var')
+     * Production code: $field.attr('data-property')
      *
      * @param {jQuery} $field
      * @returns {String|undefined}
      */
     function resolveCssVar($field) {
-        return $field.attr('data-property') || $field.attr('data-css-var');
+        return $field.attr('data-property');
     }
 
     /**
      * Inline reproduction of the OLD (broken) CSS-var resolution.
      * Production code before fix: $field.attr('data-css-var')
      *
-     * Used only in the regression-guard test (Test 9) to prove the bug existed.
+     * Used only in the regression-guard test (Test 8) to prove the bug existed.
      *
      * @param {jQuery} $field
      * @returns {String|undefined}
@@ -116,7 +111,7 @@ define([
      *   null (when skipped)
      */
     function runDispatch($field, value) {
-        var fieldCssVar = $field.attr('data-property') || $field.attr('data-css-var');
+        var fieldCssVar = $field.attr('data-property');
         var fieldType   = ($field.attr('data-type') || '').toLowerCase();
 
         if (!fieldCssVar || value === undefined) {
@@ -141,7 +136,7 @@ define([
 
     /**
      * Inline reproduction of the OLD (broken) dispatch that used data-css-var.
-     * Used only in the regression-guard test (Test 9).
+     * Used only in the regression-guard test (Test 8).
      */
     function runDispatchOld($field, value) {
         var fieldCssVar = $field.attr('data-css-var');   // broken: ignores data-property
@@ -175,51 +170,36 @@ define([
         },
 
         /**
-         * Test 2: data-css-var is used as fallback when data-property is absent
-         *
-         * Ensures backward compatibility with any non-color field that may still
-         * render data-css-var instead of data-property.
+         * Test 2: property absent → undefined → dispatch is skipped
          */
-        'should fall back to data-css-var when data-property is absent': function () {
-            var $field = makeField({ cssVar: '--body-bg' });  // no data-property
-
-            this.assertEquals(
-                resolveCssVar($field),
-                '--body-bg',
-                'data-css-var="--body-bg" must be used as a fallback'
-            );
-        },
-
-        /**
-         * Test 3: data-property takes precedence over data-css-var when both present
-         */
-        'should prefer data-property over data-css-var when both are present': function () {
-            var $field = makeField({ property: '--body-bg-new', cssVar: '--body-bg-old' });
-
-            this.assertEquals(
-                resolveCssVar($field),
-                '--body-bg-new',
-                'data-property must take precedence over data-css-var'
-            );
-        },
-
-        /**
-         * Test 4: neither attribute present → undefined → dispatch is skipped
-         */
-        'should return undefined when neither data-property nor data-css-var is present': function () {
-            var $field = makeField({});  // no property, no cssVar
+        'should return undefined when data-property is absent': function () {
+            var $field = makeField({});  // no property
 
             this.assertEquals(
                 resolveCssVar($field),
                 undefined,
-                'Missing both attributes must return undefined'
+                'Missing data-property must return undefined'
             );
+        },
+
+        /**
+         * Test 3: unresolvable CSS var → dispatch skipped even with valid value
+         *
+         * Defensive guard: if the field element lacks data-property, the handler
+         * must not call setVariable with undefined as the variable name.
+         */
+        'should skip dispatch when CSS var attribute is missing': function () {
+            var $field = makeField({});  // no data-property
+
+            var result = runDispatch($field, '#FFFFFF52');
+
+            this.assertEquals(result, null, 'Dispatch must be skipped when CSS var is unresolvable');
         },
 
         // ─── Layer 2: dispatch routing logic ──────────────────────────────
 
         /**
-         * Test 5: HEX reset value → setVariable dispatched with correct args
+         * Test 4: HEX reset value → setVariable dispatched with correct args
          *
          * Scenario: user changed body-bg to #b05a5a52, then clicks Discard.
          * PanelState restores it to #FFFFFF52 (draft value).
@@ -242,7 +222,7 @@ define([
         },
 
         /**
-         * Test 6: palette reference reset value → removeVariable dispatched
+         * Test 5: palette reference reset value → removeVariable dispatched
          *
          * When the draft value is a palette reference (e.g. --color-brand-primary),
          * the live preview removes the override var so the cascade resolves it via
@@ -259,7 +239,7 @@ define([
         },
 
         /**
-         * Test 7: undefined reset value → dispatch is skipped
+         * Test 6: undefined reset value → dispatch is skipped
          *
          * If PanelState.resetField() returns undefined the handler must be a no-op.
          */
@@ -272,24 +252,23 @@ define([
         },
 
         /**
-         * Test 8: unresolvable CSS var → dispatch skipped even with valid value
-         *
-         * Defensive guard: if the field element somehow lacks both data-property
-         * and data-css-var, the handler must not call setVariable with undefined
-         * as the variable name.
+         * Test 7: non-color field with data-property → dispatched correctly
          */
-        'should skip dispatch when CSS var attribute is missing': function () {
-            var $field = makeField({});  // no data-property, no data-css-var
+        'should dispatch setVariable for a non-color field with data-property': function () {
+            var $field = makeField({ property: '--max-width', type: 'text' });
 
-            var result = runDispatch($field, '#FFFFFF52');
+            var result = runDispatch($field, '1440px');
 
-            this.assertEquals(result, null, 'Dispatch must be skipped when CSS var is unresolvable');
+            this.assertNotNull(result,                          'Dispatch must produce a result');
+            this.assertEquals(result.method,  'setVariable',   'Must route to setVariable');
+            this.assertEquals(result.varName, '--max-width',   'CSS var name must be "--max-width"');
+            this.assertEquals(result.value,   '1440px',        'Value must pass through');
         },
 
         // ─── Layer 3: regression guards ───────────────────────────────────
 
         /**
-         * Test 9 — REGRESSION GUARD: data-property vs data-css-var bug
+         * Test 8 — REGRESSION GUARD: data-property vs data-css-var bug
          *
          * Directly documents the production bug that was fixed:
          *
@@ -297,7 +276,7 @@ define([
          *               The color.html template renders data-property → undefined
          *               → fieldCssVar was always undefined → guard failed → NO update
          *
-         *   After fix   settings-editor.js uses $field.attr('data-property') || ...
+         *   After fix   settings-editor.js uses $field.attr('data-property')
          *               Reads data-property correctly → guard passes → update sent
          *
          * Both the broken and the fixed paths are asserted so that any future
@@ -318,7 +297,7 @@ define([
             );
             this.assertNotNull(
                 fixedResult,
-                'FIXED code (data-property || data-css-var): dispatch must proceed'
+                'FIXED code (data-property): dispatch must proceed'
             );
             this.assertEquals(
                 fixedResult.varName,
@@ -328,7 +307,7 @@ define([
         },
 
         /**
-         * Test 10 — REGRESSION GUARD: data-default vs data-default-value bug
+         * Test 9 — REGRESSION GUARD: data-default vs data-default-value bug
          *
          * The same handlers also read $field.attr('data-default-value') for
          * fieldData.defaultValue.  The template renders data-default (no "-value"

@@ -226,25 +226,6 @@ class CssVariableBuilderTest extends TestCase
         $this->assertEmpty($blocks);
     }
 
-    public function testBuildSelectorBlocksSupportsLegacyCssVar(): void
-    {
-        $fieldMap = [
-            'buttons.bg' => [
-                'css_var'   => '--btn-bg',
-                'default'   => '#ccc',
-                '_selector' => ':root',
-            ],
-        ];
-
-        $values = [
-            ['section_code' => 'buttons', 'setting_code' => 'bg', 'value' => '#fff'],
-        ];
-
-        $blocks = $this->builder->buildSelectorBlocks($values, $fieldMap);
-
-        $this->assertStringContainsString('--btn-bg:', $blocks[':root'][0]);
-    }
-
     public function testBuildSelectorBlocksCustomSelector(): void
     {
         $fieldMap = [

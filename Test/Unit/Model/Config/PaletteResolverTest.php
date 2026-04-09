@@ -107,7 +107,7 @@ class PaletteResolverTest extends TestCase
                             [
                                 'colors' => [
                                     [
-                                        'css_var' => '--color-brand-primary',
+                                        'property' => '--color-brand-primary',
                                         'default' => '#1979c3'
                                     ]
                                 ]
@@ -138,7 +138,7 @@ class PaletteResolverTest extends TestCase
                             [
                                 'colors' => [
                                     [
-                                        'css_var' => '--color-other',
+                                        'property' => '--color-other',
                                         'default' => '#ffffff'
                                     ]
                                 ]

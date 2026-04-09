@@ -81,7 +81,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id' => '--color-brand-amber-dark',
-                            'css_var' => '--color-brand-amber-dark',
+                            'property' => '--color-brand-amber-dark',
                             'default' => '#000000'  // Different from value
                         ]
                     ]
@@ -127,7 +127,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id' => '--color-brand-primary',
-                            'css_var' => '--color-brand-primary',
+                            'property' => '--color-brand-primary',
                             'default' => '#000000'  // Different from value
                         ]
                     ]
@@ -175,9 +175,9 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000'],
-                        ['id' => '--color-brand-secondary', 'css_var' => '--color-brand-secondary', 'default' => '#000000'],
-                        ['id' => '--color-brand-tertiary', 'css_var' => '--color-brand-tertiary', 'default' => '#000000']
+                        ['id' => '--color-brand-primary', 'property' => '--color-brand-primary', 'default' => '#000000'],
+                        ['id' => '--color-brand-secondary', 'property' => '--color-brand-secondary', 'default' => '#000000'],
+                        ['id' => '--color-brand-tertiary', 'property' => '--color-brand-tertiary', 'default' => '#000000']
                     ]
                 ]
             ]
@@ -219,7 +219,7 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000']
+                        ['id' => '--color-brand-primary', 'property' => '--color-brand-primary', 'default' => '#000000']
                     ]
                 ],
                 [
@@ -227,7 +227,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id' => 'button_primary_bg',
-                            'css_var' => '--button-primary-bg',
+                            'property' => '--button-primary-bg',
                             'type' => 'color',
                             'format' => 'hex',  // HEX format
                             'default' => '#cccccc'  // Different from value
@@ -272,7 +272,7 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000']
+                        ['id' => '--color-brand-primary', 'property' => '--color-brand-primary', 'default' => '#000000']
                     ]
                 ],
                 [
@@ -280,7 +280,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id' => 'base_color',
-                            'css_var' => '--base-color',
+                            'property' => '--base-color',
                             'type' => 'color',
                             'format' => 'rgb',  // RGB format
                             'default' => '#ffffff'  // Different from value
@@ -325,7 +325,7 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000']
+                        ['id' => '--color-brand-primary', 'property' => '--color-brand-primary', 'default' => '#000000']
                     ]
                 ],
                 [
@@ -333,7 +333,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id' => 'button_bg',
-                            'css_var' => '--button-bg',
+                            'property' => '--button-bg',
                             'type' => 'color',
                             // No format property
                             'default' => '#ffffff'  // Different from value
@@ -375,7 +375,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id' => 'button_custom_bg',
-                            'css_var' => '--button-custom-bg',
+                            'property' => '--button-custom-bg',
                             'type' => 'color',
                             'format' => 'hex',
                             'default' => '#cccccc'
@@ -425,19 +425,19 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000']
+                        ['id' => '--color-brand-primary', 'property' => '--color-brand-primary', 'default' => '#000000']
                     ]
                 ],
                 [
                     'id' => 'buttons',
                     'settings' => [
-                        ['id' => 'button_bg', 'css_var' => '--button-bg', 'type' => 'color', 'format' => 'hex', 'default' => '#ffffff']
+                        ['id' => 'button_bg', 'property' => '--button-bg', 'type' => 'color', 'format' => 'hex', 'default' => '#ffffff']
                     ]
                 ],
                 [
                     'id' => 'typography',
                     'settings' => [
-                        ['id' => 'text_color', 'css_var' => '--text-color', 'type' => 'color', 'format' => 'rgb', 'default' => '#ffffff']
+                        ['id' => 'text_color', 'property' => '--text-color', 'type' => 'color', 'format' => 'rgb', 'default' => '#ffffff']
                     ]
                 ]
             ]
@@ -477,13 +477,13 @@ class CssGeneratorTest extends TestCase
                 [
                     'id' => '_palette',
                     'settings' => [
-                        ['id' => '--color-brand-primary', 'css_var' => '--color-brand-primary', 'default' => '#000000']
+                        ['id' => '--color-brand-primary', 'property' => '--color-brand-primary', 'default' => '#000000']
                     ]
                 ],
                 [
                     'id' => 'buttons',
                     'settings' => [
-                        ['id' => 'button_bg', 'css_var' => '--button-bg', 'type' => 'color', 'format' => 'hex', 'default' => '#ffffff']
+                        ['id' => 'button_bg', 'property' => '--button-bg', 'type' => 'color', 'format' => 'hex', 'default' => '#ffffff']
                     ]
                 ]
             ]
@@ -555,7 +555,7 @@ class CssGeneratorTest extends TestCase
                             'id' => 'text_color',
                             'type' => 'color',
                             'default' => 'rgb(17, 24, 39)',  // RGB default → should trigger RGB format
-                            'css_var' => '--base-color',
+                            'property' => '--base-color',
                             'palette' => 'default'
                             // NO 'format' field → should auto-detect from default
                         ]
@@ -615,7 +615,7 @@ class CssGeneratorTest extends TestCase
                             'id' => 'button_color',
                             'type' => 'color',
                             'default' => '#1979c3',  // HEX default → should trigger HEX format
-                            'css_var' => '--button-bg'
+                            'property' => '--button-bg'
                         ]
                     ]
                 ]
@@ -670,7 +670,7 @@ class CssGeneratorTest extends TestCase
                             'id' => 'text_color',
                             'type' => 'color',
                             'default' => 'rgb(17, 24, 39)',  // RGB default
-                            'css_var' => '--base-color'
+                            'property' => '--base-color'
                         ]
                     ]
                 ]
@@ -729,7 +729,7 @@ class CssGeneratorTest extends TestCase
                         [
                             'colors' => [
                                 [
-                                    'css_var' => '--color-brand-amber-dark',
+                                    'property' => '--color-brand-amber-dark',
                                     'default' => '#a16207'
                                 ]
                             ]
@@ -820,7 +820,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id' => 'base_color',
-                            'css_var' => '--base-color',
+                            'property' => '--base-color',
                             'type' => 'color',
                             'default' => 'rgb(17, 24, 39)',  // different from value → not skipped
                         ]
@@ -834,7 +834,7 @@ class CssGeneratorTest extends TestCase
                         [
                             'colors' => [
                                 [
-                                    'css_var' => '--color-brand-amber-dark',
+                                    'property' => '--color-brand-amber-dark',
                                     'default' => '#a16207'
                                 ]
                             ]
@@ -880,7 +880,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id' => 'base_color',
-                            'css_var' => '--base-color',
+                            'property' => '--base-color',
                             'type' => 'color',
                             'default' => 'rgb(17, 24, 39)',
                         ]
@@ -893,7 +893,7 @@ class CssGeneratorTest extends TestCase
                         [
                             'colors' => [
                                 [
-                                    'css_var' => '--color-brand-amber-dark',
+                                    'property' => '--color-brand-amber-dark',
                                     'default' => '#a16207'
                                 ]
                             ]
@@ -1064,11 +1064,9 @@ class CssGeneratorTest extends TestCase
     }
 
     /**
-     * Test 21: 'property' field (new name) is used instead of 'css_var' when both present.
-     *
-     * 'property' has priority over 'css_var' (backward compat alias).
+     * Test 21: 'property' field is required; fields without it are skipped.
      */
-    public function testPropertyFieldTakesPriorityOverCssVar(): void
+    public function testPropertyFieldIsRequired(): void
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
@@ -1087,8 +1085,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'       => 'font_size',
-                            'property' => '--font-size-base',  // new field
-                            'css_var'  => '--old-var-name',    // legacy (should be ignored)
+                            'property' => '--font-size-base',
                             'default'  => '16px'
                         ],
                     ],
@@ -1099,13 +1096,12 @@ class CssGeneratorTest extends TestCase
         $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
 
         $this->assertStringContainsString('--font-size-base: 18px;', $css);
-        $this->assertStringNotContainsString('--old-var-name', $css);
     }
 
     /**
-     * Test 22: Backward compat — 'css_var' still works when 'property' is absent.
+     * Test 22: Fields without 'property' key are skipped entirely.
      */
-    public function testCssVarBackwardCompatWhenPropertyAbsent(): void
+    public function testFieldsWithoutPropertyAreSkipped(): void
     {
         $this->statusProviderMock->method('getStatusId')->willReturn(1);
 
@@ -1124,7 +1120,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'      => 'font_size',
-                            'css_var' => '--font-size-base',  // only legacy field
+                            // no 'property' key — field should be skipped
                             'default' => '16px'
                         ],
                     ],
@@ -1134,7 +1130,7 @@ class CssGeneratorTest extends TestCase
 
         $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
 
-        $this->assertStringContainsString('--font-size-base: 18px;', $css);
+        $this->assertStringNotContainsString('18px', $css);
     }
 
     /**
@@ -1324,7 +1320,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'      => 'base_font',
-                            'css_var' => '--base-font-family',
+                            'property' => '--base-font-family',
                             'type'    => 'font_picker',
                             'default' => $default,
                             'options' => $options,
@@ -1466,14 +1462,14 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'      => 'base_font',
-                            'css_var' => '--base-font-family',
+                            'property' => '--base-font-family',
                             'type'    => 'font_picker',
                             'default' => 'Arial',
                             'options' => $options,
                         ],
                         [
                             'id'      => 'heading_font',
-                            'css_var' => '--heading-font-family',
+                            'property' => '--heading-font-family',
                             'type'    => 'font_picker',
                             'default' => 'Arial',
                             'options' => $options,
@@ -1529,14 +1525,14 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'      => 'base_font',
-                            'css_var' => '--base-font-family',
+                            'property' => '--base-font-family',
                             'type'    => 'font_picker',
                             'default' => 'Arial',
                             'options' => $options,
                         ],
                         [
                             'id'      => 'heading_font',
-                            'css_var' => '--heading-font-family',
+                            'property' => '--heading-font-family',
                             'type'    => 'font_picker',
                             'default' => 'Arial',
                             'options' => $options,
@@ -1601,7 +1597,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'      => 'base_font',
-                            'css_var' => '--base-font-family',
+                            'property' => '--base-font-family',
                             'type'    => 'font_picker',
                             'default' => 'Arial',
                         ],
@@ -1641,7 +1637,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'      => 'base_font',
-                            'css_var' => '--base-font-family',
+                            'property' => '--base-font-family',
                             'type'    => 'font_picker',
                             'default' => 'Arial',
                         ],
@@ -1681,7 +1677,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'      => 'base_font',
-                            'css_var' => '--base-font-family',
+                            'property' => '--base-font-family',
                             'type'    => 'font_picker',
                             'default' => 'Arial',
                         ],
@@ -1721,7 +1717,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'      => 'base_font',
-                            'css_var' => '--base-font-family',
+                            'property' => '--base-font-family',
                             'type'    => 'font_picker',
                             'default' => 'Arial',
                         ],
@@ -1763,7 +1759,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'      => 'base_font',
-                            'css_var' => '--base-font-family',
+                            'property' => '--base-font-family',
                             'type'    => 'font_picker',
                             'default' => 'Arial',
                         ],
@@ -1808,7 +1804,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'      => 'heading_font',
-                            'css_var' => '--headings-font-family',
+                            'property' => '--headings-font-family',
                             'type'    => 'font_picker',
                             'default' => 'Arial',
                         ],
@@ -1865,7 +1861,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'           => 'primary_font_role',
-                            'css_var'      => '--primary-font',
+                            'property'      => '--primary-font',
                             'type'         => 'font_picker',
                             'font_palette' => 'default',
                             'default'      => 'Arial',
@@ -1919,7 +1915,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'      => 'base_font',
-                            'css_var' => '--base-font-family',
+                            'property' => '--base-font-family',
                             'type'    => 'font_picker',
                             'default' => 'Arial',
                             // consumer field: no font_palette, no inline options
@@ -1968,7 +1964,7 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'           => 'primary_font_role',
-                            'css_var'      => '--primary-font',
+                            'property'      => '--primary-font',
                             'type'         => 'font_picker',
                             'font_palette' => 'default',
                             'default'      => 'Arial',
@@ -2026,14 +2022,14 @@ class CssGeneratorTest extends TestCase
                     'settings' => [
                         [
                             'id'           => 'primary_font_role',
-                            'css_var'      => '--primary-font',
+                            'property'      => '--primary-font',
                             'type'         => 'font_picker',
                             'font_palette' => 'default',
                             'default'      => 'Arial',
                         ],
                         [
                             'id'           => 'secondary_font_role',
-                            'css_var'      => '--secondary-font',
+                            'property'      => '--secondary-font',
                             'type'         => 'font_picker',
                             'font_palette' => 'default',
                             'default'      => 'Arial',
