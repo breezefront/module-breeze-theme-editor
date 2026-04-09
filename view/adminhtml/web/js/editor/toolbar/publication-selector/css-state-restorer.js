@@ -18,7 +18,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/error-handler',
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/loading',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/scope-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state'
@@ -28,7 +28,7 @@ define([
     errorHandler,
     loading,
     StorageHelper,
-    configManager,
+    scopeManager,
     Logger,
     Constants,
     PublicationState
@@ -51,9 +51,9 @@ define([
          */
         initCssManager: function (ctx) {
             cssManager.init({
-                scope:   configManager.getScope(),
-                scopeId: configManager.getScopeId(),
-                themeId: configManager.getThemeId(),
+                scope:   scopeManager.getScope(),
+                scopeId: scopeManager.getScopeId(),
+                themeId: scopeManager.getThemeId(),
                 iframeId: Constants.SELECTORS.IFRAME_ID
             });
         },
@@ -96,7 +96,7 @@ define([
             log.info('Restoring CSS state: mode=' + mode.mode +
                 (mode.publicationId ? ' id=' + mode.publicationId : ''));
 
-            var scopeCtx = { scope: configManager.getScope(), scopeId: configManager.getScopeId() };
+            var scopeCtx = { scope: scopeManager.getScope(), scopeId: scopeManager.getScopeId() };
 
             if (mode.mode === PUBLICATION_STATUS.PUBLICATION) {
                 cssManager.switchTo(PUBLICATION_STATUS.PUBLICATION, mode.publicationId, scopeCtx)
@@ -163,7 +163,7 @@ define([
 
             loading.show(ctx.element);
 
-            var scopeCtx = { scope: configManager.getScope(), scopeId: configManager.getScopeId() };
+            var scopeCtx = { scope: scopeManager.getScope(), scopeId: scopeManager.getScopeId() };
 
             cssManager.switchTo(status, null, scopeCtx).then(function () {
                 PublicationState.set(status);
@@ -205,7 +205,7 @@ define([
 
             loading.show(ctx.element);
 
-            var scopeCtx = { scope: configManager.getScope(), scopeId: configManager.getScopeId() };
+            var scopeCtx = { scope: scopeManager.getScope(), scopeId: scopeManager.getScopeId() };
 
             cssManager.switchTo(PUBLICATION_STATUS.PUBLICATION, publicationId, scopeCtx).then(function () {
                 PublicationState.set(PUBLICATION_STATUS.PUBLICATION);

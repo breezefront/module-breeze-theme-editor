@@ -26,7 +26,7 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-published',
     'Swissup_BreezeThemeEditor/js/graphql/mutations/delete-publication',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/scope-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state'
@@ -44,7 +44,7 @@ define([
     discardPublishedMutation,
     deletePublicationMutation,
     StorageHelper,
-    configManager,
+    scopeManager,
     Logger,
     Constants,
     PublicationState
@@ -104,8 +104,8 @@ define([
             loading.show(ctx.element);
 
             publishMutation(
-                configManager.getScope(),
-                configManager.getScopeId(),
+                scopeManager.getScope(),
+                scopeManager.getScopeId(),
                 title,
                 null,
                 false
@@ -123,9 +123,9 @@ define([
 
                     $(document).trigger('bte:published', {
                         publication: result.publication,
-                        scope:   configManager.getScope(),
-                        scopeId: configManager.getScopeId(),
-                        themeId: configManager.getThemeId()
+                        scope:   scopeManager.getScope(),
+                        scopeId: scopeManager.getScopeId(),
+                        themeId: scopeManager.getThemeId()
                     });
 
                     ctx.renderer.closeDropdown();
@@ -220,9 +220,9 @@ define([
 
                         $(document).trigger('bte:published', {
                             publication: result.publication,
-                            scope:   configManager.getScope(),
-                            scopeId: configManager.getScopeId(),
-                            themeId: configManager.getThemeId(),
+                            scope:   scopeManager.getScope(),
+                            scopeId: scopeManager.getScopeId(),
+                            themeId: scopeManager.getThemeId(),
                             isRollback: true
                         });
 
@@ -269,8 +269,8 @@ define([
             loading.show(ctx.element);
 
             discardDraftMutation(
-                configManager.getScope(),
-                configManager.getScopeId(),
+                scopeManager.getScope(),
+                scopeManager.getScopeId(),
                 null
             ).then(function (response) {
                 var result = response && response.discardBreezeThemeEditorDraft;
@@ -283,9 +283,9 @@ define([
                     Toastify.show('success', $t('Draft changes discarded'));
 
                     $(document).trigger('bte:draftDiscarded', {
-                        scope:   configManager.getScope(),
-                        scopeId: configManager.getScopeId(),
-                        themeId: configManager.getThemeId()
+                        scope:   scopeManager.getScope(),
+                        scopeId: scopeManager.getScopeId(),
+                        themeId: scopeManager.getThemeId()
                     });
 
                     ctx.renderer.closeDropdown();
@@ -337,8 +337,8 @@ define([
             loading.show(ctx.element);
 
             discardPublishedMutation(
-                configManager.getScope(),
-                configManager.getScopeId()
+                scopeManager.getScope(),
+                scopeManager.getScopeId()
             ).then(function (response) {
                 var result = response && response.discardBreezeThemeEditorPublished;
 
@@ -356,9 +356,9 @@ define([
                     Toastify.show('success', $t('Published customizations reset to defaults'));
 
                     $(document).trigger('bte:publishedDiscarded', {
-                        scope:   configManager.getScope(),
-                        scopeId: configManager.getScopeId(),
-                        themeId: configManager.getThemeId()
+                        scope:   scopeManager.getScope(),
+                        scopeId: scopeManager.getScopeId(),
+                        themeId: scopeManager.getThemeId()
                     });
 
                     ctx.renderer.closeDropdown();

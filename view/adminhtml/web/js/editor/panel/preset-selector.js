@@ -7,7 +7,7 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/apply-preset',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/lib/toastify',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/scope-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function (
@@ -19,7 +19,7 @@ define([
     applyPreset,
     PanelState,
     Toastify,
-    configManager,
+    scopeManager,
     Logger,
     Constants
 ) {
@@ -115,7 +115,7 @@ define([
 
             log.info('Loading presets...');
 
-            getPresets(configManager.getScope(), configManager.getScopeId())
+            getPresets(scopeManager.getScope(), scopeManager.getScopeId())
                 .then(function (data) {
                     self.options.presets = data.breezeThemeEditorPresets || [];
                     log.info('Loaded ' + self.options.presets.length + ' presets');
@@ -320,8 +320,8 @@ define([
             this.$applyBtn.prop('disabled', true).text('Applying...');
 
             applyPreset(
-                configManager.getScope(),
-                configManager.getScopeId(),
+                scopeManager.getScope(),
+                scopeManager.getScopeId(),
                 presetId,
                 PUBLICATION_STATUS.DRAFT,
                 overwrite

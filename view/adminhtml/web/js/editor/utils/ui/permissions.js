@@ -2,22 +2,24 @@
  * Permissions Utility for Breeze Theme Editor
  * 
  * Manages ACL permission checks and applies permission-based UI restrictions.
- * Reads permissions from window.breezeThemeEditorConfig.permissions.
+ * Reads permissions from configManager.getPermissions().
  * 
  * @module Swissup_BreezeThemeEditor/js/editor/utils/ui/permissions
  */
-define(['jquery'], function($) {
+define([
+    'jquery',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager'
+], function ($, configManager) {
     'use strict';
     
     return {
         /**
-         * Get permissions from global config
+         * Get permissions from config manager
          * 
          * @returns {Object} Permissions object with canView, canEdit, canPublish, canRollback
          */
         getPermissions: function() {
-            var config = window.breezeThemeEditorConfig || {};
-            return config.permissions || {
+            return configManager.getPermissions() || {
                 canView: false,
                 canEdit: false,
                 canPublish: false,

@@ -2,7 +2,7 @@
  * Permissions Utility Tests
  *
  * Tests for utils/ui/permissions.js:
- * - getPermissions() reads from window.breezeThemeEditorConfig
+ * - getPermissions() reads from configManager.getPermissions()
  * - canView/canEdit/canPublish/canRollback/canResetPublished delegation
  * - getPermissionMessage() returns message per action
  * - applyToElement() disables element and adds class when permission missing
@@ -12,19 +12,17 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/test/test-framework',
-    'Swissup_BreezeThemeEditor/js/editor/utils/ui/permissions'
-], function ($, TestFramework, Permissions) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/permissions',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager'
+], function ($, TestFramework, Permissions, configManager) {
     'use strict';
 
-    /** Save and restore window.breezeThemeEditorConfig around each test */
-    var originalConfig;
-
     function setPermissions(perms) {
-        window.breezeThemeEditorConfig = { permissions: perms };
+        configManager.set({ permissions: perms });
     }
 
     function clearPermissions() {
-        window.breezeThemeEditorConfig = originalConfig;
+        configManager.clear();
     }
 
     return TestFramework.suite('Permissions Utility', {
@@ -34,8 +32,7 @@ define([
         // ====================================================================
 
         'getPermissions() returns all-false defaults when config absent': function () {
-            originalConfig = window.breezeThemeEditorConfig;
-            window.breezeThemeEditorConfig = undefined;
+            configManager.clear();
 
             var perms = Permissions.getPermissions();
 
@@ -43,12 +40,9 @@ define([
             this.assertFalse(perms.canEdit,    'canEdit should default to false');
             this.assertFalse(perms.canPublish, 'canPublish should default to false');
             this.assertFalse(perms.canRollback,'canRollback should default to false');
-
-            clearPermissions();
         },
 
-        'getPermissions() reads from window.breezeThemeEditorConfig.permissions': function () {
-            originalConfig = window.breezeThemeEditorConfig;
+        'getPermissions() reads from configManager.getPermissions()': function () {
             setPermissions({ canView: true, canEdit: true, canPublish: false, canRollback: false });
 
             var perms = Permissions.getPermissions();
@@ -65,8 +59,6 @@ define([
         // ====================================================================
 
         'canView() reflects config value': function () {
-            originalConfig = window.breezeThemeEditorConfig;
-
             setPermissions({ canView: true });
             this.assertTrue(Permissions.canView(), 'canView() should be true');
 
@@ -77,8 +69,6 @@ define([
         },
 
         'canEdit() reflects config value': function () {
-            originalConfig = window.breezeThemeEditorConfig;
-
             setPermissions({ canEdit: true });
             this.assertTrue(Permissions.canEdit(), 'canEdit() should be true');
 
@@ -89,8 +79,6 @@ define([
         },
 
         'canPublish() reflects config value': function () {
-            originalConfig = window.breezeThemeEditorConfig;
-
             setPermissions({ canPublish: true });
             this.assertTrue(Permissions.canPublish(), 'canPublish() should be true');
 
@@ -98,8 +86,6 @@ define([
         },
 
         'canRollback() reflects config value': function () {
-            originalConfig = window.breezeThemeEditorConfig;
-
             setPermissions({ canRollback: true });
             this.assertTrue(Permissions.canRollback(), 'canRollback() should be true');
 
@@ -107,8 +93,6 @@ define([
         },
 
         'canResetPublished() reflects config value': function () {
-            originalConfig = window.breezeThemeEditorConfig;
-
             setPermissions({ canResetPublished: true });
             this.assertTrue(Permissions.canResetPublished(), 'canResetPublished() should be true');
 
@@ -140,7 +124,6 @@ define([
         // ====================================================================
 
         'applyToElement() disables element when permission denied': function () {
-            originalConfig = window.breezeThemeEditorConfig;
             setPermissions({ canEdit: false });
 
             var $btn = $('<button>Save</button>');
@@ -153,7 +136,6 @@ define([
         },
 
         'applyToElement() leaves element enabled when permission granted': function () {
-            originalConfig = window.breezeThemeEditorConfig;
             setPermissions({ canEdit: true });
 
             var $btn = $('<button>Save</button>');
@@ -170,7 +152,6 @@ define([
         // ====================================================================
 
         'shouldHide() returns true when user cannot perform action': function () {
-            originalConfig = window.breezeThemeEditorConfig;
             setPermissions({ canPublish: false });
 
             this.assertTrue(Permissions.shouldHide('publish'), 'Should hide when canPublish is false');
@@ -179,7 +160,6 @@ define([
         },
 
         'shouldHide() returns false when user can perform action': function () {
-            originalConfig = window.breezeThemeEditorConfig;
             setPermissions({ canPublish: true });
 
             this.assertFalse(Permissions.shouldHide('publish'), 'Should not hide when canPublish is true');
@@ -192,7 +172,6 @@ define([
         // ====================================================================
 
         'getRoleDescription() returns Admin for canRollback': function () {
-            originalConfig = window.breezeThemeEditorConfig;
             setPermissions({ canView: true, canEdit: true, canPublish: true, canRollback: true });
 
             var role = Permissions.getRoleDescription();
@@ -202,7 +181,6 @@ define([
         },
 
         'getRoleDescription() returns Publisher for canPublish without canRollback': function () {
-            originalConfig = window.breezeThemeEditorConfig;
             setPermissions({ canView: true, canEdit: true, canPublish: true, canRollback: false });
 
             var role = Permissions.getRoleDescription();
@@ -212,7 +190,6 @@ define([
         },
 
         'getRoleDescription() returns Editor for canEdit without publish': function () {
-            originalConfig = window.breezeThemeEditorConfig;
             setPermissions({ canView: true, canEdit: true, canPublish: false, canRollback: false });
 
             var role = Permissions.getRoleDescription();
@@ -222,7 +199,6 @@ define([
         },
 
         'getRoleDescription() returns Viewer for canView only': function () {
-            originalConfig = window.breezeThemeEditorConfig;
             setPermissions({ canView: true, canEdit: false, canPublish: false, canRollback: false });
 
             var role = Permissions.getRoleDescription();
@@ -232,7 +208,6 @@ define([
         },
 
         'getRoleDescription() returns No Access when all false': function () {
-            originalConfig = window.breezeThemeEditorConfig;
             setPermissions({ canView: false, canEdit: false, canPublish: false, canRollback: false });
 
             var role = Permissions.getRoleDescription();

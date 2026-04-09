@@ -9,11 +9,11 @@ define([
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/editor/scope-selector.html',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/cookie-manager',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/scope-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants'
-], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder, Logger, Constants) {
+], function ($, mageTemplate, template, cookieManager, scopeManager, urlBuilder, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/scope-selector');
@@ -397,8 +397,8 @@ define([
                 $pageSelector.breezePageSelector('resetToHomePage');
             }
 
-            // Update config manager
-            configManager.update({
+            // Update scope manager (single source of truth for runtime scope state)
+            scopeManager.update({
                 scope:     scope,
                 scopeId:   scopeId,
                 storeCode: storeCode,

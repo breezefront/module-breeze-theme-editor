@@ -9,12 +9,12 @@ define([
     'mage/template',
     'text!Swissup_BreezeThemeEditor/template/editor/page-selector.html',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/cookie-manager',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/scope-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants'
-], function ($, mageTemplate, template, cookieManager, configManager, urlBuilder, StorageHelper, Logger, Constants) {
+], function ($, mageTemplate, template, cookieManager, scopeManager, urlBuilder, StorageHelper, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/page-selector');
@@ -210,8 +210,8 @@ define([
             log.debug('New URL: ' + newUrl);
             
             // Set navigation cookies BEFORE navigation
-            var storeCode = configManager.getStoreCode(this.currentParams.store);
-            var themeId = configManager.getThemeId(this.options.themeId);
+            var storeCode = scopeManager.getStoreCode(this.currentParams.store);
+            var themeId = scopeManager.getThemeId(this.options.themeId);
             cookieManager.setNavigationCookies(storeCode, themeId);
             
             // Navigate iframe directly via contentWindow for better UX
@@ -247,8 +247,8 @@ define([
         _buildPageUrlWithParams: function(pageUrl) {
             try {
                 // Get current config (may be updated by scope selector)
-                var storeCode = configManager.getStoreCode(this.currentParams.store);
-                var themeId = configManager.getThemeId(this.options.themeId);
+                var storeCode = scopeManager.getStoreCode(this.currentParams.store);
+                var themeId = scopeManager.getThemeId(this.options.themeId);
                 
                 log.debug('Building URL with - storeCode: ' + storeCode + ' themeId: ' + themeId);
                 

@@ -6,10 +6,10 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-publications',
     'Swissup_BreezeThemeEditor/js/graphql/queries/get-config',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/scope-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants'
-], function($, getPublications, getConfig, configManager, Logger, Constants) {
+], function($, getPublications, getConfig, scopeManager, Logger, Constants) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector/metadata-loader');
@@ -24,9 +24,9 @@ define([
         init: function(options) {
             this.pageSize = (options && options.pageSize) || 10;
 
-            log.debug('Metadata loader initialized: scope=' + configManager.getScope() +
-                ' scopeId=' + configManager.getScopeId() +
-                ' themeId=' + configManager.getThemeId() +
+            log.debug('Metadata loader initialized: scope=' + scopeManager.getScope() +
+                ' scopeId=' + scopeManager.getScopeId() +
+                ' themeId=' + scopeManager.getThemeId() +
                 ' pageSize=' + this.pageSize);
 
             return this;
@@ -40,8 +40,8 @@ define([
          * @returns {Promise<Object>} Promise with {draftChangesCount, modifiedCount, lastPublished}
          */
         loadMetadata: function() {
-            var scope   = configManager.getScope();
-            var scopeId = configManager.getScopeId();
+            var scope   = scopeManager.getScope();
+            var scopeId = scopeManager.getScopeId();
 
             if (!scopeId && scope !== 'default') {
                 log.warn('Cannot load metadata: scopeId missing');
@@ -84,8 +84,8 @@ define([
          * @returns {Promise<Object>} Promise with {items, total_count, page_info}
          */
         loadPublications: function(page, search) {
-             var scope   = configManager.getScope();
-             var scopeId = configManager.getScopeId();
+             var scope   = scopeManager.getScope();
+             var scopeId = scopeManager.getScopeId();
 
              page = page || 1;
              search = search || null;

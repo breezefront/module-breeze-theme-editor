@@ -31,6 +31,7 @@ define([
     'Swissup_BreezeThemeEditor/js/graphql/mutations/discard-draft',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/scope-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state',
@@ -54,6 +55,7 @@ define([
     discardDraft,
     StorageHelper,
     configManager,
+    scopeManager,
     Logger,
     Constants,
     PublicationState
@@ -76,34 +78,32 @@ define([
         _create: function () {
             log.info('Initializing Settings Editor (Admin)');
 
-            var config = window.breezeThemeEditorConfig || {};
-
-            // configManager is initialized by publication-selector.js (toolbar starts first).
-            // Fall back to window.breezeThemeEditorConfig only if needed (e.g. panel loads standalone).
-            if (!configManager.exists()) {
-                configManager.set({
-                    scope:   config.scope   || 'stores',
-                    scopeId: config.scopeId != null ? config.scopeId : null,
-                    themeId: config.themeId || null,
-                    storeCode:       config.storeCode       || 'default',
-                    graphqlEndpoint: config.graphqlEndpoint || '/graphql'
+            // scopeManager and configManager are initialized by toolbar.js before any panel opens.
+            // Standalone fallback: if panel is somehow loaded without toolbar, seed minimal defaults.
+            if (!scopeManager.initialized()) {
+                scopeManager.init({
+                    scope:     'stores',
+                    scopeId:   null,
+                    themeId:   null,
+                    storeCode: 'default',
+                    themeName: null
                 });
             }
 
-            this.themeName = config.themeName || 'current theme';
-            this.adminUrl  = config.adminUrl  || '/admin';
+            this.themeName = scopeManager.getThemeName('current theme');
+            this.adminUrl  = configManager.getAdminUrl('/admin');
 
-            if (config.scopeId != null && config.themeName) {
+            if (scopeManager.getScopeId() != null && scopeManager.getThemeName()) {
                 this.options.title = this.options.title
-                    .replace('%1', configManager.getScopeId())
+                    .replace('%1', scopeManager.getScopeId())
                     .replace('%2', this.themeName);
             }
 
             this.$navigation = $(Constants.SELECTORS.NAVIGATION);
 
-            var themeId = configManager.getThemeId();
+            var themeId = scopeManager.getThemeId();
             if (themeId) {
-                StorageHelper.init(configManager.getScopeId(), themeId);
+                StorageHelper.init(scopeManager.getScopeId(), themeId);
             }
 
             this.template = mageTemplate(panelTemplate);
@@ -251,9 +251,9 @@ define([
 
             if (!CssManager.isReady()) {
                 CssManager.init({
-                    scope:   configManager.getScope(),
-                    scopeId: configManager.getScopeId(),
-                    themeId: configManager.getThemeId()
+                    scope:   scopeManager.getScope(),
+                    scopeId: scopeManager.getScopeId(),
+                    themeId: scopeManager.getThemeId()
                 });
             }
         },
@@ -443,7 +443,7 @@ define([
             var self = this;
             this.$saveButton.prop('disabled', true).text('Saving...');
 
-            saveValues(configManager.getScope(), configManager.getScopeId(), this.options.status, values)
+            saveValues(scopeManager.getScope(), scopeManager.getScopeId(), this.options.status, values)
                 .then(function (data) {
                     if (data.saveBreezeThemeEditorValues.success) {
                         self._showToast('success', 'Settings saved successfully!');
@@ -454,9 +454,9 @@ define([
                         var fieldModified   = PanelState.getModifiedCount();
                         var paletteModified = PaletteManager.getModifiedCount();
                         $(document).trigger('themeEditorDraftSaved', {
-                            scope:             configManager.getScope(),
-                            scopeId:           configManager.getScopeId(),
-                            themeId:           configManager.getThemeId(),
+                            scope:             scopeManager.getScope(),
+                            scopeId:           scopeManager.getScopeId(),
+                            themeId:           scopeManager.getThemeId(),
                             draftChangesCount: fieldModified + paletteModified
                         });
                     } else {
@@ -507,7 +507,7 @@ define([
                 }
 
                 log.info('Discarding override for ' + data.sectionCode + '.' + data.fieldCode);
-                discardDraft(configManager.getScope(), configManager.getScopeId(), [data.sectionCode], [data.fieldCode])
+                discardDraft(scopeManager.getScope(), scopeManager.getScopeId(), [data.sectionCode], [data.fieldCode])
                     .then(function (result) {
                         if (result.discardBreezeThemeEditorDraft.success) {
                             self._showToast('success', 'Field restored to default');
@@ -518,9 +518,9 @@ define([
                             var fieldModified   = PanelState.getModifiedCount();
                             var paletteModified = PaletteManager.getModifiedCount();
                             $(document).trigger('themeEditorDraftSaved', {
-                                scope:             configManager.getScope(),
-                                scopeId:           configManager.getScopeId(),
-                                themeId:           configManager.getThemeId(),
+                                scope:             scopeManager.getScope(),
+                                scopeId:           scopeManager.getScopeId(),
+                                themeId:           scopeManager.getThemeId(),
                                 draftChangesCount: fieldModified + paletteModified
                             });
                         } else {

@@ -9,7 +9,7 @@
  * from _getState() so tests run without a DOM or GraphQL server.
  *
  * Bugs covered:
- *   Bug 1 — permissions missing from window.breezeThemeEditorConfig
+ *   Bug 1 — permissions missing from configManager
  *            → permissions.canPublish() always returns false
  *            → canPublish in _getState() is always false
  *            → Publish button never renders even with 2 draft changes
@@ -24,8 +24,9 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/test/test-framework',
-    'Swissup_BreezeThemeEditor/js/editor/utils/ui/permissions'
-], function ($, TestFramework, permissions) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/permissions',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager'
+], function ($, TestFramework, permissions, configManager) {
     'use strict';
 
     // -------------------------------------------------------------------------
@@ -45,22 +46,15 @@ define([
     }
 
     // -------------------------------------------------------------------------
-    // Helper: set / clear window.breezeThemeEditorConfig.permissions
+    // Helper: set / clear permissions via configManager
     // -------------------------------------------------------------------------
 
-    var _originalConfig;
-
     function setPermissionsInGlobalConfig(perms) {
-        _originalConfig = window.breezeThemeEditorConfig;
-        window.breezeThemeEditorConfig = {
-            storeId: 1,
-            themeId: 1,
-            permissions: perms
-        };
+        configManager.set({ permissions: perms });
     }
 
     function restoreGlobalConfig() {
-        window.breezeThemeEditorConfig = _originalConfig;
+        configManager.clear();
     }
 
     // -------------------------------------------------------------------------
@@ -115,11 +109,11 @@ define([
 
         // ====================================================================
         // GROUP 2: Bug 1 regression — permissions module reads from
-        //          window.breezeThemeEditorConfig
+        //          configManager.getPermissions()
         //          When `permissions` key is missing → canPublish() returns false
         // ====================================================================
 
-        'Bug 1: permissions missing from breezeThemeEditorConfig → canPublish() returns false': function () {
+        'Bug 1: permissions missing from configManager → canPublish() returns false': function () {
             setPermissionsInGlobalConfig(undefined);
 
             var result = permissions.canPublish();
@@ -175,7 +169,7 @@ define([
             restoreGlobalConfig();
 
             this.assertFalse(stateResult,
-                'End-to-end: when permissions are not forwarded to breezeThemeEditorConfig, ' +
+                'End-to-end: when permissions are not set in configManager, ' +
                 'canPublish in _getState() is false and the Publish button never renders'
             );
         },
@@ -189,7 +183,7 @@ define([
             restoreGlobalConfig();
 
             this.assertTrue(stateResult,
-                'After fix: when permissions.canPublish is forwarded correctly, ' +
+                'After fix: when permissions.canPublish is set correctly in configManager, ' +
                 'canPublish in _getState() is true and the Publish button renders'
             );
         },
@@ -239,13 +233,10 @@ define([
         // GROUP 4: permissions.getPermissions() fallback and other checks
         // ====================================================================
 
-        'getPermissions() returns safe defaults when breezeThemeEditorConfig is undefined': function () {
-            var saved = window.breezeThemeEditorConfig;
-            window.breezeThemeEditorConfig = undefined;
+        'getPermissions() returns safe defaults when configManager is cleared': function () {
+            configManager.clear();
 
             var perms = permissions.getPermissions();
-
-            window.breezeThemeEditorConfig = saved;
 
             this.assertFalse(perms.canView,    'canView default must be false');
             this.assertFalse(perms.canEdit,    'canEdit default must be false');
@@ -297,7 +288,6 @@ define([
                 'canRollback defaults to false when permissions key is absent (same bug vector as Bug 1 for publish)'
             );
         },
-
         // ====================================================================
         // GROUP 6: _rollbackTo() guards — draft warning logic
         //

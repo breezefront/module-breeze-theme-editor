@@ -243,6 +243,8 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/depends-evaluator-test',
             // CSS Manager Live Preview Bug Tests (14 tests) — toolbar switchTo() must disable+clear livePreview
             'Swissup_BreezeThemeEditor/js/test/tests/css-manager-live-preview-bug-test',
+            // Scope Manager Unit Tests (16 tests) — init/update/get/clear/initialized/typed-getters/edge-cases
+            'Swissup_BreezeThemeEditor/js/test/tests/scope-manager-test',
         ];
     }
 }

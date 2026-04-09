@@ -19,6 +19,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/toolbar/toolbar-toggle',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/exit-button',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/scope-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/url-builder',
     'Swissup_BreezeThemeEditor/js/graphql/client',
     'Swissup_BreezeThemeEditor/js/editor/preview-manager',
@@ -30,7 +31,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation, 
              publicationSelector, scopeSelector, pageSelector, highlightToggle, 
-             toolbarToggle, exitButton, configManager, urlBuilder, graphQLClient, 
+             toolbarToggle, exitButton, configManager, scopeManager, urlBuilder, graphQLClient, 
              previewManager, cssManager, settingsEditor, iframeHelper, StorageHelper, Logger, Constants) {
     'use strict';
 
@@ -46,14 +47,22 @@ define([
         log.info('Initializing admin toolbar');
         log.debug('Config details: scope=' + config.scope + ' scopeId=' + config.scopeId + ' storeCode=' + config.storeCode + ' themeId=' + config.themeId + ' iframeBaseUrl=' + config.iframeBaseUrl);
         
-        // Store config globally for child widgets to access via configManager
+        // Initialize static config (readonly, set once at bootstrap)
         configManager.set({
-            scope:           config.scope || 'stores',
-            scopeId:         config.scopeId,
-            storeCode:       config.storeCode,
-            themeId:         config.themeId,
             graphqlEndpoint: config.graphqlEndpoint,
-            adminBasePath:   config.adminBasePath || '/admin/'
+            adminUrl:        config.adminUrl        || '/admin',
+            adminBasePath:   config.adminBasePath   || '/admin/',
+            permissions:     config.permissions     || {},
+            activatePanel:   config.activatePanel   || null
+        });
+
+        // Initialize runtime scope/theme state
+        scopeManager.init({
+            scope:     config.scope     || 'stores',
+            scopeId:   config.scopeId,
+            storeCode: config.storeCode,
+            themeId:   config.themeId,
+            themeName: config.themeName || null
         });
         
         // Initialize Bearer token for GraphQL authentication
@@ -122,18 +131,6 @@ define([
                 }, 0);
             }
         }
-        
-        // Store config globally for settings-editor to access (when initialized lazily)
-        window.breezeThemeEditorConfig = {
-            scope:           config.scope || 'stores',
-            scopeId:         config.scopeId,
-            themeId:         config.themeId,
-            themeName:       config.themeName || 'Theme',
-            adminUrl:        config.adminUrl || '/admin',
-            graphqlEndpoint: config.graphqlEndpoint,
-            permissions:     config.permissions || {},
-            activatePanel:   config.activatePanel || null
-        };
         
         // Initialize device switcher widget
         if ($(Constants.SELECTORS.DEVICE_SWITCHER).length && config.components && config.components.deviceSwitcher) {
@@ -260,8 +257,8 @@ define([
                         }
                         
                         try {
-                            // Get current config (may be updated by scope selector)
-                            var currentConfig = configManager.get();
+                            // Get current scope state (updated by scope-selector on store switch)
+                            var currentConfig = scopeManager.get();
                             log.debug('Using config - storeCode: ' + currentConfig.storeCode + ' themeId: ' + currentConfig.themeId);
                             
                             // Build URL with parameters using urlBuilder utility
@@ -358,18 +355,10 @@ define([
                 // No action needed - css-manager already switched CSS in publication-selector
             });
 
-            // When scope changes: update global config so that lazy-initialized
-            // panel widgets (settings-editor) pick up the new scope/scopeId on first open.
-            // Also update the navigation panelWidgets config so re-init uses new scope.
+            // When scope changes: update navigation panelWidgets config so re-init uses new scope.
+            // scopeManager is already updated by scope-selector.js before this event fires.
             $(document).on(Constants.EVENTS.SCOPE_CHANGED, function(e, scope, scopeId, storeCode) {
                 log.info('Toolbar: scope changed to ' + scope + ':' + scopeId + ' (' + storeCode + ')');
-
-                // Update global config read by settings-editor _create()
-                if (window.breezeThemeEditorConfig) {
-                    window.breezeThemeEditorConfig.scope   = scope;
-                    window.breezeThemeEditorConfig.scopeId = scopeId;
-                    window.breezeThemeEditorConfig.themeId = null; // backend will resolve from scope
-                }
 
                 // Update navigation panelWidget config (used on first lazy init)
                 var $nav = $(Constants.SELECTORS.NAVIGATION);
@@ -380,7 +369,7 @@ define([
                     navWidget.options.panelWidgets['theme-editor'].config.themeId = null;
                 }
 
-                log.info('Toolbar: global config updated for new scope');
+                log.info('Toolbar: navigation panel config updated for new scope');
             });
             
             // Update page-selector when iframe navigates to different page type

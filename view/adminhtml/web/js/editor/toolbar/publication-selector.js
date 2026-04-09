@@ -22,6 +22,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/css-state-restorer',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector/action-executor',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/scope-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function (
@@ -37,6 +38,7 @@ define([
     CssStateRestorer,
     ActionExecutor,
     configManager,
+    scopeManager,
     Logger,
     Constants
 ) {
@@ -62,18 +64,6 @@ define([
          */
         _create: function () {
             log.info('Initializing publication selector');
-
-            // Initialize configManager from window.breezeThemeEditorConfig if not yet set
-            if (!configManager.exists()) {
-                var config = window.breezeThemeEditorConfig || {};
-                configManager.set({
-                    scope:   config.scope   || this.options.scope   || 'stores',
-                    scopeId: config.scopeId != null ? config.scopeId : (this.options.scopeId != null ? this.options.scopeId : null),
-                    themeId: config.themeId || this.options.themeId || null,
-                    storeCode:        config.storeCode        || 'default',
-                    graphqlEndpoint:  config.graphqlEndpoint  || '/graphql'
-                });
-            }
 
             // Initialize modules
             this._initModules();
@@ -104,8 +94,8 @@ define([
          */
         _initModules: function () {
             // Initialize StorageHelper
-            var scopeId = configManager.getScopeId();
-            var themeId = configManager.getThemeId();
+            var scopeId = scopeManager.getScopeId();
+            var themeId = scopeManager.getThemeId();
             if (scopeId && themeId) {
                 StorageHelper.init(scopeId, themeId);
             }
