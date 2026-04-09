@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 44 / 108 завершено  
+**Статус виконання:** 48 / 108 завершено  
 
 ---
 
@@ -151,7 +151,7 @@
 - **Файл:** `Model/Provider/FrontendPageUrlProvider.php`
 - **Проблема:** Клас без жодної логіки. Існує лише як DI-alias. Можна замінити прямим preference на батьківський клас.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `bd3235e`
 
 ### 2.15 Collection builders — невикористані query-helper методи
 - **Файли:**
@@ -195,7 +195,7 @@
 - **Файл:** `view/adminhtml/web/js/editor/panel/palette-manager.js`
 - **Проблема:** `hexToRgb()` та `rgbToHex()` позначені `@deprecated`, делегують до `ColorUtils`, жодних викликів.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `bd3235e`
 
 ### 2.21 `palette-manager.js` — `getDirtyCount()` визначений двічі
 - **Файл:** `view/adminhtml/web/js/editor/panel/palette-manager.js:309–311` та `480–482`
@@ -260,7 +260,7 @@
   - `.permission-notice` та `.permission-notice .help-text` (рядки 70–86) — ніде не застосовуються в шаблонах
   - Порожній `&:hover::after {}` блок (рядки 109–112) — компілюється в nothing
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `bd3235e`
 
 ### 2.30 `_theme-editor-panel.less` — legacy CSS
 - **Файл:** `view/adminhtml/web/css/source/panels/_theme-editor-panel.less:307–357`
@@ -637,11 +637,110 @@
 > Тісне зчеплення між компонентами.
 
 ### 7.1 `window.breezeThemeEditorConfig` — глобальний стан
-- **Файл:** `view/adminhtml/web/js/editor/toolbar.js`
+- **Файли:** `view/adminhtml/web/js/editor/toolbar.js`, `settings-editor.js`, `publication-selector.js`, `permissions.js`
 - **Проблема:** Toolbar записує конфіг у `window.breezeThemeEditorConfig`, кілька компонентів читають звідти. Невидима залежність між toolbar та будь-яким компонентом, що читає цей глобал.
-- **Пропозиція:** Замінити на shared AMD-модуль (config store).
+- **Проблема з `configManager` (поточний стан):**
+  - `configManager` зберігає стан через `$('body').data()` — це теж page-scoped глобал, просто через jQuery DOM замість `window.*`. Суть проблеми не усувається.
+  - `configManager` змішує два типи даних: **статичний конфіг** (`graphqlEndpoint`, `adminUrl`, `permissions`) і **runtime стан** (`scope`, `scopeId`, `themeId`, `themeName` — змінюються при `scopeChanged` і після GraphQL).
+- **Правильне рішення:** Розділити на два AMD closure singleton-и:
+  - `config-manager.js` — **статичний readonly конфіг**, встановлюється один раз при старті toolbar. Аналог `Magento\Framework\App\Config`.
+  - `scope-manager.js` — **runtime стан scope/theme**, мутує при `scopeChanged` та після GraphQL. Аналог `Magento\Store\Model\StoreManager`.
+  - Обидва зберігають стан у `var _config = {}` / `var _scope = {}` у AMD замиканні — RequireJS кешує `define()`, тому всі модулі отримують один і той самий екземпляр.
+- **Розподіл полів:**
+
+  | Поле | Модуль | Тип |
+  |------|--------|-----|
+  | `graphqlEndpoint` | `config-manager` | static |
+  | `adminUrl` | `config-manager` | static |
+  | `adminBasePath` | `config-manager` | static |
+  | `permissions` | `config-manager` | static |
+  | `activatePanel` | `config-manager` | static |
+  | `scope` | `scope-manager` | runtime |
+  | `scopeId` | `scope-manager` | runtime |
+  | `storeCode` | `scope-manager` | runtime |
+  | `themeId` | `scope-manager` | runtime (null після scopeChanged, реальний після GraphQL) |
+  | `themeName` | `scope-manager` | runtime (оновлюється після GraphQL) |
+
+- **`publication-state.js`** — залишається незалежним singleton без змін.
+
+- **Plan виконання (10 кроків):**
+
+  **Крок 1 — Створити `utils/core/scope-manager.js`**
+  - AMD closure singleton: `var _scope = { scope, scopeId, storeCode, themeId, themeName }`
+  - API: `init(data)`, `update(updates)`, `get()`, `clear()` (для тестів)
+  - Геттери: `getScope()`, `getScopeId()`, `getStoreCode()`, `getThemeId()`, `getThemeName()`
+  - `init()` — перша ініціалізація при старті; `update()` — часткові зміни при scopeChanged/GraphQL
+
+  **Крок 2 — Переписати `config-manager.js`**
+  - Замінити `$('body').data(CONFIG_KEY, ...)` на `var _config = {}` у AMD замиканні
+  - Прибрати залежність від `jquery`
+  - Видалити scope/theme поля: `scope`, `scopeId`, `storeCode`, `themeId`, `themeName`
+  - Видалити мертві сеттери: `setScope()`, `setScopeId()`, `setStoreCode()`, `setThemeId()`
+  - Видалити `update()` — конфіг readonly після `set()`
+  - Додати нові поля в DEFAULTS: `adminUrl`, `permissions`, `activatePanel`
+  - Додати геттери: `getAdminUrl()`, `getPermissions()`, `getActivatePanel()`
+  - Залишити: `set()`, `get()`, `exists()`, `clear()`, `getGraphqlEndpoint()`, `getAdminUrl()`, `getAdminBasePath()`
+
+  **Крок 3 — `toolbar.js`**
+  - Розбити `configManager.set({...})` на два виклики:
+    - `configManager.set({ graphqlEndpoint, adminUrl, adminBasePath, permissions, activatePanel })`
+    - `scopeManager.init({ scope, scopeId, storeCode, themeId, themeName })`
+  - Видалити `window.breezeThemeEditorConfig = {...}` (рядки 127–136)
+  - В `scopeChanged` handler: видалити `window.breezeThemeEditorConfig.scope/scopeId/themeId = ...` — `scope-selector.js` вже викликає `scopeManager.update()` перед тригером події
+  - Додати `scopeManager` як AMD-залежність
+
+  **Крок 4 — `toolbar/scope-selector.js`**
+  - `configManager.update({ scope, scopeId, storeCode, themeId: null })` → `scopeManager.update({ scope, scopeId, storeCode, themeId: null })`
+  - Замінити `configManager` на `scopeManager` як AMD-залежність (якщо `configManager` більше не потрібен у цьому файлі)
+
+  **Крок 5 — `panel/config-loader.js`**
+  - `configManager.getScope/getScopeId/getThemeId/getThemeName` → `scopeManager.*`
+  - `configManager.update({ themeId, themeName })` → `scopeManager.update({ themeId, themeName })`
+  - Додати `scopeManager` як AMD-залежність
+
+  **Крок 6 — `panel/settings-editor.js`**
+  - Видалити `var config = window.breezeThemeEditorConfig || {}`
+  - Standalone fallback: `if (!scopeManager.initialized()) scopeManager.init({ scope: 'stores', ... })`
+  - `config.themeName` → `scopeManager.getThemeName('current theme')`
+  - `config.adminUrl` → `configManager.getAdminUrl('/admin')`
+  - `configManager.getScope/getScopeId/getThemeId` → `scopeManager.*`
+  - Додати `scopeManager` як AMD-залежність
+
+  **Крок 7 — `toolbar/publication-selector.js`**
+  - Видалити весь fallback блок (`if (!configManager.exists()) { var config = window.breezeThemeEditorConfig ... }`)
+  - `configManager.getScopeId/getThemeId` → `scopeManager.*`
+  - Додати `scopeManager` як AMD-залежність
+
+  **Крок 8 — `utils/ui/permissions.js`**
+  - `window.breezeThemeEditorConfig.permissions` → `configManager.getPermissions()`
+  - Замінити `jquery` на `config-manager` як AMD-залежність
+
+  **Крок 9 — Решта 9 файлів: `configManager.get*` → `scopeManager.get*`**
+  - `css-manager.js` — `getScope`, `getScopeId`, `getThemeId` (14 викликів)
+  - `panel/error-presenter.js` — `getScope`, `getThemeName` (4 виклики)
+  - `panel/preset-selector.js` — `getScope`, `getScopeId` (4 виклики)
+  - `panel/section-renderer.js` — `getScope`, `getScopeId`, `getThemeId` (6 викликів)
+  - `toolbar/page-selector.js` — `getStoreCode`, `getThemeId` (4 виклики)
+  - `toolbar/publication-selector/action-executor.js` — `getScope`, `getScopeId`, `getThemeId` (16 викликів)
+  - `toolbar/publication-selector/css-state-restorer.js` — `getScope`, `getScopeId`, `getThemeId` (8 викликів)
+  - `toolbar/publication-selector/metadata-loader.js` — `getScope`, `getScopeId`, `getThemeId` (6 викликів)
+  - У кожному файлі: додати `scopeManager` як AMD-залежність, прибрати `configManager` якщо більше не потрібен
+
+  **Крок 10 — Тести**
+  - `permissions-test.js`: `window.breezeThemeEditorConfig = { permissions: perms }` → `configManager.set({ permissions: perms })`; `window.breezeThemeEditorConfig = originalConfig` → `configManager.clear()`; додати `configManager` до `define([...])`
+  - `publication-selector-test.js`: `window.breezeThemeEditorConfig = { permissions: perms }` → `configManager.set({ permissions: perms })`; `window.breezeThemeEditorConfig = undefined` → `configManager.clear()`; додати `configManager` до `define([...])`
+  - Новий `scope-manager-test.js`: `init()` встановлює всі поля; `update()` оновлює тільки вказані; `getScopeId()` з `scopeId=0` повертає `0` (не `null`); `getThemeId()` після `update({ themeId: null })` повертає `null`; `clear()` скидає до дефолтів
+
+- **Зачіпаються файли:** 14 production JS + 2 test JS + 1 новий файл (scope-manager.js)
 - **Пріоритет:** 🟠 High
-- **Статус:** 🔄 Частково — коміти `5b62abf` `cdbdfc1` вводять `configManager` як єдине джерело scope/scopeId/themeId; `window.breezeThemeEditorConfig` залишається у `toolbar.js` (запис), `settings-editor.js`, `publication-selector.js`, `permissions.js` (читання як fallback). Потребує завершення.
+- **Статус:** `[x] DONE` — коміт `6b9911a`
+  - Створено `scope-manager.js` — AMD closure singleton (`var _scope = {}`), API: `init`, `update`, `get*`, `clear`
+  - `config-manager.js` переписано — AMD closure (`var _config = {}`), jQuery прибрано, тільки static поля
+  - 14 production файлів мігровано: `configManager.getScope/Id/ThemeId/Name/StoreCode` → `scopeManager.*`
+  - `window.breezeThemeEditorConfig` повністю видалено
+  - `permissions.js` → `configManager.getPermissions()`
+  - Тести оновлено: `permissions-test.js`, `publication-selector-test.js`; новий `scope-manager-test.js` (16 тестів)
+  - Jest: 771 passed ✅
 
 ### 7.2 `AdminToolbar` — 15 constructor-залежностей
 - **Файл:** `ViewModel/AdminToolbar.php`
@@ -827,16 +926,16 @@
 | Категорія | Всього | 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low |
 |-----------|--------|------------|--------|----------|-------|
 | 1. Мертвий код — баги | 4 | 3 | 1 | — | — | ✅ 4/4 |
-| 2. Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 9/31 |
+| 2. Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 12/31 |
 | 3. God classes | 5 | — | 4 | 1 | — | 4/5 |
 | 4. Code duplication | 21 | — | 5 | 10 | 6 | 8/21 |
 | 5. Magic numbers/strings | 17 | 1 | — | 4 | 12 | 4/17 |
 | 6. Missing abstractions | 8 | — | 1 | 7 | — | 4/8 |
-| 7. Tight coupling | 9 | — | 2 | 4 | 3 | 0/9 |
+| 7. Tight coupling | 9 | — | 2 | 4 | 3 | 1/9 |
 | 8. setTimeout audit | 13 | — | — | 3 | 10 | 0/13 |
 | **Всього** | **108** | **5** | **16** | **39** | **48** |
-| **Виконано** | **33** | **5** | **10** | **12** | **6** |
-| **Залишилось** | **75** | **0** | **6** | **27** | **42** |
+| **Виконано** | **48** | **5** | **12** | **18** | **13** |
+| **Залишилось** | **60** | **0** | **4** | **21** | **35** |
 
 > Примітка: деякі пункти перетинаються між категоріями (напр. п. 3.2 і п. 7.2, або п. 6.3 і п. 7.3).
 
@@ -877,8 +976,86 @@
 22. `[x]` **п. 5.11** — Замінити магічні `'DRAFT'`/`'PUBLISHED'` рядки константами — `0c57fa1`
 23. `[x]` **п. 5.12** — Замінити `#1979c3` на LESS-змінну — `eaa7e7c`
 
-### Крок 6 — Low priority cleanup
-- Решта магічних чисел, low-priority dead code, коментарі
+### Крок 7 — Tight coupling
+- **Крок 7A** `[x]` — PHP dead code cleanup (пп. 2.2–2.12 + 2.15 partial) — `0cf89a5`
+- **Крок 7B** `[x]` — css-var shim removal (PHP + GraphQL + JS) — `06e760c` `6574cd9` `f337705`
+- **Крок 7C** `[x]` — JS dead code: `palette-manager.js` deprecated wrappers, `FrontendPageUrlProvider`, `_utilities.less` tooltip stub — `bd3235e`
+- **Крок 7.1** `[x]` — **Розділити `configManager` на `config-manager` (static) + `scope-manager` (runtime); видалити `window.breezeThemeEditorConfig`** — коміт `6b9911a`
+
+### Крок 8 — PHP refactoring
+
+> Ізольований PHP-блок, не залежить від JS-змін.
+
+- `[ ]` **п. 4.11 + 4.12** — `PublishService`: `_applySnapshot()` private helper + `saveChangelog`/`saveChangelogFromOld` merge
+- `[ ]` **п. 4.14** — `ValueRepository.toRow()` private helper
+- `[ ]` **п. 4.13** — `ConfigProvider._mergeById()` helper
+- `[ ]` **п. 4.15** — `AdminUserLoader._buildUserData()` helper
+- `[ ]` **п. 6.5** — `DraftUserIdResolver::resolve()` abstraction (7+ inline occurrences)
+- `[ ]` **п. 6.8** — `ThemeResolver` per-request cache (`getThemeCollection()`)
+- `[ ]` **п. 3.5** — `AbstractConfigResolver` god class decomposition
+- `[ ]` **п. 5.2** — `CssGenerator::EMPTY_CSS_OUTPUT` constant
+- `[ ]` **п. 7.4** — `db_schema.xml` FK `onDelete="SET NULL"` для `user_id`
+- `[ ]` **п. 7.5** — `AclAuthorization` silent bypass fix
+- `[ ]` **п. 2.15** *(залишок)* — `Value/Collection.php`, `Status/Collection.php`, `Changelog/Collection.php` мертві query-builder методи
+- `[ ]` **п. 2.27** — `autoPublish`/`publicationTitle` мертві GraphQL params (schema + resolver)
+
+### Крок 9 — JS duplication cleanup
+
+> Батч малих JS рефакторингів, кожен незалежний.
+
+- `[ ]` **п. 4.9** — `scope-selector.js` `_traverseScopes(callback)` helper
+- `[ ]` **п. 4.10** — `field-handlers/base.js` merge reset/restore (~40 рядків кожен)
+- `[ ]` **п. 4.18** — `publication-selector.js` `_extractErrorMessage()` helper (6+ inline)
+- `[ ]` **п. 4.19** — `settings-editor.js` `_applyConfig()` private helper
+- `[ ]` **п. 5.3** — `#bte-iframe` → `Constants.SELECTORS.IFRAME` у toolbar.js (×7), color.js, css-preview-manager.js
+- `[ ]` **п. 2.22** — `repeater.js::initSortable()` stub видалити або реалізувати
+- `[ ]` **п. 2.23** — `error-handler.js::_logToServer()` stub видалити або реалізувати
+- `[ ]` **п. 2.25** — мертві утиліти: `url-builder.js` (3), `cookie-manager.js` (4), `permissions.js` (2), `loading.js` (1)
+- `[ ]` **п. 2.26** — `metadata-loader.js::getPublicationTitle()` видалити
+- `[ ]` **п. 4.20** — `preview-manager.js` `_injectCSS`/`injectCSS` near-identical pair
+
+### Крок 10 — JS abstractions
+
+> Більші JS рефакторинги з залежностями між собою.
+
+- `[ ]` **п. 8.11** — витягти `_debounce(fn, delay)` в `utils/debounce.js` (використовується в settings-editor + palette-renderer)
+- `[ ]` **п. 8.1 + 8.2** — iframe retry-polling → спільна `waitForIframeReady()` → `Promise`
+- `[ ]` **п. 8.9** — `settings-editor.js:306` `setTimeout` race → `panelShown` event
+- `[ ]` **п. 4.17 + 6.6** — `base-palette-renderer.js` shared mixin (accordion + dirty state + confirm dialog)
+- `[ ]` **п. 6.7** — `window.confirm()` / `alert()` → `Magento_Ui/js/modal/confirm`
+- `[ ]` **п. 7.2** — `AdminToolbar.php` 15 constructor deps → sub-ViewModels
+- `[ ]` **п. 4.6** — `ValueInterface[]` GraphQL mapping → `toGraphQlValue()` на `AbstractMutationResolver` *(перевірити чи не закрито з 6.4)*
+- `[ ]` **п. 7.3** — `CssGenerator` → `ColorPipeline` *(перевірити чи не закрито з 6.3)*
+- `[ ]` **п. 2.24** — `highlight-toggle.js` — реалізувати або прибрати кнопку
+
+### Крок 11 — Low priority sweep
+
+> Все що залишилось: magic numbers, LESS змінні, коментарі, дрібний dead code.
+
+- `[ ]` **п. 5.4** — magic z-index `10001`/`10002` → LESS змінна
+- `[ ]` **п. 5.6** — breakpoints `'768px'`/`'375px'` → константи у `device-switcher.js`
+- `[ ]` **п. 5.7** — magic числа в `palette-section-renderer.js` (220, 50, 150, 500)
+- `[ ]` **п. 5.8** — `'--color-brand-'` → class constant у `CssGenerator.php`
+- `[ ]` **п. 5.9** — `'--color-'` prefix → константа у `color.js`
+- `[ ]` **п. 5.10** — `transition: 'width 0.3s ease'` → CSS клас у `device-switcher.js`
+- `[ ]` **п. 5.13** — `rgba(255, 255, 255, 0.2)` → `@bte-field-border-translucent` LESS variable
+- `[ ]` **п. 5.14** — `'Courier New', monospace` → `@bte-code-font` LESS variable
+- `[ ]` **п. 5.15** — `min-width: 220px` → LESS variable у `_mixins.less`
+- `[ ]` **п. 5.16** — `max-height: 75vh` → LESS variable у `_mixins.less`
+- `[ ]` **п. 5.17** — `padding-right: 36px` → LESS variable у `_publication-selector.less`
+- `[ ]` **п. 2.30** — legacy CSS у `_theme-editor-panel.less:307–357`
+- `[ ]` **п. 2.31** — duplicate LESS variables у `_variables.less`
+- `[ ]` **п. 7.6** — `AdminTokenGenerator` надмірне debug logging
+- `[ ]` **п. 7.7** — `UserResolver` info log на кожному auth
+- `[ ]` **п. 7.8** — мішаниця мов у коментарях → уніфікувати на EN
+- `[ ]` **п. 7.9** — `strpos` chain → lookup table у `AdminToolbar.php`
+- `[ ]` **п. 8.3** — `setTimeout(fn, 0)` → `Promise.resolve().then(fn)` у `toolbar.js`
+- `[ ]` **п. 8.4 + 8.6** — outside-click `setTimeout(fn, 10)` → `requestAnimationFrame` + спільний `onOutsideClick()`
+- `[ ]` **п. 8.5 + 8.8** — flag cleanup `setTimeout(fn, 50)` → `Promise.resolve().then(fn)`
+- `[ ]` **п. 8.7** — inline debounce timers → локальний `_debounce()` у `palette-section-renderer.js`
+- `[ ]` **п. 8.10** — додати коментар `/* intentional UX delay */` до reload timeout
+- `[ ]` **п. 8.12** — документувати CSS animation sync timeouts у `navigation.js`
+- `[ ]` **п. 8.13** — документувати intentional delay у `toolbar-toggle.js`
 
 ### Виконано поза кроками (нові рефакторинги)
 25. `[x]` **п. 2.19** — Замінити хардкодовані рядки на Constants у 17 production-файлах — `365a3dd`

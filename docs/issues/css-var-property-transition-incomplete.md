@@ -2,23 +2,24 @@
 
 **Severity:** Medium  
 **Area:** `Model/Service/CssGenerator.php`, `etc/schema.graphqls`, `Model/Resolver/Query/AbstractConfigResolver.php`  
-**Type:** Technical debt / API cleanup
+**Type:** Technical debt / API cleanup  
+**Status:** ✅ Resolved
 
 ---
 
 ## Problem
 
-The module is mid-transition from the legacy `css_var` field name (used in
+The module was mid-transition from the legacy `css_var` field name (used in
 old `settings.json` theme configs) to the new `property` field name. A
-backward-compat shim exists in multiple places:
+backward-compat shim existed in multiple places:
 
-**`CssGenerator.php:141`**
+**`CssVariableBuilder.php`**
 ```php
 // Support both 'property' (new) and legacy 'css_var'
 $property = $field['property'] ?? $field['css_var'] ?? null;
 ```
 
-**`AbstractConfigResolver.php:92`**
+**`AbstractConfigResolver.php`**
 ```php
 'property' => $setting['property'] ?? $setting['css_var'] ?? null,
 ```
@@ -29,42 +30,31 @@ cssVar: String! @deprecated(reason: "Use 'property' instead")
 property: String!
 ```
 
-The `@deprecated` annotation on `cssVar` in the GraphQL input type means
-clients still using the old field name get a deprecation warning but it
-continues to work.
-
 ---
 
 ## Impact
 
-- Every CSS generation call checks two keys — minor overhead, but more
-  importantly: it masks missing `property` fields silently by falling back
-  to `css_var`, which can hide config errors.
-- The `@deprecated cssVar` field in the GraphQL schema adds noise.
-- The shim will need to stay as long as any installed Breeze theme still
-  ships `settings.json` files with `css_var` instead of `property`.
+- Every CSS generation call checked two keys — minor overhead, but more
+  importantly: it masked missing `property` fields silently by falling back
+  to `css_var`, which could hide config errors.
+- The `@deprecated cssVar` field in the GraphQL schema added noise.
 
 ---
 
-## Fix
+## Resolution
 
-This cannot be fully resolved in this module alone — it requires coordinating
-with the Breeze theme packages:
-
-1. **Audit Breeze theme `settings.json` files** — identify all that still use
-   `css_var`. The fix is trivial in the theme configs (rename the key).
-2. **Once all maintained themes use `property`**, remove the `?? $field['css_var']`
-   fallbacks from `CssGenerator` and `AbstractConfigResolver`.
-3. **Remove the `cssVar` field** from `SaveBreezeThemeEditorPaletteValueInput`
-   in `schema.graphqls` (breaking change for any client still sending `cssVar`).
+All shims removed after auditing Breeze theme packages (0 occurrences of
+`css_var` in `breeze-evolution` and `breeze-blank` `settings.json` files).
 
 ---
 
 ## Tracking
 
 - [x] Audit Breeze theme packages for remaining `css_var` usage — **0 occurrences** in both `breeze-evolution` and `breeze-blank` `settings.json`. Ready to remove shim.
-- [ ] Remove `CssVariableBuilder.php` fallbacks (2 places: lines 89, 184)
-- [ ] Remove `AbstractConfigResolver.php` fallback (line 105)
-- [ ] Remove `PaletteProvider.php` fallbacks (lines 75, 132, 133)
-- [ ] Remove `PaletteResolver.php` fallback (line 114)
-- [ ] Remove deprecated `cssVar` from GraphQL schema (`schema.graphqls`)
+- [x] Remove `CssVariableBuilder.php` fallbacks (2 places: lines 89, 184)
+- [x] Remove `AbstractConfigResolver.php` fallback (line 105)
+- [x] Remove `PaletteProvider.php` fallbacks (lines 75, 132, 133)
+- [x] Remove `PaletteResolver.php` fallback (line 114)
+- [x] Remove deprecated `cssVar` from GraphQL schema (`schema.graphqls`) and `SavePaletteValue.php` resolver
+- [x] Remove `data-css-var` fallback from `settings-editor.js` and `css-preview-manager.js`
+- [x] Update all unit tests — replace `css_var` fixtures with `property`, remove backward-compat test cases

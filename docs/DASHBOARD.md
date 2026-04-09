@@ -1,17 +1,17 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 2026-04-08  
-**Загальний прогрес:** 99% завершено (Admin Migration) | Рефакторинг: 44/108
+**Останнє оновлення:** 2026-04-09  
+**Загальний прогрес:** ✅ Admin Migration завершено (beta.3 released) | Рефакторинг: 48/108
 
 ---
 
 ## 🚨 Поточний Фокус
 
-### ✅ Проект практично завершений
+### ✅ Admin Migration завершено — beta.3 released
 
-28/30 issues закрито. Всі фази міграції завершені (1–5 в процесі release prep).  
-Відкрито: `css-var` shim cleanup (Medium), `error-log` stub (Low), `highlight` (Deferred).  
-Єдиний блокуючий пункт — **Manual GraphQL E2E тестування** у Phase 5.
+Всі фази міграції завершені. GraphQL E2E 6/6 ✅. beta.3 зарелізовано 09.04.2026.  
+Відкрито: `error-log` stub (Low), `highlight` (Deferred).  
+Поточна робота — **Рефакторинг** (48/108).
 
 ---
 
@@ -20,7 +20,7 @@
 ### 🚀 1. Admin Migration (ГОЛОВНИЙ ПРОЕКТ)
 
 **Мета:** Міграція з token-based до admin інтерфейсу  
-**Статус:** ✅ 99% завершено  
+**Статус:** ✅ 100% завершено — beta.3 released 09.04.2026  
 **Документація:** [`docs/migration/`](migration/)
 
 | Фаза | Назва | Статус | Прогрес | Документи |
@@ -30,36 +30,27 @@
 | **3A** | Toolbar GraphQL | ✅ Завершено | 100% | [phase-3a/](migration/phases/phase-3a/) |
 | **3B** | Settings Editor | ✅ Завершено | 100% | [phase-3b/](migration/phases/phase-3b/) |
 | **4** | Test Audit | ✅ Завершено | 100% | [phase-4/](migration/phases/phase-4/) |
-| **5** | Polish & Testing | 🟡 В процесі | 80% | [phase-5/](migration/phases/phase-5/) |
-
-**Phase 5 — що залишилось:**
-- ✅ Браузерна валідація Admin JS
-- ✅ Light panel theme (issue-006)
-- ✅ Multi-scope support
-- ✅ Phosphor Icons
-- ✅ Content Builder integration
-- [ ] Manual GraphQL E2E тестування
-- [ ] Release preparation (version bump, changelog, git tag)
+| **5** | Polish & Testing | ✅ Завершено | 100% | [phase-5/](migration/phases/phase-5/) |
 
 ---
 
 ### 🔧 2. Рефакторинг (Code Quality)
 
 **Мета:** Усунення технічної заборгованості після завершення Admin Migration  
-**Статус:** 🔄 В процесі (33 / 108 завершено)  
+**Статус:** 🔄 В процесі (48 / 108 завершено)  
 **Документація:** [`docs/refactoring/PLAN.md`](refactoring/PLAN.md)
 
 | Категорія | Задач | 🔴 | 🟠 | 🟡 | 🟢 | Виконано |
 |-----------|-------|----|----|----|----|----------|
 | Мертвий код — баги | 4 | 3 | 1 | — | — | ✅ 4/4 |
-| Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 20/31 |
+| Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 12/31 |
 | God classes/widgets | 5 | — | 4 | 1 | — | 4/5 |
 | Code duplication | 21 | — | 5 | 10 | 6 | 8/21 |
 | Magic numbers/strings | 17 | 1 | — | 4 | 12 | 4/17 |
 | Missing abstractions | 8 | — | 1 | 7 | — | 4/8 |
-| Tight coupling | 9 | — | 2 | 4 | 3 | 0/9 |
+| Tight coupling | 9 | — | 2 | 4 | 3 | 1/9 |
 | setTimeout audit | 13 | — | — | 3 | 10 | 0/13 |
-| **Всього** | **108** | **5** | **16** | **39** | **48** | **44/108** |
+| **Всього** | **108** | **5** | **16** | **39** | **48** | **48/108** |
 
 **Завершені кроки:**
 - ✅ Крок 1 — Критичні баги (6/6): пп. 1.1, 1.2, 1.3, 1.4, 2.21, 5.1
@@ -69,10 +60,19 @@
 - ✅ Крок 5 — Missing abstractions + Magic strings (5/5): пп. 6.1, 6.2, 6.3, 5.11, 5.12
 - ✅ Крок 6 — Medium/Low cleanup (4/4): пп. 4.3, 6.4, 4.4, 2.13
 - ✅ Крок 7A — PHP Dead code (11/11): пп. 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 2.10, 2.11, 2.12 + 2.15 (partial)
+- ✅ Крок 7B — css-var shim + issue-017 refactor: issue `css-var` closed, `storeManager` required dep
+- ✅ Крок 7C — JS dead code: `palette-manager.js` deprecated wrappers (п. 2.20), `FrontendPageUrlProvider` (п. 2.14), `_utilities.less` tooltip stub (п. 2.29) — `bd3235e`
+- ✅ Крок 7.1 — `window.breezeThemeEditorConfig` видалено; `config-manager.js` + новий `scope-manager.js` як AMD closure singletons; 14 файлів мігровано; Jest 771 ✅ — `6b9911a`
 
-**Наступні кроки (Крок 7B):**
-- [ ] JS/CSS Dead code (категорія 2): пп. 2.14, 2.19, 2.20, 2.22, 2.23, 2.24, 2.25, 2.26, 2.27, 2.29, 2.30, 2.31
-- [ ] Tight coupling 7.1 — прибрати `window.breezeThemeEditorConfig` з 4 JS-файлів
+**Наступний крок: Крок 8 — PHP refactoring**
+- [ ] `PublishService` — `_applySnapshot()` + `saveChangelog` dedup (пп. 4.11, 4.12)
+- [ ] `ValueRepository.toRow()` приватний helper (п. 4.14)
+- [ ] `ConfigProvider._mergeById()` helper (п. 4.13)
+- [ ] `DraftUserIdResolver` abstraction (п. 6.5)
+- [ ] `ThemeResolver` per-request cache (п. 6.8)
+- [ ] `AbstractConfigResolver` decomposition (п. 3.5)
+- [ ] Dead GraphQL params `autoPublish`/`publicationTitle` (п. 2.27)
+- [ ] db_schema FK `onDelete="SET NULL"` (п. 7.4)
 
 ---
 
@@ -82,7 +82,8 @@
 |--------|--------|------|----------|
 | css-manager unification (panel + editor → єдиний модуль) | ✅ | 08.04 | `5a97541` `8e59dac` |
 | publication-state singleton (єдине джерело currentStatus) | ✅ | 08.04 | `26b3ee9` `65a4ede` |
-| configManager — єдине джерело scope/scopeId/themeId | ✅ | 08.04 | `5b62abf` `cdbdfc1` |
+| scope-manager.js + config-manager.js — AMD closure singletons | ✅ | 09.04 | `6b9911a` |
+| configManager — єдине джерело scope/scopeId/themeId (partial) | ✅ | 08.04 | `5b62abf` `cdbdfc1` |
 | url-restoration — окремий AMD модуль | ✅ | 08.04 | `df54e47` `6f9f7dd` |
 | Multi-scope (Default/Website/Store View) | ✅ | 10.03 | `5d43943` + серія |
 | Light panel theme + toggle (issue-006) | ✅ | ~12.03 | `7c74231` |
@@ -111,8 +112,8 @@
 
 | Тип | Кількість | Статус |
 |-----|-----------|--------|
-| PHP Unit tests | 50 файлів | ✅ Проходять (744 tests, 2 skipped) |
-| JS Admin tests | 31 spec-файлів | ✅ Проходять (758 tests) |
+| PHP Unit tests | 50 файлів | ✅ Проходять (741 tests, 2 skipped) |
+| JS Admin tests | 32 spec-файлів | ✅ Проходять (771 tests) |
 | GraphQL integration tests | наявні | ✅ |
 
 ---
@@ -136,10 +137,10 @@
 
 | Категорія | Всього | Закрито | Відкрито |
 |-----------|--------|---------|---------|
-| Bugs | 22 | 21 ✅ | 1 (css-var) |
-| Tasks | 8 | 7 ✅ | 1 (css-var) |
+| Bugs | 22 | 22 ✅ | 0 |
+| Tasks | 9 | 8 ✅ | 1 (error-log open), 1 (highlight deferred) |
 | Без номера | 1 | — | 1 (test-cov) |
-| **Всього** | **30** | **27 ✅** | **3** |
+| **Всього** | **31** | **29 ✅** | **2** |
 
 ---
 
@@ -152,18 +153,18 @@ Admin Migration:
 ✅ Phase 3A   ████████████ 100%
 ✅ Phase 3B   ████████████ 100%
 ✅ Phase 4    ████████████ 100%
-🟡 Phase 5    ██████████░░  80% ← Manual E2E + Release
+✅ Phase 5    ████████████ 100% — beta.3 released
 
 Refactoring:
 🔴 Critical     ████████████   5/5  ✅ Крок 1 завершено
-🟠 High         ██████████░░  10/16 ✅ Кроки 2+3+4 завершено
-🟡 Medium       ████░░░░░░░░  16/38 ✅ Крок 7A завершено
-🟢 Low          ████░░░░░░░░  16/48
-📋 Total        ████░░░░░░░░  44/108 (41%)
+🟠 High         ████████████  12/16 ✅ Кроки 2+3+4+7.1 завершено
+🟡 Medium       ████░░░░░░░░  18/39 ✅ Крок 7C завершено
+🟢 Low          ███░░░░░░░░░  13/48
+📋 Total        █████░░░░░░░  48/108 (44%)
 
-Issues:        27/30 closed (3 open/deferred)
-PHP Tests:     50 файлів / 744 tests ✅
-JS Tests:      31 spec-файлів / 758 tests ✅
+Issues:        29/31 closed (1 open, 1 deferred)
+PHP Tests:     50 файлів / 741 tests ✅
+JS Tests:      32 spec-файлів / 771 tests ✅
 ```
 
 ---
@@ -176,8 +177,8 @@ docs/
 ├── README.md                         # Індекс
 │
 ├── issues/                           # Issue tracker
-│   ├── DASHBOARD.md                  # ✅ 27/30 closed
-│   └── 001–016 *.md                  # Детальні описи
+│   ├── DASHBOARD.md                  # ✅ 29/31 closed
+│   └── 001–026 *.md                  # Детальні описи
 │
 ├── features/                         # Реалізовані фічі
 │   ├── color-palette-system.md       # ✅

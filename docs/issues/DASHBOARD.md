@@ -1,6 +1,6 @@
 # Issues Dashboard
 
-**Updated:** 2026-04-08
+**Updated:** 2026-04-09
 
 ---
 
@@ -9,10 +9,10 @@
 | | Count |
 |---|---|
 | Total issues | 31 |
-| Fixed / Closed | 28 |
-| Pending | 3 |
-| Bugs | 23 (22 closed, 1 open) |
-| Tasks | 8 (7 done, 1 open + 1 deferred) |
+| Fixed / Closed | 29 |
+| Pending | 2 |
+| Bugs | 22 (22 closed, 0 open) |
+| Tasks | 9 (7 done, 1 open, 1 deferred) |
 
 ---
 
@@ -54,7 +54,7 @@
 | [008](008-icons-for-config-sections.md) | Add icons to config sections | Medium | **Done** — `689c6e3` |
 | [009](009-delete-publication-versions.md) | Delete button for saved publication versions | Medium | **Done** — `71c9351` |
 | [016](016-editor-defaults-to-stores-scope-not-default.md) | Editor opens in `stores` scope instead of `default` | Low | **Done** — `8071f79` |
-| [css-var](css-var-property-transition-incomplete.md) | Incomplete `css_var` → `property` transition (shim cleanup) | Medium | **Open** |
+| [css-var](css-var-property-transition-incomplete.md) | Incomplete `css_var` → `property` transition (shim cleanup) | Medium | **Done** — 2026-04-09 |
 | [highlight](highlight-toggle-not-implemented.md) | Highlight toggle — button hidden pending Phase 2 implementation | Medium | **Deferred** — `f393219` |
 | [error-log](error-handler-server-logging.md) | Client-side errors not logged server-side (TODO stub) | Low | **Open** |
 
