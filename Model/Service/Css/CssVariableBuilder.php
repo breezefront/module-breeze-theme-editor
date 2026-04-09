@@ -53,7 +53,7 @@ class CssVariableBuilder
      * - Null / empty values
      * - Palette section entries (section_code === '_palette')
      * - Values equal to their field default
-     * - Fields without a 'property' or legacy 'css_var' key
+     * - Fields without a 'property' key
      *
      * Returns [ selector => [ 'line1', 'line2', ... ], ... ]
      *
@@ -85,8 +85,7 @@ class CssVariableBuilder
                 continue;
             }
 
-            // Support both 'property' (new) and legacy 'css_var'
-            $property = $field['property'] ?? $field['css_var'] ?? null;
+            $property = $field['property'] ?? null;
             if (!$property) {
                 continue;
             }
@@ -181,7 +180,7 @@ class CssVariableBuilder
         foreach ($config['palettes'] ?? [] as $palette) {
             foreach ($palette['groups'] ?? [] as $group) {
                 foreach ($group['colors'] ?? [] as $color) {
-                    $cssVar  = $color['property'] ?? $color['css_var'] ?? null;
+                    $cssVar  = $color['property'] ?? null;
                     $default = $color['default'] ?? null;
                     if ($cssVar && $default) {
                         $defaults[$cssVar] = $default;

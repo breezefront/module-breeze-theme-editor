@@ -102,7 +102,7 @@ abstract class AbstractConfigResolver extends AbstractQueryResolver
                         : $currentValue,
                     'default' => $this->encodeValue($defaultValue),
                     'isModified' => $currentValue !== null && $currentValue !== $defaultValue,
-                    'property' => $setting['property'] ?? $setting['css_var'] ?? null,
+                    'property' => $setting['property'] ?? null,
                     'selector' => $setting['selector'] ?? null,
                     'required' => $setting['required'] ?? false,
                     'validation' => $this->formatValidation($setting),
