@@ -608,7 +608,7 @@
 - **Проблема:** `isDraft ? $userId : null` (або варіації) написано inline 7+ разів.
 - **Пропозиція:** `DraftUserIdResolver::resolve(string $statusCode, int $userId): ?int`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `ad0bd60` (`StatusCode::draftUserId()` + `StatusCode::draftUserIdForSave()` static helpers; `AbstractMutationResolver` делегує до них; `PresetService` та `ImportExportService` позбулись дублювання)
 
 ### 6.6 Base palette renderer (`base-palette-renderer.js`)
 - **Зачіпає:** `palette-section-renderer.js`, `font-palette-section-renderer.js`
@@ -990,7 +990,7 @@
 - `[x]` **п. 4.14** — `ValueRepository.toRow()` private helper — коміт `304cbf3`
 - `[x]` **п. 4.13** — `ConfigProvider.mergeById()` helper — коміт `7a7bb22`
 - `[x]` **п. 4.15** — `AdminUserLoader._buildUserData()` helper — коміт `6e744f1`
-- `[ ]` **п. 6.5** — `DraftUserIdResolver::resolve()` abstraction (7+ inline occurrences)
+- `[x]` **п. 6.5** — `StatusCode::draftUserId/draftUserIdForSave()` static helpers — коміт `ad0bd60`
 - `[x]` **п. 6.8** — `ThemeResolver` per-request cache (`loadTheme()`) — коміт `5f338c3`
 - `[ ]` **п. 3.5** — `AbstractConfigResolver` god class decomposition
 - `[x]` **п. 5.2** — `CssGenerator::EMPTY_CSS_OUTPUT` constant — коміт `526342e`
