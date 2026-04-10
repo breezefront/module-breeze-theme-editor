@@ -412,7 +412,7 @@
 - **Файл:** `Model/ValueRepository.php`
 - **Проблема:** `save()` та `saveMultiple()` будують ідентичний `$row` масив. Потрібна private `toRow(ValueInterface $value): array`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `304cbf3`
 
 ### 4.15 `getUserData()` / `getMultipleUsersData()` — дублювання array-building
 - **Файл:** `Model/Utility/AdminUserLoader.php`
@@ -987,7 +987,7 @@
 > Ізольований PHP-блок, не залежить від JS-змін.
 
 - `[ ]` **п. 4.11 + 4.12** — `PublishService`: `_applySnapshot()` private helper + `saveChangelog`/`saveChangelogFromOld` merge
-- `[ ]` **п. 4.14** — `ValueRepository.toRow()` private helper
+- `[x]` **п. 4.14** — `ValueRepository.toRow()` private helper — коміт `304cbf3`
 - `[ ]` **п. 4.13** — `ConfigProvider._mergeById()` helper
 - `[ ]` **п. 4.15** — `AdminUserLoader._buildUserData()` helper
 - `[ ]` **п. 6.5** — `DraftUserIdResolver::resolve()` abstraction (7+ inline occurrences)
