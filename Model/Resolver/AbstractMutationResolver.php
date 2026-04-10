@@ -55,7 +55,7 @@ abstract class AbstractMutationResolver implements ResolverInterface
      */
     protected function getDraftUserId(array $params): ?int
     {
-        return $params['statusCode'] === StatusCode::DRAFT ? (int)$params['userId'] : null;
+        return StatusCode::draftUserId($params['statusCode'], (int)$params['userId']);
     }
 
     /**
@@ -67,6 +67,6 @@ abstract class AbstractMutationResolver implements ResolverInterface
      */
     protected function getDraftUserIdForSave(array $params): int
     {
-        return $params['statusCode'] === StatusCode::DRAFT ? (int)$params['userId'] : 0;
+        return StatusCode::draftUserIdForSave($params['statusCode'], (int)$params['userId']);
     }
 }
