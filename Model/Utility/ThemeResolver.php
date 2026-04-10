@@ -5,7 +5,6 @@ namespace Swissup\BreezeThemeEditor\Model\Utility;
 
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\DesignInterface;
-use Magento\Theme\Model\ResourceModel\Theme\Collection as ThemeCollection;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory as ThemeCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -16,6 +15,9 @@ use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 
 class ThemeResolver
 {
+    /** @var array<int, mixed> Per-request memoisation of loaded theme objects. */
+    private array $themeCache = [];
+
     public function __construct(
         private ScopeConfigInterface $scopeConfig,
         private ThemeCollectionFactory $themeCollectionFactory,
@@ -118,9 +120,7 @@ class ThemeResolver
     {
         $hierarchy = [];
 
-        /** @var ThemeCollection $collection */
-        $collection = $this->themeCollectionFactory->create();
-        $theme = $collection->getItemById($themeId);
+        $theme = $this->loadTheme($themeId);
 
         if (!$theme) {
             return $hierarchy;
@@ -151,8 +151,7 @@ class ThemeResolver
      */
     public function getThemeInfo(int $themeId): array
     {
-        $collection = $this->themeCollectionFactory->create();
-        $theme = $collection->getItemById($themeId);
+        $theme = $this->loadTheme($themeId);
 
         if (!$theme) {
             throw new LocalizedException(__('Theme with ID %1 not found', $themeId));
@@ -174,9 +173,7 @@ class ThemeResolver
      */
     public function hasParentTheme(int $themeId): bool
     {
-        $collection = $this->themeCollectionFactory->create();
-        $theme = $collection->getItemById($themeId);
-
+        $theme = $this->loadTheme($themeId);
         return $theme && $theme->getParentId();
     }
 
@@ -185,11 +182,23 @@ class ThemeResolver
      *
      * @internal Used by tests only; not part of the public API.
      */
-    public function getParentThemeId(int $themeId): ? int
+    public function getParentThemeId(int $themeId): ?int
     {
-        $collection = $this->themeCollectionFactory->create();
-        $theme = $collection->getItemById($themeId);
-
+        $theme = $this->loadTheme($themeId);
         return $theme && $theme->getParentId() ? (int)$theme->getParentId() : null;
+    }
+
+    /**
+     * Load a theme object by ID with per-request memoisation.
+     *
+     * Returns null when no theme with the given ID exists.
+     */
+    private function loadTheme(int $themeId): mixed
+    {
+        if (!array_key_exists($themeId, $this->themeCache)) {
+            $collection = $this->themeCollectionFactory->create();
+            $this->themeCache[$themeId] = $collection->getItemById($themeId) ?: null;
+        }
+        return $this->themeCache[$themeId];
     }
 }
