@@ -46,8 +46,21 @@ class AclAuthorization
     }
 
     /**
-     * Check ACL permission before resolver execution
-     * 
+     * Check ACL permission before resolver execution.
+     *
+     * SECURITY NOTE — silent bypass risk
+     * ====================================
+     * This plugin is registered on BreezeResolverInterface in etc/graphql/di.xml.
+     * Magento's DI plugin system intercepts calls ONLY on instances of that type.
+     *
+     * If a resolver implements only the base Magento ResolverInterface (not
+     * BreezeResolverInterface), this plugin is SILENTLY SKIPPED — no exception,
+     * no log entry, the resolver just executes without any auth check.
+     *
+     * All resolvers MUST extend AbstractMutationResolver or AbstractQueryResolver
+     * (both implement BreezeResolverInterface).  The guardrail test
+     * Test\Unit\Plugin\GraphQL\ResolverAclGuardrailTest enforces this automatically.
+     *
      * @param BreezeResolverInterface $subject Resolver instance
      * @param \Magento\Framework\GraphQl\Config\Element\Field $field
      * @param \Magento\GraphQl\Model\Query\ContextInterface $context
