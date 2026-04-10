@@ -49,23 +49,9 @@ class ValueRepository implements ValueRepositoryInterface
             $connection = $this->resourceConnection->getConnection();
             $table      = $this->resource->getMainTable();
 
-            $row = [
-                ValueInterface::THEME_ID     => $value->getThemeId(),
-                ValueInterface::SCOPE        => $value->getScope(),
-                ValueInterface::STORE_ID     => $value->getStoreId(),
-                ValueInterface::STATUS_ID    => $value->getStatusId(),
-                ValueInterface::SECTION_CODE => $value->getSectionCode(),
-                ValueInterface::SETTING_CODE => $value->getSettingCode(),
-                ValueInterface::VALUE        => $value->getValue(),
-            ];
-
-            if ($value->getUserId() !== null) {
-                $row[ValueInterface::USER_ID] = $value->getUserId();
-            }
-
             $connection->insertOnDuplicate(
                 $table,
-                [$row],
+                [$this->toRow($value)],
                 [ValueInterface::VALUE, ValueInterface::UPDATED_AT]
             );
         } catch (\Exception $exception) {
@@ -98,22 +84,7 @@ class ValueRepository implements ValueRepositoryInterface
                     );
                 }
 
-                $row = [
-                    ValueInterface::THEME_ID => $value->getThemeId(),
-                    ValueInterface::SCOPE => $value->getScope(),
-                    ValueInterface::STORE_ID => $value->getStoreId(),
-                    ValueInterface::STATUS_ID => $value->getStatusId(),
-                    ValueInterface::SECTION_CODE => $value->getSectionCode(),
-                    ValueInterface::SETTING_CODE => $value->getSettingCode(),
-                    ValueInterface::VALUE => $value->getValue()
-                ];
-
-                // Add user_id only if not NULL
-                if ($value->getUserId() !== null) {
-                    $row[ValueInterface::USER_ID] = $value->getUserId();
-                }
-
-                $data[] = $row;
+                $data[] = $this->toRow($value);
             }
 
             $connection->insertOnDuplicate(
@@ -129,6 +100,31 @@ class ValueRepository implements ValueRepositoryInterface
                 $exception
             );
         }
+    }
+
+    /**
+     * Convert a ValueInterface instance into a DB row array.
+     *
+     * user_id is omitted when NULL so that the column default / existing value
+     * is preserved on INSERT ON DUPLICATE KEY UPDATE.
+     */
+    private function toRow(ValueInterface $value): array
+    {
+        $row = [
+            ValueInterface::THEME_ID     => $value->getThemeId(),
+            ValueInterface::SCOPE        => $value->getScope(),
+            ValueInterface::STORE_ID     => $value->getStoreId(),
+            ValueInterface::STATUS_ID    => $value->getStatusId(),
+            ValueInterface::SECTION_CODE => $value->getSectionCode(),
+            ValueInterface::SETTING_CODE => $value->getSettingCode(),
+            ValueInterface::VALUE        => $value->getValue(),
+        ];
+
+        if ($value->getUserId() !== null) {
+            $row[ValueInterface::USER_ID] = $value->getUserId();
+        }
+
+        return $row;
     }
 
     /**
