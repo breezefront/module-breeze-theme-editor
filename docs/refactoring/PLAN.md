@@ -628,7 +628,7 @@
 - **Проблема:** `getThemeInfo()`, `getParentThemeId()`, `hasParentTheme()` — кожен робить окремий DB-запит для одних і тих самих даних.
 - **Пропозиція:** Private `getThemeCollection()` з кешуванням per-request.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `5f338c3` (`private array $themeCache` + `loadTheme()` memoisation)
 
 ---
 
@@ -991,7 +991,7 @@
 - `[ ]` **п. 4.13** — `ConfigProvider._mergeById()` helper
 - `[x]` **п. 4.15** — `AdminUserLoader._buildUserData()` helper — коміт `6e744f1`
 - `[ ]` **п. 6.5** — `DraftUserIdResolver::resolve()` abstraction (7+ inline occurrences)
-- `[ ]` **п. 6.8** — `ThemeResolver` per-request cache (`getThemeCollection()`)
+- `[x]` **п. 6.8** — `ThemeResolver` per-request cache (`loadTheme()`) — коміт `5f338c3`
 - `[ ]` **п. 3.5** — `AbstractConfigResolver` god class decomposition
 - `[x]` **п. 5.2** — `CssGenerator::EMPTY_CSS_OUTPUT` constant — коміт `526342e`
 - `[x] N/A` **п. 7.4** — `db_schema.xml` FK `onDelete="SET NULL"` — адміни рідко видаляються, `NO ACTION` є захистом від випадкового видалення
