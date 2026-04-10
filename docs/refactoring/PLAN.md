@@ -419,7 +419,7 @@
 - **Проблема:** Ідентична конкатенація `fullname` та ідентичний `$userData` масив у двох методах.
 - **Пропозиція:** Private `_buildUserData(AdminUserInterface $user): array`.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `6e744f1`
 
 ### 4.16 Tooltip HTML — двічі в palette renderer
 - **Файл:** `view/adminhtml/web/js/editor/panel/sections/palette-section-renderer.js`
@@ -989,7 +989,7 @@
 - `[ ]` **п. 4.11 + 4.12** — `PublishService`: `_applySnapshot()` private helper + `saveChangelog`/`saveChangelogFromOld` merge
 - `[x]` **п. 4.14** — `ValueRepository.toRow()` private helper — коміт `304cbf3`
 - `[ ]` **п. 4.13** — `ConfigProvider._mergeById()` helper
-- `[ ]` **п. 4.15** — `AdminUserLoader._buildUserData()` helper
+- `[x]` **п. 4.15** — `AdminUserLoader._buildUserData()` helper — коміт `6e744f1`
 - `[ ]` **п. 6.5** — `DraftUserIdResolver::resolve()` abstraction (7+ inline occurrences)
 - `[ ]` **п. 6.8** — `ThemeResolver` per-request cache (`getThemeCollection()`)
 - `[ ]` **п. 3.5** — `AbstractConfigResolver` god class decomposition
