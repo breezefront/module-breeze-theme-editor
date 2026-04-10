@@ -393,13 +393,13 @@
 - **Файл:** `Model/Service/PublishService.php:92–113` та `184–203`
 - **Проблема:** Обидва методи: delete old rows → save new rows → write changelog. Спільні кроки можна витягти в private `_applySnapshot()`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `8c8e892`
 
 ### 4.12 `saveChangelog()` / `saveChangelogFromOld()` — майже ідентичні цикли
 - **Файл:** `Model/Service/PublishService.php:223–246`
 - **Проблема:** Обидва ітерують значення, будують `ChangelogInterface` — різниця тільки у джерелі "before" значення.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `8c8e892` (видалено `saveChangelogFromOld`; rollback нормалізує дані перед викликом єдиного `saveChangelog()`)
 
 ### 4.13 `mergeSections()` / `mergeSettings()` — одновалентний алгоритм
 - **Файл:** `Model/Provider/ConfigProvider.php`
@@ -986,7 +986,7 @@
 
 > Ізольований PHP-блок, не залежить від JS-змін.
 
-- `[ ]` **п. 4.11 + 4.12** — `PublishService`: `_applySnapshot()` private helper + `saveChangelog`/`saveChangelogFromOld` merge
+- `[x]` **п. 4.11 + 4.12** — `PublishService`: `applySnapshot()` helper + `saveChangelog` уніфіковано — коміт `8c8e892`
 - `[x]` **п. 4.14** — `ValueRepository.toRow()` private helper — коміт `304cbf3`
 - `[x]` **п. 4.13** — `ConfigProvider.mergeById()` helper — коміт `7a7bb22`
 - `[x]` **п. 4.15** — `AdminUserLoader._buildUserData()` helper — коміт `6e744f1`
