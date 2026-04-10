@@ -406,7 +406,7 @@
 - **Проблема:** Обидва реалізують однаковий merge-by-code pattern.
 - **Пропозиція:** `_mergeById(array $target, array $source, string $key): array`
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `7a7bb22`
 
 ### 4.14 `toRow()` — дублювання в `ValueRepository`
 - **Файл:** `Model/ValueRepository.php`
@@ -988,7 +988,7 @@
 
 - `[ ]` **п. 4.11 + 4.12** — `PublishService`: `_applySnapshot()` private helper + `saveChangelog`/`saveChangelogFromOld` merge
 - `[x]` **п. 4.14** — `ValueRepository.toRow()` private helper — коміт `304cbf3`
-- `[ ]` **п. 4.13** — `ConfigProvider._mergeById()` helper
+- `[x]` **п. 4.13** — `ConfigProvider.mergeById()` helper — коміт `7a7bb22`
 - `[x]` **п. 4.15** — `AdminUserLoader._buildUserData()` helper — коміт `6e744f1`
 - `[ ]` **п. 6.5** — `DraftUserIdResolver::resolve()` abstraction (7+ inline occurrences)
 - `[x]` **п. 6.8** — `ThemeResolver` per-request cache (`loadTheme()`) — коміт `5f338c3`
