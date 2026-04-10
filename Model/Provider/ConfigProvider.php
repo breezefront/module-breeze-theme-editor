@@ -85,36 +85,19 @@ class ConfigProvider
      */
     private function mergeSections(array $baseSections, array $overrideSections): array
     {
-        $merged = $baseSections;
-        foreach ($overrideSections as $overrideSection) {
-            $found = false;
-            foreach ($merged as $idx => &$baseSection) {
-                if ($baseSection['id'] === $overrideSection['id']) {
-                    if (!empty($overrideSection['disable'])) {
-                        unset($merged[$idx]);
-                    } else {
-                        if (isset($overrideSection['settings'])) {
-                            $baseSection['settings'] = $this->mergeSettings(
-                                $baseSection['settings'] ?? [],
-                                $overrideSection['settings']
-                            );
-                        }
-                        foreach (['name', 'description', 'icon', 'order', 'selector'] as $field) {
-                            if (isset($overrideSection[$field])) {
-                                $baseSection[$field] = $overrideSection[$field];
-                            }
-                        }
-                    }
-                    $found = true;
-                    break;
+        return $this->mergeById($baseSections, $overrideSections, function (array &$base, array $override): void {
+            if (isset($override['settings'])) {
+                $base['settings'] = $this->mergeSettings(
+                    $base['settings'] ?? [],
+                    $override['settings']
+                );
+            }
+            foreach (['name', 'description', 'icon', 'order', 'selector'] as $field) {
+                if (isset($override[$field])) {
+                    $base[$field] = $override[$field];
                 }
             }
-            unset($baseSection);
-            if (!$found && empty($overrideSection['disable'])) {
-                $merged[] = $overrideSection;
-            }
-        }
-        return array_values($merged);
+        });
     }
 
     /**
@@ -122,23 +105,40 @@ class ConfigProvider
      */
     private function mergeSettings(array $baseSettings, array $overrideSettings): array
     {
-        $merged = $baseSettings;
-        foreach ($overrideSettings as $overrideSetting) {
+        return $this->mergeById($baseSettings, $overrideSettings, function (array &$base, array $override): void {
+            $base = array_merge($base, $override);
+        });
+    }
+
+    /**
+     * Generic merge-by-id: iterate $override items, match by 'id' against $base.
+     *
+     * For each override item:
+     *   - 'disable' flag set → remove matched base item
+     *   - matched              → call $onMatch(&$baseItem, $overrideItem)
+     *   - not found            → append override item
+     *
+     * @param callable(array &$baseItem, array $overrideItem): void $onMatch
+     */
+    private function mergeById(array $base, array $override, callable $onMatch): array
+    {
+        $merged = $base;
+        foreach ($override as $overrideItem) {
             $found = false;
-            foreach ($merged as $idx => &$baseSetting) {
-                if ($baseSetting['id'] === $overrideSetting['id']) {
-                    if (!empty($overrideSetting['disable'])) {
+            foreach ($merged as $idx => &$baseItem) {
+                if ($baseItem['id'] === $overrideItem['id']) {
+                    if (!empty($overrideItem['disable'])) {
                         unset($merged[$idx]);
                     } else {
-                        $baseSetting = array_merge($baseSetting, $overrideSetting);
+                        $onMatch($baseItem, $overrideItem);
                     }
                     $found = true;
                     break;
                 }
             }
-            unset($baseSetting);
-            if (!$found && empty($overrideSetting['disable'])) {
-                $merged[] = $overrideSetting;
+            unset($baseItem);
+            if (!$found && empty($overrideItem['disable'])) {
+                $merged[] = $overrideItem;
             }
         }
         return array_values($merged);
