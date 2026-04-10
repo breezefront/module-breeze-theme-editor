@@ -93,22 +93,7 @@ class PublishService
             $this->valueService->deleteValues($themeId, $scope, $publishedStatusId, null);
 
             // Save clean merged snapshot with the publishing admin's user_id
-            $models = [];
-            foreach ($mergedMap as $val) {
-                $model = $this->valueRepository->create();
-                $model->setThemeId($themeId);
-                $model->setScope($scope->getType());
-                $model->setStoreId($scope->getScopeId());
-                $model->setStatusId($publishedStatusId);
-                $model->setSectionCode($val['section_code']);
-                $model->setSettingCode($val['setting_code']);
-                $model->setValue($val['value']);
-                $model->setUserId($userId);
-                $models[] = $model;
-            }
-            if ($models) {
-                $this->valueRepository->saveMultiple($models);
-            }
+            $this->applySnapshot($themeId, $scope, $publishedStatusId, $userId, array_values($mergedMap));
 
             // Delete draft values
             $this->valueService->deleteValues($themeId, $scope, $draftStatusId, $userId);
@@ -176,7 +161,16 @@ class PublishService
             $this->publicationRepository->save($publication);
 
             // Save changelog for rollback
-            $this->saveChangelogFromOld($publication->getPublicationId(), $oldChanges);
+            $normalizedChanges = [];
+            foreach ($oldChanges as $c) {
+                $normalizedChanges[] = [
+                    'sectionCode'    => $c->getSectionCode(),
+                    'fieldCode'      => $c->getSettingCode(),
+                    'publishedValue' => $c->getOldValue(),
+                    'draftValue'     => $c->getNewValue(),
+                ];
+            }
+            $this->saveChangelog($publication->getPublicationId(), $normalizedChanges);
 
             // Clear current draft before restoring old values
             // (prevents draft from silently surviving rollback)
@@ -186,22 +180,15 @@ class PublishService
             $this->valueService->deleteValues($themeId, $scope, $publishedStatusId, null);
 
             // Restore snapshot from changelog with the rolling-back admin's user_id
-            $models = [];
+            $snapshotRows = [];
             foreach ($oldChanges as $change) {
-                $model = $this->valueRepository->create();
-                $model->setThemeId($themeId);
-                $model->setScope($scope->getType());
-                $model->setStoreId($scope->getScopeId());
-                $model->setStatusId($publishedStatusId);
-                $model->setSectionCode($change->getSectionCode());
-                $model->setSettingCode($change->getSettingCode());
-                $model->setValue($change->getNewValue());
-                $model->setUserId($userId);
-                $models[] = $model;
+                $snapshotRows[] = [
+                    'section_code' => $change->getSectionCode(),
+                    'setting_code' => $change->getSettingCode(),
+                    'value'        => $change->getNewValue(),
+                ];
             }
-            if ($models) {
-                $this->valueRepository->saveMultiple($models);
-            }
+            $this->applySnapshot($themeId, $scope, $publishedStatusId, $userId, $snapshotRows);
 
             $connection->commit();
         } catch (\Exception $e) {
@@ -221,6 +208,42 @@ class PublishService
         ];
     }
 
+    /**
+     * Persist a snapshot of value rows as published records owned by $userId.
+     *
+     * Each row must contain: section_code, setting_code, value.
+     * Caller is responsible for deleting the old published rows beforehand.
+     */
+    private function applySnapshot(
+        int $themeId,
+        ScopeInterface $scope,
+        int $publishedStatusId,
+        int $userId,
+        array $rows
+    ): void {
+        $models = [];
+        foreach ($rows as $row) {
+            $model = $this->valueRepository->create();
+            $model->setThemeId($themeId);
+            $model->setScope($scope->getType());
+            $model->setStoreId($scope->getScopeId());
+            $model->setStatusId($publishedStatusId);
+            $model->setSectionCode($row['section_code']);
+            $model->setSettingCode($row['setting_code']);
+            $model->setValue($row['value']);
+            $model->setUserId($userId);
+            $models[] = $model;
+        }
+        if ($models) {
+            $this->valueRepository->saveMultiple($models);
+        }
+    }
+
+    /**
+     * Persist changelog entries for a publication.
+     *
+     * Each item must have keys: sectionCode, fieldCode, publishedValue, draftValue.
+     */
     private function saveChangelog(int $publicationId, array $changes): void
     {
         foreach ($changes as $change) {
@@ -230,19 +253,6 @@ class PublishService
             $changelog->setSettingCode($change['fieldCode']);
             $changelog->setOldValue($change['publishedValue']);
             $changelog->setNewValue($change['draftValue']);
-            $this->changelogRepository->save($changelog);
-        }
-    }
-
-    private function saveChangelogFromOld(int $newPublicationId, array $oldChanges): void
-    {
-        foreach ($oldChanges as $oldChange) {
-            $changelog = $this->changelogFactory->create();
-            $changelog->setPublicationId($newPublicationId);
-            $changelog->setSectionCode($oldChange->getSectionCode());
-            $changelog->setSettingCode($oldChange->getSettingCode());
-            $changelog->setOldValue($oldChange->getOldValue());
-            $changelog->setNewValue($oldChange->getNewValue());
             $this->changelogRepository->save($changelog);
         }
     }
