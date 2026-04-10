@@ -765,7 +765,7 @@
 - **Файл:** `Plugin/GraphQL/AclAuthorization.php`, `etc/graphql/di.xml`
 - **Проблема:** Plugin спрацьовує тільки на resolver'ах, що реалізують `ResolverInterface`. Якщо resolver забуде реалізувати interface — авторизація мовчки обходиться.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `fbd5e60` (guardrail тест `ResolverAclGuardrailTest` — 22 resolver'и; SECURITY NOTE у `beforeResolve()`)
 
 ### 7.6 Надмірне логування — `AdminTokenGenerator`
 - **Файл:** `Model/Service/AdminTokenGenerator.php`
@@ -995,7 +995,7 @@
 - `[ ]` **п. 3.5** — `AbstractConfigResolver` god class decomposition
 - `[x]` **п. 5.2** — `CssGenerator::EMPTY_CSS_OUTPUT` constant — коміт `526342e`
 - `[x] N/A` **п. 7.4** — `db_schema.xml` FK `onDelete="SET NULL"` — адміни рідко видаляються, `NO ACTION` є захистом від випадкового видалення
-- `[ ]` **п. 7.5** — `AclAuthorization` silent bypass fix
+- `[x]` **п. 7.5** — `AclAuthorization` guardrail тест + SECURITY NOTE — коміт `fbd5e60`
 - `[x]` **п. 2.15** *(залишок)* — `Value/Collection.php`, `Status/Collection.php`, `Changelog/Collection.php` мертві query-builder методи — коміт `b1d5539`
 - `[x]` **п. 2.27** — `autoPublish`/`publicationTitle` мертві GraphQL params (schema + resolver) — коміт `b1d5539`
 
