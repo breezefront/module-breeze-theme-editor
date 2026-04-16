@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 49 / 108 завершено  
+**Статус виконання:** 47 / 108 завершено (+ 2 partial: пп. 6.5, 2.27)  
 
 ---
 
@@ -242,7 +242,7 @@
 - **Файли:** `view/adminhtml/web/js/editor/graphql/mutation/save-values.js`, `etc/schema.graphqls:412–413`
 - **Проблема:** Параметри передаються в мутацію та визначені в схемі, але `SaveValues.php` resolver їх ніколи не читає. Схемний dead code.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[x] DONE` — коміт `b1d5539` (видалено `autoPublish`, `publicationTitle` зі схеми; також видалено `notifyUsers` з `PublishBreezeThemeEditorInput`)
+- **Статус:** `🔄 Partial` — коміт `b1d5539` (видалено зі схеми та PHP resolver). **Залишок:** `save-values.js:33–44` — функція досі приймає `autoPublish` і `publicationTitle` як параметри та надсилає їх в GraphQL input object. Потрібно видалити з сигнатури, input object і JSDoc.
 
 ---
 
@@ -608,7 +608,7 @@
 - **Проблема:** `isDraft ? $userId : null` (або варіації) написано inline 7+ разів.
 - **Пропозиція:** `DraftUserIdResolver::resolve(string $statusCode, int $userId): ?int`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[x] DONE` — коміт `ad0bd60` (`StatusCode::draftUserId()` + `StatusCode::draftUserIdForSave()` static helpers; `AbstractMutationResolver` делегує до них; `PresetService` та `ImportExportService` позбулись дублювання)
+- **Статус:** `🔄 Partial` — коміт `ad0bd60` (`StatusCode::draftUserId()` + `StatusCode::draftUserIdForSave()` static helpers; `AbstractMutationResolver` делегує до них; `PresetService` та `ImportExportService` позбулись дублювання). **Залишок:** `Mutation/SaveValues.php:37–39` і `Mutation/SaveValue.php:38–40` досі використовують inline `if ($params['userId'] !== null) { $valueModel->setUserId(...) }` замість `setUserId($this->getDraftUserIdForSave($params))`.
 
 ### 6.6 Base palette renderer (`base-palette-renderer.js`)
 - **Зачіпає:** `palette-section-renderer.js`, `font-palette-section-renderer.js`
@@ -934,8 +934,10 @@
 | 7. Tight coupling | 9 | — | 2 | 4 | 3 | 1/9 |
 | 8. setTimeout audit | 13 | — | — | 3 | 10 | 0/13 |
 | **Всього** | **108** | **5** | **16** | **39** | **48** |
-| **Виконано** | **49** | **5** | **12** | **19** | **13** |
-| **Залишилось** | **59** | **0** | **4** | **20** | **35** |
+| **Виконано** | **47** | **5** | **12** | **17** | **13** |
+| **Залишилось** | **61** | **0** | **4** | **22** | **35** |
+
+> Примітка: пп. 6.5 і 2.27 — `🔄 Partial` (частково зроблено, є залишки).
 
 > Примітка: деякі пункти перетинаються між категоріями (напр. п. 3.2 і п. 7.2, або п. 6.3 і п. 7.3).
 
@@ -982,22 +984,31 @@
 - **Крок 7C** `[x]` — JS dead code: `palette-manager.js` deprecated wrappers, `FrontendPageUrlProvider`, `_utilities.less` tooltip stub — `bd3235e`
 - **Крок 7.1** `[x]` — **Розділити `configManager` на `config-manager` (static) + `scope-manager` (runtime); видалити `window.breezeThemeEditorConfig`** — коміт `6b9911a`
 
-### Крок 8 — PHP refactoring
+### Крок 8 — PHP + JS залишки (малі)
 
-> Ізольований PHP-блок, не залежить від JS-змін.
+> Залишки попередніх кроків — два PHP файли і один JS файл.
 
 - `[x]` **п. 4.11 + 4.12** — `PublishService`: `applySnapshot()` helper + `saveChangelog` уніфіковано — коміт `8c8e892`
 - `[x]` **п. 4.14** — `ValueRepository.toRow()` private helper — коміт `304cbf3`
 - `[x]` **п. 4.13** — `ConfigProvider.mergeById()` helper — коміт `7a7bb22`
 - `[x]` **п. 4.15** — `AdminUserLoader._buildUserData()` helper — коміт `6e744f1`
-- `[x]` **п. 6.5** — `StatusCode::draftUserId/draftUserIdForSave()` static helpers — коміт `ad0bd60`
 - `[x]` **п. 6.8** — `ThemeResolver` per-request cache (`loadTheme()`) — коміт `5f338c3`
-- `[ ]` **п. 3.5** — `AbstractConfigResolver` god class decomposition
 - `[x]` **п. 5.2** — `CssGenerator::EMPTY_CSS_OUTPUT` constant — коміт `526342e`
 - `[x] N/A` **п. 7.4** — `db_schema.xml` FK `onDelete="SET NULL"` — адміни рідко видаляються, `NO ACTION` є захистом від випадкового видалення
 - `[x]` **п. 7.5** — `AclAuthorization` guardrail тест + SECURITY NOTE — коміт `fbd5e60`
-- `[x]` **п. 2.15** *(залишок)* — `Value/Collection.php`, `Status/Collection.php`, `Changelog/Collection.php` мертві query-builder методи — коміт `b1d5539`
-- `[x]` **п. 2.27** — `autoPublish`/`publicationTitle` мертві GraphQL params (schema + resolver) — коміт `b1d5539`
+- `[x] N/A` **п. 2.15** — `Value/Collection.php`, `Status/Collection.php`, `Changelog/Collection.php` — порожні класи, нема чого видаляти
+- `[ ]` **п. 6.5** *(залишок)* — `SaveValues.php:37–39` і `SaveValue.php:38–40` → замінити inline `if ($params['userId'] !== null)` на `$this->getDraftUserIdForSave($params)`
+- `[ ]` **п. 2.27** *(залишок)* — `save-values.js:33–44` → видалити `autoPublish`/`publicationTitle` з параметрів, input object і JSDoc
+
+### Крок 8.5 — `AbstractConfigResolver` decomposition (великий)
+
+> Окремий крок через обсяг — 446 рядків, 18 методів.
+
+- `[ ]` **п. 3.5** — Витягти з `AbstractConfigResolver` окремі класи:
+  - `FieldFormatter` — `formatValidation()`, `formatParams()`, `buildNumericParams()`, `buildSelectParams()`, `buildFontPickerParams()`, `buildSocialLinksParams()`, `buildImageUploadParams()`, `buildCodeParams()`, `formatOptions()`, `formatDependency()`
+  - `PresetFormatter` — `formatPresets()`, `formatPresetSettings()`
+  - `PaletteFormatter` — `formatPalettes()`, `formatFontPalettes()`, `collectFontPaletteProperties()`, `mergeFontPaletteRolesAsFields()`
+  - `AbstractConfigResolver` залишається з `mergeSectionsWithValues()`, `encodeValue()` та делегуванням до форматерів
 
 ### Крок 9 — JS duplication cleanup
 
