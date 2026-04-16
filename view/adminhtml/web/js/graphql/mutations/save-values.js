@@ -30,18 +30,14 @@ define([
      * @param {Number} scopeId
      * @param {String} status
      * @param {Array} values - [{sectionCode, fieldCode, value}]
-     * @param {Boolean} autoPublish
-     * @param {String} publicationTitle - Required if autoPublish
      * @returns {Promise}
      */
-    return function saveValues(scope, scopeId, status, values, autoPublish, publicationTitle) {
+    return function saveValues(scope, scopeId, status, values) {
         return client.execute(mutation, {
             input: {
-                scope:            { type: scope || 'stores', scopeId: scopeId },
-                status:           status || 'DRAFT',
-                values:           values,
-                autoPublish:      autoPublish || false,
-                publicationTitle: publicationTitle || null
+                scope:  { type: scope || 'stores', scopeId: scopeId },
+                status: status || 'DRAFT',
+                values: values
             }
         }, 'SaveMultipleValues');
     };
