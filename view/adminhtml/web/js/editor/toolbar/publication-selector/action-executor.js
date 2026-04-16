@@ -132,11 +132,11 @@ define([
                     ctx.options.publicationsPage = 1;
                     ctx._loadPublications();
                 } else {
-                    self._onPublishError(result ? result.message : 'Publish failed');
+                    self._onPublishError(self._extractErrorMessage(result, 'Publish failed'));
                 }
                 loading.hide(ctx.element);
             }).catch(function (error) {
-                self._onPublishError(error.message || 'Unknown error');
+                self._onPublishError(self._extractErrorMessage(error, 'Unknown error'));
                 loading.hide(ctx.element);
             });
         },
@@ -230,14 +230,14 @@ define([
                         ctx.options.publicationsPage = 1;
                         ctx._loadPublications();
                     } else {
-                        var errMsg = (result && result.message) ? result.message : 'Publish failed';
+                        var errMsg = self._extractErrorMessage(result, 'Publish failed');
                         Toastify.show('error', $t('Publish failed: %1').replace('%1', errMsg));
                         errorHandler.handle({ message: errMsg }, 'rollback');
                     }
                     loading.hide(ctx.element);
                 })
                 .catch(function (error) {
-                    var errMsg = error.message || 'Unknown error';
+                    var errMsg = self._extractErrorMessage(error, 'Unknown error');
                     Toastify.show('error', $t('Publish failed: %1').replace('%1', errMsg));
                     errorHandler.handle({ message: errMsg }, 'rollback');
                     loading.hide(ctx.element);
@@ -290,13 +290,13 @@ define([
 
                     ctx.renderer.closeDropdown();
                 } else {
-                    var errMsg = (result && result.message) ? result.message : 'Discard failed';
+                    var errMsg = self._extractErrorMessage(result, 'Discard failed');
                     Toastify.show('error', $t('Discard failed: %1').replace('%1', errMsg));
                     errorHandler.handle({ message: errMsg }, 'discard-draft');
                 }
                 loading.hide(ctx.element);
             }).catch(function (error) {
-                var errMsg = error.message || 'Unknown error';
+                var errMsg = self._extractErrorMessage(error, 'Unknown error');
                 Toastify.show('error', $t('Discard failed: %1').replace('%1', errMsg));
                 errorHandler.handle({ message: errMsg }, 'discard-draft');
                 loading.hide(ctx.element);
@@ -363,13 +363,13 @@ define([
 
                     ctx.renderer.closeDropdown();
                 } else {
-                    var errMsg = (result && result.message) ? result.message : 'Reset failed';
+                    var errMsg = self._extractErrorMessage(result, 'Reset failed');
                     Toastify.show('error', $t('Reset failed: %1').replace('%1', errMsg));
                     errorHandler.handle({ message: errMsg }, 'discard-published');
                 }
                 loading.hide(ctx.element);
             }).catch(function (error) {
-                var errMsg = error.message || 'Unknown error';
+                var errMsg = self._extractErrorMessage(error, 'Unknown error');
                 Toastify.show('error', $t('Reset failed: %1').replace('%1', errMsg));
                 errorHandler.handle({ message: errMsg }, 'discard-published');
                 loading.hide(ctx.element);
@@ -424,14 +424,14 @@ define([
 
                         Toastify.show('success', $t('Publication deleted'));
                     } else {
-                        var errMsg = (result && result.message) ? result.message : 'Delete failed';
+                        var errMsg = self._extractErrorMessage(result, 'Delete failed');
                         Toastify.show('error', $t('Delete failed: %1').replace('%1', errMsg));
                         errorHandler.handle({ message: errMsg }, 'delete-publication');
                     }
                     loading.hide(ctx.element);
                 })
                 .catch(function (error) {
-                    var errMsg = error.message || 'Unknown error';
+                    var errMsg = self._extractErrorMessage(error, 'Unknown error');
                     Toastify.show('error', $t('Delete failed: %1').replace('%1', errMsg));
                     errorHandler.handle({ message: errMsg }, 'delete-publication');
                     loading.hide(ctx.element);
@@ -486,18 +486,18 @@ define([
         },
 
         /**
-         * Extract an error message from a GraphQL mutation response.
+         * Extract an error message from either a GraphQL result object or a
+         * caught JS Error.  Covers both call-sites:
+         *   - .then()  → result may be  { success: false, message: '...' }
+         *   - .catch() → error is a JS Error with .message
          *
-         * @param  {Object|null} response
-         * @param  {string}      mutationKey  - e.g. 'publishBreezeThemeEditor'
-         * @param  {string}      fallback     - default message
+         * @param  {Object|Error|null} source
+         * @param  {string}            fallback
          * @return {string}
+         * @private
          */
-        getMutationError: function (response, mutationKey, fallback) {
-            if (response && response[mutationKey] && response[mutationKey].message) {
-                return response[mutationKey].message;
-            }
-            return fallback || 'Unknown error';
+        _extractErrorMessage: function (source, fallback) {
+            return (source && source.message) ? source.message : (fallback || 'Unknown error');
         }
     };
 });

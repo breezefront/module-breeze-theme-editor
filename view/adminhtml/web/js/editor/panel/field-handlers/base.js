@@ -211,64 +211,65 @@ define([
         },
 
         /**
-         * Handle field reset button click
-         * Restores draft value and clears dirty state
-         * Uses specialized handlers from registry if available
-         * 
-         * @param {jQuery} $resetBtn - Reset button element
+         * Shared implementation for reset and restore actions.
+         *
+         * @param {Object} options
+         * @param {jQuery}   options.$btn           - Button element (carries data-field-code / data-section-code)
+         * @param {string}   options.label          - Action label for logging ('Reset' | 'Restore')
+         * @param {string}   options.confirmMessage - Text shown in the confirmation dialog
+         * @param {Function} options.stateAction    - PanelState method to call (resetField | restoreToDefault)
+         * @param {string}   options.notFoundMsg    - Log message when stateAction returns undefined
+         * @private
          */
-        handleFieldReset: function($resetBtn) {
-            var fieldCode = $resetBtn.data('field-code');
-            var sectionCode = $resetBtn.data('section-code');
-            
-            log.info('Reset clicked: ' + sectionCode + '.' + fieldCode);
-            
-            // Show confirmation dialog
-            if (!window.confirm('Discard unsaved changes?')) {
-                log.info('Reset cancelled by user');
+        _handleFieldAction: function (options) {
+            var fieldCode   = options.$btn.data('field-code');
+            var sectionCode = options.$btn.data('section-code');
+
+            log.info(options.label + ' clicked: ' + sectionCode + '.' + fieldCode);
+
+            if (!window.confirm(options.confirmMessage)) {
+                log.info(options.label + ' cancelled by user');
                 return;
             }
-            
-            // Get draft value from PanelState
-            var draftValue = PanelState.getDraftValue(sectionCode, fieldCode);
-            
-            if (draftValue === undefined) {
-                log.warn('No draft value found for ' + sectionCode + '.' + fieldCode);
-                return;
-            }
-            
-            // Reset field in state (removes dirty flag)
-            var restoredValue = PanelState.resetField(sectionCode, fieldCode);
-            
+
+            var restoredValue = options.stateAction(sectionCode, fieldCode);
+
             if (restoredValue === undefined) {
-                log.error('Failed to reset field');
+                log.error(options.notFoundMsg + ': ' + sectionCode + '.' + fieldCode);
                 return;
             }
-            
-            // Find field element to determine type
-            var $field = this._findFieldElement(sectionCode, fieldCode);
-            var $wrapper = $field.closest('.bte-field');
-            var $input = $wrapper.find('input, select, textarea').first();
-            
-            // Look for data-type on input first (priority), then on $field itself
+
+            var $field    = this._findFieldElement(sectionCode, fieldCode);
+            var $wrapper  = $field.closest('.bte-field');
+            var $input    = $wrapper.find('input, select, textarea').first();
             var fieldType = ($input.attr('data-type') || $field.attr('data-type') || '').toUpperCase();
-            
-            // Get specialized handler for this field type
-            var handler = this._getHandlerForType(fieldType);
-            
-            // Call specialized updateFieldUIAfterReset if available, otherwise use base implementation
+            var handler   = this._getHandlerForType(fieldType);
+
             if (handler && handler.updateFieldUIAfterReset && handler !== this) {
-                log.info('Using specialized handler for type: ' + fieldType);
-                // Pass $field and handler reference to avoid context issues
-                // This allows specialized handlers to access both BaseHandler methods (via this)
-                // and their own methods (via handler reference)
+                log.info('Using specialized handler for ' + options.label + ', type: ' + fieldType);
                 handler.updateFieldUIAfterReset.call(this, sectionCode, fieldCode, restoredValue, $field, handler);
             } else {
                 log.info('Using base handler for type: ' + fieldType);
                 this.updateFieldUIAfterReset(sectionCode, fieldCode, restoredValue);
             }
-            
-            log.info('Field reset complete: ' + sectionCode + '.' + fieldCode + ' -> ' + restoredValue);
+
+            log.info('Field ' + options.label + ' complete: ' + sectionCode + '.' + fieldCode + ' -> ' + restoredValue);
+        },
+
+        /**
+         * Handle field reset button click.
+         * Restores draft value and clears dirty state.
+         *
+         * @param {jQuery} $resetBtn
+         */
+        handleFieldReset: function ($resetBtn) {
+            this._handleFieldAction({
+                $btn:           $resetBtn,
+                label:          'Reset',
+                confirmMessage: 'Discard unsaved changes?',
+                stateAction:    PanelState.resetField.bind(PanelState),
+                notFoundMsg:    'Failed to reset field'
+            });
         },
 
         /**
@@ -329,50 +330,19 @@ define([
         },
 
         /**
-         * Handle field restore button click
+         * Handle field restore button click.
          * Restores field to its default value and triggers auto-save via PanelState event.
-         * Uses specialized handlers from registry if available (same as handleFieldReset).
          *
-         * @param {jQuery} $restoreBtn - Restore button element
+         * @param {jQuery} $restoreBtn
          */
-        handleFieldRestore: function($restoreBtn) {
-            var fieldCode = $restoreBtn.data('field-code');
-            var sectionCode = $restoreBtn.data('section-code');
-
-            log.info('Restore clicked: ' + sectionCode + '.' + fieldCode);
-
-            // Show confirmation dialog
-            if (!window.confirm('Your customization will be lost. Continue?')) {
-                log.info('Restore cancelled by user');
-                return;
-            }
-
-            // Restore to default in state — fires 'field-restore' event
-            // settings-editor.js listener will handle auto-save + badge refresh
-            var defaultValue = PanelState.restoreToDefault(sectionCode, fieldCode);
-
-            if (defaultValue === undefined) {
-                log.error('Failed to restore field: ' + sectionCode + '.' + fieldCode);
-                return;
-            }
-
-            // Update field UI immediately (set input value to default)
-            var $field = this._findFieldElement(sectionCode, fieldCode);
-            var $wrapper = $field.closest('.bte-field');
-            var $input = $wrapper.find('input, select, textarea').first();
-            var fieldType = ($input.attr('data-type') || $field.attr('data-type') || '').toUpperCase();
-
-            // Use specialized handler if available
-            var handler = this._getHandlerForType(fieldType);
-
-            if (handler && handler.updateFieldUIAfterReset && handler !== this) {
-                log.info('Using specialized handler for restore, type: ' + fieldType);
-                handler.updateFieldUIAfterReset.call(this, sectionCode, fieldCode, defaultValue, $field, handler);
-            } else {
-                this.updateFieldUIAfterReset(sectionCode, fieldCode, defaultValue);
-            }
-
-            log.info('Field restore complete: ' + sectionCode + '.' + fieldCode + ' -> ' + defaultValue);
+        handleFieldRestore: function ($restoreBtn) {
+            this._handleFieldAction({
+                $btn:           $restoreBtn,
+                label:          'Restore',
+                confirmMessage: 'Your customization will be lost. Continue?',
+                stateAction:    PanelState.restoreToDefault.bind(PanelState),
+                notFoundMsg:    'Failed to restore field'
+            });
         },
 
         /**

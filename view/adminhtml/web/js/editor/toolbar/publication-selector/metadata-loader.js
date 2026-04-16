@@ -170,25 +170,14 @@ define([
             if (!publications || !publications.length) {
                 return null;
             }
-            
+
             for (var i = 0; i < publications.length; i++) {
                 if (publications[i].id == publicationId) {
                     return publications[i];
                 }
             }
-            
-            return null;
-        },
 
-        /**
-         * Get publication title by ID
-         * @param {Array} publications - List of publications
-         * @param {number|string} publicationId
-         * @returns {string}
-         */
-        getPublicationTitle: function(publications, publicationId) {
-            var publication = this.findPublicationById(publications, publicationId);
-            return publication ? publication.title : 'Publication #' + publicationId;
+            return null;
         }
     };
 });

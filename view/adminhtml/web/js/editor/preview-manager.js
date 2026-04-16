@@ -29,22 +29,21 @@ define([
         injectDraftCSS: function(iframeId, scope, scopeId) {
             var self = this;
             var $iframe = $('#' + iframeId);
-            
+
             if (!$iframe.length) {
                 log.error('Preview iframe not found: ' + iframeId);
                 return;
             }
-            
+
             log.debug('Loading draft CSS for scope=' + scope + ' scopeId=' + scopeId);
-            
-            // Load CSS from GraphQL using the query function
+
             getCssQuery(scope, scopeId, PUBLICATION_STATUS.DRAFT, null)
                 .then(function(response) {
                 if (response && response.getThemeEditorCss) {
                     var css = response.getThemeEditorCss.css;
-                    
+
                     if (css && css.trim()) {
-                        self._injectCSS($iframe[0], css);
+                        self.injectCSS(iframeId, css, 'bte-theme-css-variables-draft');
                         log.info('Draft CSS injected into preview (' + css.length + ' chars)');
                     } else {
                         log.info('No draft CSS to inject');
@@ -57,59 +56,11 @@ define([
         },
         
         /**
-         * Inject CSS into iframe document
-         * 
-         * @private
-         * @param {HTMLIFrameElement} iframe - Iframe DOM element
-         * @param {string} css - CSS content to inject
-         */
-        _injectCSS: function(iframe, css) {
-            try {
-                var doc = iframe.contentDocument || iframe.contentWindow.document;
-                
-                if (!doc) {
-                    log.error('Cannot access iframe document');
-                    return;
-                }
-                
-                // Remove existing injected style
-                var existingStyle = doc.getElementById('bte-theme-css-variables-draft');
-                if (existingStyle) {
-                    existingStyle.remove();
-                }
-                
-                // Create new style element
-                var style = doc.createElement('style');
-                style.id = 'bte-theme-css-variables-draft';
-                style.type = 'text/css';
-                style.textContent = css;
-                
-                // Append to head
-                if (doc.head) {
-                    doc.head.appendChild(style);
-                    log.info('CSS injected into iframe head');
-                } else {
-                    log.error('Iframe document has no head element');
-                }
-                
-            } catch (e) {
-                log.error('Failed to inject CSS into iframe: ' + e);
-                
-                // Check for CORS error
-                if (e.name === 'SecurityError') {
-                    log.error('CORS Error: Cannot access iframe content. Check same-origin policy.');
-                }
-            }
-        },
-        
-        /**
          * Refresh preview CSS
-         * 
-         * Reloads and re-injects the draft CSS.
-         * 
-         * @param {string} iframeId - ID of the iframe element
-         * @param {string} scope - Scope type ('default', 'websites', 'stores')
-         * @param {number} scopeId - Scope ID
+         *
+         * @param {string} iframeId
+         * @param {string} scope
+         * @param {number} scopeId
          */
         refresh: function(iframeId, scope, scopeId) {
             log.debug('Refreshing preview CSS...');
@@ -118,31 +69,11 @@ define([
         
         /**
          * Remove draft CSS from iframe
-         * 
-         * @param {string} iframeId - ID of the iframe element
+         *
+         * @param {string} iframeId
          */
         removeDraftCSS: function(iframeId) {
-            var $iframe = $('#' + iframeId);
-            
-            if (!$iframe.length) {
-                log.error('Preview iframe not found: ' + iframeId);
-                return;
-            }
-            
-            try {
-                var iframe = $iframe[0];
-                var doc = iframe.contentDocument || iframe.contentWindow.document;
-                
-                if (doc) {
-                    var existingStyle = doc.getElementById('bte-theme-css-variables-draft');
-                    if (existingStyle) {
-                        existingStyle.remove();
-                        log.info('Draft CSS removed from preview');
-                    }
-                }
-            } catch (e) {
-                log.error('Failed to remove CSS from iframe: ' + e);
-            }
+            this.removeCSS(iframeId, 'bte-theme-css-variables-draft');
         },
         
         /**

@@ -66,6 +66,29 @@ define([
         },
 
         /**
+         * Traverse the full websites → groups → stores hierarchy.
+         *
+         * The callback receives (entry, group, store):
+         *   - entry-level visit  : group === null, store === null
+         *   - store-level visit  : all three are populated
+         *
+         * @param {Function} callback
+         * @private
+         */
+        _traverseScopes: function (callback) {
+            this.options.websites.forEach(function (entry) {
+                callback(entry, null, null);
+                if (entry.type === 'website') {
+                    entry.groups.forEach(function (group) {
+                        group.stores.forEach(function (store) {
+                            callback(entry, group, store);
+                        });
+                    });
+                }
+            });
+        },
+
+        /**
          * Find display name for a given scope + scopeId
          * @param {string} scope
          * @param {number} scopeId
@@ -75,23 +98,18 @@ define([
         _findScopeName: function (scope, scopeId) {
             var name = 'All Store Views';
 
-            this.options.websites.forEach(function (entry) {
-                if (entry.type === 'default' && scope === 'default') {
-                    name = entry.name;
-                    return;
-                }
-                if (entry.type === 'website' && scope === 'websites' && entry.scopeId == scopeId) {
-                    name = entry.name;
-                    return;
-                }
-                if (entry.type === 'website') {
-                    entry.groups.forEach(function (group) {
-                        group.stores.forEach(function (store) {
-                            if (scope === 'stores' && store.scopeId == scopeId) {
-                                name = store.name;
-                            }
-                        });
-                    });
+            this._traverseScopes(function (entry, group, store) {
+                if (!store) {
+                    if (entry.type === 'default' && scope === 'default') {
+                        name = entry.name;
+                    }
+                    if (entry.type === 'website' && scope === 'websites' && entry.scopeId == scopeId) {
+                        name = entry.name;
+                    }
+                } else {
+                    if (scope === 'stores' && store.scopeId == scopeId) {
+                        name = store.name;
+                    }
                 }
             });
 
@@ -111,19 +129,14 @@ define([
             var code = null;
             var defaultStoreId = this._findDefaultStoreId(scope, scopeId);
 
-            this.options.websites.forEach(function (entry) {
-                if (entry.type === 'website') {
-                    entry.groups.forEach(function (group) {
-                        group.stores.forEach(function (store) {
-                            if (scope === 'stores' && store.scopeId == scopeId) {
-                                code = store.code;
-                            }
-                            if ((scope === 'default' || scope === 'websites') &&
-                                store.scopeId == defaultStoreId && code === null) {
-                                code = store.code;
-                            }
-                        });
-                    });
+            this._traverseScopes(function (entry, group, store) {
+                if (!store) { return; }
+                if (scope === 'stores' && store.scopeId == scopeId) {
+                    code = store.code;
+                }
+                if ((scope === 'default' || scope === 'websites') &&
+                    store.scopeId == defaultStoreId && code === null) {
+                    code = store.code;
                 }
             });
 
@@ -139,23 +152,22 @@ define([
          */
         _findDefaultStoreId: function (scope, scopeId) {
             var id = 0;
-            this.options.websites.forEach(function (entry) {
-                if (entry.type === 'default' && scope === 'default') {
-                    id = entry.defaultStoreId || 0;
-                }
-                if (entry.type === 'website' && scope === 'websites' && entry.scopeId == scopeId) {
-                    id = entry.defaultStoreId || 0;
-                }
-                if (entry.type === 'website') {
-                    entry.groups.forEach(function (group) {
-                        group.stores.forEach(function (store) {
-                            if (scope === 'stores' && store.scopeId == scopeId) {
-                                id = store.scopeId;
-                            }
-                        });
-                    });
+
+            this._traverseScopes(function (entry, group, store) {
+                if (!store) {
+                    if (entry.type === 'default' && scope === 'default') {
+                        id = entry.defaultStoreId || 0;
+                    }
+                    if (entry.type === 'website' && scope === 'websites' && entry.scopeId == scopeId) {
+                        id = entry.defaultStoreId || 0;
+                    }
+                } else {
+                    if (scope === 'stores' && store.scopeId == scopeId) {
+                        id = store.scopeId;
+                    }
                 }
             });
+
             return id;
         },
 

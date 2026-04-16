@@ -298,10 +298,8 @@ define([
          *
          * @param {jQuery} $element
          */
-        initSortable: function($element) {
-            // Basic drag-and-drop implementation would go here
-            // For now, just log that it's initialized
-            log.debug('Repeater sortable initialized (basic implementation)');
+        initSortable: function($element) { // eslint-disable-line no-unused-vars
+            // TODO: implement drag-and-drop row sorting when needed
         },
 
         /**

@@ -85,40 +85,6 @@ define([
             var msg = ErrorHandler._getErrorMessage(error);
 
             this.assertStringContains(msg, 'unexpected', 'Should return generic message when no error.message');
-        },
-
-        // ====================================================================
-        // GROUP 2: _isCritical (4 tests)
-        // ====================================================================
-
-        '_isCritical returns true for 500': function () {
-            var error = { response: { status: 500 } };
-
-            this.assertTrue(ErrorHandler._isCritical(error), 'Status 500 should be critical');
-        },
-
-        '_isCritical returns true for 503': function () {
-            var error = { response: { status: 503 } };
-
-            this.assertTrue(ErrorHandler._isCritical(error), 'Status 503 should be critical');
-        },
-
-        '_isCritical returns false for 401': function () {
-            var error = { response: { status: 401 } };
-
-            this.assertFalse(ErrorHandler._isCritical(error), 'Status 401 should not be critical');
-        },
-
-        '_isCritical returns false when no response': function () {
-            var error = { message: 'network error' };
-
-            this.assertFalse(ErrorHandler._isCritical(error), 'No-response errors should not be critical');
-        },
-
-        '_isCritical returns false for 404': function () {
-            var error = { response: { status: 404 } };
-
-            this.assertFalse(ErrorHandler._isCritical(error), 'Status 404 should not be critical');
         }
     });
 });

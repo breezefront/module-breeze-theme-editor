@@ -267,14 +267,29 @@ define([
 
         // ─── Config loading ──────────────────────────────────────────────────────
 
+        /**
+         * Render sections from a loaded config and finalize the loading state.
+         * Optionally run an extra callback before hiding the loader.
+         *
+         * @param {Object}        config
+         * @param {Function|null} extraFn  - called with (config) after render, before hideLoader
+         * @private
+         */
+        _applyConfig: function (config, extraFn) {
+            SectionRenderer.render(this, config.sections);
+            $(document).trigger('bte:sections-rendered', [{ element: this.element }]);
+            if (typeof extraFn === 'function') {
+                extraFn(config);
+            }
+            this._hideLoader();
+        },
+
         _loadConfig: function () {
             var self = this;
             this._showLoader('Loading configuration...');
 
             ConfigLoader.load(this, function (config) {
-                SectionRenderer.render(self, config.sections);
-                $(document).trigger('bte:sections-rendered', [{ element: self.element }]);
-                self._hideLoader();
+                self._applyConfig(config);
             }, function (error) {
                 self._showError(error);
             });
@@ -285,10 +300,9 @@ define([
             this._showLoader('Loading publication #' + publicationId + '...');
 
             ConfigLoader.loadFromPublication(this, publicationId, function (config) {
-                SectionRenderer.render(self, config.sections);
-                $(document).trigger('bte:sections-rendered', [{ element: self.element }]);
-                self._hideLoader();
-                self._showToast('success', 'Loaded publication: ' + (config.metadata.lastPublished || 'Unknown date'));
+                self._applyConfig(config, function (cfg) {
+                    self._showToast('success', 'Loaded publication: ' + (cfg.metadata.lastPublished || 'Unknown date'));
+                });
             }, function (error) {
                 self._showError(error);
             });

@@ -231,7 +231,7 @@
 - **Файл:** `view/adminhtml/web/js/editor/utils/ui/loading.js`
   - `isLoading()` — не викликається
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] N/A` — всі методи мають повноцінні тести (не stubs); є реальна логіка яку тести верифікують. Видалення методів потягне за собою видалення тестів без реальної користі — залишено як documented utility API.
 
 ### 2.26 `publication-selector/metadata-loader.js::getPublicationTitle()` — не викликається
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/publication-selector/metadata-loader.js:184`
