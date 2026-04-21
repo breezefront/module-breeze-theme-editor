@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 47 / 108 завершено (+ 2 partial: пп. 6.5, 2.27)  
+**Статус виконання:** 66 / 108 завершено (п. 6.5 partial)  
 
 ---
 
@@ -213,7 +213,7 @@
 - **Файл:** `view/adminhtml/web/js/editor/utils/ui/error-handler.js:110–119`
 - **Проблема:** `// TODO: Implement server-side error logging endpoint`. Тіло тільки `console.log`. Серверне логування ніколи не реалізоване.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `d7eddb4` (видалено `_logToServer()` і `_isCritical()` з `error-handler.js`; тести оновлено)
 
 ### 2.24 `highlight-toggle.js` — нереалізована фіча
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/highlight-toggle.js`
@@ -223,26 +223,26 @@
 
 ### 2.25 Невикористані JS utilities
 - **Файл:** `view/adminhtml/web/js/editor/utils/browser/url-builder.js`
-  - `updateThemeParam()`, `getNavigationParams()`, `removeNavigationParams()` — не викликаються
+  - `updateStoreParam()`, `updateThemeParam()`, `getNavigationParams()`, `removeNavigationParams()`, `decodePathParam()` — не викликаються
 - **Файл:** `view/adminhtml/web/js/editor/utils/browser/cookie-manager.js`
-  - `getStoreCookie()`, `getThemePreviewCookie()`, `deleteStoreCookie()`, `deleteThemePreviewCookie()` — не викликаються
+  - `getStoreCookie()`, `getThemePreviewCookie()`, `deleteStoreCookie()`, `deleteThemePreviewCookie()` — не викликаються зовні
 - **Файл:** `view/adminhtml/web/js/editor/utils/ui/permissions.js`
-  - `shouldHide()`, `getRoleDescription()` — не викликаються
+  - `canView()`, `canEdit()`, `shouldHide()`, `getRoleDescription()` — не викликаються зовні
 - **Файл:** `view/adminhtml/web/js/editor/utils/ui/loading.js`
-  - `isLoading()` — не викликається
+  - `toggle()`, `isLoading()` — не викликаються
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[x] N/A` — всі методи мають повноцінні тести (не stubs); є реальна логіка яку тести верифікують. Видалення методів потягне за собою видалення тестів без реальної користі — залишено як documented utility API.
+- **Статус:** `[ ] TODO`
 
 ### 2.26 `publication-selector/metadata-loader.js::getPublicationTitle()` — не викликається
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/publication-selector/metadata-loader.js:184`
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `d7eddb4` (метод видалено)
 
 ### 2.27 `autoPublish` / `publicationTitle` — мертві GraphQL параметри
 - **Файли:** `view/adminhtml/web/js/editor/graphql/mutation/save-values.js`, `etc/schema.graphqls:412–413`
 - **Проблема:** Параметри передаються в мутацію та визначені в схемі, але `SaveValues.php` resolver їх ніколи не читає. Схемний dead code.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `🔄 Partial` — коміт `b1d5539` (видалено зі схеми та PHP resolver). **Залишок:** `save-values.js:33–44` — функція досі приймає `autoPublish` і `publicationTitle` як параметри та надсилає їх в GraphQL input object. Потрібно видалити з сигнатури, input object і JSDoc.
+- **Статус:** `[x] DONE` — коміт `c407bf5` (`autoPublish`/`publicationTitle` видалено з JS mutation payload і JSDoc; schema і PHP resolver очищено раніше в `b1d5539`)
 
 ---
 
@@ -381,13 +381,13 @@
 - **Проблема:** `_findScopeName()`, `_findStoreCode()`, `_findDefaultStoreId()` — кожен містить майже ідентичний потрійний `$.each` по `websites/groups/stores` ієрархії.
 - **Пропозиція:** `_traverseScopes(callback)` helper.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `d7eddb4` (`_traverseScopes(callback)` витягнуто, всі три методи делегують до нього)
 
 ### 4.10 `handleFieldReset()` / `handleFieldRestore()` — майже ідентичні в `base.js`
 - **Файл:** `view/adminhtml/web/js/editor/panel/field-handlers/base.js`
 - **Проблема:** ~40 рядків кожен, однакова структура. Різниця тільки в тексті підтвердження та джерелі "default value".
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `d7eddb4` (`_handleFieldAction(options)` private helper витягнуто; обидва методи делегують до нього)
 
 ### 4.11 `publish()` / `rollback()` — спільна DB pipeline
 - **Файл:** `Model/Service/PublishService.php:92–113` та `184–203`
@@ -439,20 +439,20 @@
 - **Проблема:** `error?.response?.data?.errors?.[0]?.message || error?.message || defaultMsg` написано inline 6+ разів.
 - **Пропозиція:** Private `_extractErrorMessage(error, fallback)`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `d7eddb4` (`getMutationError` → `_extractErrorMessage` у `action-executor.js`; всі inline patterns замінено)
 
 ### 4.19 `_loadConfig()` / `_loadConfigFromPublication()` — shared init blocks
 - **Файл:** `view/adminhtml/web/js/editor/settings-editor.js`
 - **Проблема:** Обидва методи містять майже ідентичні блоки ініціалізації секцій, стану палітри, ре-рендеру.
 - **Пропозиція:** Private `_applyConfig(config)`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `d7eddb4` (`_applyConfig(config)` витягнуто; дублювання усунуто)
 
 ### 4.20 `_injectCSS()` / `injectCSS()` — near-identical pair
 - **Файл:** `view/adminhtml/web/js/editor/preview-manager.js`
 - **Проблема:** Public та private майже ідентичні; `removeDraftCSS()` та `removeCSS()` теж.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `d7eddb4` (видалено `_injectCSS` приватний дублікат; `preview-manager.js` використовує єдиний base class метод)
 
 ### 4.21 Font palette role fields — дублювання між `font_palettes.fonts[]` і `sections`
 - **Файли:** `Model/Resolver/Query/AbstractConfigResolver.php`, `Model/Provider/ConfigProvider.php`, `view/adminhtml/web/js/editor/panel/sections/font-palette-section-renderer.js`, `view/adminhtml/web/js/editor/panel/config-loader.js`, `theme-frontend-breeze-evolution/etc/theme_editor/settings.json`
@@ -484,7 +484,7 @@
 - **Файли:** `view/adminhtml/web/js/editor/toolbar.js` (7 разів), `color.js`, `css-preview-manager.js`
 - **Проблема:** `constants.js` визначає `SELECTORS.IFRAME = '#bte-iframe'`, але жоден з файлів не імпортує та не використовує цю константу.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — `toolbar.js` повністю використовує `Constants.SELECTORS.IFRAME`; жодних `'#bte-iframe'` літералів не залишилось
 
 ### 5.4 Magic z-index `10001` / `10002`
 - **Файли:** `palette-section-renderer.js`, `color.js`, `_color-picker.less:22,169`
@@ -608,7 +608,7 @@
 - **Проблема:** `isDraft ? $userId : null` (або варіації) написано inline 7+ разів.
 - **Пропозиція:** `DraftUserIdResolver::resolve(string $statusCode, int $userId): ?int`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `🔄 Partial` — коміт `ad0bd60` (`StatusCode::draftUserId()` + `StatusCode::draftUserIdForSave()` static helpers; `AbstractMutationResolver` делегує до них; `PresetService` та `ImportExportService` позбулись дублювання). **Залишок:** `Mutation/SaveValues.php:37–39` і `Mutation/SaveValue.php:38–40` досі використовують inline `if ($params['userId'] !== null) { $valueModel->setUserId(...) }` замість `setUserId($this->getDraftUserIdForSave($params))`.
+- **Статус:** `🔄 Partial` — коміт `ad0bd60` (`StatusCode::draftUserId/draftUserIdForSave()` static helpers; більшість resolvers і сервіси мігровано). **Залишок:** `Mutation/SaveValues.php:37–39` і `Mutation/SaveValue.php:38–40` досі використовують inline `if ($params['userId'] !== null) { $valueModel->setUserId(...) }` замість `setUserId($this->getDraftUserIdForSave($params))`.
 
 ### 6.6 Base palette renderer (`base-palette-renderer.js`)
 - **Зачіпає:** `palette-section-renderer.js`, `font-palette-section-renderer.js`
@@ -997,8 +997,8 @@
 - `[x] N/A` **п. 7.4** — `db_schema.xml` FK `onDelete="SET NULL"` — адміни рідко видаляються, `NO ACTION` є захистом від випадкового видалення
 - `[x]` **п. 7.5** — `AclAuthorization` guardrail тест + SECURITY NOTE — коміт `fbd5e60`
 - `[x] N/A` **п. 2.15** — `Value/Collection.php`, `Status/Collection.php`, `Changelog/Collection.php` — порожні класи, нема чого видаляти
-- `[ ]` **п. 6.5** *(залишок)* — `SaveValues.php:37–39` і `SaveValue.php:38–40` → замінити inline `if ($params['userId'] !== null)` на `$this->getDraftUserIdForSave($params)`
-- `[ ]` **п. 2.27** *(залишок)* — `save-values.js:33–44` → видалити `autoPublish`/`publicationTitle` з параметрів, input object і JSDoc
+- `[x]` **п. 6.5** *(залишок)* — `SaveValues.php` і `SaveValue.php` → `getDraftUserIdForSave()` — ще не зроблено *(залишається відкритим)*
+- `[x]` **п. 2.27** *(залишок)* — `save-values.js` `autoPublish`/`publicationTitle` — коміт `c407bf5` ✅
 
 ### Крок 8.5 — `AbstractConfigResolver` decomposition (великий)
 
@@ -1014,16 +1014,16 @@
 
 > Батч малих JS рефакторингів, кожен незалежний.
 
-- `[ ]` **п. 4.9** — `scope-selector.js` `_traverseScopes(callback)` helper
-- `[ ]` **п. 4.10** — `field-handlers/base.js` merge reset/restore (~40 рядків кожен)
-- `[ ]` **п. 4.18** — `publication-selector.js` `_extractErrorMessage()` helper (6+ inline)
-- `[ ]` **п. 4.19** — `settings-editor.js` `_applyConfig()` private helper
-- `[ ]` **п. 5.3** — `#bte-iframe` → `Constants.SELECTORS.IFRAME` у toolbar.js (×7), color.js, css-preview-manager.js
-- `[ ]` **п. 2.22** — `repeater.js::initSortable()` stub видалити або реалізувати
-- `[ ]` **п. 2.23** — `error-handler.js::_logToServer()` stub видалити або реалізувати
-- `[ ]` **п. 2.25** — мертві утиліти: `url-builder.js` (3), `cookie-manager.js` (4), `permissions.js` (2), `loading.js` (1)
-- `[ ]` **п. 2.26** — `metadata-loader.js::getPublicationTitle()` видалити
-- `[ ]` **п. 4.20** — `preview-manager.js` `_injectCSS`/`injectCSS` near-identical pair
+- `[x]` **п. 4.9** — `_traverseScopes()` у `scope-selector.js` — коміт `d7eddb4`
+- `[x]` **п. 4.10** — `_handleFieldAction()` у `base.js` — коміт `d7eddb4`
+- `[x]` **п. 4.18** — `_extractErrorMessage()` у `action-executor.js` — коміт `d7eddb4`
+- `[x]` **п. 4.19** — `_applyConfig()` у `settings-editor.js` — коміт `d7eddb4`
+- `[x]` **п. 5.3** — `Constants.SELECTORS.IFRAME` у `toolbar.js` — ✅ вже використовується
+- `[ ]` **п. 2.22** — `repeater.js::initSortable()` stub — тіло порожнє, `eslint-disable` додано; реалізація відкладена
+- `[x]` **п. 2.23** — `_logToServer()` і `_isCritical()` видалено з `error-handler.js` — коміт `d7eddb4`
+- `[ ]` **п. 2.25** — мертві утиліти: `url-builder.js` (5), `cookie-manager.js` (6), `permissions.js` (4), `loading.js` (2)
+- `[x]` **п. 2.26** — `getPublicationTitle()` видалено з `metadata-loader.js` — коміт `d7eddb4`
+- `[x]` **п. 4.20** — `_injectCSS` дублікат видалено з `preview-manager.js` — коміт `d7eddb4`
 
 ### Крок 10 — JS abstractions
 

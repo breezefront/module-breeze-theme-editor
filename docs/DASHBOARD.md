@@ -1,17 +1,17 @@
 # Breeze Theme Editor - Project Dashboard
 
-**Останнє оновлення:** 2026-04-09  
-**Загальний прогрес:** ✅ Admin Migration завершено (beta.3 released) | Рефакторинг: 48/108
+**Останнє оновлення:** 2026-04-21  
+**Загальний прогрес:** ✅ Admin Migration завершено (beta.4 released) | Рефакторинг: 68/108
 
 ---
 
 ## 🚨 Поточний Фокус
 
-### ✅ Admin Migration завершено — beta.3 released
+### ✅ Admin Migration завершено — beta.4 released
 
-Всі фази міграції завершені. GraphQL E2E 6/6 ✅. beta.3 зарелізовано 09.04.2026.  
+Всі фази міграції завершені. GraphQL E2E 6/6 ✅. beta.4 зарелізовано 16.04.2026.  
 Відкрито: `error-log` stub (Low), `highlight` (Deferred).  
-Поточна робота — **Рефакторинг** (48/108).
+Поточна робота — **Рефакторинг** (68/108).
 
 ---
 
@@ -20,7 +20,7 @@
 ### 🚀 1. Admin Migration (ГОЛОВНИЙ ПРОЕКТ)
 
 **Мета:** Міграція з token-based до admin інтерфейсу  
-**Статус:** ✅ 100% завершено — beta.3 released 09.04.2026  
+**Статус:** ✅ 100% завершено — beta.4 released 16.04.2026  
 **Документація:** [`docs/migration/`](migration/)
 
 | Фаза | Назва | Статус | Прогрес | Документи |
@@ -37,20 +37,20 @@
 ### 🔧 2. Рефакторинг (Code Quality)
 
 **Мета:** Усунення технічної заборгованості після завершення Admin Migration  
-**Статус:** 🔄 В процесі (48 / 108 завершено)  
+**Статус:** 🔄 В процесі (66 / 108 завершено)  
 **Документація:** [`docs/refactoring/PLAN.md`](refactoring/PLAN.md)
 
 | Категорія | Задач | 🔴 | 🟠 | 🟡 | 🟢 | Виконано |
 |-----------|-------|----|----|----|----|----------|
 | Мертвий код — баги | 4 | 3 | 1 | — | — | ✅ 4/4 |
-| Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 12/31 |
+| Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 26/31 |
 | God classes/widgets | 5 | — | 4 | 1 | — | 4/5 |
-| Code duplication | 21 | — | 5 | 10 | 6 | 8/21 |
-| Magic numbers/strings | 17 | 1 | — | 4 | 12 | 4/17 |
-| Missing abstractions | 8 | — | 1 | 7 | — | 4/8 |
-| Tight coupling | 9 | — | 2 | 4 | 3 | 1/9 |
+| Code duplication | 21 | — | 5 | 10 | 6 | 18/21 |
+| Magic numbers/strings | 17 | 1 | — | 4 | 12 | 6/17 |
+| Missing abstractions | 8 | — | 1 | 7 | — | 5/8 (+partial) |
+| Tight coupling | 9 | — | 2 | 4 | 3 | 3/9 |
 | setTimeout audit | 13 | — | — | 3 | 10 | 0/13 |
-| **Всього** | **108** | **5** | **16** | **39** | **48** | **48/108** |
+| **Всього** | **108** | **5** | **16** | **39** | **48** | **66/108** |
 
 **Завершені кроки:**
 - ✅ Крок 1 — Критичні баги (6/6): пп. 1.1, 1.2, 1.3, 1.4, 2.21, 5.1
@@ -64,15 +64,18 @@
 - ✅ Крок 7C — JS dead code: `palette-manager.js` deprecated wrappers (п. 2.20), `FrontendPageUrlProvider` (п. 2.14), `_utilities.less` tooltip stub (п. 2.29) — `bd3235e`
 - ✅ Крок 7.1 — `window.breezeThemeEditorConfig` видалено; `config-manager.js` + новий `scope-manager.js` як AMD closure singletons; 14 файлів мігровано; Jest 771 ✅ — `6b9911a`
 
-**Наступний крок: Крок 8 — PHP refactoring**
-- [ ] `PublishService` — `_applySnapshot()` + `saveChangelog` dedup (пп. 4.11, 4.12)
-- [ ] `ValueRepository.toRow()` приватний helper (п. 4.14)
-- [ ] `ConfigProvider._mergeById()` helper (п. 4.13)
-- [ ] `DraftUserIdResolver` abstraction (п. 6.5)
-- [ ] `ThemeResolver` per-request cache (п. 6.8)
-- [ ] `AbstractConfigResolver` decomposition (п. 3.5)
-- [ ] Dead GraphQL params `autoPublish`/`publicationTitle` (п. 2.27)
-- [ ] db_schema FK `onDelete="SET NULL"` (п. 7.4)
+**Завершено в Кроці 8 (beta.4):**
+- ✅ Крок 8 — PHP refactoring (більшість): пп. 4.11, 4.12, 4.13, 4.14, 4.15, 6.8, 2.23, 2.26, 2.27, 5.3, 2.15 — `526342e`..`c407bf5`
+- ✅ Крок 9 — JS DRY: пп. 4.9, 4.10, 4.18, 4.19, 4.20, 2.16 (error-handler cleanup) — `d7eddb4`
+
+**Наступний крок: Крок 8.5 — залишок PHP**
+- [ ] п. 6.5 partial — `SaveValues.php:37–39` + `SaveValue.php:38–40` → `getDraftUserIdForSave()`
+- [ ] п. 3.5 — `AbstractConfigResolver` decomposition (446 рядків → витягти `FieldFormatter`, `PresetFormatter`, `PaletteFormatter`)
+
+**Крок 9 залишок — мертвий JS код**
+- [ ] п. 2.25 — dead methods: `url-builder.js` (5), `cookie-manager.js` (6), `permissions.js` (4), `loading.js` (2)
+- [ ] п. 2.22 — `repeater.js::initSortable()` порожнє тіло
+- [ ] п. 2.24 — `highlight-toggle.js` iframe частина (Phase 2 TODO)
 
 ---
 
@@ -153,14 +156,14 @@ Admin Migration:
 ✅ Phase 3A   ████████████ 100%
 ✅ Phase 3B   ████████████ 100%
 ✅ Phase 4    ████████████ 100%
-✅ Phase 5    ████████████ 100% — beta.3 released
+✅ Phase 5    ████████████ 100% — beta.4 released
 
 Refactoring:
 🔴 Critical     ████████████   5/5  ✅ Крок 1 завершено
-🟠 High         ████████████  12/16 ✅ Кроки 2+3+4+7.1 завершено
-🟡 Medium       ████░░░░░░░░  18/39 ✅ Крок 7C завершено
-🟢 Low          ███░░░░░░░░░  13/48
-📋 Total        █████░░░░░░░  48/108 (44%)
+🟠 High         ████████████  14/16 ✅ Кроки 2+3+4+7.1+8 завершено
+🟡 Medium       ████████░░░░  28/39
+🟢 Low          ████░░░░░░░░  19/48
+📋 Total        ██████░░░░░░  66/108 (61%)
 
 Issues:        29/31 closed (1 open, 1 deferred)
 PHP Tests:     50 файлів / 741 tests ✅
