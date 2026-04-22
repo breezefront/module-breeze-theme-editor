@@ -34,9 +34,7 @@ class SaveValues extends AbstractSaveMutation
             $valueModel->setSectionCode($val['sectionCode']);
             $valueModel->setSettingCode($val['fieldCode']); // NOTICE: у ValueInterface поле скоріш за все називається SettingCode, а не fieldCode
             $valueModel->setValue($val['value']);
-            if ($params['userId'] !== null) {
-                $valueModel->setUserId($params['userId']);
-            }
+            $valueModel->setUserId($this->getDraftUserIdForSave($params));
             $valueModels[] = $valueModel;
         }
 

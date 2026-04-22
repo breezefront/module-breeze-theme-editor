@@ -35,9 +35,7 @@ class SaveValue extends AbstractSaveMutation
         $valueModel->setSectionCode($sectionCode);
         $valueModel->setSettingCode($fieldCode); // важливо: якщо в моделі Value використовується SettingCode, не fieldCode
         $valueModel->setValue($newValue);
-        if ($params['userId'] !== null) {
-            $valueModel->setUserId($params['userId']);
-        }
+        $valueModel->setUserId($this->getDraftUserIdForSave($params));
 
         $this->valueRepository->save($valueModel);
 

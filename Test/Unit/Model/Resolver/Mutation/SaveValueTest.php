@@ -138,7 +138,7 @@ class SaveValueTest extends TestCase
         $valueMock->method('setSectionCode')->willReturnSelf();
         $valueMock->method('setSettingCode')->willReturnSelf();
         $valueMock->method('setValue')->willReturnSelf();
-        $valueMock->expects($this->once())->method('setUserId')->with(100)->willReturnSelf();
+        $valueMock->expects($this->once())->method('setUserId')->with(0)->willReturnSelf();
 
         $this->valueRepository->method('create')->willReturn($valueMock);
         $this->valueRepository->expects($this->once())->method('save')->with($valueMock);
