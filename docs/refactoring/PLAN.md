@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 72 / 108 завершено  
+**Статус виконання:** 74 / 108 завершено  
 
 ---
 
@@ -417,14 +417,14 @@
 - **Файл:** `view/adminhtml/web/js/editor/panel/sections/palette-section-renderer.js`
 - **Проблема:** HTML-шаблон tooltip для swatch будується ідентично в `_createSwatch()` та `_updateSwatchModifiedState()`.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[ ] TODO` — tooltip дублювання в `_createSwatch()` і `_updateSwatchModifiedState()` залишається
 
 ### 4.17 Accordion toggle — у двох renderer'ах
 - **Файли:** `palette-section-renderer.js`, `font-palette-section-renderer.js`
 - **Проблема:** Ідентичне прив'язування accordion expand/collapse + анімація.
 - **Пропозиція:** Shared `accordion-mixin.js` або base renderer.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `598daba` (`_bindAccordion()` витягнуто в `base-palette-renderer.js`)
 
 ### 4.18 Error message extraction — 6+ разів inline в `publication-selector.js`
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/publication-selector.js`
@@ -607,9 +607,7 @@
 - **Проблема:** Accordion toggle, swatch rendering scaffolding, dirty-state tracking, confirm-dialog reset — все дубльоване в обох renderer'ах.
 - **Пропозиція:** Shared `base-palette-renderer.js` mixin або прототип.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
-
-### 6.7 Magento modal замість `window.confirm()` / `alert()`
+- **Статус:** `[x] DONE` — коміт `598daba` (`base-palette-renderer.js` витягнуто: `_bindAccordion`, `_bindBadgeUpdates`, `_updateHeaderBadges`, `_escapeHtml`, `_escapeAttr`; 781/781 тестів ✅)
 - **Зачіпає:** `field-handlers/base.js`, `palette-section-renderer.js`, `font-palette-section-renderer.js`, `repeater.js`
 - **Проблема:** Native `confirm()` та `alert()` для деструктивних дій. `Magento_Ui/js/modal/confirm` доступний і надає консистентний UI.
 - **Пріоритет:** 🟡 Medium
