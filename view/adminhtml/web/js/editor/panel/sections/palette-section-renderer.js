@@ -187,13 +187,7 @@ define([
             }
 
             // Add title tooltip
-            var tooltip = color.label + '\n' + 
-                         hexValue + '\n' + 
-                         'Used in ' + (color.usageCount || 0) + ' fields';
-            if (isModified) {
-                tooltip += '\n⚠️ Modified from default';
-            }
-            $swatch.attr('title', tooltip);
+            $swatch.attr('title', this._buildSwatchTooltip(color.label, hexValue, color.usageCount, isModified));
 
             // Create visual square
             var $visual = $('<div class="bte-swatch-visual"></div>');
@@ -374,12 +368,31 @@ define([
             // Update tooltip
             var color = PaletteManager.getColor(property);
             var hexValue = color.value;  // Already HEX format (Breeze 3.0)
-            var tooltip = color.label + '\n' + hexValue + '\n' + 
-                         'Used in ' + (color.usageCount || 0) + ' fields';
+            $swatch.attr('title', this._buildSwatchTooltip(color.label, hexValue, color.usageCount, isModified));
+        },
+
+        /**
+         * Build tooltip text for a color swatch.
+         *
+         * Used in both _createSwatch() (initial render) and
+         * _updateSwatchModifiedState() (after save/reset) to keep the
+         * tooltip format consistent.
+         *
+         * @param {String}  label       - Human-readable color name
+         * @param {String}  hexValue    - Current HEX value, e.g. '#ff0000'
+         * @param {Number}  usageCount  - Number of fields using this color
+         * @param {Boolean} isModified  - Whether the color differs from its default
+         * @returns {String}
+         */
+        _buildSwatchTooltip: function (label, hexValue, usageCount, isModified) {
+            var tooltip = label + '\n' + hexValue + '\n' +
+                'Used in ' + (usageCount || 0) + ' fields';
+
             if (isModified) {
                 tooltip += '\n⚠️ Modified from default';
             }
-            $swatch.attr('title', tooltip);
+
+            return tooltip;
         },
 
         /**

@@ -417,7 +417,7 @@
 - **Файл:** `view/adminhtml/web/js/editor/panel/sections/palette-section-renderer.js`
 - **Проблема:** HTML-шаблон tooltip для swatch будується ідентично в `_createSwatch()` та `_updateSwatchModifiedState()`.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO` — tooltip дублювання в `_createSwatch()` і `_updateSwatchModifiedState()` залишається
+- **Статус:** `[x] DONE` — `_buildSwatchTooltip(label, hexValue, usageCount, isModified)` витягнуто; обидва місця замінено одним викликом
 
 ### 4.17 Accordion toggle — у двох renderer'ах
 - **Файли:** `palette-section-renderer.js`, `font-palette-section-renderer.js`
