@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 67 / 108 завершено  
+**Статус виконання:** 68 / 108 завершено  
 
 ---
 
@@ -312,7 +312,7 @@
 - **Проблема:** Один abstract клас відповідає за: завантаження секцій, побудову полів, params для validation/option/select/font-picker/palette/font-palette, побудову preset.
 - **Пропозиція:** Виокремити окремі builder-класи.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `16608f2`; витягнуто `FieldFormatter`, `FieldParamsFormatter`, `SectionFormatter`, `PresetFormatter`; `AbstractConfigResolver` зменшено до ~45 рядків; тести перенесено в `Test/Unit/Model/Formatter/`
 
 ---
 
@@ -1004,11 +1004,7 @@
 
 > Окремий крок через обсяг — 446 рядків, 18 методів.
 
-- `[ ]` **п. 3.5** — Витягти з `AbstractConfigResolver` окремі класи:
-  - `FieldFormatter` — `formatValidation()`, `formatParams()`, `buildNumericParams()`, `buildSelectParams()`, `buildFontPickerParams()`, `buildSocialLinksParams()`, `buildImageUploadParams()`, `buildCodeParams()`, `formatOptions()`, `formatDependency()`
-  - `PresetFormatter` — `formatPresets()`, `formatPresetSettings()`
-  - `PaletteFormatter` — `formatPalettes()`, `formatFontPalettes()`, `collectFontPaletteProperties()`, `mergeFontPaletteRolesAsFields()`
-  - `AbstractConfigResolver` залишається з `mergeSectionsWithValues()`, `encodeValue()` та делегуванням до форматерів
+- `[x]` **п. 3.5** — DONE `16608f2` — витягнуто `FieldFormatter`, `FieldParamsFormatter`, `SectionFormatter`, `PresetFormatter`
 
 ### Крок 9 — JS duplication cleanup
 

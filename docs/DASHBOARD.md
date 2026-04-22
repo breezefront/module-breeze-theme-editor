@@ -1,7 +1,7 @@
 # Breeze Theme Editor - Project Dashboard
 
 **Останнє оновлення:** 2026-04-21  
-**Загальний прогрес:** ✅ Admin Migration завершено (beta.4 released) | Рефакторинг: 67/108
+**Загальний прогрес:** ✅ Admin Migration завершено (beta.4 released) | Рефакторинг: 68/108
 
 ---
 
@@ -37,20 +37,20 @@
 ### 🔧 2. Рефакторинг (Code Quality)
 
 **Мета:** Усунення технічної заборгованості після завершення Admin Migration  
-**Статус:** 🔄 В процесі (67 / 108 завершено)  
+**Статус:** 🔄 В процесі (68 / 108 завершено)  
 **Документація:** [`docs/refactoring/PLAN.md`](refactoring/PLAN.md)
 
 | Категорія | Задач | 🔴 | 🟠 | 🟡 | 🟢 | Виконано |
 |-----------|-------|----|----|----|----|----------|
 | Мертвий код — баги | 4 | 3 | 1 | — | — | ✅ 4/4 |
 | Dead code cleanup | 31 | 1 | 3 | 10 | 17 | 26/31 |
-| God classes/widgets | 5 | — | 4 | 1 | — | 4/5 |
+| God classes/widgets | 5 | — | 4 | 1 | — | ✅ 5/5 |
 | Code duplication | 21 | — | 5 | 10 | 6 | 18/21 |
 | Magic numbers/strings | 17 | 1 | — | 4 | 12 | 6/17 |
 | Missing abstractions | 8 | — | 1 | 7 | — | 6/8 |
 | Tight coupling | 9 | — | 2 | 4 | 3 | 3/9 |
 | setTimeout audit | 13 | — | — | 3 | 10 | 0/13 |
-| **Всього** | **108** | **5** | **16** | **39** | **48** | **67/108** |
+| **Всього** | **108** | **5** | **16** | **39** | **48** | **68/108** |
 
 **Завершені кроки:**
 - ✅ Крок 1 — Критичні баги (6/6): пп. 1.1, 1.2, 1.3, 1.4, 2.21, 5.1
@@ -67,11 +67,10 @@
 **Завершено в Кроці 8 (beta.4):**
 - ✅ Крок 8 — PHP refactoring (більшість): пп. 4.11, 4.12, 4.13, 4.14, 4.15, 6.8, 2.23, 2.26, 2.27, 5.3, 2.15 — `526342e`..`c407bf5`
 - ✅ Крок 9 — JS DRY: пп. 4.9, 4.10, 4.18, 4.19, 4.20, 2.16 (error-handler cleanup) — `d7eddb4`
+- ✅ П. 6.5 — `getDraftUserIdForSave()` у `SaveValue`/`SaveValues` — `c74ca1e`
+- ✅ П. 3.5 — `AbstractConfigResolver` декомпозиція → `FieldFormatter`, `FieldParamsFormatter`, `SectionFormatter`, `PresetFormatter` — `16608f2`
 
-**Наступний крок: Крок 8.5 — залишок PHP**
-- [ ] п. 3.5 — `AbstractConfigResolver` decomposition (446 рядків → витягти `FieldFormatter`, `PresetFormatter`, `PaletteFormatter`)
-
-**Крок 9 залишок — мертвий JS код**
+**Наступний крок: Крок 9 залишок — мертвий JS код**
 - [ ] п. 2.25 — dead methods: `url-builder.js` (5), `cookie-manager.js` (6), `permissions.js` (4), `loading.js` (2)
 - [ ] п. 2.22 — `repeater.js::initSortable()` порожнє тіло
 - [ ] п. 2.24 — `highlight-toggle.js` iframe частина (Phase 2 TODO)
