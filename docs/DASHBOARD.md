@@ -158,13 +158,13 @@ Admin Migration:
 
 Refactoring:
 🔴 Critical     ████████████   5/5  ✅ Крок 1 завершено
-🟠 High         ████████████  14/16 ✅ Кроки 2+3+4+7.1+8 завершено
+🟠 High         ████████████  15/16 ✅ Кроки 2+3+4+7.1+7.2+8 завершено
 🟡 Medium       ████████░░░░  28/39
 🟢 Low          ████░░░░░░░░  19/48
-📋 Total        ██████░░░░░░  66/108 (61%)
+📋 Total        ██████░░░░░░  67/108 (62%)
 
 Issues:        29/31 closed (1 open, 1 deferred)
-PHP Tests:     50 файлів / 741 tests ✅
+PHP Tests:     50 файлів / 769 tests ✅
 JS Tests:      32 spec-файлів / 771 tests ✅
 ```
 
