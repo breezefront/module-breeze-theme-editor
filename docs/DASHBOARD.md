@@ -1,7 +1,7 @@
 # Breeze Theme Editor - Project Dashboard
 
 **Останнє оновлення:** 2026-04-21  
-**Загальний прогрес:** ✅ Admin Migration завершено (beta.4 released) | Рефакторинг: 68/108
+**Загальний прогрес:** ✅ Admin Migration завершено (beta.4 released) | Рефакторинг: 67/108
 
 ---
 
@@ -37,7 +37,7 @@
 ### 🔧 2. Рефакторинг (Code Quality)
 
 **Мета:** Усунення технічної заборгованості після завершення Admin Migration  
-**Статус:** 🔄 В процесі (66 / 108 завершено)  
+**Статус:** 🔄 В процесі (67 / 108 завершено)  
 **Документація:** [`docs/refactoring/PLAN.md`](refactoring/PLAN.md)
 
 | Категорія | Задач | 🔴 | 🟠 | 🟡 | 🟢 | Виконано |
@@ -47,10 +47,10 @@
 | God classes/widgets | 5 | — | 4 | 1 | — | 4/5 |
 | Code duplication | 21 | — | 5 | 10 | 6 | 18/21 |
 | Magic numbers/strings | 17 | 1 | — | 4 | 12 | 6/17 |
-| Missing abstractions | 8 | — | 1 | 7 | — | 5/8 (+partial) |
+| Missing abstractions | 8 | — | 1 | 7 | — | 6/8 |
 | Tight coupling | 9 | — | 2 | 4 | 3 | 3/9 |
 | setTimeout audit | 13 | — | — | 3 | 10 | 0/13 |
-| **Всього** | **108** | **5** | **16** | **39** | **48** | **66/108** |
+| **Всього** | **108** | **5** | **16** | **39** | **48** | **67/108** |
 
 **Завершені кроки:**
 - ✅ Крок 1 — Критичні баги (6/6): пп. 1.1, 1.2, 1.3, 1.4, 2.21, 5.1
@@ -69,7 +69,6 @@
 - ✅ Крок 9 — JS DRY: пп. 4.9, 4.10, 4.18, 4.19, 4.20, 2.16 (error-handler cleanup) — `d7eddb4`
 
 **Наступний крок: Крок 8.5 — залишок PHP**
-- [ ] п. 6.5 partial — `SaveValues.php:37–39` + `SaveValue.php:38–40` → `getDraftUserIdForSave()`
 - [ ] п. 3.5 — `AbstractConfigResolver` decomposition (446 рядків → витягти `FieldFormatter`, `PresetFormatter`, `PaletteFormatter`)
 
 **Крок 9 залишок — мертвий JS код**

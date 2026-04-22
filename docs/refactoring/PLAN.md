@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 66 / 108 завершено (п. 6.5 partial)  
+**Статус виконання:** 67 / 108 завершено  
 
 ---
 
@@ -608,7 +608,7 @@
 - **Проблема:** `isDraft ? $userId : null` (або варіації) написано inline 7+ разів.
 - **Пропозиція:** `DraftUserIdResolver::resolve(string $statusCode, int $userId): ?int`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `🔄 Partial` — коміт `ad0bd60` (`StatusCode::draftUserId/draftUserIdForSave()` static helpers; більшість resolvers і сервіси мігровано). **Залишок:** `Mutation/SaveValues.php:37–39` і `Mutation/SaveValue.php:38–40` досі використовують inline `if ($params['userId'] !== null) { $valueModel->setUserId(...) }` замість `setUserId($this->getDraftUserIdForSave($params))`.
+- **Статус:** `[x] DONE` — коміти `ad0bd60` (static helpers + більшість resolvers), `c74ca1e` (`SaveValue.php` + `SaveValues.php` — inline userId → `getDraftUserIdForSave()`)
 
 ### 6.6 Base palette renderer (`base-palette-renderer.js`)
 - **Зачіпає:** `palette-section-renderer.js`, `font-palette-section-renderer.js`
