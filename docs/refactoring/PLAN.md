@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 71 / 108 завершено  
+**Статус виконання:** 72 / 108 завершено  
 
 ---
 
@@ -354,9 +354,7 @@
 - **Проблема:** Ітерація `$values` і маппінг `[sectionCode, fieldCode, value, isModified, updatedAt]` для GraphQL-відповіді — структурно ідентична в усіх чотирьох файлах.
 - **Пропозиція:** Protected `toGraphQlValue()` на `AbstractMutationResolver`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
-
-### 4.7 HEX8→rgba — тричі дубльована логіка
+- **Статус:** `[x] DONE` — коміт `85289cd` (`values: [BreezeThemeEditorValue!]` додано до всіх mutation output типів у schema + PHP resolvers + JS оновлено) — тричі дубльована логіка
 - **Файли:** `Model/Service/CssGenerator.php:378–384`, `Model/Utility/ColorFormatter.php:118–125`, `view/adminhtml/web/js/editor/panel/css-preview-manager.js` (всередині `_formatColorValue()`)
 - **Проблема:** Алгоритм конвертації 8-значного hex в `rgba()` дубльований у PHP двічі та перереалізований у JS.
 - **Пропозиція:** `ColorConverter::hex8ToRgba()` + JS-аналог в `ColorUtils`.
