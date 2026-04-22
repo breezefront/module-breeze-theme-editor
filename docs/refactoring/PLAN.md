@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 68 / 108 завершено  
+**Статус виконання:** 69 / 108 завершено  
 
 ---
 
@@ -223,15 +223,13 @@
 
 ### 2.25 Невикористані JS utilities
 - **Файл:** `view/adminhtml/web/js/editor/utils/browser/url-builder.js`
-  - `updateStoreParam()`, `updateThemeParam()`, `getNavigationParams()`, `removeNavigationParams()`, `decodePathParam()` — не викликаються
-- **Файл:** `view/adminhtml/web/js/editor/utils/browser/cookie-manager.js`
-  - `getStoreCookie()`, `getThemePreviewCookie()`, `deleteStoreCookie()`, `deleteThemePreviewCookie()` — не викликаються зовні
-- **Файл:** `view/adminhtml/web/js/editor/utils/ui/permissions.js`
-  - `canView()`, `canEdit()`, `shouldHide()`, `getRoleDescription()` — не викликаються зовні
-- **Файл:** `view/adminhtml/web/js/editor/utils/ui/loading.js`
-  - `toggle()`, `isLoading()` — не викликаються
+  - `updateStoreParam()`, `updateThemeParam()`, `getNavigationParams()`, `removeNavigationParams()` — видалено
+  - `decodePathParam()` — має виклики в тест-файлах, залишено
+- **Файл:** `view/adminhtml/web/js/editor/utils/browser/cookie-manager.js` — всі методи мають production callers
+- **Файл:** `view/adminhtml/web/js/editor/utils/ui/permissions.js` — всі методи мають production callers
+- **Файл:** `view/adminhtml/web/js/editor/utils/ui/loading.js` — всі методи мають production callers
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `bcc0f38` (4 dead методи з `url-builder.js` видалено); решта файлів чисті
 
 ### 2.26 `publication-selector/metadata-loader.js::getPublicationTitle()` — не викликається
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/publication-selector/metadata-loader.js:184`
