@@ -30,7 +30,11 @@ define([
     // Kept in sync with font-palette-section-renderer.js
     // =========================================================================
 
-    /** Reproduction of _escapeHtml */
+    /**
+     * Inline reproductions of _escapeHtml / _escapeAttr.
+     * Used only as internal test-fixture helpers (e.g. inside buildSectionHtml).
+     * The escape logic itself is tested in base-palette-renderer-test.js.
+     */
     function escapeHtml(str) {
         return String(str)
             .replace(/&/g, '&amp;')
@@ -39,7 +43,6 @@ define([
             .replace(/"/g, '&quot;');
     }
 
-    /** Reproduction of _escapeAttr */
     function escapeAttr(str) {
         return String(str)
             .replace(/&/g, '&amp;')
@@ -397,31 +400,7 @@ define([
 
     return TestFramework.suite('Font Palette Section Renderer', {
 
-        // ─── Layer 1: HTML escaping ──────────────────────────────────────────
-
-        'escapeHtml: converts & to &amp;': function () {
-            this.assertEqual('a &amp; b', escapeHtml('a & b'));
-        },
-
-        'escapeHtml: converts < and > to entities': function () {
-            this.assertEqual('&lt;script&gt;', escapeHtml('<script>'));
-        },
-
-        'escapeHtml: converts double-quote to &quot;': function () {
-            this.assertEqual('&quot;xss&quot;', escapeHtml('"xss"'));
-        },
-
-        'escapeAttr: converts & and " only (leaves < > as-is)': function () {
-            // _escapeAttr is used in HTML attributes so < > are less dangerous
-            // but & and " must still be escaped to prevent attribute injection.
-            var result = escapeAttr('a & b "val"');
-            this.assertStringContains(result, '&amp;',  '& must become &amp;');
-            this.assertStringContains(result, '&quot;', '" must become &quot;');
-        },
-
-        'escapeHtml: numeric input is converted to string without throwing': function () {
-            this.assertEqual('42', escapeHtml(42));
-        },
+        // Note: _escapeHtml / _escapeAttr are tested in base-palette-renderer-test.js.
 
         // ─── Layer 1: _buildRoleMap ──────────────────────────────────────────
 

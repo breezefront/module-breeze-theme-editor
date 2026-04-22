@@ -8,7 +8,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
-    'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-section-renderer'
+    'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-palette-renderer'
 ], function ($, widget, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer, Logger, StorageHelper, IconRegistry) {
     'use strict';
 
@@ -47,7 +47,7 @@ define([
      *     discardDraft() mutation → markFieldAsSaved() → themeEditorDraftSaved
      *     event → _updateHeaderBadges() here.
      */
-    $.widget('swissup.fontPaletteSection', $.swissup.baseSectionRenderer, {
+    $.widget('swissup.fontPaletteSection', $.swissup.basePaletteRenderer, {
         options: {
             fontPalettes:  [], // Array from config.fontPalettes
             sections:      [], // config.sections (to locate role field sectionCode + fieldCode)
@@ -236,25 +236,7 @@ define([
             var self = this;
 
             // ── Accordion toggle ─────────────────────────────────────────────
-            this.element.on('click', '.bte-font-palette-header', function (e) {
-                // Let reset-button clicks bubble through to their own handler below
-                if ($(e.target).closest('.bte-palette-reset-btn').length) {
-                    return;
-                }
-                e.stopPropagation();
-
-                var isOpen = self.$header.hasClass('active');
-
-                if (isOpen) {
-                    self.$header.removeClass('active');
-                    self.$content.removeClass('active').slideUp(200);
-                } else {
-                    self.$header.addClass('active');
-                    self.$content.addClass('active').slideDown(200);
-                }
-
-                StorageHelper.setItem('font_palette_open', isOpen ? 'false' : 'true');
-            });
+            this._bindAccordion(this.$header, this.$content, 'font_palette_open');
 
             // ── Reset button: discard all dirty role changes ─────────────────
             // Uses .bte-palette-reset-btn (same class as color palette section).
@@ -459,34 +441,18 @@ define([
                 log.info('Role font changed: ' + roleProperty + ' \u2192 ' + val);
             });
 
-            // ── Listen for palette/field changes ─────────────────────────────
-            // Refresh header badges when any field in the panel changes so the
-            // count stays in sync.
-            this._onPaletteChanged = function () {
-                self._updateHeaderBadges();
-            };
-            $(document).on('paletteColorChanged', this._onPaletteChanged);
-
-            // ── After a successful save / discard ─────────────────────────────
-            // settings-editor.js calls PanelState.markAsSaved() (or
-            // markFieldAsSaved) before firing themeEditorDraftSaved, so isDirty
-            // will be false and isModified will be up-to-date for all fields.
-            this._onDraftSaved = function () {
-                self._updateHeaderBadges();
-                log.debug('Font palette badges refreshed after save');
-            };
-            $(document).on('themeEditorDraftSaved', this._onDraftSaved);
+            // ── Listen for palette/field changes and saves ────────────────────
+            // Refresh header badges when any field in the panel changes or a
+            // draft is saved so the count stays in sync.
+            this._bindBadgeUpdates();
         },
 
         /**
-         * Compute dirty/modified counts from PanelState for all role fields and
-         * render the header badge HTML via BadgeRenderer.
+         * Compute dirty/modified counts from PanelState for all role fields.
+         *
+         * @returns {{ dirty: Number, modified: Number }}
          */
-        _updateHeaderBadges: function () {
-            if (!this.$badgesContainer || !this.$badgesContainer.length) {
-                return;
-            }
-
+        _getBadgeCounts: function () {
             var dirty    = 0;
             var modified = 0;
 
@@ -500,12 +466,28 @@ define([
                 }
             }, this);
 
+            return { dirty: dirty, modified: modified };
+        },
+
+        /**
+         * Render header badges and append × restore button when modified > 0.
+         *
+         * Overrides the base implementation to add the section-level restore
+         * button (font palette has a dedicated × that resets all roles to
+         * defaults, unlike the colour palette which uses a separate reset btn).
+         */
+        _updateHeaderBadges: function () {
+            if (!this.$badgesContainer || !this.$badgesContainer.length) {
+                return;
+            }
+
+            var counts   = this._getBadgeCounts();
+            var html     = BadgeRenderer.renderPaletteBadges(counts.dirty, counts.modified);
+
             // renderPaletteBadges returns '' when both counts are 0.
             // When modified > 0, append a single × restore button right after
             // the Modified badge so the user can reset all roles to defaults.
-            var html = BadgeRenderer.renderPaletteBadges(dirty, modified);
-
-            if (modified > 0) {
+            if (counts.modified > 0) {
                 html += '<button type="button"' +
                     ' class="bte-font-palette-restore-btn bte-field-restore-btn"' +
                     ' title="Restore all font roles to default values"' +
@@ -516,7 +498,7 @@ define([
 
             this.$badgesContainer.html(html);
 
-            log.debug('Font palette badges: dirty=' + dirty + ' modified=' + modified);
+            log.debug('Font palette badges: dirty=' + counts.dirty + ' modified=' + counts.modified);
         },
 
         /**
@@ -621,40 +603,18 @@ define([
             log.debug('Consumer fields updated for role: ' + roleProperty);
         },
 
-        // ── HTML helpers ─────────────────────────────────────────────────────
-
-        _escapeHtml: function (str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-        },
-
-        _escapeAttr: function (str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/"/g, '&quot;');
-        },
+        // ── Lifecycle ────────────────────────────────────────────────────────
 
         /**
          * Destroy widget
          */
         _destroy: function () {
-            this.element.off('click', '.bte-font-palette-header');
             this.element.off('click', '.bte-palette-reset-btn');
             this.element.off('click', '.bte-font-palette-restore-btn');
             this.element.off('click', '.bte-font-picker-trigger');
             this.element.off('click', '.bte-font-picker-option');
 
-            if (this._onPaletteChanged) {
-                $(document).off('paletteColorChanged', this._onPaletteChanged);
-            }
-            if (this._onDraftSaved) {
-                $(document).off('themeEditorDraftSaved', this._onDraftSaved);
-            }
-
-            this._super();
+            this._super(); // cleans up accordion + badge updates + editability
         }
     });
 

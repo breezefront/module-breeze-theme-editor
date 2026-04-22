@@ -3,21 +3,19 @@ define([
     'jquery-ui-modules/widget',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/palette-section.html',
     'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
-    'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
-    'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-section-renderer'
+    'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-palette-renderer'
 ], function (
     $,
     widget,
     paletteTemplate,
     PaletteManager,
-    BadgeRenderer,
     Logger,
     StorageHelper,
     IconRegistry
-    // base-section-renderer registers $.swissup.baseSectionRenderer — no var needed
+    // base-palette-renderer registers $.swissup.basePaletteRenderer — no var needed
 ) {
     'use strict';
 
@@ -30,7 +28,7 @@ define([
      * - Pickr color picker on click (with opacity/alpha support)
      * - Debounced save (500ms)
      */
-    $.widget('swissup.paletteSection', $.swissup.baseSectionRenderer, {
+    $.widget('swissup.paletteSection', $.swissup.basePaletteRenderer, {
         options: {
             palettes: [],
             scope: 'stores',
@@ -213,24 +211,7 @@ define([
             var self = this;
 
             // Toggle accordion
-            this.$header.on('click', function(e) {
-                if ($(e.target).closest('.bte-palette-reset-btn').length) {
-                    return; // let the delegated reset handler on this.element deal with it
-                }
-
-                var isActive = self.$header.hasClass('active');
-                
-                if (isActive) {
-                    self.$header.removeClass('active');
-                    self.$content.removeClass('active').slideUp(200);
-                } else {
-                    self.$header.addClass('active');
-                    self.$content.addClass('active').slideDown(200);
-                }
-
-                StorageHelper.setItem('palette_open', isActive ? 'false' : 'true');
-                Logger.debug('palette-section', 'Accordion toggled', {open: !isActive});
-            });
+            this._bindAccordion(this.$header, this.$content, 'palette_open');
 
             // Click on swatch → open Pickr popup
             this.$grid.on('click', '.bte-palette-swatch', function() {
@@ -362,20 +343,15 @@ define([
         },
 
         /**
-         * Update header badges (Changed + Reset + Modified)
-         * 
-         * Renders and updates badge HTML in palette header based on dirty
-         * and modified counts. Uses BadgeRenderer for consistent styling.
+         * Return dirty/modified counts from PaletteManager for badge rendering.
+         *
+         * @returns {{ dirty: Number, modified: Number }}
          */
-        _updateHeaderBadges: function() {
-            var dirtyCount = PaletteManager.getDirtyCount();
-            var modifiedCount = PaletteManager.getModifiedCount();
-            
-            // Render badges using BadgeRenderer
-            var badgesHtml = BadgeRenderer.renderPaletteBadges(dirtyCount, modifiedCount);
-            this.$badgesContainer.html(badgesHtml);
-            
-            Logger.debug('palette-section', 'Badges updated', {dirty: dirtyCount, modified: modifiedCount});
+        _getBadgeCounts: function () {
+            return {
+                dirty:    PaletteManager.getDirtyCount(),
+                modified: PaletteManager.getModifiedCount()
+            };
         },
 
         /**
@@ -649,7 +625,6 @@ define([
         _destroy: function () {
             clearTimeout(this._justChangedTimer);
             this._closeAllPalettePickrPopups();
-            this.$header.off('click');
             this.$grid.off('click', '.bte-palette-swatch');
             this.element.off('click', '.bte-palette-reset-btn');
             $(document).off('paletteColorChanged.paletteSection paletteChangesReverted.paletteSection');
