@@ -62,56 +62,6 @@ define([
         },
         
         /**
-         * Update only store parameter in URL
-         * Preserves other existing parameters
-         * 
-         * @param {string} url - URL to modify
-         * @param {string} storeCode - Store code
-         * @param {string} baseUrl - Base URL for resolving (optional)
-         * @returns {string} Modified URL
-         */
-        updateStoreParam: function(url, storeCode, baseUrl) {
-            if (!url || !storeCode) {
-                log.error('Cannot update store param: url or storeCode is empty');
-                return url;
-            }
-            
-            try {
-                var urlObj = new URL(url, baseUrl || window.location.origin);
-                urlObj.searchParams.set(Constants.URL_PARAMS.STORE, storeCode);
-                return urlObj.toString();
-            } catch (e) {
-                log.error('Failed to update store param: ' + url + ' ' + e);
-                return url;
-            }
-        },
-        
-        /**
-         * Update only theme parameter in URL
-         * Preserves other existing parameters
-         * 
-         * @param {string} url - URL to modify
-         * @param {number|string} themeId - Theme ID
-         * @param {string} baseUrl - Base URL for resolving (optional)
-         * @returns {string} Modified URL
-         */
-        updateThemeParam: function(url, themeId, baseUrl) {
-            if (!url || !themeId) {
-                log.error('Cannot update theme param: url or themeId is empty');
-                return url;
-            }
-            
-            try {
-                var urlObj = new URL(url, baseUrl || window.location.origin);
-                urlObj.searchParams.set(Constants.URL_PARAMS.THEME, themeId);
-                return urlObj.toString();
-            } catch (e) {
-                log.error('Failed to update theme param: ' + url + ' ' + e);
-                return url;
-            }
-        },
-        
-        /**
          * Check if URL already has navigation parameters
          * 
          * @param {string} url - URL to check
@@ -132,30 +82,6 @@ define([
             } catch (e) {
                 log.error('Failed to parse URL: ' + url + ' ' + e);
                 return { hasStore: false, hasTheme: false };
-            }
-        },
-        
-        /**
-         * Get navigation parameters from URL
-         * 
-         * @param {string} url - URL to parse
-         * @param {string} baseUrl - Base URL for resolving (optional)
-         * @returns {Object} Object with storeCode and themeId
-         */
-        getNavigationParams: function(url, baseUrl) {
-            if (!url) {
-                return { storeCode: null, themeId: null };
-            }
-            
-            try {
-                var urlObj = new URL(url, baseUrl || window.location.origin);
-                return {
-                    storeCode: urlObj.searchParams.get(Constants.URL_PARAMS.STORE),
-                    themeId: urlObj.searchParams.get(Constants.URL_PARAMS.THEME)
-                };
-            } catch (e) {
-                log.error('Failed to get navigation params: ' + url + ' ' + e);
-                return { storeCode: null, themeId: null };
             }
         },
         
@@ -212,29 +138,6 @@ define([
             });
         },
         
-        /**
-         * Remove navigation parameters from URL
-         * Useful for cleanup or testing
-         * 
-         * @param {string} url - URL to clean
-         * @param {string} baseUrl - Base URL for resolving (optional)
-         * @returns {string} URL without navigation parameters
-         */
-        removeNavigationParams: function(url, baseUrl) {
-            if (!url) {
-                return url;
-            }
-            
-            try {
-                var urlObj = new URL(url, baseUrl || window.location.origin);
-                urlObj.searchParams.delete(Constants.URL_PARAMS.STORE);
-                urlObj.searchParams.delete(Constants.URL_PARAMS.THEME);
-                return urlObj.toString();
-            } catch (e) {
-                log.error('Failed to remove navigation params: ' + url + ' ' + e);
-                return url;
-            }
-        },
 
         /**
          * Encode a frontend path for use in Magento admin URL path segments.
