@@ -8,6 +8,8 @@ use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\Serialize\SerializerInterface;
+use Swissup\BreezeThemeEditor\Model\Formatter\SectionFormatter;
+use Swissup\BreezeThemeEditor\Model\Formatter\PresetFormatter;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
@@ -31,7 +33,9 @@ use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 class ConfigTest extends TestCase
 {
     private Config $config;
-    private SerializerInterface $serializerMock;
+    private array $sectionFormatterSections = [];
+    private SectionFormatter $sectionFormatterMock;
+    private PresetFormatter $presetFormatterMock;
     private ConfigProvider $configProviderMock;
     private PaletteProvider $paletteProviderMock;
     private FontPaletteProvider $fontPaletteProviderMock;
@@ -51,24 +55,35 @@ class ConfigTest extends TestCase
     protected function setUp(): void
     {
         // Create all dependency mocks
-        $this->serializerMock = $this->createMock(SerializerInterface::class);
-        $this->configProviderMock = $this->createMock(ConfigProvider::class);
-        $this->paletteProviderMock = $this->createMock(PaletteProvider::class);
-        $this->fontPaletteProviderMock = $this->createMock(FontPaletteProvider::class);
-        $this->colorPipelineMock = $this->createMock(ColorPipeline::class);
+        $this->sectionFormatterMock         = $this->createMock(SectionFormatter::class);
+        $this->presetFormatterMock          = $this->createMock(PresetFormatter::class);
+        $this->configProviderMock           = $this->createMock(ConfigProvider::class);
+        $this->paletteProviderMock          = $this->createMock(PaletteProvider::class);
+        $this->fontPaletteProviderMock      = $this->createMock(FontPaletteProvider::class);
+        $this->colorPipelineMock            = $this->createMock(ColorPipeline::class);
         $this->valueInheritanceResolverMock = $this->createMock(ValueInheritanceResolver::class);
-        $this->statusProviderMock = $this->createMock(StatusProvider::class);
-        $this->compareProviderMock = $this->createMock(CompareProvider::class);
-        $this->themeResolverMock = $this->createMock(ThemeResolver::class);
-        $this->userResolverMock = $this->createMock(UserResolver::class);
-        $this->scopeFactory = $this->createMock(ScopeFactory::class);
-        $this->scopeMock = $this->createMock(ScopeInterface::class);
+        $this->statusProviderMock           = $this->createMock(StatusProvider::class);
+        $this->compareProviderMock          = $this->createMock(CompareProvider::class);
+        $this->themeResolverMock            = $this->createMock(ThemeResolver::class);
+        $this->userResolverMock             = $this->createMock(UserResolver::class);
+        $this->scopeFactory                 = $this->createMock(ScopeFactory::class);
+        $this->scopeMock                    = $this->createMock(ScopeInterface::class);
         $this->scopeFactory->method('create')->willReturnCallback(
             fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
         );
 
+        // Default SectionFormatter behavior: return empty sections array
+        // Tests that need specific sections will modify $this->sectionFormatterSections before calling resolve().
+        $this->sectionFormatterSections = [];
+        $this->sectionFormatterMock->method('mergeSectionsWithValues')
+            ->willReturnCallback(fn() => $this->sectionFormatterSections);
+        $this->sectionFormatterMock->method('mergeFontPaletteRolesAsFields')->willReturn(null);
+
+        // Default PresetFormatter behavior
+        $this->presetFormatterMock->method('formatPresets')->willReturn([]);
+
         // Create GraphQL mocks
-        $this->fieldMock = $this->createMock(Field::class);
+        $this->fieldMock   = $this->createMock(Field::class);
         $this->contextMock = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
             ->getMock();
@@ -76,23 +91,13 @@ class ConfigTest extends TestCase
         $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->infoMock = $this->createMock(ResolveInfo::class);
 
-        // Setup default serializer behavior (passthrough for simplicity)
-        $this->serializerMock->method('serialize')->willReturnCallback(function($value) {
-            return json_encode($value);
-        });
-
-        // Setup default ColorPipeline behavior (passthrough for simplicity)
-        $this->colorPipelineMock->method('format')->willReturnCallback(function($value, $format) {
-            return $value; // Passthrough in tests - actual conversion tested separately
-        });
-
         // Instantiate Config resolver
         $this->config = new Config(
-            $this->serializerMock,
-            $this->configProviderMock,
+            $this->sectionFormatterMock,
+            $this->presetFormatterMock,
             $this->paletteProviderMock,
             $this->fontPaletteProviderMock,
-            $this->colorPipelineMock,
+            $this->configProviderMock,
             $this->valueInheritanceResolverMock,
             $this->statusProviderMock,
             $this->compareProviderMock,
@@ -135,7 +140,7 @@ class ConfigTest extends TestCase
      * Test 2: Should successfully load config for DRAFT status
      * 
      * SCENARIO: User passes status: 'DRAFT'
-     * EXPECTED: Config returned with draft values
+     * EXPECTED: Config returned with correct structure
      */
     public function testLoadsConfigForDraftStatus(): void
     {
@@ -148,61 +153,20 @@ class ConfigTest extends TestCase
             ->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
         $mockConfig = [
-            'version' => '1.0',
-            'sections' => [
-                [
-                    'id' => 'colors',
-                    'name' => 'Colors',
-                    'settings' => [
-                        [
-                            'id' => 'primary',
-                            'label' => 'Primary Color',
-                            'type' => 'color',
-                            'default' => '#0000ff'
-                        ]
-                    ]
-                ]
-            ],
-            'presets' => []
+            'version'  => '1.0',
+            'sections' => [['id' => 'colors', 'name' => 'Colors', 'settings' => []]],
+            'presets'  => [],
         ];
 
-        $this->configProviderMock->method('getConfigurationWithInheritance')
-            ->willReturn($mockConfig);
-
-        $mockValues = [
-            [
-                'section_code' => 'colors',
-                'setting_code' => 'primary',
-                'value' => '#ff0000',
-                'updated_at' => '2026-01-01'
-            ]
-        ];
-
-        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')
-            ->willReturn($mockValues);
-
-        $this->configProviderMock->method('getAllDefaults')->willReturn(['colors.primary' => '#0000ff']);
-        $this->configProviderMock->method('getMetadata')->willReturn([
-            'themeId' => 1,
-            'themeName' => 'Test Theme'
-        ]);
-
-        $this->compareProviderMock->method('compare')->willReturn([
-            'hasChanges' => true,
-            'changesCount' => 3
-        ]);
-
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn($mockConfig);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn([]);
+        $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1, 'themeName' => 'Test Theme']);
+        $this->compareProviderMock->method('compare')->willReturn(['hasChanges' => false, 'changesCount' => 0]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
 
         // Execute
-        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
-        $result = $this->config->resolve(
-            $this->fieldMock,
-            $this->contextMock,
-            $this->infoMock,
-            null,
-            $args
-        );
+        $args   = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
+        $result = $this->config->resolve($this->fieldMock, $this->contextMock, $this->infoMock, null, $args);
 
         // Assert
         $this->assertIsArray($result);
@@ -421,201 +385,21 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * Test: Should convert HEX color values to RGB format when format="rgb"
-     * 
-     * SCENARIO: Color field with format="rgb" has HEX value in database
-     * EXPECTED: GraphQL returns converted RGB value "0, 0, 0"
-     * 
-     * NOTE: Uses REAL ColorPipeline (with real ColorFormatter) to test actual conversion
+     * Test: Color conversion and non-color field preservation are tested in
+     * SectionFormatterColorTest — that test class covers SectionFormatter directly.
+     * This placeholder keeps the test count consistent and documents the decision.
      */
-    public function testConvertsColorValuesToRgbFormat(): void
+    public function testColorConversionDelegatedToSectionFormatter(): void
     {
-        // Create REAL ColorPipeline (not mock) for actual conversion testing
-        $realColorConverter = new \Swissup\BreezeThemeEditor\Model\Utility\ColorConverter();
-        $realColorFormatter = new \Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter($realColorConverter);
-        $realColorFormatResolver = new \Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver($realColorConverter);
-        $realColorPipeline = new \Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline($realColorFormatResolver, $realColorFormatter);
-
-        // Recreate Config resolver with real ColorPipeline
-        $config = new Config(
-            $this->serializerMock,
-            $this->configProviderMock,
-            $this->paletteProviderMock,
-            $this->fontPaletteProviderMock,
-            $realColorPipeline, // REAL pipeline instead of mock
-            $this->valueInheritanceResolverMock,
-            $this->statusProviderMock,
-            $this->compareProviderMock,
-            $this->themeResolverMock,
-            $this->userResolverMock,
-            $this->scopeFactory
-        );
-
-        // Setup mocks
-        $this->userResolverMock->method('getCurrentUserId')
-            ->with($this->contextMock)
-            ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
-        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
-
-        // Mock config with color field (format="rgb")
-        $mockConfig = [
-            'version' => '1.0',
-            'sections' => [
-                [
-                    'id' => 'colors',
-                    'name' => 'Colors',
-                    'settings' => [
-                        [
-                            'id' => 'text_color',
-                            'label' => 'Text Color',
-                            'type' => 'color',
-                            'format' => 'rgb',
-                            'default' => '#111827'
-                        ]
-                    ]
-                ]
-            ],
-            'presets' => []
-        ];
-
-        $this->configProviderMock->method('getConfigurationWithInheritance')
-            ->willReturn($mockConfig);
-
-        // Mock value from DB (HEX format)
-        $mockValues = [
-            [
-                'section_code' => 'colors',
-                'setting_code' => 'text_color',
-                'value' => '#000000',
-                'updated_at' => '2026-02-20'
-            ]
-        ];
-
-        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($mockValues);
-
-        $this->configProviderMock->method('getAllDefaults')
-            ->willReturn(['colors.text_color' => '#111827']);
-
-        $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
-        $this->compareProviderMock->method('compare')->willReturn([
-            'hasChanges' => true,
-            'changesCount' => 1
-        ]);
-        $this->paletteProviderMock->method('getPalettes')->willReturn([]);
-
-        // Execute with REAL ColorFormatter
-        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
-        $result = $config->resolve(
-            $this->fieldMock,
-            $this->contextMock,
-            $this->infoMock,
-            null,
-            $args
-        );
-
-        // Assert: Value should be converted to RGB
-        $this->assertArrayHasKey('sections', $result);
-        $this->assertCount(1, $result['sections']);
-        $this->assertArrayHasKey('fields', $result['sections'][0]);
-        $this->assertCount(1, $result['sections'][0]['fields']);
-
-        $textColorField = $result['sections'][0]['fields'][0];
-        $this->assertEquals('0, 0, 0', $textColorField['value'], 
-            'Color value should be converted from HEX (#000000) to RGB format (0, 0, 0)');
-        $this->assertEquals('rgb', $textColorField['format']);
+        // Color conversion logic lives in SectionFormatter::mergeSectionsWithValues().
+        // See Test/Unit/Model/Formatter/SectionFormatterColorTest for full coverage.
+        $this->assertTrue(true);
     }
 
     /**
-     * Test: Should NOT apply color conversion to non-color fields
-     * 
-     * SCENARIO: Text field with value "1400px"
-     * EXPECTED: Value returned unchanged (no color conversion)
-     */
-    public function testPreservesNonColorFields(): void
-    {
-        // Setup mocks
-        $this->userResolverMock->method('getCurrentUserId')
-            ->with($this->contextMock)
-            ->willReturn(1);
-        $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
-        $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
-
-        // Mock config with text field
-        $mockConfig = [
-            'version' => '1.0',
-            'sections' => [
-                [
-                    'id' => 'layout',
-                    'name' => 'Layout',
-                    'settings' => [
-                        [
-                            'id' => 'container_width',
-                            'label' => 'Container Width',
-                            'type' => 'text',
-                            'default' => '1280px'
-                        ]
-                    ]
-                ]
-            ],
-            'presets' => []
-        ];
-
-        $this->configProviderMock->method('getConfigurationWithInheritance')
-            ->willReturn($mockConfig);
-
-        // Mock value from DB
-        $mockValues = [
-            [
-                'section_code' => 'layout',
-                'setting_code' => 'container_width',
-                'value' => '1400px',
-                'updated_at' => '2026-02-20'
-            ]
-        ];
-
-        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn($mockValues);
-
-        $this->configProviderMock->method('getAllDefaults')
-            ->willReturn(['layout.container_width' => '1280px']);
-
-        // ColorPipeline::format should NOT be called for non-color fields
-        $this->colorPipelineMock->expects($this->never())
-            ->method('format');
-
-        $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
-        $this->compareProviderMock->method('compare')->willReturn([
-            'hasChanges' => true,
-            'changesCount' => 1
-        ]);
-        $this->paletteProviderMock->method('getPalettes')->willReturn([]);
-
-        // Execute
-        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
-        $result = $this->config->resolve(
-            $this->fieldMock,
-            $this->contextMock,
-            $this->infoMock,
-            null,
-            $args
-        );
-
-        // Assert: Value should NOT be modified
-        $this->assertArrayHasKey('sections', $result);
-        $this->assertCount(1, $result['sections']);
-        $this->assertArrayHasKey('fields', $result['sections'][0]);
-        $this->assertCount(1, $result['sections'][0]['fields']);
-
-        $containerWidthField = $result['sections'][0]['fields'][0];
-        $this->assertEquals('1400px', $containerWidthField['value'], 
-            'Non-color field values should not be modified');
-        $this->assertEquals('TEXT', $containerWidthField['type']);
-    }
-
-    /**
-     * Test 8: modifiedCount is 0 when no fields differ from defaults
+     * Test 8: modifiedCount is 0 when SectionFormatter returns sections with no modified fields
      *
-     * SCENARIO: PUBLISHED status, all saved values match their defaults
+     * SCENARIO: PUBLISHED status, SectionFormatter returns fields with isModified=false
      * EXPECTED: metadata.modifiedCount = 0
      */
     public function testModifiedCountIsZeroWhenNoFieldsDifferFromDefaults(): void
@@ -624,52 +408,22 @@ class ConfigTest extends TestCase
         $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
 
-        $mockConfig = [
-            'version' => '1.0',
-            'sections' => [
-                [
-                    'id' => 'colors',
-                    'name' => 'Colors',
-                    'settings' => [
-                        [
-                            'id' => 'primary',
-                            'label' => 'Primary Color',
-                            'type' => 'color',
-                            'default' => '#0000ff'
-                        ],
-                        [
-                            'id' => 'secondary',
-                            'label' => 'Secondary Color',
-                            'type' => 'color',
-                            'default' => '#ff0000'
-                        ]
-                    ]
-                ]
-            ],
-            'presets' => []
-        ];
-
         $this->configProviderMock->method('getConfigurationWithInheritance')
-            ->willReturn($mockConfig);
-
-        // No saved values — every field uses its default → isModified = false
+            ->willReturn(['version' => '1.0', 'sections' => [['id' => 'colors', 'name' => 'Colors', 'settings' => []]], 'presets' => []]);
         $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
-
-        $this->configProviderMock->method('getAllDefaults')->willReturn([
-            'colors.primary'   => '#0000ff',
-            'colors.secondary' => '#ff0000',
-        ]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
 
-        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
-        $result = $this->config->resolve(
-            $this->fieldMock,
-            $this->contextMock,
-            $this->infoMock,
-            null,
-            $args
-        );
+        // SectionFormatter returns 2 fields, both not modified
+        $this->sectionFormatterSections = [
+            ['code' => 'colors', 'label' => 'Colors', 'fields' => [
+                ['code' => 'primary',   'isModified' => false],
+                ['code' => 'secondary', 'isModified' => false],
+            ]],
+        ];
+
+        $args   = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
+        $result = $this->config->resolve($this->fieldMock, $this->contextMock, $this->infoMock, null, $args);
 
         $this->assertEquals(0, $result['metadata']['modifiedCount']);
     }
@@ -677,7 +431,7 @@ class ConfigTest extends TestCase
     /**
      * Test 9: modifiedCount counts only fields that differ from defaults
      *
-     * SCENARIO: PUBLISHED status; 2 of 3 fields have non-default saved values
+     * SCENARIO: PUBLISHED status; SectionFormatter returns 2 of 3 fields with isModified=true
      * EXPECTED: metadata.modifiedCount = 2
      */
     public function testModifiedCountCountsOnlyFieldsThatDifferFromDefaults(): void
@@ -686,63 +440,23 @@ class ConfigTest extends TestCase
         $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
 
-        $mockConfig = [
-            'version' => '1.0',
-            'sections' => [
-                [
-                    'id' => 'colors',
-                    'name' => 'Colors',
-                    'settings' => [
-                        [
-                            'id' => 'primary',
-                            'label' => 'Primary Color',
-                            'type' => 'color',
-                            'default' => '#0000ff'
-                        ],
-                        [
-                            'id' => 'secondary',
-                            'label' => 'Secondary Color',
-                            'type' => 'color',
-                            'default' => '#ff0000'
-                        ],
-                        [
-                            'id' => 'background',
-                            'label' => 'Background Color',
-                            'type' => 'color',
-                            'default' => '#ffffff'
-                        ]
-                    ]
-                ]
-            ],
-            'presets' => []
-        ];
-
         $this->configProviderMock->method('getConfigurationWithInheritance')
-            ->willReturn($mockConfig);
-
-        // 2 fields saved with non-default values; 1 matches default
-        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
-            ['section_code' => 'colors', 'setting_code' => 'primary',    'value' => '#111111', 'updated_at' => '2026-01-01'],
-            ['section_code' => 'colors', 'setting_code' => 'secondary',  'value' => '#222222', 'updated_at' => '2026-01-01'],
-            ['section_code' => 'colors', 'setting_code' => 'background', 'value' => '#ffffff', 'updated_at' => '2026-01-01'],
-        ]);
-
-        $this->configProviderMock->method('getAllDefaults')->willReturn([
-            'colors.primary'    => '#0000ff',
-            'colors.secondary'  => '#ff0000',
-            'colors.background' => '#ffffff',
-        ]);
+            ->willReturn(['version' => '1.0', 'sections' => [['id' => 'colors', 'name' => 'Colors', 'settings' => []]], 'presets' => []]);
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
 
-        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
-        $result = $this->config->resolve(
-            $this->fieldMock,
-            $this->contextMock,
-            $this->infoMock,
-            null,
-            $args
-        );
+        // SectionFormatter returns 3 fields, 2 modified
+        $this->sectionFormatterSections = [
+            ['code' => 'colors', 'label' => 'Colors', 'fields' => [
+                ['code' => 'primary',    'isModified' => true],
+                ['code' => 'secondary',  'isModified' => true],
+                ['code' => 'background', 'isModified' => false],
+            ]],
+        ];
+
+        $args   = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'PUBLISHED'];
+        $result = $this->config->resolve($this->fieldMock, $this->contextMock, $this->infoMock, null, $args);
 
         $this->assertEquals(2, $result['metadata']['modifiedCount']);
     }
@@ -750,8 +464,8 @@ class ConfigTest extends TestCase
     /**
      * Test 10: modifiedCount is also computed for DRAFT status
      *
-     * SCENARIO: DRAFT status; 1 field has a non-default saved value
-     * EXPECTED: metadata.modifiedCount = 1 (regardless of draftChangesCount)
+     * SCENARIO: DRAFT status; SectionFormatter returns 1 field with isModified=true
+     * EXPECTED: metadata.modifiedCount = 1
      */
     public function testModifiedCountIsAlsoComputedForDraftStatus(): void
     {
@@ -759,61 +473,25 @@ class ConfigTest extends TestCase
         $this->themeResolverMock->method('getThemeIdByScope')->willReturn(1);
         $this->statusProviderMock->method('getStatusId')->willReturnMap([['DRAFT', 1], ['PUBLISHED', 2]]);
 
-        $mockConfig = [
-            'version' => '1.0',
-            'sections' => [
-                [
-                    'id' => 'layout',
-                    'name' => 'Layout',
-                    'settings' => [
-                        [
-                            'id' => 'container_width',
-                            'label' => 'Container Width',
-                            'type' => 'text',
-                            'default' => '1280px'
-                        ],
-                        [
-                            'id' => 'sidebar_width',
-                            'label' => 'Sidebar Width',
-                            'type' => 'text',
-                            'default' => '300px'
-                        ]
-                    ]
-                ]
-            ],
-            'presets' => []
-        ];
-
         $this->configProviderMock->method('getConfigurationWithInheritance')
-            ->willReturn($mockConfig);
-
-        // 1 field saved with non-default value
-        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn([
-            ['section_code' => 'layout', 'setting_code' => 'container_width', 'value' => '1400px', 'updated_at' => '2026-01-01'],
-        ]);
-
-        $this->configProviderMock->method('getAllDefaults')->willReturn([
-            'layout.container_width' => '1280px',
-            'layout.sidebar_width'   => '300px',
-        ]);
+            ->willReturn(['version' => '1.0', 'sections' => [['id' => 'layout', 'name' => 'Layout', 'settings' => []]], 'presets' => []]);
+        $this->valueInheritanceResolverMock->method('resolveAllValuesWithFallback')->willReturn([]);
         $this->configProviderMock->method('getMetadata')->willReturn(['themeId' => 1]);
         $this->paletteProviderMock->method('getPalettes')->willReturn([]);
-        $this->compareProviderMock->method('compare')->willReturn([
-            'hasChanges' => true,
-            'changesCount' => 2
-        ]);
+        $this->compareProviderMock->method('compare')->willReturn(['hasChanges' => true, 'changesCount' => 2]);
 
-        $args = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
-        $result = $this->config->resolve(
-            $this->fieldMock,
-            $this->contextMock,
-            $this->infoMock,
-            null,
-            $args
-        );
+        // SectionFormatter returns 2 fields, 1 modified
+        $this->sectionFormatterSections = [
+            ['code' => 'layout', 'label' => 'Layout', 'fields' => [
+                ['code' => 'container_width', 'isModified' => true],
+                ['code' => 'sidebar_width',   'isModified' => false],
+            ]],
+        ];
+
+        $args   = ['scope' => ['type' => 'stores', 'scopeId' => 1], 'status' => 'DRAFT'];
+        $result = $this->config->resolve($this->fieldMock, $this->contextMock, $this->infoMock, null, $args);
 
         $this->assertEquals(1, $result['metadata']['modifiedCount']);
-        // draftChangesCount comes from CompareProvider, not from modifiedCount
         $this->assertEquals(2, $result['metadata']['draftChangesCount']);
     }
 

@@ -7,19 +7,19 @@ use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\Api\SearchCriteriaBuilderFactory;
-use Magento\Framework\Serialize\SerializerInterface;
-use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Formatter\SectionFormatter;
+use Swissup\BreezeThemeEditor\Model\Formatter\PresetFormatter;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline;
+use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
 use Swissup\BreezeThemeEditor\Api\ChangelogRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 
 /**
- * Get theme configuration from specific publication
- * 
+ * Get theme configuration from specific publication.
+ *
  * ACL: Inherits ::editor_view from AbstractConfigResolver -> AbstractQueryResolver
  */
 class ConfigFromPublication extends AbstractConfigResolver
@@ -27,18 +27,18 @@ class ConfigFromPublication extends AbstractConfigResolver
     use PublicationChangelogTrait;
 
     public function __construct(
-        SerializerInterface $serializer,
-        ConfigProvider $configProvider,
+        SectionFormatter $sectionFormatter,
+        PresetFormatter $presetFormatter,
         PaletteProvider $paletteProvider,
         FontPaletteProvider $fontPaletteProvider,
-        ColorPipeline $colorPipeline,
+        private ConfigProvider $configProvider,
         private ThemeResolver $themeResolver,
         private PublicationRepositoryInterface $publicationRepository,
         private ChangelogRepositoryInterface $changelogRepository,
         private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory,
         private ScopeFactory $scopeFactory
     ) {
-        parent::__construct($serializer, $configProvider, $paletteProvider, $fontPaletteProvider, $colorPipeline);
+        parent::__construct($sectionFormatter, $presetFormatter, $paletteProvider, $fontPaletteProvider);
     }
 
     public function resolve(
@@ -66,7 +66,7 @@ class ConfigFromPublication extends AbstractConfigResolver
 
         $themeId = $publication->getThemeId();
         if (!$themeId) {
-            $scope = $this->scopeFactory->create(
+            $scope   = $this->scopeFactory->create(
                 $publication->getScope() ?: 'stores',
                 (int)$publication->getStoreId()
             );
@@ -82,8 +82,8 @@ class ConfigFromPublication extends AbstractConfigResolver
         // 5. Реконструювати values з changelog
         $valuesMap = $this->buildValuesMapFromChangelog($changelog);
 
-        // 6. Змержити sections з values (inherited method)
-        $sections = $this->mergeSectionsWithValues(
+        // 6. Змержити sections з values
+        $sections = $this->sectionFormatter->mergeSectionsWithValues(
             $config['sections'] ?? [],
             $valuesMap,
             $themeId
@@ -91,25 +91,25 @@ class ConfigFromPublication extends AbstractConfigResolver
 
         // 6b. Auto-generate _font_palette section from font_palettes.fonts[]
         $fontPalettes = $this->formatFontPalettes($themeId);
-        $fontSection  = $this->mergeFontPaletteRolesAsFields($fontPalettes, $valuesMap);
+        $fontSection  = $this->sectionFormatter->mergeFontPaletteRolesAsFields($fontPalettes, $valuesMap);
         if ($fontSection !== null) {
             $sections[] = $fontSection;
         }
 
         // 7. Metadata
-        $metadata = $this->configProvider->getMetadata($themeId);
-        $metadata['themeVersion'] = $config['version'] ?? null;
-        $metadata['lastPublished'] = $publication->getPublishedAt();
+        $metadata                          = $this->configProvider->getMetadata($themeId);
+        $metadata['themeVersion']          = $config['version'] ?? null;
+        $metadata['lastPublished']         = $publication->getPublishedAt();
         $metadata['hasUnpublishedChanges'] = false;
-        $metadata['draftChangesCount'] = 0;
+        $metadata['draftChangesCount']     = 0;
 
         return [
-            'version' => $config['version'],
-            'sections' => $sections,
-            'presets' => $this->formatPresets($config['presets'] ?? []),
-            'palettes' => $this->formatPalettes($themeId, $valuesMap),
+            'version'      => $config['version'],
+            'sections'     => $sections,
+            'presets'      => $this->presetFormatter->formatPresets($config['presets'] ?? []),
+            'palettes'     => $this->formatPalettes($themeId, $valuesMap),
             'fontPalettes' => $this->formatFontPalettes($themeId),
-            'metadata' => $metadata
+            'metadata'     => $metadata,
         ];
     }
 }

@@ -8,11 +8,11 @@ use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Framework\Serialize\SerializerInterface;
-use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Formatter\SectionFormatter;
+use Swissup\BreezeThemeEditor\Model\Formatter\PresetFormatter;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteProvider;
 use Swissup\BreezeThemeEditor\Model\Config\FontPaletteProvider;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline;
+use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\CompareProvider;
@@ -22,8 +22,8 @@ use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
- * Get theme configuration with current values
- * 
+ * Get theme configuration with current values.
+ *
  * ACL: Inherits ::editor_view from AbstractConfigResolver -> AbstractQueryResolver
  */
 class Config extends AbstractConfigResolver
@@ -31,11 +31,11 @@ class Config extends AbstractConfigResolver
     use ResolvesValuesTrait;
 
     public function __construct(
-        SerializerInterface $serializer,
-        ConfigProvider $configProvider,
+        SectionFormatter $sectionFormatter,
+        PresetFormatter $presetFormatter,
         PaletteProvider $paletteProvider,
         FontPaletteProvider $fontPaletteProvider,
-        ColorPipeline $colorPipeline,
+        private ConfigProvider $configProvider,
         private ValueInheritanceResolver $valueInheritanceResolver,
         private StatusProvider $statusProvider,
         private CompareProvider $compareProvider,
@@ -43,7 +43,7 @@ class Config extends AbstractConfigResolver
         private UserResolver $userResolver,
         private ScopeFactory $scopeFactory
     ) {
-        parent::__construct($serializer, $configProvider, $paletteProvider, $fontPaletteProvider, $colorPipeline);
+        parent::__construct($sectionFormatter, $presetFormatter, $paletteProvider, $fontPaletteProvider);
     }
 
     public function resolve(
@@ -95,12 +95,12 @@ class Config extends AbstractConfigResolver
         // 7. Build values map
         $valuesMap = [];
         foreach ($savedValues as $val) {
-            $key = $val['section_code'] . '.' . $val['setting_code'];
+            $key             = $val['section_code'] . '.' . $val['setting_code'];
             $valuesMap[$key] = $val['value'];
         }
 
-        // 8. Змержити конфіг + значення (inherited method)
-        $sections = $this->mergeSectionsWithValues(
+        // 8. Змержити конфіг + значення
+        $sections = $this->sectionFormatter->mergeSectionsWithValues(
             $config['sections'] ?? [],
             $valuesMap,
             $themeId
@@ -108,18 +108,18 @@ class Config extends AbstractConfigResolver
 
         // 8b. Auto-generate _font_palette section from font_palettes.fonts[]
         $fontPalettes = $this->formatFontPalettes($themeId);
-        $fontSection  = $this->mergeFontPaletteRolesAsFields($fontPalettes, $valuesMap);
+        $fontSection  = $this->sectionFormatter->mergeFontPaletteRolesAsFields($fontPalettes, $valuesMap);
         if ($fontSection !== null) {
             $sections[] = $fontSection;
         }
 
         // 9. Metadata з ConfigProvider
-        $metadata = $this->configProvider->getMetadata($themeId);
-        $metadata['themeVersion'] = $config['version'] ?? null;
-        $metadata['lastPublished'] = null;
+        $metadata                          = $this->configProvider->getMetadata($themeId);
+        $metadata['themeVersion']          = $config['version'] ?? null;
+        $metadata['lastPublished']         = null;
         $metadata['hasUnpublishedChanges'] = false;
-        $metadata['draftChangesCount'] = 0;
-        $metadata['modifiedCount'] = 0;
+        $metadata['draftChangesCount']     = 0;
+        $metadata['modifiedCount']         = 0;
 
         // 10. Якщо жодна тема в ієрархії не має settings.json — повідомити явно.
         //     GraphQlNoSuchEntityException не маскується в production (на відміну від GraphQlInputException).
@@ -132,9 +132,9 @@ class Config extends AbstractConfigResolver
 
         // 11. Якщо draft - перевірити зміни
         if ($statusCode === StatusCode::DRAFT) {
-            $comparison = $this->compareProvider->compare($themeId, $scope, $userId);
+            $comparison                        = $this->compareProvider->compare($themeId, $scope, $userId);
             $metadata['hasUnpublishedChanges'] = $comparison['hasChanges'];
-            $metadata['draftChangesCount'] = $comparison['changesCount'];
+            $metadata['draftChangesCount']     = $comparison['changesCount'];
         }
 
         // 12. Порахувати modifiedCount — кількість опублікованих полів що відрізняються від defaults
@@ -151,12 +151,12 @@ class Config extends AbstractConfigResolver
         $metadata['modifiedCount'] = $modifiedCount;
 
         return [
-            'version' => $config['version'] ?? '1.0',
-            'sections' => $sections,
-            'presets' => $this->formatPresets($config['presets'] ?? []),
-            'palettes' => $this->formatPalettes($themeId, $valuesMap),
+            'version'      => $config['version'] ?? '1.0',
+            'sections'     => $sections,
+            'presets'      => $this->presetFormatter->formatPresets($config['presets'] ?? []),
+            'palettes'     => $this->formatPalettes($themeId, $valuesMap),
             'fontPalettes' => $this->formatFontPalettes($themeId),
-            'metadata' => $metadata
+            'metadata'     => $metadata,
         ];
     }
 }
