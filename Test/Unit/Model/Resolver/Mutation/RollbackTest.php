@@ -7,8 +7,11 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Rollback;
 use Swissup\BreezeThemeEditor\Model\Service\PublishService;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
+use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Publication;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
@@ -19,17 +22,31 @@ class RollbackTest extends TestCase
 {
     private Rollback $rollbackResolver;
     private PublishService|MockObject $publishServiceMock;
+    private ValueService|MockObject $valueServiceMock;
+    private StatusProvider|MockObject $statusProviderMock;
     private UserResolver|MockObject $userResolverMock;
     private PublicationRepositoryInterface|MockObject $publicationRepositoryMock;
+    private ScopeFactory|MockObject $scopeFactory;
     private Field|MockObject $fieldMock;
     private ContextInterface|MockObject $contextMock;
     private ResolveInfo|MockObject $resolveInfoMock;
 
     protected function setUp(): void
     {
-        $this->publishServiceMock = $this->createMock(PublishService::class);
-        $this->userResolverMock = $this->createMock(UserResolver::class);
+        $this->publishServiceMock        = $this->createMock(PublishService::class);
+        $this->valueServiceMock          = $this->createMock(ValueService::class);
+        $this->statusProviderMock        = $this->createMock(StatusProvider::class);
+        $this->userResolverMock          = $this->createMock(UserResolver::class);
         $this->publicationRepositoryMock = $this->createMock(PublicationRepositoryInterface::class);
+        $this->scopeFactory              = $this->createMock(ScopeFactory::class);
+        $this->scopeFactory->method('create')->willReturnCallback(
+            fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
+        );
+        $this->scopeFactory->method('fromInput')->willReturnCallback(
+            fn(array $data) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($data['type'] ?? 'stores', (int)($data['scopeId'] ?? 0))
+        );
+        $this->statusProviderMock->method('getStatusId')->willReturn(2);
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([]);
         $this->fieldMock = $this->createMock(Field::class);
         $this->contextMock = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -40,8 +57,11 @@ class RollbackTest extends TestCase
 
         $this->rollbackResolver = new Rollback(
             $this->publishServiceMock,
+            $this->valueServiceMock,
+            $this->statusProviderMock,
             $this->userResolverMock,
-            $this->publicationRepositoryMock
+            $this->publicationRepositoryMock,
+            $this->scopeFactory
         );
     }
 
@@ -67,6 +87,7 @@ class RollbackTest extends TestCase
         $newPublication = $this->createMock(Publication::class);
         $newPublication->method('getPublicationId')->willReturn(101);
         $newPublication->method('getThemeId')->willReturn(10);
+        $newPublication->method('getScope')->willReturn('stores');
         $newPublication->method('getStoreId')->willReturn(1);
         $newPublication->method('getTitle')->willReturn('Rollback to v1.0');
         $newPublication->method('getDescription')->willReturn('Rolling back due to issues');
@@ -127,6 +148,7 @@ class RollbackTest extends TestCase
         $newPublication = $this->createMock(Publication::class);
         $newPublication->method('getPublicationId')->willReturn(102);
         $newPublication->method('getThemeId')->willReturn(10);
+        $newPublication->method('getScope')->willReturn('stores');
         $newPublication->method('getStoreId')->willReturn(1);
         $newPublication->method('getTitle')->willReturn('Quick Rollback');
         $newPublication->method('getDescription')->willReturn(null);
@@ -214,6 +236,7 @@ class RollbackTest extends TestCase
         $newPublication = $this->createMock(Publication::class);
         $newPublication->method('getPublicationId')->willReturn(103);
         $newPublication->method('getThemeId')->willReturn(15);
+        $newPublication->method('getScope')->willReturn('stores');
         $newPublication->method('getStoreId')->willReturn(2);
         $newPublication->method('getTitle')->willReturn('Full Rollback Test');
         $newPublication->method('getDescription')->willReturn('Test description');
@@ -292,6 +315,7 @@ class RollbackTest extends TestCase
         $newPublication = $this->createMock(Publication::class);
         $newPublication->method('getPublicationId')->willReturn(104);
         $newPublication->method('getThemeId')->willReturn(10);
+        $newPublication->method('getScope')->willReturn('stores');
         $newPublication->method('getStoreId')->willReturn(1);
         $newPublication->method('getTitle')->willReturn('No Changes Rollback');
         $newPublication->method('getDescription')->willReturn(null);
@@ -351,6 +375,7 @@ class RollbackTest extends TestCase
                 $newPub = $this->createMock(Publication::class);
                 $newPub->method('getPublicationId')->willReturn(105);
                 $newPub->method('getThemeId')->willReturn(10);
+                $newPub->method('getScope')->willReturn('stores');
                 $newPub->method('getStoreId')->willReturn(1);
                 $newPub->method('getTitle')->willReturn('Test Verification');
                 $newPub->method('getDescription')->willReturn(null);
@@ -394,6 +419,7 @@ class RollbackTest extends TestCase
         $newPublication = $this->createMock(Publication::class);
         $newPublication->method('getPublicationId')->willReturn(106);
         $newPublication->method('getThemeId')->willReturn(10);
+        $newPublication->method('getScope')->willReturn('stores');
         $newPublication->method('getStoreId')->willReturn(1);
         $newPublication->method('getTitle')->willReturn('Test Changes Null');
         $newPublication->method('getDescription')->willReturn(null);
@@ -446,6 +472,7 @@ class RollbackTest extends TestCase
         $newPublication = $this->createMock(Publication::class);
         $newPublication->method('getPublicationId')->willReturn(107);
         $newPublication->method('getThemeId')->willReturn(10);
+        $newPublication->method('getScope')->willReturn('stores');
         $newPublication->method('getStoreId')->willReturn(1);
         $newPublication->method('getTitle')->willReturn('Test User Metadata');
         $newPublication->method('getDescription')->willReturn(null);

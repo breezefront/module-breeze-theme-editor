@@ -43,16 +43,19 @@ class SaveValue extends AbstractSaveMutation
         $defaults = $this->configProvider->getAllDefaults($params['themeId']);
         $defaultValue = $defaults[$sectionCode . '.' . $fieldCode] ?? null;
 
+        $valueItem = [
+            'sectionCode' => $sectionCode,
+            'fieldCode'   => $fieldCode,
+            'value'       => $newValue,
+            'isModified'  => $newValue !== $defaultValue,
+            'updatedAt'   => date('Y-m-d H:i:s')
+        ];
+
         return [
             'success' => true,
             'message' => __('Value saved successfully'),
-            'value' => [
-                'sectionCode' => $sectionCode,
-                'fieldCode'   => $fieldCode,
-                'value'       => $newValue,
-                'isModified'  => $newValue !== $defaultValue,
-                'updatedAt'   => date('Y-m-d H:i:s')
-            ]
+            'value'   => $valueItem,
+            'values'  => [$valueItem]
         ];
     }
 }

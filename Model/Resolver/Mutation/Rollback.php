@@ -7,9 +7,13 @@ use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\PublishService;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
+use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Api\PublicationRepositoryInterface;
+use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Rollback to previous publication
@@ -30,8 +34,11 @@ class Rollback extends AbstractMutationResolver
     
     public function __construct(
         private PublishService $publishManager,
+        private ValueService $valueService,
+        private StatusProvider $statusProvider,
         private UserResolver $userResolver,
-        private PublicationRepositoryInterface $publicationRepository
+        private PublicationRepositoryInterface $publicationRepository,
+        private ScopeFactory $scopeFactory
     ) {}
 
     public function resolve(
@@ -68,9 +75,33 @@ class Rollback extends AbstractMutationResolver
         // Отримати створену публікацію
         $newPublication = $this->publicationRepository->getById($result['publicationId']);
 
+        // Завантажити published values після rollback
+        $scope = $this->scopeFactory->fromInput([
+            'type'    => $newPublication->getScope(),
+            'scopeId' => $newPublication->getStoreId(),
+        ]);
+        $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
+        $publishedRows = $this->valueService->getValuesByTheme(
+            $newPublication->getThemeId(),
+            $scope,
+            $publishedStatusId
+        );
+
+        $values = [];
+        foreach ($publishedRows as $row) {
+            $values[] = [
+                'sectionCode' => $row['section_code'],
+                'fieldCode'   => $row['setting_code'],
+                'value'       => $row['value'],
+                'isModified'  => true,
+                'updatedAt'   => $row['updated_at'],
+            ];
+        }
+
         return [
             'success' => true,
             'message' => __('Successfully rolled back to publication #%1', $publicationId),
+            'values'  => $values,
             'publication' => [
                 'publicationId' => $newPublication->getPublicationId(),
                 'themeId' => $newPublication->getThemeId(),

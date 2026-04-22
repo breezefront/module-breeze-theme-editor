@@ -56,7 +56,8 @@ class DeletePublication extends AbstractMutationResolver
 
         return [
             'success' => true,
-            'message' => __('Publication deleted successfully')
+            'message' => __('Publication deleted successfully'),
+            'values' => []
         ];
     }
 }

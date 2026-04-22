@@ -55,7 +55,8 @@ class SavePaletteValue extends AbstractMutationResolver
             return [
                 'success' => false,
                 'message' => __('Invalid CSS variable name. Must start with "--color-"'),
-                'affectedFields' => 0
+                'affectedFields' => 0,
+                'values' => []
             ];
         }
 
@@ -68,7 +69,8 @@ class SavePaletteValue extends AbstractMutationResolver
             return [
                 'success' => false,
                 'message' => __('Invalid color format. Expected HEX (e.g., "#1979c3") or RGB (e.g., "25, 121, 195")'),
-                'affectedFields' => 0
+                'affectedFields' => 0,
+                'values' => []
             ];
         }
 
@@ -96,7 +98,8 @@ class SavePaletteValue extends AbstractMutationResolver
             return [
                 'success' => false,
                 'message' => __('Failed to save palette value: %1', $e->getMessage()),
-                'affectedFields' => 0
+                'affectedFields' => 0,
+                'values' => []
             ];
         }
 
@@ -107,7 +110,8 @@ class SavePaletteValue extends AbstractMutationResolver
         return [
             'success' => true,
             'message' => __('Palette color saved successfully'),
-            'affectedFields' => $affectedCount
+            'affectedFields' => $affectedCount,
+            'values' => []
         ];
     }
 

@@ -483,6 +483,7 @@ type SaveBreezeThemeEditorValueOutput {
     success: Boolean!
     message: String
     value: BreezeThemeEditorValue
+    values: [BreezeThemeEditorValue!]
 }
 
 type BreezeThemeEditorValidationError {
@@ -494,24 +495,28 @@ type PublishBreezeThemeEditorOutput {
     success: Boolean!
     message: String
     publication: BreezeThemeEditorPublication
+    values: [BreezeThemeEditorValue!]
 }
 
 type DiscardBreezeThemeEditorDraftOutput {
     success: Boolean!
     message: String
     discardedCount: Int @doc(description: "Number of discarded values")
+    values: [BreezeThemeEditorValue!]
 }
 
 type DiscardBreezeThemeEditorPublishedOutput {
     success: Boolean!
     message: String
     discardedCount: Int @doc(description: "Number of reset published values")
+    values: [BreezeThemeEditorValue!]
 }
 
 type RollbackBreezeThemeEditorOutput {
     success: Boolean!
     message: String
     publication: BreezeThemeEditorPublication
+    values: [BreezeThemeEditorValue!]
 }
 
 type ApplyBreezeThemeEditorPresetOutput {
@@ -540,6 +545,7 @@ type ExportBreezeThemeEditorSettingsOutput {
     message: String
     jsonData: String @doc(description: "Exported settings as JSON")
     filename: String @doc(description: "Suggested filename")
+    values: [BreezeThemeEditorValue!]
 }
 
 type ImportBreezeThemeEditorSettingsOutput {
@@ -548,15 +554,18 @@ type ImportBreezeThemeEditorSettingsOutput {
     importedCount: Int
     skippedCount: Int
     errors: [String!]
+    values: [BreezeThemeEditorValue!]
 }
 
 type SaveBreezeThemeEditorPaletteValueOutput {
     success: Boolean!
     message: String
     affectedFields: Int! @doc(description: "Number of fields that use this color")
+    values: [BreezeThemeEditorValue!]
 }
 
 type DeleteBreezeThemeEditorPublicationOutput {
     success: Boolean!
     message: String
+    values: [BreezeThemeEditorValue!]
 }

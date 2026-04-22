@@ -13,6 +13,13 @@ define([
                 success
                 message
                 discardedCount
+                values {
+                    sectionCode
+                    fieldCode
+                    value
+                    isModified
+                    updatedAt
+                }
             }
         }
     `;

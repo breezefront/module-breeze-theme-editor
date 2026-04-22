@@ -75,7 +75,8 @@ class ExportSettings extends AbstractMutationResolver
             'success' => true,
             'message' => __('Settings exported successfully'),
             'jsonData' => $result['jsonData'],
-            'filename' => $result['filename']
+            'filename' => $result['filename'],
+            'values' => []
         ];
     }
 }

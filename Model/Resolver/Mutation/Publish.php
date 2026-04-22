@@ -7,10 +7,13 @@ use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\PublishService;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
+use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
+use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Publish draft to production
@@ -31,6 +34,8 @@ class Publish extends AbstractMutationResolver
     
     public function __construct(
         private PublishService $publishManager,
+        private ValueService $valueService,
+        private StatusProvider $statusProvider,
         private UserResolver $userResolver,
         private ThemeResolver $themeResolver,
         private ScopeFactory $scopeFactory
@@ -68,9 +73,25 @@ class Publish extends AbstractMutationResolver
             $description
         );
 
+        // Завантажити published values після публікації
+        $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
+        $publishedRows = $this->valueService->getValuesByTheme($themeId, $scope, $publishedStatusId);
+
+        $values = [];
+        foreach ($publishedRows as $row) {
+            $values[] = [
+                'sectionCode' => $row['section_code'],
+                'fieldCode'   => $row['setting_code'],
+                'value'       => $row['value'],
+                'isModified'  => true,
+                'updatedAt'   => $row['updated_at'],
+            ];
+        }
+
         return [
             'success' => true,
             'message' => __('Settings published successfully'),
+            'values'  => $values,
             'publication' => [
                 'publicationId' => $result['publicationId'],
                 'themeId' => $result['themeId'],

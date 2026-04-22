@@ -15,7 +15,7 @@ use Swissup\BreezeThemeEditor\Model\StatusCode;
 
 /**
  * Discard draft changes
- * 
+ *
  * ACL: Inherits ::editor_edit from AbstractMutationResolver
  */
 class DiscardDraft extends AbstractMutationResolver
@@ -40,7 +40,7 @@ class DiscardDraft extends AbstractMutationResolver
             ? (int)$args['themeId']
             : $this->themeResolver->getThemeIdByScope($scope);
 
-        $sectionCodes = $args['sectionCodes'] ??  null;
+        $sectionCodes = $args['sectionCodes'] ?? null;
         $fieldCodes   = $args['fieldCodes']   ?? null;
         $userId = $this->userResolver->getCurrentUserId($context);
 
@@ -56,10 +56,26 @@ class DiscardDraft extends AbstractMutationResolver
             $fieldCodes
         );
 
+        // Завантажити поточні published values — те, що тепер активне після відкидання чернетки
+        $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
+        $publishedRows = $this->valueService->getValuesByTheme($themeId, $scope, $publishedStatusId);
+
+        $values = [];
+        foreach ($publishedRows as $row) {
+            $values[] = [
+                'sectionCode' => $row['section_code'],
+                'fieldCode'   => $row['setting_code'],
+                'value'       => $row['value'],
+                'isModified'  => true,
+                'updatedAt'   => $row['updated_at'],
+            ];
+        }
+
         return [
-            'success' => true,
-            'message' => __('Draft changes discarded successfully'),
-            'discardedCount' => $discardedCount
+            'success'        => true,
+            'message'        => __('Draft changes discarded successfully'),
+            'discardedCount' => $discardedCount,
+            'values'         => $values,
         ];
     }
 }

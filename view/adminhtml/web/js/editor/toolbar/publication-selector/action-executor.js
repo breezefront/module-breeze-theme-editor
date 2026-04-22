@@ -285,7 +285,8 @@ define([
                     $(document).trigger('bte:draftDiscarded', {
                         scope:   scopeManager.getScope(),
                         scopeId: scopeManager.getScopeId(),
-                        themeId: scopeManager.getThemeId()
+                        themeId: scopeManager.getThemeId(),
+                        values:  result.values || []
                     });
 
                     ctx.renderer.closeDropdown();
@@ -358,7 +359,8 @@ define([
                     $(document).trigger('bte:publishedDiscarded', {
                         scope:   scopeManager.getScope(),
                         scopeId: scopeManager.getScopeId(),
-                        themeId: scopeManager.getThemeId()
+                        themeId: scopeManager.getThemeId(),
+                        values:  result.values || []
                     });
 
                     ctx.renderer.closeDropdown();

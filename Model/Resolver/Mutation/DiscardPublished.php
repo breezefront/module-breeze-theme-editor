@@ -62,7 +62,8 @@ class DiscardPublished extends AbstractMutationResolver
         return [
             'success' => true,
             'message' => __('Published customizations reset to theme defaults'),
-            'discardedCount' => $discardedCount
+            'discardedCount' => $discardedCount,
+            'values' => []
         ];
     }
 }

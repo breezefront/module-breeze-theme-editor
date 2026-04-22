@@ -11,6 +11,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\ImportSettings;
 use Swissup\BreezeThemeEditor\Model\Service\ImportExportService;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
+use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
@@ -20,6 +22,8 @@ class ImportSettingsTest extends TestCase
 {
     private ImportSettings $mutation;
     private ImportExportService|MockObject $importExportService;
+    private ValueService|MockObject $valueService;
+    private StatusProvider|MockObject $statusProvider;
     private UserResolver|MockObject $userResolver;
     private ThemeResolver|MockObject $themeResolver;
     private ScopeFactory|MockObject $scopeFactory;
@@ -31,6 +35,8 @@ class ImportSettingsTest extends TestCase
     protected function setUp(): void
     {
         $this->importExportService = $this->createMock(ImportExportService::class);
+        $this->valueService        = $this->createMock(ValueService::class);
+        $this->statusProvider      = $this->createMock(StatusProvider::class);
         $this->userResolver        = $this->createMock(UserResolver::class);
         $this->themeResolver       = $this->createMock(ThemeResolver::class);
         $this->scopeFactory        = $this->createMock(ScopeFactory::class);
@@ -41,6 +47,8 @@ class ImportSettingsTest extends TestCase
         $this->scopeFactory->method('fromInput')->willReturnCallback(
             fn(array $data) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($data['type'] ?? 'stores', (int)($data['scopeId'] ?? 0))
         );
+        $this->statusProvider->method('getStatusId')->willReturn(1);
+        $this->valueService->method('getValuesByTheme')->willReturn([]);
         $this->field               = $this->createMock(Field::class);
         $this->context             = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -49,6 +57,8 @@ class ImportSettingsTest extends TestCase
 
         $this->mutation = new ImportSettings(
             $this->importExportService,
+            $this->valueService,
+            $this->statusProvider,
             $this->userResolver,
             $this->themeResolver,
             $this->scopeFactory

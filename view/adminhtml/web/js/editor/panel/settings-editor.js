@@ -226,21 +226,29 @@ define([
                 setTimeout(function () { window.location.reload(); }, 1000);
             });
 
-            $(document).on('bte:publishedDiscarded', function () {
+            $(document).on('bte:publishedDiscarded', function (e, data) {
                 log.info('Published customizations discarded, refreshing preview...');
                 CssPreviewManager.reset();
                 CssManager.showPublished();
                 CssManager.refreshPublishedCss();
-                self._loadConfig();
+                if (data && data.values && data.values.length >= 0) {
+                    self._updatePanelFields(data.values);
+                } else {
+                    self._loadConfig();
+                }
             });
 
-            $(document).on('bte:draftDiscarded', function () {
+            $(document).on('bte:draftDiscarded', function (e, data) {
                 log.info('Draft discarded, refreshing panel...');
                 PanelState.reset();
                 PaletteManager.revertDirtyChanges();
                 CssPreviewManager.reset();
                 CssManager.refreshDraftCss();
-                self._loadConfig();
+                if (data && data.values && data.values.length >= 0) {
+                    self._updatePanelFields(data.values);
+                } else {
+                    self._loadConfig();
+                }
             });
         },
 
@@ -493,6 +501,25 @@ define([
             this._updateChangesCount();
             this._refreshAllBadges();
             CssPreviewManager.refresh();
+        },
+
+        /**
+         * Update panel field DOM elements from a values array returned by a mutation.
+         * Skips fields not found in the DOM (e.g. palette / hidden fields).
+         *
+         * @param {Array} values - Array of { sectionCode, fieldCode, value }
+         */
+        _updatePanelFields: function (values) {
+            log.info('Updating ' + (values ? values.length : 0) + ' panel fields from mutation response');
+
+            (values || []).forEach(function (item) {
+                var selector = '[data-section="' + item.sectionCode + '"][data-field="' + item.fieldCode + '"]';
+                var $field = $(selector);
+
+                if ($field.length && $field.val() !== item.value) {
+                    $field.val(item.value).trigger('change');
+                }
+            });
         },
 
         // ─── PanelState event handler ────────────────────────────────────────────

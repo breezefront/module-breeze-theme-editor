@@ -7,6 +7,8 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Publish;
 use Swissup\BreezeThemeEditor\Model\Service\PublishService;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
+use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
@@ -20,6 +22,8 @@ class PublishTest extends TestCase
 {
     private Publish $publishResolver;
     private PublishService|MockObject $publishServiceMock;
+    private ValueService|MockObject $valueServiceMock;
+    private StatusProvider|MockObject $statusProviderMock;
     private UserResolver|MockObject $userResolverMock;
     private ThemeResolver|MockObject $themeResolverMock;
     private ScopeFactory|MockObject $scopeFactory;
@@ -31,13 +35,20 @@ class PublishTest extends TestCase
     protected function setUp(): void
     {
         $this->publishServiceMock = $this->createMock(PublishService::class);
-        $this->userResolverMock = $this->createMock(UserResolver::class);
-        $this->themeResolverMock = $this->createMock(ThemeResolver::class);
-        $this->scopeFactory = $this->createMock(ScopeFactory::class);
-        $this->scopeMock    = $this->createMock(ScopeInterface::class);
+        $this->valueServiceMock   = $this->createMock(ValueService::class);
+        $this->statusProviderMock = $this->createMock(StatusProvider::class);
+        $this->userResolverMock   = $this->createMock(UserResolver::class);
+        $this->themeResolverMock  = $this->createMock(ThemeResolver::class);
+        $this->scopeFactory       = $this->createMock(ScopeFactory::class);
+        $this->scopeMock          = $this->createMock(ScopeInterface::class);
         $this->scopeFactory->method('create')->willReturnCallback(
             fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
         );
+        $this->scopeFactory->method('fromInput')->willReturnCallback(
+            fn(array $data) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($data['type'] ?? 'stores', (int)($data['scopeId'] ?? 0))
+        );
+        $this->statusProviderMock->method('getStatusId')->willReturn(2);
+        $this->valueServiceMock->method('getValuesByTheme')->willReturn([]);
         $this->fieldMock = $this->createMock(Field::class);
         $this->contextMock = $this->getMockBuilder(ContextInterface::class)
             ->addMethods(['getUserId', 'getUserType'])
@@ -48,6 +59,8 @@ class PublishTest extends TestCase
 
         $this->publishResolver = new Publish(
             $this->publishServiceMock,
+            $this->valueServiceMock,
+            $this->statusProviderMock,
             $this->userResolverMock,
             $this->themeResolverMock,
             $this->scopeFactory

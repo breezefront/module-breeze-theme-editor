@@ -53,12 +53,19 @@ class DiscardDraftTest extends TestCase
             $this->themeResolver,
             $this->scopeFactory
         );
+
+        // Default stubs for tests that don't override them
+        $this->valueService->method('getValuesByTheme')->willReturn([]);
     }
 
     public function testDiscardsAllDraftValuesAndReturnsCount(): void
     {
         $this->userResolver->method('getCurrentUserId')->willReturn(42);
-        $this->statusProvider->method('getStatusId')->with('DRAFT')->willReturn(1);
+        $this->statusProvider->method('getStatusId')->willReturnMap([
+            ['DRAFT', 1],
+            ['PUBLISHED', 2],
+        ]);
+        $this->valueService->method('getValuesByTheme')->willReturn([]);
         $this->valueService
             ->expects($this->once())
             ->method('deleteValues')

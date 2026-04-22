@@ -7,6 +7,8 @@ use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\ImportExportService;
+use Swissup\BreezeThemeEditor\Model\Service\ValueService;
+use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
@@ -22,6 +24,8 @@ class ImportSettings extends AbstractMutationResolver
 {
     public function __construct(
         private ImportExportService $importExportService,
+        private ValueService $valueService,
+        private StatusProvider $statusProvider,
         private UserResolver $userResolver,
         private ThemeResolver $themeResolver,
         private ScopeFactory $scopeFactory
@@ -58,12 +62,28 @@ class ImportSettings extends AbstractMutationResolver
                 $overwriteExisting
             );
 
+            // Завантажити values після імпорту
+            $statusId = $this->statusProvider->getStatusId($statusCode);
+            $importedRows = $this->valueService->getValuesByTheme($themeId, $scope, $statusId);
+
+            $values = [];
+            foreach ($importedRows as $row) {
+                $values[] = [
+                    'sectionCode' => $row['section_code'],
+                    'fieldCode'   => $row['setting_code'],
+                    'value'       => $row['value'],
+                    'isModified'  => true,
+                    'updatedAt'   => $row['updated_at'],
+                ];
+            }
+
             return [
-                'success' => true,
-                'message' => __('Successfully imported %1 settings', $result['importedCount']),
-                'importedCount' => $result['importedCount'],
-                'skippedCount' => $result['skippedCount'],
-                'errors' => $result['errors'] ?? []
+                'success'        => true,
+                'message'        => __('Successfully imported %1 settings', $result['importedCount']),
+                'importedCount'  => $result['importedCount'],
+                'skippedCount'   => $result['skippedCount'],
+                'errors'         => $result['errors'] ?? [],
+                'values'         => $values,
             ];
 
         } catch (\Exception $e) {
