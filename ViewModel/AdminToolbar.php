@@ -3,9 +3,7 @@
 namespace Swissup\BreezeThemeEditor\ViewModel;
 
 use Magento\Framework\View\Element\Block\ArgumentInterface;
-use Magento\Framework\Url\DecoderInterface;
-use Magento\Framework\Url\EncoderInterface;
-use Magento\Framework\UrlInterface;
+use Magento\Framework\App\RequestInterface;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarAuthProvider;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarPermissionsProvider;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarScopeProvider;
@@ -19,7 +17,7 @@ use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarUrlProvider;
  * - ToolbarScopeProvider    — scope/store resolution
  * - ToolbarAuthProvider     — authentication and user identity
  * - ToolbarPermissionsProvider — ACL permission checks
- * - ToolbarUrlProvider      — admin + GraphQL URLs
+ * - ToolbarUrlProvider      — admin + GraphQL + iframe URLs, page ID detection
  * - ToolbarThemeProvider    — frontend theme ID resolution
  *
  * All public methods are kept to preserve backward compatibility with
@@ -68,21 +66,6 @@ class AdminToolbar implements ArgumentInterface
     private $themeProvider;
 
     /**
-     * @var DecoderInterface
-     */
-    private $urlDecoder;
-
-    /**
-     * @var EncoderInterface
-     */
-    private $urlEncoder;
-
-    /**
-     * @var UrlInterface
-     */
-    private $urlBuilder;
-
-    /**
      * @param \Magento\Framework\App\RequestInterface $request
      * @param \Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider $pageUrlProvider
      * @param \Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider $storeDataProvider
@@ -91,9 +74,6 @@ class AdminToolbar implements ArgumentInterface
      * @param ToolbarPermissionsProvider $permissionsProvider
      * @param ToolbarUrlProvider $urlProvider
      * @param ToolbarThemeProvider $themeProvider
-     * @param DecoderInterface $urlDecoder
-     * @param EncoderInterface $urlEncoder
-     * @param UrlInterface $urlBuilder
      */
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
@@ -103,10 +83,7 @@ class AdminToolbar implements ArgumentInterface
         ToolbarAuthProvider $authProvider,
         ToolbarPermissionsProvider $permissionsProvider,
         ToolbarUrlProvider $urlProvider,
-        ToolbarThemeProvider $themeProvider,
-        DecoderInterface $urlDecoder,
-        EncoderInterface $urlEncoder,
-        UrlInterface $urlBuilder
+        ToolbarThemeProvider $themeProvider
     ) {
         $this->request             = $request;
         $this->pageUrlProvider     = $pageUrlProvider;
@@ -116,9 +93,6 @@ class AdminToolbar implements ArgumentInterface
         $this->permissionsProvider = $permissionsProvider;
         $this->urlProvider         = $urlProvider;
         $this->themeProvider       = $themeProvider;
-        $this->urlDecoder          = $urlDecoder;
-        $this->urlEncoder          = $urlEncoder;
-        $this->urlBuilder          = $urlBuilder;
     }
 
     // =========================================================================
@@ -289,21 +263,11 @@ class AdminToolbar implements ArgumentInterface
     /**
      * Build the iframe preview URL for the editor page.
      *
-     * The 'url' path param is encoded with Magento's uenc scheme
-     * (EncoderInterface: strtr(base64_encode(), '+/=', '-_~')) so that
-     * characters like '/' survive through Cloudflare and any proxy that
-     * decodes %2F before reaching origin.
-     *
      * @return string
      */
     public function getIframeUrl(): string
     {
-        $requestedUrl = $this->request->getParam('url', '/');
-        $params       = ['store' => $this->getStoreId(), 'url' => $this->urlEncoder->encode($requestedUrl)];
-        if ($this->isJstestMode()) {
-            $params['jstest'] = 1;
-        }
-        return $this->urlBuilder->getUrl('breeze_editor/editor/iframe', $params);
+        return $this->urlProvider->getIframeUrl($this->getStoreId());
     }
 
     /**
@@ -313,45 +277,17 @@ class AdminToolbar implements ArgumentInterface
      */
     public function isJstestMode()
     {
-        return (bool)$this->request->getParam('jstest', false);
+        return $this->urlProvider->isJstestMode();
     }
 
     /**
      * Derive the current page action name from the iframe URL parameter.
      *
-     * This is an approximation based on URL patterns. For precise detection,
-     * use postMessage from the iframe.
-     *
      * @return string Action name (e.g. 'cms_index_index')
      */
     public function getCurrentPageId()
     {
-        $rawUrl = $this->request->getParam('url', '');
-        $url    = $rawUrl ? $this->urlDecoder->decode($rawUrl) : '/';
-
-        if (empty($url) || $url === '/') {
-            return 'cms_index_index';
-        }
-        if (strpos($url, '/checkout/cart') !== false) {
-            return 'checkout_cart_index';
-        }
-        if (strpos($url, '/checkout') !== false) {
-            return 'checkout_index_index';
-        }
-        if (strpos($url, '/customer/account/login') !== false) {
-            return 'customer_account_login';
-        }
-        if (strpos($url, '/customer/account') !== false) {
-            return 'customer_account_index';
-        }
-        if (strpos($url, '/catalogsearch/result') !== false) {
-            return 'catalogsearch_result_index';
-        }
-        if (strpos($url, '.html') !== false) {
-            return 'catalog_category_view';
-        }
-
-        return 'cms_page_view';
+        return $this->urlProvider->getCurrentPageId();
     }
 
     /**

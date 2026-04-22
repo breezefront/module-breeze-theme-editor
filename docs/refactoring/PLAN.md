@@ -736,7 +736,7 @@
 - **Файл:** `ViewModel/AdminToolbar.php`
 - **Проблема:** Зміна будь-якого з 15 залежних класів потенційно ламає ViewModel. Включаючи 2 мертві залежності (п. 2.1).
 - **Пріоритет:** 🟠 High (пов'язано з п. 3.2)
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — 11 deps → 8 deps. `DecoderInterface`, `EncoderInterface`, `UrlInterface` переміщені в `ToolbarUrlProvider` разом з методами `getIframeUrl()`, `isJstestMode()`, `getCurrentPageId()`.
 
 ### 7.3 `CssGenerator` — 3 color utility залежності
 - **Файл:** `Model/Service/CssGenerator.php`
@@ -1020,7 +1020,7 @@
 - `[ ]` **п. 8.9** — `settings-editor.js:306` `setTimeout` race → `panelShown` event
 - `[ ]` **п. 4.17 + 6.6** — `base-palette-renderer.js` shared mixin (accordion + dirty state + confirm dialog)
 - `[ ]` **п. 6.7** — `window.confirm()` / `alert()` → `Magento_Ui/js/modal/confirm`
-- `[ ]` **п. 7.2** — `AdminToolbar.php` 15 constructor deps → sub-ViewModels
+- `[x]` **п. 7.2** — `AdminToolbar.php` 11 deps → 8: URL deps переміщені в `ToolbarUrlProvider`
 - `[ ]` **п. 4.6** — `ValueInterface[]` GraphQL mapping → `toGraphQlValue()` на `AbstractMutationResolver` *(перевірити чи не закрито з 6.4)*
 - `[ ]` **п. 7.3** — `CssGenerator` → `ColorPipeline` *(перевірити чи не закрито з 6.3)*
 - `[ ]` **п. 2.24** — `highlight-toggle.js` — реалізувати або прибрати кнопку
