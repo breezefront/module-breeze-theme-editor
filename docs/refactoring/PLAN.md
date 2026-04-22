@@ -1018,7 +1018,7 @@
 - `[ ]` **п. 8.11** — витягти `_debounce(fn, delay)` в `utils/debounce.js` (використовується в settings-editor + palette-renderer)
 - `[ ]` **п. 8.1 + 8.2** — iframe retry-polling → спільна `waitForIframeReady()` → `Promise`
 - `[ ]` **п. 8.9** — `settings-editor.js:306` `setTimeout` race → `panelShown` event
-- `[ ]` **п. 4.17 + 6.6** — `base-palette-renderer.js` shared mixin (accordion + dirty state + confirm dialog)
+- `[x]` **п. 4.17 + 6.6** — `base-palette-renderer.js` shared mixin (accordion + dirty state + confirm dialog) — `598daba`
 - `[ ]` **п. 6.7** — `window.confirm()` / `alert()` → `Magento_Ui/js/modal/confirm`
 - `[x]` **п. 7.2** — `AdminToolbar.php` 11 deps → 8: URL deps переміщені в `ToolbarUrlProvider`
 - `[ ]` **п. 4.6** — `ValueInterface[]` GraphQL mapping → `toGraphQlValue()` на `AbstractMutationResolver` *(перевірити чи не закрито з 6.4)*
