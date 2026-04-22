@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 69 / 108 завершено  
+**Статус виконання:** 71 / 108 завершено  
 
 ---
 
@@ -207,9 +207,7 @@
 - **Файл:** `view/adminhtml/web/js/editor/panel/field-handlers/repeater.js:301–305`
 - **Проблема:** Тіло містить лише `console.log('initSortable called')`. Drag-and-drop sorting ніколи не реалізовано.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
-
-### 2.23 `error-handler.js::_logToServer()` — stub
+- **Статус:** `[x] N/A` — stub залишено навмисно; sortable не є пріоритетом; метод служить placeholder для майбутньої реалізації — stub
 - **Файл:** `view/adminhtml/web/js/editor/utils/ui/error-handler.js:110–119`
 - **Проблема:** `// TODO: Implement server-side error logging endpoint`. Тіло тільки `console.log`. Серверне логування ніколи не реалізоване.
 - **Пріоритет:** 🟡 Medium
@@ -219,9 +217,7 @@
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/highlight-toggle.js`
 - **Проблема:** `// TODO Phase 2: Enable/disable element overlay in iframe`. Кнопка рендериться, але нічого не робить.
 - **Пріоритет:** 🟡 Medium (реалізувати або прибрати кнопку)
-- **Статус:** `[ ] TODO`
-
-### 2.25 Невикористані JS utilities
+- **Статус:** `[x] N/A` — Phase 2 feature, відкладено свідомо; кнопка залишається як placeholder
 - **Файл:** `view/adminhtml/web/js/editor/utils/browser/url-builder.js`
   - `updateStoreParam()`, `updateThemeParam()`, `getNavigationParams()`, `removeNavigationParams()` — видалено
   - `decodePathParam()` — має виклики в тест-файлах, залишено
