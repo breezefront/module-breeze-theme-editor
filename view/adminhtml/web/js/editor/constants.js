@@ -133,7 +133,34 @@ define([], function() {
         TIMEOUTS: {
             DEBOUNCE: 300,
             ANIMATION: 200,
-            DROPDOWN_CLOSE: 150
+            DROPDOWN_CLOSE: 150,
+            PALETTE_BADGES_DEBOUNCE: 150,
+            PALETTE_COOLDOWN: 500
+        },
+
+        /**
+         * Palette color picker layout values (px)
+         */
+        PALETTE: {
+            POPUP_WIDTH: 220,
+            SCROLL_OFFSET: 50,
+            Z_INDEX: 10001
+        },
+
+        /**
+         * Device breakpoint widths
+         */
+        DEVICE_WIDTHS: {
+            TABLET: '768px',
+            MOBILE: '375px'
+        },
+
+        /**
+         * CSS variable prefixes
+         */
+        CSS_VAR_PREFIXES: {
+            COLOR: '--color-',
+            COLOR_BRAND: '--color-brand-'
         }
     };
 });

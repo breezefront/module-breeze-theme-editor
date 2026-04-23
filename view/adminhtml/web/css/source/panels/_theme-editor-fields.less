@@ -172,7 +172,7 @@
     .bte-color-trigger {
         width: 60px;
         height: 40px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid @bte-field-border-translucent;
         border-radius: 4px;
         background: rgba(0, 0, 0, 0.3);
         cursor: pointer;
@@ -202,11 +202,11 @@
         flex: 1;
         padding: 8px 12px;
         background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid @bte-field-border-translucent;
         border-radius: 4px;
         color: @bte-toolbar-text;
         font-size: 13px;
-        font-family: 'Courier New', monospace;
+        font-family: @bte-code-font;
 
         &:hover {
             border-color: rgba(255, 255, 255, 0.3);
@@ -239,7 +239,7 @@
         flex: 1;
         height: 6px;
         border-radius: 3px;
-        background: rgba(255, 255, 255, 0.2);
+        background: @bte-field-border-translucent;
         outline: none;
         -webkit-appearance: none;
 
@@ -291,7 +291,7 @@
         font-size: 13px;
         font-weight: 500;
         color: rgba(255, 255, 255, 0.8);
-        font-family: 'Courier New', monospace;
+        font-family: @bte-code-font;
     }
 }
 
@@ -304,7 +304,7 @@
         width: 100%;
         padding: 8px 12px;
         background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid @bte-field-border-translucent;
         border-radius: 4px;
         color: @bte-toolbar-text;
         font-size: 13px;
@@ -336,7 +336,7 @@
         width: 100%;
         padding: 8px 12px;
         background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid @bte-field-border-translucent;
         border-radius: 4px;
         color: @bte-toolbar-text;
         font-size: 13px;
@@ -369,7 +369,7 @@
         width: 100%;
         padding: 10px 12px;
         background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid @bte-field-border-translucent;
         border-radius: 4px;
         color: @bte-toolbar-text;
         font-size: 13px;
@@ -453,7 +453,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(255, 255, 255, 0.2);
+        background: @bte-field-border-translucent;
         border-radius: 24px;
         transition: background 0.2s, box-shadow 0.2s;
 

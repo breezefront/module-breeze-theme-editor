@@ -8,7 +8,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
     'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-palette-renderer',
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog',
-    'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
+    'Swissup_BreezeThemeEditor/js/editor/utils/bsync',
+    'Swissup_BreezeThemeEditor/js/editor/constants'
 ], function (
     $,
     widget,
@@ -19,7 +20,8 @@ define([
     IconRegistry,
     _basePaletteRenderer,
     Dialog,
-    Bsync
+    Bsync,
+    Constants
 ) {
     'use strict';
 
@@ -444,7 +446,7 @@ define([
                 // If swatch is not visible, scroll to it
                 if (swatchTop < 0 || swatchTop > containerHeight) {
                     this.$content.animate({
-                        scrollTop: containerScrollTop + swatchTop - 50
+                        scrollTop: containerScrollTop + swatchTop - Constants.PALETTE.SCROLL_OFFSET
                     }, 300);
                 }
                 
@@ -561,7 +563,7 @@ define([
 
                     Logger.info('palette-section', 'Color changed (Pickr)', {property: property, hex: hex});
 
-                    // Debounce badge/panel updates (~150 ms) to avoid flicker during drag
+                    // Debounce badge/panel updates to avoid flicker during drag
                     clearTimeout(badgesDebounceTimer);
                     badgesDebounceTimer = setTimeout(function() {
                         // Arm cooldown so a stray click after picker close can't
@@ -570,13 +572,13 @@ define([
                         if (self._justChangedTimer) {
                             self._justChangedTimer.cancel && self._justChangedTimer.cancel();
                         }
-                        self._justChangedTimer = Bsync.delay(500).then(function() {
+                        self._justChangedTimer = Bsync.delay(Constants.TIMEOUTS.PALETTE_COOLDOWN).then(function() {
                             self._justChanged = false;
                         });
 
                         self._updateHeaderBadges();
                         $(document).trigger('paletteColorChanged');
-                    }, 150);
+                    }, Constants.TIMEOUTS.PALETTE_BADGES_DEBOUNCE);
                 });
 
                 // On cancel — restore original colour and close popup
@@ -603,7 +605,7 @@ define([
             var top = offset.top;
 
             // Clamp to viewport
-            var popupWidth = 220; // approximate, Pickr nano is ~200px
+            var popupWidth = Constants.PALETTE.POPUP_WIDTH; // approximate, Pickr nano is ~200px
             if (left + popupWidth > $(window).width()) {
                 left = offset.left - popupWidth - 10;
             }
@@ -612,7 +614,7 @@ define([
                 position: 'absolute',
                 left: left + 'px',
                 top: top + 'px',
-                zIndex: 10001
+                zIndex: Constants.PALETTE.Z_INDEX
             });
         },
 

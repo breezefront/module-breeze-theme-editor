@@ -431,7 +431,7 @@ define([
                 position: 'absolute',
                 left: left + 'px',
                 top: top + 'px',
-                zIndex: 10001
+                zIndex: Constants.PALETTE.Z_INDEX
             });
         },
 

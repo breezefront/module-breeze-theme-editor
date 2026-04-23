@@ -31,12 +31,12 @@ define([
                 },
                 tablet: {
                     icon: require.toUrl('Swissup_BreezeThemeEditor/images/Tablet.svg'),
-                    width: '768px',
+                    width: Constants.DEVICE_WIDTHS.TABLET,
                     title: 'Tablet'
                 },
                 mobile: {
                     icon: require.toUrl('Swissup_BreezeThemeEditor/images/Phone.svg'),
-                    width: '375px',
+                    width: Constants.DEVICE_WIDTHS.MOBILE,
                     title: 'Mobile'
                 }
             }
@@ -151,12 +151,11 @@ define([
                 return;
             }
 
-            // Apply width with smooth transition
+            // Apply width with smooth transition (transition defined in CSS)
             $iframe.css({
                 'width': config.width,
                 'max-width': '100%',
-                'margin': '0 auto',
-                'transition': 'width 0.3s ease'
+                'margin': '0 auto'
             });
         },
 

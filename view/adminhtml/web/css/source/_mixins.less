@@ -48,7 +48,7 @@
     top: ~"calc(100% + 8px)";
     left: 50%;
     transform: translateX(-50%);
-    min-width: 220px;
+    min-width: @bte-dropdown-min-width;
     background: @bte-toolbar-dropdown-bg;
     border: 1px solid @bte-toolbar-dropdown-border;
     border-radius: @bte-toolbar-border-radius;
@@ -67,7 +67,7 @@
         visibility 0s 0.3s;
 
     &.active {
-        max-height: 75vh;
+        max-height: @bte-dropdown-max-height;
         opacity: 1;
         visibility: visible;
         overflow: visible;
@@ -107,7 +107,7 @@
     }
 
     .dropdown-content {
-        max-height: ~"calc(75vh - 100px)";
+        max-height: ~"calc(@{bte-dropdown-max-height} - 100px)";
         overflow-y: auto;
         overflow-x: hidden;
 

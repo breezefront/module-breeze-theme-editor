@@ -47,6 +47,10 @@
 @bte-toolbar-z-index: 10000;
 @bte-toolbar-compact-z-index: 9999;
 
+/* Color Picker z-index (above toolbar and dropdowns) */
+@bte-color-picker-z-index: @bte-toolbar-z-index + 1;    // 10001
+@bte-color-picker-overlay-z-index: @bte-toolbar-z-index + 2; // 10002
+
 @bte-toolbar-padding-h: 20px;
 @bte-toolbar-padding-h-mobile: 10px;
 @bte-toolbar-gap: 20px;
@@ -109,12 +113,6 @@
 @status-draft-color: #f59e0b; /* Amber/Orange*/
 @status-published-color: #10b981; /* Green */
 @status-historical-color: #6b7280; /* Gray */
-
-/* Dropdown Colors */
-@dropdown-section-title-color: #6b7280;
-@dropdown-action-bg: #f9fafb;
-@dropdown-action-hover-bg: #f3f4f6;
-@dropdown-item-meta-color: #9ca3af;
 
 /* Status Error */
 @status-error-color: #ef4444; /* Red */
@@ -212,3 +210,22 @@
 @bte-panel-input-border:   #E0E6EF;
 @bte-panel-input-text:     #0B0B0B;
 @bte-panel-input-radius:   6px;
+
+/* ============================================================================
+ * FIELD / PANEL SHARED TOKENS
+ * ============================================================================ */
+
+/* Semi-transparent white border (dark theme fields, panel sections) */
+@bte-field-border-translucent: rgba(255, 255, 255, 0.2);
+
+/* Monospace font stack for code/CSS fields */
+@bte-code-font: 'Courier New', monospace;
+
+/* Dropdown min-width */
+@bte-dropdown-min-width: 220px;
+
+/* Dropdown max-height (collapsed fallback) */
+@bte-dropdown-max-height: 75vh;
+
+/* Publication item padding-right (room for delete button on hover) */
+@bte-publication-item-padding-right: 36px;

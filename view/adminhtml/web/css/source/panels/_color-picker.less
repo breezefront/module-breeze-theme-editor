@@ -13,13 +13,13 @@
 .bte-color-popup {
     position: absolute;
     background: @bte-toolbar-bg;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid @bte-field-border-translucent;
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     padding: 16px;
     display: flex;
     gap: 16px;
-    z-index: 10001;
+    z-index: @bte-color-picker-z-index;
     max-height: 90vh;
     overflow: hidden;
 }
@@ -78,7 +78,7 @@
     }
     
     &::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.2);
+        background: @bte-field-border-translucent;
         border-radius: 3px;
         
         &:hover {
@@ -113,7 +113,7 @@
 .bte-popup-palette .bte-palette-swatch {
     width: 24px;
     height: 24px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 2px solid @bte-field-border-translucent;
     border-radius: 3px;
     cursor: pointer;
     position: relative;
@@ -166,19 +166,19 @@
     background: @bte-toolbar-bg;
     border: none;
     box-shadow: none;
-    z-index: 10002; // Higher than popup (10001) and toolbar (9999)
+    z-index: @bte-color-picker-overlay-z-index; // Higher than popup (@bte-color-picker-z-index) and toolbar (@bte-toolbar-z-index)
     
     // Color palette (Box for Saturation/Value)
     .pcr-selection {
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid @bte-field-border-translucent;
         
         .pcr-color-preview {
             background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid @bte-field-border-translucent;
         }
         
         .pcr-color-chooser {
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid @bte-field-border-translucent;
         }
         
         // Hue slider
@@ -186,14 +186,14 @@
             background: linear-gradient(to bottom,
                 #f00 0%, #ff0 17%, #0f0 33%,
                 #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid @bte-field-border-translucent;
         }
         
         // Opacity slider (if not locked)
         .pcr-opacity {
             background: linear-gradient(to right,
                 transparent, currentColor);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid @bte-field-border-translucent;
         }
     }
     
@@ -213,9 +213,9 @@
         input {
             padding: 0.45em 0.5em;
             background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid @bte-field-border-translucent;
             color: @bte-toolbar-text;
-            font-family: 'Courier New', monospace;
+            font-family: @bte-code-font;
             font-size: 0.75em;
             letter-spacing: 0.07em;
             text-align: center;
@@ -249,7 +249,7 @@
             padding: 0.45em 0.5em;
             background: rgba(255, 255, 255, 0.1);
             color: @bte-toolbar-text;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid @bte-field-border-translucent;
             font-size: 0.75em;
             text-align: center;
             cursor: pointer;

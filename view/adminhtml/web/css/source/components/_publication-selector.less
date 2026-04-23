@@ -155,7 +155,7 @@ _____________________________________________
             }
 
             &::-webkit-scrollbar-thumb {
-                background: rgba(255, 255, 255, 0.2);
+                background: @bte-field-border-translucent;
                 border-radius: 4px;
 
                 &:hover {
@@ -320,7 +320,7 @@ _____________________________________________
     .publications-list {
         .dropdown-item {
             padding: 10px 16px;
-            padding-right: 36px; /* room for the delete button on hover */
+            padding-right: @bte-publication-item-padding-right; /* room for the delete button on hover */
 
             .item-icon {
                 font-size: 18px;

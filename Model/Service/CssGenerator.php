@@ -24,6 +24,7 @@ use Swissup\BreezeThemeEditor\Model\StatusCode;
 class CssGenerator
 {
     public const EMPTY_CSS_OUTPUT = ":root {\n}\n";
+    public const COLOR_BRAND_PREFIX = '--color-brand-';
 
     public function __construct(
         private ValueInheritanceResolver $valueInheritanceResolver,
@@ -173,7 +174,7 @@ class CssGenerator
         $hexValue = $rawValue;
         $rgbValue = $this->colorPipeline->format($hexValue, 'rgb') ?? '';
 
-        $label = str_replace('--color-brand-', '', $cssVar);
+        $label = str_replace(self::COLOR_BRAND_PREFIX, '', $cssVar);
         $label = ucwords(str_replace('-', ' ', $label));
 
         $css  = "    $cssVar: $hexValue;  /* Palette: $label */\n";
