@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 79 / 108 завершено  
+**Статус виконання:** 91 / 108 завершено  
 
 ---
 
@@ -266,7 +266,7 @@
 - **Файли:** `view/base/web/css/source/_variables.less`, `view/adminhtml/web/css/source/_variables.less`
 - **Проблема:** `@dropdown-section-title-color`, `@dropdown-action-bg`, `@dropdown-action-hover-bg`, `@dropdown-item-meta-color` визначаються двічі в одному файлі. Перші визначення повністю перезаписуються.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — видалено `@dropdown-*` мертві змінні; додано токени: `@bte-field-border-translucent`, `@bte-code-font`, `@bte-dropdown-min-width`, `@bte-dropdown-max-height`, `@bte-publication-item-padding-right`
 
 ---
 
