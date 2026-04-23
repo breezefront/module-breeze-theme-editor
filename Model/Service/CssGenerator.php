@@ -6,7 +6,7 @@ namespace Swissup\BreezeThemeEditor\Model\Service;
 use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
-use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline;
 use Swissup\BreezeThemeEditor\Model\Service\Css\CssVariableBuilder;
 use Swissup\BreezeThemeEditor\Model\Service\Css\CssFontImportBuilder;
 use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
@@ -30,7 +30,8 @@ class CssGenerator
         private StatusProvider $statusProvider,
         private ConfigProvider $configProvider,
         private CssVariableBuilder $variableBuilder,
-        private CssFontImportBuilder $fontImportBuilder
+        private CssFontImportBuilder $fontImportBuilder,
+        private ColorPipeline $colorPipeline
     ) {}
 
     /**
@@ -166,11 +167,11 @@ class CssGenerator
     {
         // Convert legacy RGB strings to HEX
         if (preg_match('/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/', $rawValue)) {
-            $rawValue = ColorConverter::rgbToHex($rawValue);
+            $rawValue = $this->colorPipeline->format($rawValue, 'hex') ?? $rawValue;
         }
 
         $hexValue = $rawValue;
-        $rgbValue = ColorConverter::hexToRgb($hexValue);
+        $rgbValue = $this->colorPipeline->format($hexValue, 'rgb') ?? '';
 
         $label = str_replace('--color-brand-', '', $cssVar);
         $label = ucwords(str_replace('-', ' ', $label));

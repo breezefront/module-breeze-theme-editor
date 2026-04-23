@@ -743,7 +743,7 @@
 - **Проблема:** Напряму залежить від `ColorConverter`, `ColorFormatter`, `ColorFormatResolver`. Новий color format потребує змін у `CssGenerator`.
 - **Пропозиція:** `ColorPipeline` facade (пов'язано з п. 6.3).
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — `ColorConverter` статичні виклики замінено на `ColorPipeline::format()`. Ін'єкція через конструктор.
 
 ### 7.4 `db_schema.xml` — FK `onDelete="NO ACTION"` для `user_id`
 - **Файл:** `etc/db_schema.xml:63`
@@ -1022,7 +1022,7 @@
 - `[ ]` **п. 6.7** — `window.confirm()` / `alert()` → `Magento_Ui/js/modal/confirm`
 - `[x]` **п. 7.2** — `AdminToolbar.php` 11 deps → 8: URL deps переміщені в `ToolbarUrlProvider`
 - `[ ]` **п. 4.6** — `ValueInterface[]` GraphQL mapping → `toGraphQlValue()` на `AbstractMutationResolver` *(перевірити чи не закрито з 6.4)*
-- `[ ]` **п. 7.3** — `CssGenerator` → `ColorPipeline` *(перевірити чи не закрито з 6.3)*
+- `[x]` **п. 7.3** — `CssGenerator` → `ColorPipeline`
 - `[ ]` **п. 2.24** — `highlight-toggle.js` — реалізувати або прибрати кнопку
 
 ### Крок 11 — Low priority sweep

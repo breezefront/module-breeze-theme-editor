@@ -14,7 +14,9 @@ use Swissup\BreezeThemeEditor\Model\Service\ValueInheritanceResolver;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatter;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorPipeline;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Model\Service\Css\CssValueFormatter;
 use Swissup\BreezeThemeEditor\Model\Service\Css\CssVariableBuilder;
@@ -44,7 +46,10 @@ class CssGeneratorTest extends TestCase
         $this->configProviderMock = $this->createMock(ConfigProvider::class);
         $this->scope = $this->createMock(ScopeInterface::class);
 
-        $colorFormatResolver = new ColorFormatResolver(new ColorConverter());
+        $colorConverter      = new ColorConverter();
+        $colorFormatResolver = new ColorFormatResolver($colorConverter);
+        $colorFormatter      = new ColorFormatter($colorConverter);
+        $colorPipeline       = new ColorPipeline($colorFormatResolver, $colorFormatter);
         $formatter           = new CssValueFormatter($colorFormatResolver);
         $variableBuilder     = new CssVariableBuilder($formatter);
         $fontImportBuilder   = new CssFontImportBuilder($variableBuilder);
@@ -54,7 +59,8 @@ class CssGeneratorTest extends TestCase
             $this->statusProviderMock,
             $this->configProviderMock,
             $variableBuilder,
-            $fontImportBuilder
+            $fontImportBuilder,
+            $colorPipeline
         );
     }
     
@@ -2096,7 +2102,10 @@ class CssGeneratorTest extends TestCase
     private function createCssGeneratorWithRealResolver(
         ValueInheritanceResolver $resolver
     ): CssGenerator {
-        $colorFormatResolver = new ColorFormatResolver(new ColorConverter());
+        $colorConverter      = new ColorConverter();
+        $colorFormatResolver = new ColorFormatResolver($colorConverter);
+        $colorFormatter      = new ColorFormatter($colorConverter);
+        $colorPipeline       = new ColorPipeline($colorFormatResolver, $colorFormatter);
         $formatter           = new CssValueFormatter($colorFormatResolver);
         $variableBuilder     = new CssVariableBuilder($formatter);
         $fontImportBuilder   = new CssFontImportBuilder($variableBuilder);
@@ -2106,7 +2115,8 @@ class CssGeneratorTest extends TestCase
             $this->statusProviderMock,
             $this->configProviderMock,
             $variableBuilder,
-            $fontImportBuilder
+            $fontImportBuilder,
+            $colorPipeline
         );
     }
 
