@@ -12,8 +12,9 @@ define([
     'text!Swissup_BreezeThemeEditor/template/editor/compact-toggle-button.html',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
-], function ($, mageTemplate, widget, toggleTemplate, compactTemplate, Logger, StorageHelper, Constants) {
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
+], function ($, mageTemplate, widget, toggleTemplate, compactTemplate, Logger, StorageHelper, Constants, Bsync) {
     'use strict';
 
     var log = Logger.for('toolbar/toolbar-toggle');
@@ -161,7 +162,10 @@ define([
             var state = StorageHelper.getGlobalItem('admin_toolbar_visible');
             if (state === '0') {
                 // Restore collapsed state after a short delay
-                setTimeout($.proxy(this._hideToolbar, this), 100);
+                var self = this;
+                Bsync.delay(100).then(function () {
+                    self._hideToolbar();
+                });
             }
         }
     });

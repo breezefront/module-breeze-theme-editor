@@ -15,8 +15,9 @@ define([
     'text!Swissup_BreezeThemeEditor/template/editor/navigation.html',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
-], function ($, widget, mageTemplate, navigationTemplate, Logger, iconRegistry, Constants) {
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
+], function ($, widget, mageTemplate, navigationTemplate, Logger, iconRegistry, Constants, Bsync) {
     'use strict';
 
     var log = Logger.for('toolbar/navigation');
@@ -213,9 +214,9 @@ define([
                 $panel[0].offsetHeight; // Force reflow
                 
                 // Step 3: Add active class to trigger transform animation (slide in from LEFT)
-                setTimeout(function() {
+                Bsync.nextTick().then(function() {
                     $panel.addClass(Constants.CSS_CLASSES.ACTIVE);
-                }, 10);
+                });
                 
                 log.info('Panel shown: ' + panelId);
 
@@ -258,10 +259,14 @@ define([
                 $panel.removeClass(Constants.CSS_CLASSES.ACTIVE);
                 log.info('Panel hidden: ' + panelId);
 
-                // Step 2: Wait for animation to complete (300ms), then hide panel (display: none)
-                setTimeout(function() {
-                    $panel.hide();
-                }, Constants.TIMEOUTS.DEBOUNCE); // Match CSS transition duration
+                // Step 2: Wait for CSS transition to end, then hide panel (display: none)
+                Bsync.waitForTransition($panel, Constants.TIMEOUTS.DEBOUNCE + 100)
+                    .then(function () {
+                        $panel.hide();
+                    })
+                    .catch(function () {
+                        $panel.hide(); // fallback: hide even if transitionend never fired
+                    });
 
                 // Видалити клас з body (якщо немає інших активних панелей)
                 if ($(this.options.panelSelector).find('.bte-panel.' + Constants.CSS_CLASSES.ACTIVE).length === 0) {

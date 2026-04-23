@@ -28,11 +28,12 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
 ], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation, 
              publicationSelector, scopeSelector, pageSelector, highlightToggle, 
              toolbarToggle, exitButton, configManager, scopeManager, urlBuilder, graphQLClient, 
-             previewManager, cssManager, settingsEditor, iframeHelper, StorageHelper, Logger, Constants) {
+             previewManager, cssManager, settingsEditor, iframeHelper, StorageHelper, Logger, Constants, Bsync) {
     'use strict';
 
     var log = Logger.for('toolbar');
@@ -121,14 +122,14 @@ define([
             if (config.activatePanel) {
                 var _activatePanel = config.activatePanel;
                 // Defer until after the current call-stack so the widget is fully ready
-                setTimeout(function () {
+                Bsync.nextTick().then(function () {
                     var $nav = $(Constants.SELECTORS.NAVIGATION);
                     var navWidget = $nav.data('swissupBreezeNavigation');
                     if (navWidget && typeof navWidget.setActive === 'function') {
                         log.info('Auto-activating panel: ' + _activatePanel);
                         navWidget.setActive(_activatePanel);
                     }
-                }, 0);
+                });
             }
         }
         

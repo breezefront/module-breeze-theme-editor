@@ -7,7 +7,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
     'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-palette-renderer',
-    'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog'
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog',
+    'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
 ], function (
     $,
     widget,
@@ -17,7 +18,8 @@ define([
     StorageHelper,
     IconRegistry,
     _basePaletteRenderer,
-    Dialog
+    Dialog,
+    Bsync
 ) {
     'use strict';
 
@@ -216,12 +218,12 @@ define([
 
             // Close Pickr popup on outside click
             $(document).on('click.bte-palette-pickr', function(e) {
-                setTimeout(function() {
+                Bsync.nextTick().then(function() {
                     if (!$('.bte-color-popup').length) return;
                     if (!$(e.target).closest('.bte-color-popup, .bte-palette-swatch').length) {
                         self._closeAllPalettePickrPopups();
                     }
-                }, 10);
+                });
             });
 
             // Close Pickr popup on ESC
@@ -565,10 +567,12 @@ define([
                         // Arm cooldown so a stray click after picker close can't
                         // accidentally trigger the Reset button
                         self._justChanged = true;
-                        clearTimeout(self._justChangedTimer);
-                        self._justChangedTimer = setTimeout(function() {
+                        if (self._justChangedTimer) {
+                            self._justChangedTimer.cancel && self._justChangedTimer.cancel();
+                        }
+                        self._justChangedTimer = Bsync.delay(500).then(function() {
                             self._justChanged = false;
-                        }, 500);
+                        });
 
                         self._updateHeaderBadges();
                         $(document).trigger('paletteColorChanged');

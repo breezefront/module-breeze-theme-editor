@@ -7,8 +7,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/color-utils',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/partials/palette-grid.html',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
-], function ($, _, BaseHandler, PaletteManager, ColorRenderer, ColorUtils, paletteGridTemplate, Logger, Constants) {
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
+], function ($, _, BaseHandler, PaletteManager, ColorRenderer, ColorUtils, paletteGridTemplate, Logger, Constants, Bsync) {
     'use strict';
 
     var log = Logger.for('panel/field-handlers/color');
@@ -78,12 +79,12 @@ define([
             
             // Close popup on outside click (with delay to prevent immediate close after opening)
             $(document).on('click.bte-color-popup', function(e) {
-                // Delay check to allow popup to fully render after trigger click
-                setTimeout(function() {
+                // Defer to next microtask to allow popup to fully render after trigger click
+                Bsync.nextTick().then(function() {
                     // Check if any popup is currently open
                     var hasOpenPopup = $('.bte-color-popup').length > 0;
                     if (!hasOpenPopup) return;
-                    
+
                     // Close if clicked outside popup or trigger.
                     // Note: .pcr-app is inside .bte-color-popup, so no need to check separately.
                     // Also exclude .bte-palette-swatch: clicking a palette swatch opens its own
@@ -91,7 +92,7 @@ define([
                     if (!$(e.target).closest('.bte-color-popup, .bte-color-trigger, .bte-palette-swatch').length) {
                         self._closeAllPopups();
                     }
-                }, 10);
+                });
             });
             
             // Close popup on ESC key
@@ -548,7 +549,7 @@ define([
             var $preview = $wrapper.find('.bte-color-preview');
             
             // Check if value is palette reference
-            var isPaletteRef = typeof value === 'string' && value.startsWith('--color-');
+            var isPaletteRef = typeof value === 'string' && value.startsWith(Constants.CSS_VAR_PREFIXES.COLOR);
             var hexValue;
             
             log.debug('Reset: value=' + value + ' isPaletteRef=' + isPaletteRef);

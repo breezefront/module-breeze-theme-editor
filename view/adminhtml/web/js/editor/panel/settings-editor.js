@@ -36,7 +36,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/constants',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state',
     'Swissup_BreezeThemeEditor/js/editor/panel/depends-evaluator',
-    'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog'
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog',
+    'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
 ], function (
     $,
     widget,
@@ -61,7 +62,8 @@ define([
     Constants,
     PublicationState,
     _dependsEvaluator,
-    Dialog
+    Dialog,
+    Bsync
 ) {
     'use strict';
 
@@ -224,7 +226,7 @@ define([
                 self._updateChangesCount();
                 self._refreshAllBadges();
                 CssPreviewManager.reset();
-                setTimeout(function () { window.location.reload(); }, 1000);
+                Bsync.delay(1000).then(function () { window.location.reload(); });
             });
 
             $(document).on('bte:publishedDiscarded', function (e, data) {
@@ -614,9 +616,9 @@ define([
             log.info('Publication status changed to: ' + data.status);
 
             // Always update field editability (fixes first-open regression)
-            setTimeout(function () {
+            Bsync.delay(100).then(function () {
                 self._updateFieldsEditability();
-            }, 100);
+            });
 
             if (self.options.status === data.status && data.status !== PUBLICATION_STATUS.PUBLICATION) {
                 log.debug('Status unchanged, skipping config reload');

@@ -24,8 +24,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state'
-], function($, getCss, previewManager, configManager, scopeManager, StorageHelper, Logger, Constants, PublicationState) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state',
+    'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
+], function($, getCss, previewManager, configManager, scopeManager, StorageHelper, Logger, Constants, PublicationState, Bsync) {
     'use strict';
 
     var log = Logger.for('css-manager');
@@ -39,31 +40,31 @@ define([
          * Initialize CSS Manager.
          *
          * Idempotent: if already ready (called by toolbar first, then by panel),
-         * the second call is a no-op — StorageHelper and state are already set.
+         * the second call resolves immediately without re-initializing.
+         *
+         * Returns a Promise that resolves to `true` on success or `false` on
+         * unrecoverable failure (bad scope, missing iframe).
+         * Rejects only when waitForElement times out (iframe never became ready).
          *
          * @param {Object} config - Configuration object
-         * @param {String} config.scope - Scope ('default'|'websites'|'stores'); written to
-         *                                configManager if not already set (first-init fallback)
-         * @param {Number} config.scopeId - Scope ID (same fallback)
-         * @param {Number} config.themeId - Theme ID (same fallback)
+         * @param {String} config.scope    - Scope ('default'|'websites'|'stores')
+         * @param {Number} config.scopeId  - Scope ID
+         * @param {Number} config.themeId  - Theme ID
          * @param {String} config.iframeId - Preview iframe ID
-         * @param {Number} retries - Internal retry counter (for iframe load waiting)
-         * @returns {Boolean}
+         * @returns {Promise<Boolean>}
          */
-        init: function(config, retries) {
+        init: function(config) {
             // Support legacy call: init(scopeId, themeId) → treat as no-op config
             if (typeof config === 'number' || typeof config === 'string') {
-                retries = 0;
                 config = {};
             }
             config = config || {};
-            retries = retries || 0;
             var self = this;
 
-            // Idempotent guard: toolbar inits first, panel skips if already ready.
-            if (retries === 0 && this.isReady()) {
+            // Idempotent guard: toolbar inits first, panel resolves immediately if ready.
+            if (this.isReady()) {
                 log.info('CSS Manager already initialized, skipping');
-                return true;
+                return Promise.resolve(true);
             }
 
             // Bootstrap scopeManager if it hasn't been initialised yet
@@ -82,8 +83,9 @@ define([
             // Initialize StorageHelper with current scope/theme context
             StorageHelper.init(scopeManager.getScopeId(), scopeManager.getThemeId());
 
-            // Register BEFORE the retry loop so scope changes during iframe loading
-            // are never missed. off+on prevents duplicates on subsequent init() calls.
+            // Register scope-change listener BEFORE async waiting so scope changes
+            // during iframe loading are never missed.
+            // off+on prevents duplicates on subsequent init() calls.
             $(document).off('scopeChanged.cssManager').on('scopeChanged.cssManager', function () {
                 // scopeManager already updated by scope-selector.js before this event fires.
                 manager.reinit(null, true);
@@ -92,68 +94,66 @@ define([
             // Validate parameters
             if (!scopeManager.getScopeId() && scopeManager.getScope() !== 'default') {
                 log.error('CSS Manager: Invalid scopeId for scope=' + scopeManager.getScope());
-                return false;
+                return Promise.resolve(false);
             }
-            
+
             // Get iframe element
             var $iframe = $('#' + iframeId);
             if (!$iframe.length) {
                 log.error('CSS Manager: iframe not found: ' + iframeId);
-                return false;
-            }
-            
-            // Get iframe document (with retry logic for async load)
-            var iframe = $iframe[0];
-            var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-            
-            if (!iframeDoc || !iframeDoc.body) {
-                if (retries < 20) {
-                    log.info('CSS Manager: iframe not ready, retry ' + (retries + 1));
-                    setTimeout(function() {
-                        self.init(config, retries + 1);
-                    }, 200);
-                    return false;
-                }
-                log.error('CSS Manager: iframe not ready after 20 retries');
-                return false;
-            }
-            
-            // Find existing published style from PHP template
-            var $publishedStyle = $(iframeDoc).find('#bte-theme-css-variables');
-            
-            if (!$publishedStyle.length) {
-                if (retries < 20) {
-                    log.info('CSS Manager: #bte-theme-css-variables not ready, retry ' + (retries + 1));
-                    setTimeout(function() {
-                        self.init(config, retries + 1);
-                    }, 200);
-                    return false;
-                }
-                // No published styles yet (no CSS changes saved) - create empty placeholder
-                log.info('CSS Manager: #bte-theme-css-variables not found - creating empty placeholder');
-                $publishedStyle = $('<style>', {
-                    id: 'bte-theme-css-variables',
-                    type: 'text/css',
-                    'data-status': 'published',
-                    media: 'all'
-                }).text(':root {}');
-                $(iframeDoc.head).append($publishedStyle);
+                return Promise.resolve(false);
             }
 
-            log.info('CSS Manager initialized scope=' + scopeManager.getScope() + ':' + scopeManager.getScopeId() + ' iframeId=' + iframeId);
+            var iframeDoc = $iframe[0].contentDocument || $iframe[0].contentWindow.document;
 
-            // NOTE: _applyStoredState() is intentionally NOT called here.
-            // Responsibility for the first switchTo() belongs to css-state-restorer.js
-            // (toolbar flow). Calling it here would cause a duplicate GraphQL request:
-            //   init() → _applyStoredState() → switchTo(DRAFT) [request #1]
-            //   setupCssStateRestoration() → restoreCssState() → switchTo(DRAFT) [request #2]
-            // this._applyStoredState();
+            // --- 8.1: wait for iframe body ---
+            var bodyReady = (iframeDoc && iframeDoc.body)
+                ? Promise.resolve(iframeDoc.body)
+                : Bsync.waitForElement('body', iframeDoc, 4000);
 
-            // Trigger ready event for other components (e.g. css-preview-manager).
-            // Pass iframeDoc so listeners can initialize without re-querying the iframe.
-            $(document).trigger('bte:cssManagerReady', { iframeDocument: iframeDoc });
+            return bodyReady
+                .then(function () {
+                    // Re-read iframeDoc after body is ready (navigation may have replaced it)
+                    iframeDoc = $iframe[0].contentDocument || $iframe[0].contentWindow.document;
 
-            return true;
+                    // --- 8.2: wait for #bte-theme-css-variables ---
+                    var $publishedStyle = $(iframeDoc).find('#bte-theme-css-variables');
+                    if ($publishedStyle.length) {
+                        return $publishedStyle[0];
+                    }
+                    log.info('CSS Manager: waiting for #bte-theme-css-variables');
+                    return Bsync.waitForElement('#bte-theme-css-variables', iframeDoc, 4000);
+                })
+                .catch(function () {
+                    // waitForElement timed out — create empty placeholder (same behaviour
+                    // as the old retry loop after 20 attempts).
+                    log.info('CSS Manager: #bte-theme-css-variables not found - creating empty placeholder');
+                    iframeDoc = $iframe[0].contentDocument || $iframe[0].contentWindow.document;
+                    var placeholder = $('<style>', {
+                        id: 'bte-theme-css-variables',
+                        type: 'text/css',
+                        'data-status': 'published',
+                        media: 'all'
+                    }).text(':root {}');
+                    $(iframeDoc.head).append(placeholder);
+                    return placeholder[0];
+                })
+                .then(function () {
+                    log.info('CSS Manager initialized scope=' + scopeManager.getScope() + ':' + scopeManager.getScopeId() + ' iframeId=' + iframeId);
+
+                    // NOTE: _applyStoredState() is intentionally NOT called here.
+                    // Responsibility for the first switchTo() belongs to css-state-restorer.js
+                    // (toolbar flow). Calling it here would cause a duplicate GraphQL request:
+                    //   init() → _applyStoredState() → switchTo(DRAFT) [request #1]
+                    //   setupCssStateRestoration() → restoreCssState() → switchTo(DRAFT) [request #2]
+                    // this._applyStoredState();
+
+                    // Trigger ready event for other components (e.g. css-preview-manager).
+                    // Pass iframeDoc so listeners can initialize without re-querying the iframe.
+                    $(document).trigger('bte:cssManagerReady', { iframeDocument: iframeDoc });
+
+                    return true;
+                });
         },
         
         /**

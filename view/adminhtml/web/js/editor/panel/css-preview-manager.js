@@ -7,8 +7,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/panel/font-palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
-], function ($, ColorUtils, IframeHelper, CssManager, StorageHelper, Logger, FontPaletteManager, PaletteManager, Constants) {
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
+], function ($, ColorUtils, IframeHelper, CssManager, StorageHelper, Logger, FontPaletteManager, PaletteManager, Constants, Bsync) {
     'use strict';
 
     var log = Logger.for('panel/css-preview-manager');
@@ -214,12 +215,12 @@ define([
                     $trigger.data('is-palette-update', true);
                     
                     pickrInstance.setColor(hexValue, true); // silent=true
-                    
-                    // Clear flag after short delay
-                    setTimeout(function() {
+
+                    // Clear flag after short delay (allow Pickr to finish its sync)
+                    Bsync.delay(50).then(function() {
                         $input.removeData('is-palette-update');
                         $trigger.removeData('is-palette-update');
-                    }, 50);
+                    });
                 }
             });
             

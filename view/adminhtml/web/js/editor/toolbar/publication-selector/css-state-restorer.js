@@ -46,6 +46,8 @@ define([
 
         /**
          * Initialize cssManager for the given scope/theme context.
+         * cssManager.init() now returns a Promise; errors are logged here so the
+         * caller (_create) stays synchronous and does not need to chain .then().
          *
          * @param {Object} ctx - Widget context
          */
@@ -55,6 +57,8 @@ define([
                 scopeId: scopeManager.getScopeId(),
                 themeId: scopeManager.getThemeId(),
                 iframeId: Constants.SELECTORS.IFRAME_ID
+            }).catch(function (err) {
+                log.error('CSS Manager init failed: ' + err);
             });
         },
 
