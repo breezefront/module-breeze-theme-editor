@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 107 / 108 завершено  
+**Статус виконання:** 108 / 108 завершено ✅  
 
 ---
 
@@ -775,7 +775,7 @@
 - **Файли:** `ConfigProvider.php`, `ValidationService.php`, `ValueInheritanceResolver.php`, `ImportExportService.php`, `css-manager.js`, `css-preview-manager.js`, `_mixins.less`
 - **Проблема:** Коментарі в деяких файлах написані українською, в інших — англійською. Ускладнює onboarding.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `37089b1` (всі коментарі перекладено на EN)
 
 ### 7.9 `strpos` chain для визначення типу сторінки
 - **Файл:** `ViewModel/AdminToolbar.php:449–468`
