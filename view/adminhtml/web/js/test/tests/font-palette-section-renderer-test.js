@@ -21,8 +21,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/badge-renderer',
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog',
     'Swissup_BreezeThemeEditor/js/editor/panel/sections/font-palette-section-renderer'
-], function ($, TestFramework, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer) {
+], function ($, TestFramework, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer, Dialog) {
     'use strict';
 
     // =========================================================================
@@ -1280,8 +1281,8 @@ define([
 
         'reset handler (025-B1): setVariable called when previewReady is already resolved': function (done) {
             var self        = this;
-            var origConfirm = window.confirm;
-            window.confirm  = function () { return true; };
+            var origConfirm = Dialog.confirm;
+            Dialog.confirm  = function (msg, onConfirm) { onConfirm(); };
 
             build025Fixture(Promise.resolve(), function ($c, calls, destroy) {
                 $c.find('.bte-font-palette-badges').html(
@@ -1293,7 +1294,7 @@ define([
                     function () { return calls.setVariable.length > 0; },
                     1000,
                     function (err) {
-                        window.confirm = origConfirm;
+                        Dialog.confirm = origConfirm;
                         destroy();
                         done(err);
                     }
@@ -1302,8 +1303,8 @@ define([
         },
 
         'reset handler (025-B2): setVariable NOT called synchronously when previewReady is pending': function (done) {
-            var origConfirm = window.confirm;
-            window.confirm  = function () { return true; };
+            var origConfirm = Dialog.confirm;
+            Dialog.confirm  = function (msg, onConfirm) { onConfirm(); };
 
             build025Fixture(new Promise(function () {}), function ($c, calls, destroy) {
                 $c.find('.bte-font-palette-badges').html(
@@ -1314,7 +1315,7 @@ define([
                 this.assertEqual(0, calls.setVariable.length,
                     '(025-B2) setVariable must not fire before previewReady resolves');
 
-                window.confirm = origConfirm;
+                Dialog.confirm = origConfirm;
                 destroy();
                 done(null);
             }.bind(this));
@@ -1322,8 +1323,8 @@ define([
 
         'reset handler (025-B3): setVariable called after previewReady resolves': function (done) {
             var self        = this;
-            var origConfirm = window.confirm;
-            window.confirm  = function () { return true; };
+            var origConfirm = Dialog.confirm;
+            Dialog.confirm  = function (msg, onConfirm) { onConfirm(); };
             var resolve;
             var previewReady = new Promise(function (r) { resolve = r; });
 
@@ -1342,7 +1343,7 @@ define([
                     function () { return calls.setVariable.length > 0; },
                     1000,
                     function (err) {
-                        window.confirm = origConfirm;
+                        Dialog.confirm = origConfirm;
                         destroy();
                         done(err);
                     }

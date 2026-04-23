@@ -29,7 +29,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/scope-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state',
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog'
 ], function (
     $,
     $t,
@@ -47,7 +48,8 @@ define([
     scopeManager,
     Logger,
     Constants,
-    PublicationState
+    PublicationState,
+    Dialog
 ) {
     'use strict';
 
@@ -79,17 +81,34 @@ define([
                 return;
             }
 
-            if (!this.confirmUnsavedChanges()) {
-                return;
-            }
+            var self = this;
+            var hasUnsaved = PanelState.hasChanges();
 
+            if (hasUnsaved) {
+                var unsavedCount = PanelState.getChangesCount();
+                var message = $t('You have %1 unsaved change(s).\n\nPublish will ignore them. Continue?')
+                    .replace('%1', unsavedCount);
+
+                Dialog.confirm(message, function () {
+                    self._doPublish(ctx);
+                });
+            } else {
+                self._doPublish(ctx);
+            }
+        },
+
+        /**
+         * Prompt for title and execute publish mutation.
+         *
+         * @param {Object} ctx - Widget context
+         * @private
+         */
+        _doPublish: function (ctx) {
+            var self = this;
             var suggested = this.suggestPublicationTitle(ctx.options.publications);
-            var title = prompt($t('Enter publication title:'), suggested);
-            if (!title || !title.trim()) {
-                return;
-            }
-
-            this.executePublish(ctx, title.trim());
+            Dialog.prompt($t('Enter publication title:'), suggested, function (title) {
+                self.executePublish(ctx, title);
+            });
         },
 
         /**
@@ -169,6 +188,8 @@ define([
                 return;
             }
 
+            var self = this;
+
             if (ctx.options.changesCount > 0 || PanelState.hasChanges()) {
                 var unsavedCount = PanelState.hasChanges() ? PanelState.getChangesCount() : 0;
                 var draftCount   = ctx.options.changesCount;
@@ -179,18 +200,28 @@ define([
                     'Continue?'
                 ).replace('%1', draftCount).replace('%2', unsavedCount);
 
-                if (!confirm(message)) {
-                    return;
-                }
+                Dialog.confirm(message, function () {
+                    self._doRollback(ctx, publicationId, publicationTitle);
+                });
+            } else {
+                self._doRollback(ctx, publicationId, publicationTitle);
             }
+        },
 
+        /**
+         * Prompt for title and execute rollback mutation.
+         *
+         * @param {Object} ctx
+         * @param {number} publicationId
+         * @param {string} publicationTitle
+         * @private
+         */
+        _doRollback: function (ctx, publicationId, publicationTitle) {
+            var self = this;
             var defaultTitle = $t('Restoring: %1').replace('%1', publicationTitle);
-            var title = prompt($t('Enter a title for this restore:'), defaultTitle);
-            if (!title || !title.trim()) {
-                return;
-            }
-
-            this.executeRollback(ctx, publicationId, title.trim());
+            Dialog.prompt($t('Enter a title for this restore:'), defaultTitle, function (title) {
+                self.executeRollback(ctx, publicationId, title);
+            });
         },
 
         /**
@@ -258,13 +289,22 @@ define([
                 return;
             }
 
+            var self = this;
             var message = $t('Discard all %1 draft changes? This cannot be undone.')
                 .replace('%1', ctx.options.changesCount);
 
-            if (!confirm(message)) {
-                return;
-            }
+            Dialog.confirm(message, function () {
+                self._doDiscardDraft(ctx);
+            });
+        },
 
+        /**
+         * Execute discardBreezeThemeEditorDraft mutation.
+         *
+         * @param {Object} ctx - Widget context
+         * @private
+         */
+        _doDiscardDraft: function (ctx) {
             var self = this;
             loading.show(ctx.element);
 
@@ -318,15 +358,14 @@ define([
                 return;
             }
 
+            var self = this;
             var message = $t(
                 'This will reset %1 customized fields to theme defaults on the live site.\n\nThis cannot be undone.'
             ).replace('%1', ctx.options.publishedModifiedCount);
 
-            if (!confirm(message)) {
-                return;
-            }
-
-            this.executeDiscardPublished(ctx);
+            Dialog.confirm(message, function () {
+                self.executeDiscardPublished(ctx);
+            });
         },
 
         /**
@@ -390,13 +429,23 @@ define([
          * @param {string} publicationTitle
          */
         deletePublication: function (ctx, publicationId, publicationTitle) {
+            var self = this;
             var message = $t('Delete "%1"? This cannot be undone.')
                 .replace('%1', publicationTitle || ('#' + publicationId));
 
-            if (!confirm(message)) {
-                return;
-            }
+            Dialog.confirm(message, function () {
+                self._doDeletePublication(ctx, publicationId);
+            });
+        },
 
+        /**
+         * Execute deleteBreezeThemeEditorPublication mutation.
+         *
+         * @param {Object} ctx
+         * @param {number} publicationId
+         * @private
+         */
+        _doDeletePublication: function (ctx, publicationId) {
             loading.show(ctx.element);
 
             deletePublicationMutation(publicationId)
@@ -426,46 +475,23 @@ define([
 
                         Toastify.show('success', $t('Publication deleted'));
                     } else {
-                        var errMsg = self._extractErrorMessage(result, 'Delete failed');
+                        var errMsg = this._extractErrorMessage(result, 'Delete failed');
                         Toastify.show('error', $t('Delete failed: %1').replace('%1', errMsg));
                         errorHandler.handle({ message: errMsg }, 'delete-publication');
                     }
                     loading.hide(ctx.element);
-                })
+                }.bind(this))
                 .catch(function (error) {
-                    var errMsg = self._extractErrorMessage(error, 'Unknown error');
+                    var errMsg = this._extractErrorMessage(error, 'Unknown error');
                     Toastify.show('error', $t('Delete failed: %1').replace('%1', errMsg));
                     errorHandler.handle({ message: errMsg }, 'delete-publication');
                     loading.hide(ctx.element);
-                });
+                }.bind(this));
         },
 
         // =====================================================================
         // Pure helpers (unit-testable without widget context)
         // =====================================================================
-
-        /**
-         * Suggest a publication title based on the most recent publication.
-         * If the previous title ends with _vN the version number is incremented.
-         * Otherwise _v1 is appended. Returns '' when no publication exists.
-         *
-         * @param  {Array}  publications
-         * @return {string}
-         */
-        suggestPublicationTitle: function (publications) {
-            if (!publications || !publications.length) {
-                return '';
-            }
-
-            var lastTitle = publications[0].title || '';
-            var match = lastTitle.match(/^(.*?)_v(\d+)$/);
-
-            if (match) {
-                return match[1] + '_v' + (parseInt(match[2], 10) + 1);
-            }
-
-            return lastTitle ? lastTitle + '_v1' : '';
-        },
 
         /**
          * Check whether a confirmation dialog must be shown before publishing

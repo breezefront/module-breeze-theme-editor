@@ -8,8 +8,21 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
-    'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-palette-renderer'
-], function ($, widget, FontPaletteManager, PanelState, CssPreviewManager, BadgeRenderer, Logger, StorageHelper, IconRegistry) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-palette-renderer',
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog'
+], function (
+    $,
+    widget,
+    FontPaletteManager,
+    PanelState,
+    CssPreviewManager,
+    BadgeRenderer,
+    Logger,
+    StorageHelper,
+    IconRegistry,
+    _basePaletteRenderer,
+    Dialog
+) {
     'use strict';
 
     var log = Logger.for('panel/font-palette-section');
@@ -269,26 +282,24 @@ define([
                 var msg   = 'Reset ' + count + ' font role' +
                     (count > 1 ? 's' : '') + ' to saved values?';
 
-                if (!confirm(msg)) {
-                    return;
-                }
-
-                dirty.forEach(function (item) {
-                    PanelState.resetField(item.rf.sectionCode, item.rf.fieldCode);
-                    self._roleFields[item.property].currentValue = item.savedValue;
-                    FontPaletteManager.setCurrentValue(item.property, item.savedValue);
-                    self._updateRolePickerUI(item.property, item.savedValue);
-                    self._updateConsumerFields(item.property, item.savedValue);
-                    // Deferred until iframe $styleElement is ready (fixes Issue 025)
-                    Promise.resolve(self.options.previewReady).then(function () {
-                        CssPreviewManager.setVariable(item.property, item.savedValue, 'font_picker');
+                Dialog.confirm(msg, function () {
+                    dirty.forEach(function (item) {
+                        PanelState.resetField(item.rf.sectionCode, item.rf.fieldCode);
+                        self._roleFields[item.property].currentValue = item.savedValue;
+                        FontPaletteManager.setCurrentValue(item.property, item.savedValue);
+                        self._updateRolePickerUI(item.property, item.savedValue);
+                        self._updateConsumerFields(item.property, item.savedValue);
+                        // Deferred until iframe $styleElement is ready (fixes Issue 025)
+                        Promise.resolve(self.options.previewReady).then(function () {
+                            CssPreviewManager.setVariable(item.property, item.savedValue, 'font_picker');
+                        });
                     });
+
+                    self._updateHeaderBadges();
+                    $(document).trigger('paletteColorChanged');
+
+                    log.info('Font role reset: ' + count + ' role(s) reverted to saved values');
                 });
-
-                self._updateHeaderBadges();
-                $(document).trigger('paletteColorChanged');
-
-                log.info('Font role reset: ' + count + ' role(s) reverted to saved values');
             });
 
             // ── Restore button (×): restore ALL modified roles to defaults ────

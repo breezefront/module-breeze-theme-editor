@@ -6,7 +6,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper',
     'Swissup_BreezeThemeEditor/js/editor/panel/icon-registry',
-    'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-palette-renderer'
+    'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-palette-renderer',
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog'
 ], function (
     $,
     widget,
@@ -14,8 +15,9 @@ define([
     PaletteManager,
     Logger,
     StorageHelper,
-    IconRegistry
-    // base-palette-renderer registers $.swissup.basePaletteRenderer — no var needed
+    IconRegistry,
+    _basePaletteRenderer,
+    Dialog
 ) {
     'use strict';
 
@@ -248,19 +250,17 @@ define([
                 // Confirm with user
                 var count = PaletteManager.getDirtyCount();
                 var confirmMsg = 'Reset ' + count + ' palette color' + (count > 1 ? 's' : '') + ' to saved values?';
-                
-                if (!confirm(confirmMsg)) {
-                    return;
-                }
-                
-                // Revert changes
-                var reverted = PaletteManager.revertDirtyChanges();
-                
-                Logger.info('palette-section', 'Changes reverted', {count: reverted});
-                
-                // Show toast notification
-                require(['Swissup_BreezeThemeEditor/js/lib/toastify'], function(Toastify) {
-                    Toastify.show('info', reverted + ' palette color' + (reverted > 1 ? 's' : '') + ' reset');
+
+                Dialog.confirm(confirmMsg, function () {
+                    // Revert changes
+                    var reverted = PaletteManager.revertDirtyChanges();
+
+                    Logger.info('palette-section', 'Changes reverted', {count: reverted});
+
+                    // Show toast notification
+                    require(['Swissup_BreezeThemeEditor/js/lib/toastify'], function(Toastify) {
+                        Toastify.show('info', reverted + ' palette color' + (reverted > 1 ? 's' : '') + ' reset');
+                    });
                 });
             });
 

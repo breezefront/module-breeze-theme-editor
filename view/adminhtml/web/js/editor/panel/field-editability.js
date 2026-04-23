@@ -12,11 +12,13 @@
 define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog'
 ], function (
     $,
     Logger,
-    Constants
+    Constants,
+    Dialog
 ) {
     'use strict';
 
@@ -108,9 +110,12 @@ define([
                 var mode = ctx.options.status === PUBLICATION_STATUS.PUBLICATION
                     ? 'a historical publication'
                     : 'Published';
-                if (confirm('You are viewing ' + mode + ' mode.\nSwitch to Draft to make changes?')) {
-                    $(document).trigger('bte:requestSwitchToDraft');
-                }
+                Dialog.confirm(
+                    'You are viewing ' + mode + ' mode.\nSwitch to Draft to make changes?',
+                    function () {
+                        $(document).trigger('bte:requestSwitchToDraft');
+                    }
+                );
             });
         }
     };

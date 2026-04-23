@@ -35,7 +35,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state',
-    'Swissup_BreezeThemeEditor/js/editor/panel/depends-evaluator'
+    'Swissup_BreezeThemeEditor/js/editor/panel/depends-evaluator',
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog'
 ], function (
     $,
     widget,
@@ -58,9 +59,9 @@ define([
     scopeManager,
     Logger,
     Constants,
-    PublicationState
-    // depends-evaluator is a side-effect import: it self-registers DOM event
-    // listeners for 'bte:sections-rendered' and 'bte:field-changed'.
+    PublicationState,
+    _dependsEvaluator,
+    Dialog
 ) {
     'use strict';
 
@@ -442,12 +443,14 @@ define([
                 this._showToast('notice', 'No changes to reset');
                 return;
             }
-            if (confirm('Reset all changes to default values?')) {
+
+            var self = this;
+            Dialog.confirm('Reset all changes to default values?', function () {
                 PanelState.reset();
                 PaletteManager.revertDirtyChanges();
                 CssPreviewManager.reset();
-                this._loadConfig();
-            }
+                self._loadConfig();
+            });
         },
 
         _save: function () {

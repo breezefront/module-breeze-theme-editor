@@ -2,8 +2,9 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, PanelState, CssPreviewManager, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog'
+], function ($, PanelState, CssPreviewManager, Logger, Dialog) {
     'use strict';
 
     var log = Logger.for('panel/field-handlers/base');
@@ -227,11 +228,21 @@ define([
 
             log.info(options.label + ' clicked: ' + sectionCode + '.' + fieldCode);
 
-            if (!window.confirm(options.confirmMessage)) {
-                log.info(options.label + ' cancelled by user');
-                return;
-            }
+            var self = this;
+            Dialog.confirm(options.confirmMessage, function () {
+                self._doFieldAction(options, sectionCode, fieldCode);
+            });
+        },
 
+        /**
+         * Execute the field action after user confirmed.
+         *
+         * @param {Object} options
+         * @param {string} sectionCode
+         * @param {string} fieldCode
+         * @private
+         */
+        _doFieldAction: function (options, sectionCode, fieldCode) {
             var restoredValue = options.stateAction(sectionCode, fieldCode);
 
             if (restoredValue === undefined) {
