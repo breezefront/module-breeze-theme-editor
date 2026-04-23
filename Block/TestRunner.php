@@ -74,7 +74,7 @@ class TestRunner extends Template
             }
             
             // Check if request is in admin area
-            if ($moduleName === 'admin' || strpos($moduleName, 'admin') === 0) {
+            if ($moduleName === 'admin' || str_starts_with($moduleName, 'admin')) {
                 return true;
             }
         } catch (\Exception $e) {
@@ -83,7 +83,7 @@ class TestRunner extends Template
         
         // Fallback method 2: Check template path
         $template = $this->getTemplate();
-        if ($template && (strpos($template, 'adminhtml') !== false || strpos($template, 'admin/') !== false)) {
+        if ($template && (str_contains($template, 'adminhtml') || str_contains($template, 'admin/'))) {
             return true;
         }
         
