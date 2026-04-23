@@ -12,7 +12,7 @@ class StatusProvider
 {
     private const CACHE_KEY = 'breeze_theme_editor_status_map';
     private const CACHE_TAG = 'breeze_theme_editor';
-    private const CACHE_LIFETIME = 86400; // 24 години
+    private const CACHE_LIFETIME = 86400; // 24 hours
 
     private ?array $statusMap = null;
 
@@ -23,7 +23,7 @@ class StatusProvider
     ) {}
 
     /**
-     * Отримати status_id по code (DRAFT, PUBLISHED)
+     * Get status_id by code (DRAFT, PUBLISHED)
      */
     public function getStatusId(string $code): int
     {
@@ -38,7 +38,7 @@ class StatusProvider
     }
 
     /**
-     * Отримати мапінг з кешу або БД
+     * Get mapping from cache or database
      */
     private function getStatusMap(): array
     {
@@ -46,17 +46,17 @@ class StatusProvider
             return $this->statusMap;
         }
 
-        // Спробувати з кешу
+        // Try from cache
         $cached = $this->cache->load(self::CACHE_KEY);
         if ($cached) {
             $this->statusMap = $this->serializer->unserialize($cached);
             return $this->statusMap;
         }
 
-        // Завантажити з БД
+        // Load from database
         $this->statusMap = $this->loadFromDatabase();
 
-        // Зберегти в кеш
+        // Save to cache
         $this->cache->save(
             $this->serializer->serialize($this->statusMap),
             self::CACHE_KEY,
@@ -68,7 +68,7 @@ class StatusProvider
     }
 
     /**
-     * Завантажити з БД
+     * Load from database
      */
     private function loadFromDatabase(): array
     {

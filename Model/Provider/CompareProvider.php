@@ -21,17 +21,17 @@ class CompareProvider
     ) {}
 
     /**
-     * Порівняти draft vs published
+     * Compare draft vs published
      */
     public function compare(int $themeId, ScopeInterface $scope, int $userId): array
     {
         $draftStatusId = $this->statusProvider->getStatusId(StatusCode::DRAFT);
         $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
 
-        // Отримати draft через ValueService
+        // Get draft via ValueService
         $draft = $this->valueService->getValuesByTheme($themeId, $scope, $draftStatusId, $userId);
 
-        // Якщо draft порожній - немає змін
+        // If draft is empty — no changes
         if (empty($draft)) {
             return [
                 'hasChanges' => false,
@@ -40,10 +40,10 @@ class CompareProvider
             ];
         }
 
-        // Отримати published через ValueService
+        // Get published via ValueService
         $published = $this->valueService->getValuesByTheme($themeId, $scope, $publishedStatusId, null);
 
-        // Створити map для швидкого пошуку
+        // Build map for fast lookup
         $publishedMap = [];
         foreach ($published as $val) {
             $key = $val['section_code'] . '.' . $val['setting_code'];
@@ -56,7 +56,7 @@ class CompareProvider
             $draftMap[$key] = $val['value'];
         }
 
-        // Порівнювати ТІЛЬКИ ті ключі що є в draft
+        // Compare ONLY keys that exist in draft
         $changes = [];
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $labels = $this->extractLabels($config);
@@ -65,7 +65,7 @@ class CompareProvider
             $publishedValue = $publishedMap[$key] ?? null;
 
             if ($publishedValue === $draftValue) {
-                continue; // Без змін
+                continue; // No changes
             }
 
             [$sectionCode, $fieldCode] = explode('.', $key, 2);

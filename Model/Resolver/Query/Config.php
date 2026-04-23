@@ -53,13 +53,13 @@ class Config extends AbstractConfigResolver
         ?array $value = null,
         ?array $args = null
     ) {
-        // 1. Отримати userId
+        // 1. Get userId
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        // 2. Отримати scope / scopeId
+        // 2. Get scope / scopeId
         $scope = $this->scopeFactory->fromInput($args['scope'] ?? []);
 
-        // 3. Визначити theme ID
+        // 3. Determine theme ID
         try {
             $themeId = isset($args['themeId'])
                 ? (int)$args['themeId']
@@ -68,7 +68,7 @@ class Config extends AbstractConfigResolver
             throw new GraphQlInputException(__($e->getMessage()));
         }
 
-        // 4. Визначити статус
+        // 4. Determine status
         $statusCode = $args['status'] ?? StatusCode::PUBLISHED;
 
         // Validate: PUBLICATION not supported for this query
@@ -84,10 +84,10 @@ class Config extends AbstractConfigResolver
             throw new GraphQlInputException(__($e->getMessage()));
         }
 
-        // 5. Отримати конфігурацію з inheritance
+        // 5. Get configuration with inheritance
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
 
-        // 6. Отримати збережені значення через InheritanceResolver
+        // 6. Get saved values via InheritanceResolver
         // For DRAFT: merge published values (base) + draft overrides so that fields
         // without a draft row still display the published value, not the theme default.
         $savedValues = $this->resolveValues($statusCode, $themeId, $scope, $statusId, $userId);
@@ -99,7 +99,7 @@ class Config extends AbstractConfigResolver
             $valuesMap[$key] = $val['value'];
         }
 
-        // 8. Змержити конфіг + значення
+        // 8. Merge config + values
         $sections = $this->sectionFormatter->mergeSectionsWithValues(
             $config['sections'] ?? [],
             $valuesMap,
@@ -113,7 +113,7 @@ class Config extends AbstractConfigResolver
             $sections[] = $fontSection;
         }
 
-        // 9. Metadata з ConfigProvider
+        // 9. Metadata from ConfigProvider
         $metadata                          = $this->configProvider->getMetadata($themeId);
         $metadata['themeVersion']          = $config['version'] ?? null;
         $metadata['lastPublished']         = null;
@@ -121,8 +121,8 @@ class Config extends AbstractConfigResolver
         $metadata['draftChangesCount']     = 0;
         $metadata['modifiedCount']         = 0;
 
-        // 10. Якщо жодна тема в ієрархії не має settings.json — повідомити явно.
-        //     GraphQlNoSuchEntityException не маскується в production (на відміну від GraphQlInputException).
+        // 10. If no theme in the hierarchy has settings.json — report explicitly.
+        //     GraphQlNoSuchEntityException is not masked in production (unlike GraphQlInputException).
         if (empty($config['sections'])) {
             $themeName = $metadata['themeName'] ?? (string)$themeId;
             throw new GraphQlNoSuchEntityException(
@@ -130,16 +130,16 @@ class Config extends AbstractConfigResolver
             );
         }
 
-        // 11. Якщо draft - перевірити зміни
+        // 11. If draft - check for changes
         if ($statusCode === StatusCode::DRAFT) {
             $comparison                        = $this->compareProvider->compare($themeId, $scope, $userId);
             $metadata['hasUnpublishedChanges'] = $comparison['hasChanges'];
             $metadata['draftChangesCount']     = $comparison['changesCount'];
         }
 
-        // 12. Порахувати modifiedCount — кількість опублікованих полів що відрізняються від defaults
-        //     Обчислюється з поточних $sections (вже змержених з saved values).
-        //     Для DRAFT-запиту metadata-loader робить окремий PUBLISHED запит.
+        // 12. Count modifiedCount — number of published fields that differ from defaults.
+        //     Computed from current $sections (already merged with saved values).
+        //     For DRAFT requests, the metadata-loader makes a separate PUBLISHED request.
         $modifiedCount = 0;
         foreach ($sections as $section) {
             foreach (($section['fields'] ?? []) as $f) {

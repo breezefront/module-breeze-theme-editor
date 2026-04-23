@@ -23,7 +23,7 @@ class ImportExportService
     ) {}
 
     /**
-     * Експорт налаштувань
+     * Export settings
      */
     public function export(
         int $themeId,
@@ -33,14 +33,14 @@ class ImportExportService
     ): array {
         $statusId = $this->statusProvider->getStatusId($statusCode);
 
-        // Використати ValueService для отримання значень
+        // Use ValueService to retrieve values
         if ($statusCode === StatusCode::PUBLISHED) {
             $values = $this->valueService->getValuesByTheme($themeId, $scope, $statusId, null);
         } else {
             $values = $this->valueService->getValuesByTheme($themeId, $scope, $statusId, $userId);
         }
 
-        // Форматувати для експорту
+        // Format for export
         $export = [];
         foreach ($values as $val) {
             $key = $val['section_code'] . '.' . $val['setting_code'];
@@ -96,7 +96,7 @@ class ImportExportService
         $statusId = $this->statusProvider->getStatusId($statusCode);
         $userIdForSave = StatusCode::draftUserIdForSave($statusCode, $userId);
 
-        // Конвертувати у ValueInterface[]
+        // Convert to ValueInterface[]
         $models = [];
         $errors = [];
 
@@ -121,7 +121,7 @@ class ImportExportService
             $models[] = $model;
         }
 
-        // Валідація
+        // Validation
         $validationErrors = $this->validationProvider->validateValues($themeId, $models);
         if (!empty($validationErrors)) {
             foreach ($validationErrors as $error) {

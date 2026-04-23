@@ -55,7 +55,7 @@ class Rollback extends AbstractMutationResolver
 
         $userId = $this->userResolver->getCurrentUserId($context);
 
-        // Перевірити що публікація існує
+        // Verify that the publication exists
         try {
             $targetPublication = $this->publicationRepository->getById($publicationId);
         } catch (\Exception $e) {
@@ -64,7 +64,7 @@ class Rollback extends AbstractMutationResolver
             );
         }
 
-        // Виконати rollback
+        // Perform rollback
         $result = $this->publishManager->rollback(
             $publicationId,
             $userId,
@@ -72,10 +72,10 @@ class Rollback extends AbstractMutationResolver
             $description
         );
 
-        // Отримати створену публікацію
+        // Get the newly created publication
         $newPublication = $this->publicationRepository->getById($result['publicationId']);
 
-        // Завантажити published values після rollback
+        // Load published values after rollback
         $scope = $this->scopeFactory->fromInput([
             'type'    => $newPublication->getScope(),
             'scopeId' => $newPublication->getStoreId(),

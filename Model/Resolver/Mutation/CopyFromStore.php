@@ -31,23 +31,23 @@ class CopyFromStore extends AbstractSaveMutation
             );
         }
 
-        // Використати базовий метод для target scope
+        // Use base method for target scope
         $params = $this->prepareBaseParams([
             'scope'   => $input['to'],
             'status'  => $input['status'] ?? StatusCode::DRAFT
         ], $context);
 
-        // Визначити themeId для source scope
+        // Determine themeId for source scope
         $fromThemeId = $this->themeResolver->getThemeIdByScope($fromScopeVO);
 
-        // Копіювати published values з source scope через ValueService
+        // Copy published values from source scope via ValueService
         $fromStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
 
         $copiedCount = $this->valueService->copyValues(
             $fromThemeId,
             $fromScopeVO,
             $fromStatusId,
-            null, // Published values не мають userId
+            null, // Published values have no userId
             $params['themeId'],
             $params['scope'],
             $params['statusId'],
@@ -55,7 +55,7 @@ class CopyFromStore extends AbstractSaveMutation
             $sectionCodes
         );
 
-        // Отримати скопійовані values через ValueService
+        // Retrieve copied values via ValueService
         $values = $this->valueService->getValuesByTheme(
             $params['themeId'],
             $params['scope'],
@@ -63,7 +63,7 @@ class CopyFromStore extends AbstractSaveMutation
             $this->getDraftUserId($params)
         );
 
-        // Фільтр по секціях якщо потрібно
+        // Filter by sections if needed
         if ($sectionCodes) {
             $values = array_filter($values, function ($val) use ($sectionCodes) {
                 return in_array($val['section_code'], $sectionCodes);

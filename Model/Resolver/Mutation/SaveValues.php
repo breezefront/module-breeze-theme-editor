@@ -18,11 +18,11 @@ class SaveValues extends AbstractSaveMutation
     ) {
         $input = $args['input'];
 
-        // Парсимо стандартні параметри
+        // Parse standard parameters
         $params = $this->prepareBaseParams($input, $context);
         $values = $input['values'];
 
-        // Формуємо масив ValueInterface моделей
+        // Build array of ValueInterface models
         $valueModels = [];
         foreach ($values as $val) {
             /** @var ValueInterface $valueModel */
@@ -32,16 +32,16 @@ class SaveValues extends AbstractSaveMutation
             $valueModel->setStoreId($params['scope']->getScopeId());
             $valueModel->setStatusId($params['statusId']);
             $valueModel->setSectionCode($val['sectionCode']);
-            $valueModel->setSettingCode($val['fieldCode']); // NOTICE: у ValueInterface поле скоріш за все називається SettingCode, а не fieldCode
+            $valueModel->setSettingCode($val['fieldCode']); // NOTICE: in ValueInterface the field is likely called SettingCode, not fieldCode
             $valueModel->setValue($val['value']);
             $valueModel->setUserId($this->getDraftUserIdForSave($params));
             $valueModels[] = $valueModel;
         }
 
-        // Зберігаємо всі значення (batch, сучасний API)
+        // Save all values (batch, modern API)
         $savedCount = $this->valueRepository->saveMultiple($valueModels);
 
-        // Визначаємо змінені значення (isModified)
+        // Determine modified values (isModified)
         $defaults = $this->configProvider->getAllDefaults($params['themeId']);
         $result = [];
         foreach ($values as $val) {

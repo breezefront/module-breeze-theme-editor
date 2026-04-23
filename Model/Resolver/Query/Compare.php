@@ -32,7 +32,7 @@ class Compare extends AbstractQueryResolver
         ?array $value = null,
         ?array $args = null
     ) {
-        // Отримати userId з токена
+        // Get userId from token
         $userId = $this->userResolver->getCurrentUserId($context);
 
         $scope = $this->scopeFactory->fromInput($args['scope'] ?? []);

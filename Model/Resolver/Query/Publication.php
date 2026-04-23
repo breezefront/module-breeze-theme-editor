@@ -47,14 +47,14 @@ class Publication extends AbstractQueryResolver
             );
         }
 
-        // Отримати changelog через SearchCriteria
+        // Get changelog via SearchCriteria
         $criteria = $this->searchCriteriaBuilder
             ->addFilter('publication_id', $publicationId)
             ->create();
         $searchResults = $this->changelogRepository->getList($criteria);
         $changelog = $searchResults->getItems();
 
-        // Отримати labels з config
+        // Get labels from config
         $themeId = $publication->getThemeId();
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
         $labels = $this->extractLabels($config);

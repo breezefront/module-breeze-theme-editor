@@ -69,7 +69,7 @@ class ValueInheritanceResolver
     // ========================================================================
 
     /**
-     * Отримати всі values з inheritance (theme hierarchy) та scope chain.
+     * Get all values with inheritance (theme hierarchy) and scope chain.
      *
      * @param int      $themeId
      * @param ScopeInterface $scope
@@ -93,7 +93,7 @@ class ValueInheritanceResolver
         $hierarchy = $this->themeResolver->getThemeHierarchy($themeId);
         $mergedValues = [];
 
-        // Merge values від прабабусі до дитини
+        // Merge values from grandparent to child
         foreach (array_reverse($hierarchy) as $themeInfo) {
             $values = $this->resolveAllValuesByScopeChain(
                 $themeInfo['theme_id'],
@@ -146,7 +146,7 @@ class ValueInheritanceResolver
     }
 
     /**
-     * Отримати одне значення з inheritance
+     * Get a single value with inheritance
      */
     public function resolveSingleValue(
         int $themeId,
@@ -163,7 +163,7 @@ class ValueInheritanceResolver
             ? $this->themeResolver->getThemeHierarchy($themeId)
             : [['theme_id' => $themeId]];
 
-        // Шукаємо value в кожній темі (від child до parent), від найспецифічнішого scope до default
+        // Search for value in each theme (from child to parent), from most specific scope to default
         foreach ($hierarchy as $themeIndex => $themeInfo) {
             foreach (array_reverse($scopeChain) as $scopeEntry) {
                 $value = $this->valueService->getSingleValue(
@@ -186,7 +186,7 @@ class ValueInheritanceResolver
             }
         }
 
-        // Fallback до default з config
+        // Fallback to default from config
         $default = $this->configProvider->getFieldDefault($themeId, $sectionCode, $fieldCode);
 
         return [
@@ -198,7 +198,7 @@ class ValueInheritanceResolver
     }
 
     /**
-     * Перевірити чи значення inherited
+     * Check whether a value is inherited
      *
      * @internal Used by tests only; not part of the public API.
      */
@@ -238,7 +238,7 @@ class ValueInheritanceResolver
     }
 
     /**
-     * Отримати theme з якої inherited значення
+     * Get the theme from which the value is inherited
      *
      * @internal Used by tests only; not part of the public API.
      */
@@ -277,11 +277,11 @@ class ValueInheritanceResolver
      */
     private function resolveWebsiteId(ScopeInterface $scope): int
     {
-        // websites/W — websiteId вже в scope, StoreManager не потрібен
+        // websites/W — websiteId is already in scope, StoreManager not needed
         if ($scope->getType() === ValueInterface::SCOPE_WEBSITES) {
             return $scope->getScopeId();
         }
-        // stores/N — треба йти через StoreManager
+        // stores/N — need to go through StoreManager
         if ($scope->getType() === ValueInterface::SCOPE_STORES) {
             try {
                 return (int) $this->storeManager->getStore($scope->getScopeId())->getWebsiteId();

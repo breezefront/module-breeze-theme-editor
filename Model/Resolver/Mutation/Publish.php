@@ -50,7 +50,7 @@ class Publish extends AbstractMutationResolver
     ) {
         $input = $args['input'];
 
-        // Отримати userId з токена
+        // Get userId from token
         $userId = $this->userResolver->getCurrentUserId($context);
         $userMetadata = $this->userResolver->getCurrentUserMetadata($context);
 
@@ -64,7 +64,7 @@ class Publish extends AbstractMutationResolver
             throw new GraphQlInputException(__('Publication title is required'));
         }
 
-        // Опублікувати через PublishManager
+        // Publish via PublishManager
         $result = $this->publishManager->publish(
             $themeId,
             $scope,
@@ -73,7 +73,7 @@ class Publish extends AbstractMutationResolver
             $description
         );
 
-        // Завантажити published values після публікації
+        // Load published values after publishing
         $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
         $publishedRows = $this->valueService->getValuesByTheme($themeId, $scope, $publishedStatusId);
 
@@ -113,7 +113,7 @@ class Publish extends AbstractMutationResolver
     }
 
     /**
-     * Форматувати зміни для GraphQL
+     * Format changes for GraphQL
      */
     private function formatChanges(array $changes): array
     {

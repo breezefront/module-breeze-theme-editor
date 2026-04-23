@@ -45,7 +45,7 @@ class ApplyPreset extends AbstractSaveMutation
         $presetId = $input['presetId'];
         $overwriteExisting = $input['overwriteExisting'] ?? false;
 
-        // Отримати preset values (plain масив)
+        // Get preset values (plain array)
         try {
             $presetValues = $this->presetManager->getPresetValues($params['themeId'], $presetId);
         } catch (\Exception $e) {
@@ -58,7 +58,7 @@ class ApplyPreset extends AbstractSaveMutation
             throw new GraphQlInputException(__('Preset is empty'));
         }
 
-        // Якщо не overwrite - застосовуємо лише нові поля
+        // If not overwrite - apply only new fields
         if (!$overwriteExisting) {
             $existing = $this->valueService->getValuesByTheme(
                 $params['themeId'],
@@ -78,7 +78,7 @@ class ApplyPreset extends AbstractSaveMutation
             });
         }
 
-        // СТВОРЮЄМО ValueInterface[] моделі
+        // Build ValueInterface[] models
         $userIdForSave = $this->getDraftUserIdForSave($params);
         $valueModels = [];
         foreach ($presetValues as $val) {
@@ -94,10 +94,10 @@ class ApplyPreset extends AbstractSaveMutation
             $valueModels[] = $valueModel;
         }
 
-        // Зберігаємо через saveMultiple()
+        // Save via saveMultiple()
         $appliedCount = $this->valueRepository->saveMultiple($valueModels);
 
-        // Отримати збережені значення через ValueService
+        // Retrieve saved values via ValueService
         $values = $this->valueService->getValuesByTheme(
             $params['themeId'],
             $params['scope'],

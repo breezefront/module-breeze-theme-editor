@@ -22,7 +22,7 @@ class ConfigProvider
     ) {}
 
     /**
-     * ✅ Отримати конфіг з inheritance (merge з батьківськими темами)
+     * Get config with inheritance (merge with parent themes)
      */
     public function getConfigurationWithInheritance(int $themeId): array
     {
@@ -62,7 +62,7 @@ class ConfigProvider
     }
 
     /**
-     * ✅ Deep merge двох конфігів
+     * Deep merge two configs
      */
     private function deepMerge(array $base, array $override): array
     {
@@ -81,7 +81,7 @@ class ConfigProvider
     }
 
     /**
-     * ✅ Merge sections по їх ID
+     * Merge sections by their ID
      */
     private function mergeSections(array $baseSections, array $overrideSections): array
     {
@@ -101,7 +101,7 @@ class ConfigProvider
     }
 
     /**
-     * ✅ Merge settings по їх ID
+     * Merge settings by their ID
      */
     private function mergeSettings(array $baseSettings, array $overrideSettings): array
     {
@@ -145,7 +145,7 @@ class ConfigProvider
     }
 
     /**
-     * Отримати повну конфігурацію теми (без inheritance)
+     * Get full theme configuration (without inheritance)
      */
     public function getConfiguration(int $themeId): array
     {
@@ -162,7 +162,7 @@ class ConfigProvider
     }
 
     /**
-     * Побудувати metadata для теми
+     * Build metadata for theme
      */
     private function buildMetadata($theme): array
     {
@@ -176,10 +176,10 @@ class ConfigProvider
     }
 
     /**
-     * Отримати metadata
+     * Get metadata
      *
-     * Спочатку спробувати з settings.json (підтримує кастомні поля від розробника теми),
-     * при відсутності файлу — fallback до базової metadata з об'єкта теми.
+     * First try from settings.json (supports custom fields from theme developer),
+     * fallback to basic metadata from theme object if file is absent.
      */
     public function getMetadata(int $themeId): array
     {
@@ -187,7 +187,7 @@ class ConfigProvider
             $config = $this->getConfiguration($themeId);
             return $config['metadata'] ?? [];
         } catch (\Exception $e) {
-            // Fallback: збираємо metadata з об'єкта теми без settings.json
+            // Fallback: collect metadata from theme object without settings.json
             try {
                 $theme = $this->getTheme($themeId);
                 return $this->buildMetadata($theme);
@@ -198,7 +198,7 @@ class ConfigProvider
     }
 
     /**
-     * Отримати конкретне поле
+     * Get a specific field
      */
     public function getField(int $themeId, string $sectionCode, string $fieldCode): ?array
     {
@@ -217,7 +217,7 @@ class ConfigProvider
     }
 
     /**
-     * Отримати default значення для поля
+     * Get default value for a field
      */
     public function getFieldDefault(int $themeId, string $sectionCode, string $fieldCode)
     {
@@ -226,10 +226,10 @@ class ConfigProvider
     }
 
     /**
-     * Отримати всі default значення
+     * Get all default values
      *
-     * Використовує getConfigurationWithInheritance() щоб коректно повернути
-     * defaults з усього ланцюга тем, навіть якщо активна тема не має settings.json.
+     * Uses getConfigurationWithInheritance() to correctly return
+     * defaults from the entire theme chain, even if the active theme has no settings.json.
      */
     public function getAllDefaults(int $themeId): array
     {
@@ -273,7 +273,7 @@ class ConfigProvider
     }
 
     /**
-     * Отримати theme object
+     * Get theme object
      */
     private function getTheme(int $themeId)
     {
@@ -286,7 +286,7 @@ class ConfigProvider
     }
 
     /**
-     * Завантажити config файл
+     * Load config file
      */
     private function loadConfigFile($theme): array
     {
@@ -309,7 +309,7 @@ class ConfigProvider
     }
 
     /**
-     * Знайти config файл в можливих локаціях
+     * Find config file in possible locations
      */
     private function findConfigFile($theme): ?string
     {
@@ -337,7 +337,7 @@ class ConfigProvider
     }
 
     /**
-     * Валідація конфігурації
+     * Validate configuration
      */
     private function validateConfig(array $config): void
     {

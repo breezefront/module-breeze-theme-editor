@@ -58,7 +58,7 @@ class Values extends AbstractQueryResolver
             );
         }
 
-        // Отримати userId з токена
+        // Get userId from token
         $userId = $this->userResolver->getCurrentUserId($context);
 
         if ($statusCode === StatusCode::DRAFT && !$userId) {
@@ -71,14 +71,14 @@ class Values extends AbstractQueryResolver
         // without a draft row still return the published value, not the theme default.
         $values = $this->resolveValues($statusCode, $themeId, $scope, $statusId, $userId);
 
-        // Фільтр по секціях
+        // Filter by sections
         if ($sectionCodes) {
             $values = array_filter($values, function($val) use ($sectionCodes) {
                 return in_array($val['section_code'], $sectionCodes);
             });
         }
 
-        // Отримати defaults
+        // Get defaults
         $defaults = $this->configProvider->getAllDefaults($themeId);
 
         $result = [];

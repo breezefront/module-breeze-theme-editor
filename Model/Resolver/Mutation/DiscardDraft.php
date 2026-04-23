@@ -46,7 +46,7 @@ class DiscardDraft extends AbstractMutationResolver
 
         $draftStatusId = $this->statusProvider->getStatusId(StatusCode::DRAFT);
 
-        // Видалити draft значення через ValueService
+        // Delete draft values via ValueService
         $discardedCount = $this->valueService->deleteValues(
             $themeId,
             $scope,
@@ -56,7 +56,7 @@ class DiscardDraft extends AbstractMutationResolver
             $fieldCodes
         );
 
-        // Завантажити поточні published values — те, що тепер активне після відкидання чернетки
+        // Load current published values — what is now active after discarding the draft
         $publishedStatusId = $this->statusProvider->getStatusId(StatusCode::PUBLISHED);
         $publishedRows = $this->valueService->getValuesByTheme($themeId, $scope, $publishedStatusId);
 

@@ -18,16 +18,16 @@ class ResetToDefaults extends AbstractSaveMutation
     ) {
         $input = $args['input'];
 
-        // Використати базовий метод
+        // Use base method
         $params = $this->prepareBaseParams($input, $context);
 
         $sectionCodes = $input['sectionCodes'] ?? null;
         $fieldCodes = $input['fieldCodes'] ?? null;
 
-        // Отримати всі поточні значення default з config
+        // Get all current default values from config
         $defaults = $this->configProvider->getAllDefaults($params['themeId']);
 
-        // Фільтр по секціям/полям та зібрати ValueInterface[]
+        // Filter by sections/fields and collect ValueInterface[]
         $valueModels = [];
         foreach ($defaults as $key => $defaultValue) {
             [$sectionCode, $fieldCode] = explode('.', $key, 2);
@@ -49,16 +49,16 @@ class ResetToDefaults extends AbstractSaveMutation
             $valueModel->setSettingCode($fieldCode);
             $valueModel->setValue($defaultValue);
 
-            // Для published user_id = 0, для draft юзай поточного
+            // For published user_id = 0, for draft use current user
             $valueModel->setUserId($this->getDraftUserIdForSave($params));
 
             $valueModels[] = $valueModel;
         }
 
-        // Зберегти default-значення сучасним методом
+        // Save default values using the modern method
         $resetCount = $this->valueRepository->saveMultiple($valueModels);
 
-        // Отримати збережені значення через ValueService
+        // Retrieve saved values via ValueService
         $values = $this->valueService->getValuesByTheme(
             $params['themeId'],
             $params['scope'],

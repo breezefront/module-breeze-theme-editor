@@ -62,7 +62,7 @@ class ImportSettings extends AbstractMutationResolver
                 $overwriteExisting
             );
 
-            // Завантажити values після імпорту
+            // Load values after import
             $statusId = $this->statusProvider->getStatusId($statusCode);
             $importedRows = $this->valueService->getValuesByTheme($themeId, $scope, $statusId);
 

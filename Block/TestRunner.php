@@ -210,7 +210,7 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/toastify-test',
             // SyncFieldsFromChanges F5 Reload Bug Tests (12 tests) — Issues 018 & 019
             'Swissup_BreezeThemeEditor/js/test/tests/sync-fields-from-changes-test',
-            // Utils & Toolbar Unit Tests (п.3.3 pre-work)
+            // Utils & Toolbar Unit Tests (step 3.3 pre-work)
             // Error Handler Tests (13 tests) - _getErrorMessage + _isCritical
             'Swissup_BreezeThemeEditor/js/test/tests/error-handler-test',
             // Permissions Tests (19 tests) - getPermissions/canX/applyToElement/shouldHide/getRoleDescription
@@ -225,9 +225,9 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/toolbar-toggle-test',
             // Highlight Toggle Widget Tests (7 tests) - _toggleHighlight/active-class/event
             'Swissup_BreezeThemeEditor/js/test/tests/highlight-toggle-test',
-            // ActionExecutor Pure Logic Tests (п.3.4 pre-work) — suggestTitle/mutationCheck/guards/transitions
+            // ActionExecutor Pure Logic Tests (step 3.4 pre-work) — suggestTitle/mutationCheck/guards/transitions
             'Swissup_BreezeThemeEditor/js/test/tests/action-executor-test',
-            // CssStateRestorer Pure Logic Tests (п.3.4 pre-work) — determineCssMode/fallback/switchGuards
+            // CssStateRestorer Pure Logic Tests (step 3.4 pre-work) — determineCssMode/fallback/switchGuards
             'Swissup_BreezeThemeEditor/js/test/tests/css-state-restorer-test',
             // Color Handler Swatch Tests (11 tests) — Bug A: wrong data key; Bug B: setTimeout/rAF race
             'Swissup_BreezeThemeEditor/js/test/tests/color-handler-swatch-test',

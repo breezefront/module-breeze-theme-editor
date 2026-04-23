@@ -43,7 +43,7 @@ class ValidationService
     }
 
     /**
-     * Валідувати одне значення
+     * Validate a single value
      */
     public function validateValue(
         int $themeId,
@@ -57,12 +57,12 @@ class ValidationService
             return "Field {$sectionCode}.{$fieldCode} not found in configuration";
         }
 
-        // Перевірка required
+        // Check required
         if (($field['required'] ??  false) && empty($value)) {
             return "Field {$fieldCode} is required";
         }
 
-        // Валідація по типу
+        // Validate by type
         $type = $field['type'] ?? 'text';
 
         switch ($type) {
@@ -74,14 +74,14 @@ class ValidationService
             case 'text':
             case 'textarea':
                 return $this->validateText($value, $field);
-            // Додати інші типи за потреби
+            // Add more types as needed
         }
 
         return null;
     }
 
     /**
-     * Валідація кольору
+     * Validate color value
      */
     private function validateColor(string $value): ?string
     {
@@ -94,7 +94,7 @@ class ValidationService
     }
 
     /**
-     * Валідація числа
+     * Validate number value
      */
     private function validateNumber(string $value, array $field): ?string
     {
@@ -116,7 +116,7 @@ class ValidationService
     }
 
     /**
-     * Валідація тексту
+     * Validate text value
      */
     private function validateText(string $value, array $field): ?string
     {

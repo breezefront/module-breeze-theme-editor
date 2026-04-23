@@ -33,11 +33,11 @@ abstract class AbstractSaveMutation extends AbstractMutationResolver
     ) {}
 
     /**
-     * Підготувати базові параметри з input
+     * Prepare base parameters from input
      */
     protected function prepareBaseParams(array $input, $context): array
     {
-        // Отримати userId з токена
+        // Get userId from token
         $userId = $this->userResolver->getCurrentUserId($context);
 
         $scope = $this->scopeFactory->fromInput($input['scope'] ?? []);

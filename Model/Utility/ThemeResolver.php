@@ -30,7 +30,7 @@ class ThemeResolver
      */
     public function getThemeIdByStoreId(int $storeId): int
     {
-        // ✅ Читаємо безпосередньо з config
+        // Read directly from config
         $themeId = $this->scopeConfig->getValue(
             DesignInterface::XML_PATH_THEME_ID,
             ScopeInterface::SCOPE_STORE,

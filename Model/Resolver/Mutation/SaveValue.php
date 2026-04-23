@@ -18,14 +18,14 @@ class SaveValue extends AbstractSaveMutation
     ) {
         $input = $args['input'];
 
-        // Використай базовий метод для розпакування стандартних параметрів
+        // Use base method to unpack standard parameters
         $params = $this->prepareBaseParams($input, $context);
 
         $sectionCode = $input['sectionCode'];
         $fieldCode = $input['fieldCode'];
         $newValue = $input['value'];
 
-        // Сучасний підхід: створення моделі та save()
+        // Modern approach: create model and call save()
         /** @var ValueInterface $valueModel */
         $valueModel = $this->valueRepository->create();
         $valueModel->setThemeId($params['themeId']);
@@ -33,13 +33,13 @@ class SaveValue extends AbstractSaveMutation
         $valueModel->setStoreId($params['scope']->getScopeId());
         $valueModel->setStatusId($params['statusId']);
         $valueModel->setSectionCode($sectionCode);
-        $valueModel->setSettingCode($fieldCode); // важливо: якщо в моделі Value використовується SettingCode, не fieldCode
+        $valueModel->setSettingCode($fieldCode); // important: model Value uses SettingCode, not fieldCode
         $valueModel->setValue($newValue);
         $valueModel->setUserId($this->getDraftUserIdForSave($params));
 
         $this->valueRepository->save($valueModel);
 
-        // Отримуємо default для isModified
+        // Get default for isModified check
         $defaults = $this->configProvider->getAllDefaults($params['themeId']);
         $defaultValue = $defaults[$sectionCode . '.' . $fieldCode] ?? null;
 

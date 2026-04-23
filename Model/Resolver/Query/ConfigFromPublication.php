@@ -55,7 +55,7 @@ class ConfigFromPublication extends AbstractConfigResolver
 
         $publicationId = (int)$args['publicationId'];
 
-        // 2. Перевірити, що публікація існує; взяти scope/scopeId/themeId з publication record
+        // 2. Verify publication exists; take scope/scopeId/themeId from publication record
         try {
             $publication = $this->publicationRepository->getById($publicationId);
         } catch (\Exception $e) {
@@ -73,16 +73,16 @@ class ConfigFromPublication extends AbstractConfigResolver
             $themeId = $this->themeResolver->getThemeIdByScope($scope);
         }
 
-        // 3. Отримати базовий конфіг теми
+        // 3. Get base theme config
         $config = $this->configProvider->getConfigurationWithInheritance($themeId);
 
-        // 4. Отримати changelog публікації
+        // 4. Get publication changelog
         $changelog = $this->getPublicationChangelog($publicationId);
 
-        // 5. Реконструювати values з changelog
+        // 5. Reconstruct values from changelog
         $valuesMap = $this->buildValuesMapFromChangelog($changelog);
 
-        // 6. Змержити sections з values
+        // 6. Merge sections with values
         $sections = $this->sectionFormatter->mergeSectionsWithValues(
             $config['sections'] ?? [],
             $valuesMap,

@@ -50,7 +50,7 @@ class Publications extends AbstractQueryResolver
         $currentPage = $args['currentPage'] ?? 1;
         $search = $args['search'] ?? null;
 
-        // Формуємо SearchCriteria замість старого array getList!
+        // Build SearchCriteria instead of old array getList!
         $this->searchCriteriaBuilder->addFilter('theme_id', $themeId);
         $this->searchCriteriaBuilder->addFilter('scope', $scope->getType());
         $this->searchCriteriaBuilder->addFilter('store_id', $scope->getScopeId());
