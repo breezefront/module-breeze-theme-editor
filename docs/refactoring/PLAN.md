@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 106 / 108 завершено  
+**Статус виконання:** 107 / 108 завершено  
 
 ---
 
@@ -769,7 +769,7 @@
 - **Файл:** `Model/Utility/UserResolver.php:90–94`
 - **Проблема:** `info`-рівень лог на кожному автентифікованому GraphQL-запиті. При live-preview — сотні записів за хвилину.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] N/A` — адмінка, один юзер; кількість записів незначна
 
 ### 7.8 Мішаниця мов у коментарях
 - **Файли:** `ConfigProvider.php`, `ValidationService.php`, `ValueInheritanceResolver.php`, `ImportExportService.php`, `css-manager.js`, `css-preview-manager.js`, `_mixins.less`
