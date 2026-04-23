@@ -122,13 +122,13 @@ class AdminTokenGenerator
         $cachedToken = $this->getCachedToken();
         
         if ($cachedToken && $this->isTokenValid($cachedToken)) {
-            $this->logger->debug('[BTE] Using cached admin token');
+            // $this->logger->debug('[BTE] Using cached admin token');
             return $cachedToken;
         }
 
         // Token expired or doesn't exist - create new one
         if ($cachedToken) {
-            $this->logger->debug('[BTE] Cached token expired, generating new one');
+            // $this->logger->debug('[BTE] Cached token expired, generating new one');
             $this->clearCachedToken();
         }
 
@@ -182,12 +182,12 @@ class AdminTokenGenerator
         
         $secondsUntilExpiry = $expiresAt - time();
         
-        $this->logger->debug(sprintf(
-            '[BTE] Token cached in session, expires at: %s (%d seconds / %.1f minutes from now)',
-            date('Y-m-d H:i:s', $expiresAt),
-            $secondsUntilExpiry,
-            $secondsUntilExpiry / 60
-        ));
+        // $this->logger->debug(sprintf(
+        //     '[BTE] Token cached in session, expires at: %s (%d seconds / %.1f minutes from now)',
+        //     date('Y-m-d H:i:s', $expiresAt),
+        //     $secondsUntilExpiry,
+        //     $secondsUntilExpiry / 60
+        // ));
     }
 
     /**
@@ -235,11 +235,11 @@ class AdminTokenGenerator
             
             $expiration = (int) $claims['exp']->getValue();
             
-            $this->logger->debug(sprintf(
-                '[BTE] Token expiration read from JWT: %s (%d seconds from now)',
-                date('Y-m-d H:i:s', $expiration),
-                $expiration - time()
-            ));
+            // $this->logger->debug(sprintf(
+            //     '[BTE] Token expiration read from JWT: %s (%d seconds from now)',
+            //     date('Y-m-d H:i:s', $expiration),
+            //     $expiration - time()
+            // ));
             
             return $expiration;
             
@@ -265,29 +265,29 @@ class AdminTokenGenerator
         $expiresAt = $this->adminSession->getData(self::SESSION_KEY_EXPIRES);
         
         if (!$expiresAt) {
-            $this->logger->debug('[BTE] No expiration time found in session');
+            // $this->logger->debug('[BTE] No expiration time found in session');
             return false;
         }
         
         // Check if token expires in less than buffer time
         $expiresIn = $expiresAt - time();
         
-        $this->logger->debug(sprintf(
-            '[BTE] Token validation: expires in %d seconds (buffer: %d seconds)',
-            $expiresIn,
-            self::TOKEN_EXPIRATION_BUFFER
-        ));
+        // $this->logger->debug(sprintf(
+        //     '[BTE] Token validation: expires in %d seconds (buffer: %d seconds)',
+        //     $expiresIn,
+        //     self::TOKEN_EXPIRATION_BUFFER
+        // ));
         
         if ($expiresIn <= self::TOKEN_EXPIRATION_BUFFER) {
-            $this->logger->debug(sprintf(
-                '[BTE] Token expires in %d seconds (less than %d buffer), will refresh',
-                $expiresIn,
-                self::TOKEN_EXPIRATION_BUFFER
-            ));
+            // $this->logger->debug(sprintf(
+            //     '[BTE] Token expires in %d seconds (less than %d buffer), will refresh',
+            //     $expiresIn,
+            //     self::TOKEN_EXPIRATION_BUFFER
+            // ));
             return false;
         }
         
-        $this->logger->debug('[BTE] Token is still valid');
+        // $this->logger->debug('[BTE] Token is still valid');
         return true;
     }
 
