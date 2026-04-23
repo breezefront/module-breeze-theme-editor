@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 78 / 108 завершено  
+**Статус виконання:** 79 / 108 завершено  
 
 ---
 
@@ -608,10 +608,12 @@
 - **Пропозиція:** Shared `base-palette-renderer.js` mixin або прототип.
 - **Пріоритет:** 🟡 Medium
 - **Статус:** `[x] DONE` — коміт `598daba` (`base-palette-renderer.js` витягнуто: `_bindAccordion`, `_bindBadgeUpdates`, `_updateHeaderBadges`, `_escapeHtml`, `_escapeAttr`; 781/781 тестів ✅)
+
+### 6.7 Magento modal замість `window.confirm()` / `alert()`
 - **Зачіпає:** `field-handlers/base.js`, `palette-section-renderer.js`, `font-palette-section-renderer.js`, `repeater.js`
 - **Проблема:** Native `confirm()` та `alert()` для деструктивних дій. `Magento_Ui/js/modal/confirm` доступний і надає консистентний UI.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміти `240820e` (`Dialog` utility), `3a553fd` (заміна всіх `window.confirm/prompt` на Magento UI modals)
 
 ### 6.8 `ThemeCache` в `ThemeResolver`
 - **Файл:** `Model/Utility/ThemeResolver.php`
@@ -1019,7 +1021,7 @@
 - `[ ]` **п. 8.1 + 8.2** — iframe retry-polling → спільна `waitForIframeReady()` → `Promise`
 - `[ ]` **п. 8.9** — `settings-editor.js:306` `setTimeout` race → `panelShown` event
 - `[x]` **п. 4.17 + 6.6** — `base-palette-renderer.js` shared mixin (accordion + dirty state + confirm dialog) — `598daba`
-- `[ ]` **п. 6.7** — `window.confirm()` / `alert()` → `Magento_Ui/js/modal/confirm`
+- `[x]` **п. 6.7** — `window.confirm()` / `alert()` → `Magento_Ui/js/modal/confirm` — `240820e` `3a553fd`
 - `[x]` **п. 7.2** — `AdminToolbar.php` 11 deps → 8: URL deps переміщені в `ToolbarUrlProvider`
 - `[ ]` **п. 4.6** — `ValueInterface[]` GraphQL mapping → `toGraphQlValue()` на `AbstractMutationResolver` *(перевірити чи не закрито з 6.4)*
 - `[x]` **п. 7.3** — `CssGenerator` → `ColorPipeline`
