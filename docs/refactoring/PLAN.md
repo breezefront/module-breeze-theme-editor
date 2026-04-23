@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 104 / 108 завершено  
+**Статус виконання:** 105 / 108 завершено  
 
 ---
 
@@ -260,7 +260,7 @@
 - **Файл:** `view/adminhtml/web/css/source/panels/_theme-editor-panel.less:307–357`
 - **Проблема:** `.bte-control-group`, `.bte-color-picker`, `.bte-font-picker select.bte-control`, `.bte-range-slider`, `.bte-range-value` — позначені або ідентифіковані як legacy, потенційно дублюються або мертві.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE` — коміт `7d0e052` (`.bte-control-group` legacy block видалено)
 
 ### 2.31 `_variables.less` — перезаписані змінні (перші визначення мертві)
 - **Файли:** `view/base/web/css/source/_variables.less`, `view/adminhtml/web/css/source/_variables.less`
