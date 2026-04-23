@@ -780,7 +780,7 @@
 - **Проблема:** Довгий ланцюжок `if (strpos($url, '/catalog/product') !== false) ... elseif ...` крихкий і важко розширюваний.
 - **Пропозиція:** Lookup table `[url-fragment => pageId]`.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] Done`
 
 ---
 
@@ -1045,7 +1045,7 @@
 - `[ ]` **п. 7.6** — `AdminTokenGenerator` надмірне debug logging
 - `[ ]` **п. 7.7** — `UserResolver` info log на кожному auth
 - `[ ]` **п. 7.8** — мішаниця мов у коментарях → уніфікувати на EN
-- `[ ]` **п. 7.9** — `strpos` chain → lookup table у `AdminToolbar.php`
+- `[x]` **п. 7.9** — `strpos` chain → lookup table у `AdminToolbar.php`
 - `[ ]` **п. 8.3** — `setTimeout(fn, 0)` → `Promise.resolve().then(fn)` у `toolbar.js`
 - `[ ]` **п. 8.4 + 8.6** — outside-click `setTimeout(fn, 10)` → `requestAnimationFrame` + спільний `onOutsideClick()`
 - `[ ]` **п. 8.5 + 8.8** — flag cleanup `setTimeout(fn, 50)` → `Promise.resolve().then(fn)`

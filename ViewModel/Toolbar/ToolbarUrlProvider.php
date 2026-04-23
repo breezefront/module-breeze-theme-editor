@@ -163,6 +163,23 @@ class ToolbarUrlProvider
     }
 
     /**
+     * URL fragment → page action name lookup table.
+     *
+     * Order matters: more specific fragments must come before broader ones
+     * (e.g. '/checkout/cart' before '/checkout').
+     *
+     * @var array<string, string>
+     */
+    private const URL_PAGE_MAP = [
+        '/checkout/cart'         => 'checkout_cart_index',
+        '/checkout'              => 'checkout_index_index',
+        '/customer/account/login' => 'customer_account_login',
+        '/customer/account'      => 'customer_account_index',
+        '/catalogsearch/result'  => 'catalogsearch_result_index',
+        '.html'                  => 'catalog_category_view',
+    ];
+
+    /**
      * Derive the current page action name from the iframe URL parameter.
      *
      * This is an approximation based on URL patterns. For precise detection,
@@ -178,23 +195,11 @@ class ToolbarUrlProvider
         if (empty($url) || $url === '/') {
             return 'cms_index_index';
         }
-        if (strpos($url, '/checkout/cart') !== false) {
-            return 'checkout_cart_index';
-        }
-        if (strpos($url, '/checkout') !== false) {
-            return 'checkout_index_index';
-        }
-        if (strpos($url, '/customer/account/login') !== false) {
-            return 'customer_account_login';
-        }
-        if (strpos($url, '/customer/account') !== false) {
-            return 'customer_account_index';
-        }
-        if (strpos($url, '/catalogsearch/result') !== false) {
-            return 'catalogsearch_result_index';
-        }
-        if (strpos($url, '.html') !== false) {
-            return 'catalog_category_view';
+
+        foreach (self::URL_PAGE_MAP as $fragment => $pageId) {
+            if (strpos($url, $fragment) !== false) {
+                return $pageId;
+            }
         }
 
         return 'cms_page_view';
