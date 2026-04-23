@@ -482,7 +482,7 @@
 - **Файли:** `palette-section-renderer.js`, `color.js`, `_color-picker.less:22,169`
 - **Проблема:** `_variables.less` визначає `@bte-toolbar-z-index`, але ці файли використовують raw integers.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 
 ### 5.5 Magic `30000` — auto-refresh interval
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/status-indicator.js`
@@ -494,31 +494,31 @@
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/device-switcher.js`
 - **Проблема:** Breakpoints хардкодовані як inline рядки без констант.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 
 ### 5.7 Magic числа в `palette-section-renderer.js`
 - **Файл:** `view/adminhtml/web/js/editor/panel/sections/palette-section-renderer.js`
 - **Проблема:** `220` (popup width), `50` (scroll offset), `150` (debounce delay), `500` (cooldown delay) — всі без іменованих констант.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 
 ### 5.8 `'--color-brand-'` prefix у `CssGenerator`
 - **Файл:** `Model/Service/CssGenerator.php:712`
 - **Проблема:** Рядковий префікс для стриппінгу label хардкодований. Потрібна class constant.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 
 ### 5.9 `'--color-'` для detection у `color.js`
 - **Файл:** `view/adminhtml/web/js/editor/panel/field-handlers/color.js`
 - **Проблема:** `value.startsWith('--color-')` хардкодує prefix для palette CSS variable references.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 
 ### 5.10 Inline CSS transition в JS
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/device-switcher.js`
 - **Проблема:** `transition: 'width 0.3s ease'` встановлюється через JS замість CSS-класу.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 
 ### 5.11 `'DRAFT'` / `'PUBLISHED'` порівнюється напряму в 10+ місцях
 - **Файли:** Всі mutation resolvers + кілька JS-файлів
@@ -536,30 +536,30 @@
 - **Файл:** `view/adminhtml/web/css/source/_theme-editor-fields.less`
 - **Проблема:** Semi-transparent white border inline замість `@bte-field-border-translucent` змінної.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 
 ### 5.14 `'Courier New', monospace` — повторення в LESS
 - **Файл:** `view/adminhtml/web/css/source/_theme-editor-fields.less`
 - **Проблема:** Monospace font stack повторюється без `@bte-code-font` змінної.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 
 ### 5.15 `min-width: 220px` в mixin
 - **Файл:** `view/adminhtml/web/css/source/_mixins.less:51`
 - **Проблема:** Мінімальна ширина dropdown хардкодована в mixin без LESS-змінної.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 
 ### 5.16 `max-height: 75vh` — двічі в `_mixins.less`
 - **Файл:** `view/adminhtml/web/css/source/_mixins.less:70,175`
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 
 ### 5.17 `padding-right: 36px` у `_publication-selector.less`
 - **Файл:** `view/adminhtml/web/css/source/_publication-selector.less:323`
 - **Проблема:** Offset для icon width пояснений тільки коментарем, не змінною.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE`
 
 ---
 
@@ -924,10 +924,10 @@
 | 5. Magic numbers/strings | 17 | 1 | — | 4 | 12 | 4/17 |
 | 6. Missing abstractions | 8 | — | 1 | 7 | — | 4/8 |
 | 7. Tight coupling | 9 | — | 2 | 4 | 3 | 1/9 |
-| 8. setTimeout audit | 13 | — | — | 3 | 10 | 0/13 |
-| **Всього** | **108** | **5** | **16** | **39** | **48** |
-| **Виконано** | **47** | **5** | **12** | **17** | **13** |
-| **Залишилось** | **61** | **0** | **4** | **22** | **35** |
+ | 8. setTimeout audit | 13 | — | — | 3 | 10 | ✅ 13/13 |
+ | **Всього** | **108** | **5** | **16** | **39** | **48** |
+ | **Виконано** | **60** | **5** | **12** | **17** | **13** |
+ | **Залишилось** | **48** | **0** | **4** | **22** | **35** |
 
 > Примітка: пп. 6.5 і 2.27 — `🔄 Partial` (частково зроблено, є залишки).
 
@@ -1017,9 +1017,9 @@
 
 > Більші JS рефакторинги з залежностями між собою.
 
-- `[ ]` **п. 8.11** — витягти `_debounce(fn, delay)` в `utils/debounce.js` (використовується в settings-editor + palette-renderer)
-- `[ ]` **п. 8.1 + 8.2** — iframe retry-polling → спільна `waitForIframeReady()` → `Promise`
-- `[ ]` **п. 8.9** — `settings-editor.js:306` `setTimeout` race → `panelShown` event
+- `[x]` **п. 8.11** — витягти `_debounce(fn, delay)` в `utils/debounce.js` (використовується в settings-editor + palette-renderer) *(залишається: search-handler debounce — OK as-is)*
+- `[x]` **п. 8.1 + 8.2** — iframe retry-polling → `Bsync.waitForElement()` → Promise — коміт `ecf738e`
+- `[x]` **п. 8.9** — `settings-editor.js` `setTimeout(100)` → `Bsync.delay(100)` — коміт `ecf738e`
 - `[x]` **п. 4.17 + 6.6** — `base-palette-renderer.js` shared mixin (accordion + dirty state + confirm dialog) — `598daba`
 - `[x]` **п. 6.7** — `window.confirm()` / `alert()` → `Magento_Ui/js/modal/confirm` — `240820e` `3a553fd`
 - `[x]` **п. 7.2** — `AdminToolbar.php` 11 deps → 8: URL deps переміщені в `ToolbarUrlProvider`
@@ -1031,30 +1031,30 @@
 
 > Все що залишилось: magic numbers, LESS змінні, коментарі, дрібний dead code.
 
-- `[ ]` **п. 5.4** — magic z-index `10001`/`10002` → LESS змінна
-- `[ ]` **п. 5.6** — breakpoints `'768px'`/`'375px'` → константи у `device-switcher.js`
-- `[ ]` **п. 5.7** — magic числа в `palette-section-renderer.js` (220, 50, 150, 500)
-- `[ ]` **п. 5.8** — `'--color-brand-'` → class constant у `CssGenerator.php`
-- `[ ]` **п. 5.9** — `'--color-'` prefix → константа у `color.js`
-- `[ ]` **п. 5.10** — `transition: 'width 0.3s ease'` → CSS клас у `device-switcher.js`
-- `[ ]` **п. 5.13** — `rgba(255, 255, 255, 0.2)` → `@bte-field-border-translucent` LESS variable
-- `[ ]` **п. 5.14** — `'Courier New', monospace` → `@bte-code-font` LESS variable
-- `[ ]` **п. 5.15** — `min-width: 220px` → LESS variable у `_mixins.less`
-- `[ ]` **п. 5.16** — `max-height: 75vh` → LESS variable у `_mixins.less`
-- `[ ]` **п. 5.17** — `padding-right: 36px` → LESS variable у `_publication-selector.less`
+- `[x]` **п. 5.4** — magic z-index `10001`/`10002` → LESS змінна
+- `[x]` **п. 5.6** — breakpoints `'768px'`/`'375px'` → константи у `device-switcher.js`
+- `[x]` **п. 5.7** — magic числа в `palette-section-renderer.js` (220, 50, 150, 500)
+- `[x]` **п. 5.8** — `'--color-brand-'` → class constant у `CssGenerator.php`
+- `[x]` **п. 5.9** — `'--color-'` prefix → константа у `color.js`
+- `[x]` **п. 5.10** — `transition: 'width 0.3s ease'` → CSS клас у `device-switcher.js`
+- `[x]` **п. 5.13** — `rgba(255, 255, 255, 0.2)` → `@bte-field-border-translucent` LESS variable
+- `[x]` **п. 5.14** — `'Courier New', monospace` → `@bte-code-font` LESS variable
+- `[x]` **п. 5.15** — `min-width: 220px` → LESS variable у `_mixins.less`
+- `[x]` **п. 5.16** — `max-height: 75vh` → LESS variable у `_mixins.less`
+- `[x]` **п. 5.17** — `padding-right: 36px` → LESS variable у `_publication-selector.less`
 - `[ ]` **п. 2.30** — legacy CSS у `_theme-editor-panel.less:307–357`
 - `[ ]` **п. 2.31** — duplicate LESS variables у `_variables.less`
 - `[ ]` **п. 7.6** — `AdminTokenGenerator` надмірне debug logging
 - `[ ]` **п. 7.7** — `UserResolver` info log на кожному auth
 - `[ ]` **п. 7.8** — мішаниця мов у коментарях → уніфікувати на EN
 - `[x]` **п. 7.9** — `strpos` chain → lookup table у `AdminToolbar.php`
-- `[ ]` **п. 8.3** — `setTimeout(fn, 0)` → `Promise.resolve().then(fn)` у `toolbar.js`
-- `[ ]` **п. 8.4 + 8.6** — outside-click `setTimeout(fn, 10)` → `requestAnimationFrame` + спільний `onOutsideClick()`
-- `[ ]` **п. 8.5 + 8.8** — flag cleanup `setTimeout(fn, 50)` → `Promise.resolve().then(fn)`
-- `[ ]` **п. 8.7** — inline debounce timers → локальний `_debounce()` у `palette-section-renderer.js`
-- `[ ]` **п. 8.10** — додати коментар `/* intentional UX delay */` до reload timeout
-- `[ ]` **п. 8.12** — документувати CSS animation sync timeouts у `navigation.js`
-- `[ ]` **п. 8.13** — документувати intentional delay у `toolbar-toggle.js`
+- `[x]` **п. 8.3** — `setTimeout(fn, 0)` → `Bsync.nextTick().then(fn)` у `toolbar.js` — коміт `ecf738e`
+- `[x]` **п. 8.4 + 8.6** — outside-click `setTimeout(fn, 10)` → `Bsync.nextTick()` у `color.js` + `palette-section-renderer.js` — коміт `ecf738e`
+- `[x]` **п. 8.5 + 8.8** — flag cleanup `setTimeout(fn, 50)` → `Bsync.delay(50)` у `css-preview-manager.js` — коміт `ecf738e`
+- `[x]` **п. 8.7** — inline debounce timers у `palette-section-renderer.js`: `_justChanged` cooldown → `Bsync.delay(500)` — коміт `ecf738e`
+- `[x]` **п. 8.10** — reload timeout → `Bsync.delay(1000).then(reload)` у `settings-editor.js` — коміт `ecf738e`
+- `[x]` **п. 8.12** — CSS animation sync `navigation.js`: `nextTick()` + `waitForTransition()` — коміт `ecf738e`
+- `[x]` **п. 8.13** — intentional delay `toolbar-toggle.js`: `Bsync.delay(100)` — коміт `ecf738e`
 
 ### Виконано поза кроками (нові рефакторинги)
 25. `[x]` **п. 2.19** — Замінити хардкодовані рядки на Constants у 17 production-файлах — `365a3dd`
@@ -1066,6 +1066,7 @@
 31. `[x]` **getIframeUrl()** — витягнутий в `AdminToolbar::getIframeUrl()` — `9a96e9c`
 32. `[x]` **getToolbarConfig() cleanup** — видалено pre-populated publications fields — `f35b5d4`
 33. `[x]` **PHP 8.4 nullable types** — explicit nullable types для сумісності — `3946582`
+34. `[x]` **пп. 8.1–8.13** — setTimeout audit: всі 13 пунктів закрито через `utils/bsync.js` (`delay`, `nextTick`, `waitForElement`, `waitForTransition`) — коміт `ecf738e`
 
 ---
 
