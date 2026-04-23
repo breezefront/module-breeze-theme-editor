@@ -2,7 +2,7 @@
 
 **Дата аудиту:** 2026-03-19  
 **Загальний стан:** 94 + 13 (setTimeout audit) = 107 задокументованих проблем у 8 категоріях  
-**Статус виконання:** 91 / 108 завершено  
+**Статус виконання:** 104 / 108 завершено  
 
 ---
 
@@ -811,7 +811,7 @@
 - **Проблема:** `setTimeout(fn, 200)` у рекурсивному `init(config, retries)` — чекає поки `iframe.contentDocument` та `#bte-theme-css-variables` будуть доступні. До 20 спроб × 200мс = до 4с затримки при невдачі.
 - **Пропозиція:** Витягти `waitForIframe(maxRetries, delay)` → повертає `Promise`. `init()` стає `async`, використовує `await waitForIframe()`.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.2 `panel/css-manager.js` — retry polling (×2)
 - **Файл:** `view/adminhtml/web/js/editor/panel/css-manager.js:73,90`
@@ -819,7 +819,7 @@
 - **Проблема:** Ідентична логіка до п. 8.1. Дублювання retry pattern між двома css-manager файлами.
 - **Пропозиція:** Спільна утиліта `waitForIframeReady(selector, maxRetries, delay)` → `Promise`. Усунути дублювання між 8.1 і 8.2.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.3 `toolbar.js` — next-tick defer
 - **Файл:** `view/adminhtml/web/js/editor/toolbar.js:112`
@@ -827,7 +827,7 @@
 - **Проблема:** `setTimeout(fn, 0)` щоб відкласти `navWidget.setActive()` після завершення поточного call-stack (widget ще не повністю ініціалізований).
 - **Пропозиція:** Замінити на `Promise.resolve().then(fn)` або `queueMicrotask(fn)` — семантично точніше.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.4 `panel/field-handlers/color.js` — outside-click guard (×1)
 - **Файл:** `view/adminhtml/web/js/editor/panel/field-handlers/color.js:81`
@@ -835,7 +835,7 @@
 - **Проблема:** `setTimeout(fn, 10)` у `document.click` handler — дає час попапу відрендеритись перед перевіркою `.bte-color-popup`. Крихко: 10мс довільне.
 - **Пропозиція:** Замінити на `requestAnimationFrame(fn)` — виконується після наступного paint, гарантовано після render.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.5 `panel/field-handlers/color.js` — flag cleanup
 - **Файл:** `view/adminhtml/web/js/editor/panel/field-handlers/color.js:399`
@@ -843,7 +843,7 @@
 - **Проблема:** `setTimeout(fn, 50)` щоб скинути `is-palette-selection` прапорець після того як усі jQuery-події обробляться. 50мс — довільне.
 - **Пропозиція:** `Promise.resolve().then(fn)` — виконується після поточної синхронної черги.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.6 `panel/sections/palette-section-renderer.js` — outside-click guard
 - **Файл:** `view/adminhtml/web/js/editor/panel/sections/palette-section-renderer.js:242`
@@ -851,7 +851,7 @@
 - **Проблема:** Ідентична до п. 8.4 — `setTimeout(fn, 10)` у `document.click`. Дублювання паттерну з color.js.
 - **Пропозиція:** `requestAnimationFrame(fn)`. Усунути дублювання з п. 8.4 — спільний helper `onOutsideClick(selector, callback)`.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.7 `panel/sections/palette-section-renderer.js` — debounce (×2)
 - **Файл:** `view/adminhtml/web/js/editor/panel/sections/palette-section-renderer.js:575,580`
@@ -859,7 +859,7 @@
 - **Проблема:** `badgesDebounceTimer` (150мс) і `_justChangedTimer` (500мс) — інлайн debounce таймери. Коректні, але оголені.
 - **Пропозиція:** Обгорнути в локальний `_debounce(fn, delay)` для читабельності. Не змінювати логіку.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.8 `panel/css-preview-manager.js` — flag cleanup
 - **Файл:** `view/adminhtml/web/js/editor/panel/css-preview-manager.js:181`
@@ -867,7 +867,7 @@
 - **Проблема:** `setTimeout(fn, 50)` щоб скинути `is-palette-update` прапорець. Ідентична до п. 8.5.
 - **Пропозиція:** `Promise.resolve().then(fn)`. Усунути дублювання з п. 8.5.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.9 `panel/settings-editor.js:306` — editability race condition
 - **Файл:** `view/adminhtml/web/js/editor/panel/settings-editor.js:306`
@@ -875,7 +875,7 @@
 - **Проблема:** `setTimeout(_updateFieldsEditability, 100)` після події `publicationStatusChanged` — обхід race condition де поля ще не відрендерені. Коментар: "fixes the bug where fields remain disabled on first panel open".
 - **Пропозиція:** Слухати `panelShown` подію замість `setTimeout` — викликати `_updateFieldsEditability()` одразу після відкриття панелі.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.10 `panel/settings-editor.js:379` — intentional reload delay
 - **Файл:** `view/adminhtml/web/js/editor/panel/settings-editor.js:379`
@@ -883,7 +883,7 @@
 - **Проблема:** `setTimeout(window.location.reload, 1000)` після публікації — дає 1с для UX (показати success state) перед перезавантаженням.
 - **Пропозиція:** Залишити. Задокументувати `/* intentional UX delay before reload */`.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.11 `panel/settings-editor.js:913` — debounce utility
 - **Файл:** `view/adminhtml/web/js/editor/panel/settings-editor.js:906–916`
@@ -891,7 +891,7 @@
 - **Проблема:** Локальна `_debounce(fn, delay)` функція визначена всередині `settings-editor`. Те ж саме потрібно в 8.7 і потенційно деінде.
 - **Пропозиція:** Винести в `view/adminhtml/web/js/editor/utils/debounce.js` як окремий модуль. Імпортувати там де потрібно.
 - **Пріоритет:** 🟡 Medium
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.12 `toolbar/navigation.js` — CSS animation sync (×2)
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/navigation.js:215,261`
@@ -901,7 +901,7 @@
   - `:261` — `setTimeout($panel.hide, 300)` після видалення `.active` — чекає CSS transition (300мс) перед `display:none`.
 - **Пропозиція:** Залишити. Задокументувати зв'язок з CSS transition duration. Для `:215` можна розглянути `requestAnimationFrame` замість 10мс, але різниця незначна.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ### 8.13 `toolbar/toolbar-toggle.js` — intentional delay
 - **Файл:** `view/adminhtml/web/js/editor/toolbar/toolbar-toggle.js:163`
@@ -909,7 +909,7 @@
 - **Проблема:** `setTimeout(_hideToolbar, 100)` при відновленні collapsed-стану — дає час сторінці завантажитись перед приховуванням тулбара.
 - **Пропозиція:** Залишити. Розглянути заміну на `requestAnimationFrame` якщо проблем з мерехтінням не буде.
 - **Пріоритет:** 🟢 Low
-- **Статус:** `[ ] TODO`
+- **Статус:** `[x] DONE — коміт `ecf738e``
 
 ---
 
