@@ -47,6 +47,14 @@ module.exports = {
         '^underscore$':
             '<rootDir>/__mocks__/underscore.js',
 
+        // Magento UI modals
+        '^Magento_Ui/js/modal/confirm$':
+            '<rootDir>/__mocks__/magento-ui-confirm.js',
+        '^Magento_Ui/js/modal/prompt$':
+            '<rootDir>/__mocks__/magento-ui-prompt.js',
+        '^Magento_Ui/js/modal/alert$':
+            '<rootDir>/__mocks__/magento-ui-confirm.js',
+
         // jQuery — з node_modules
         '^jquery$':
             '<rootDir>/node_modules/jquery/dist/jquery.js'
