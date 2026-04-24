@@ -250,6 +250,13 @@ define([
                             log.debug('BCB preview active — skipping link intercept for: ' + href);
                             return;
                         }
+
+                        // When BLB layout builder preview is active (blb_preview=1 in the
+                        // iframe URL), blb-preview.js handles all clicks internally.
+                        if (iframeWindow.location.search.indexOf('blb_preview=1') !== -1) {
+                            log.debug('BLB preview active — skipping link intercept for: ' + href);
+                            return;
+                        }
                         
                         // Skip special links
                         if (_shouldSkipLink(href)) {
