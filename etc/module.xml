@@ -3,6 +3,7 @@
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
     <module name="Swissup_BreezeThemeEditor" setup_version="1.0.0">
         <sequence>
+            <module name="Swissup_Logger"/>
             <module name="Magento_Store"/>
             <module name="Magento_Theme"/>
             <module name="Magento_Backend"/>
