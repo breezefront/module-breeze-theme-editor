@@ -28,7 +28,7 @@
                  <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>
                  <%= data.required ? 'data-required="true"' : '' %>>
                 <div class="bte-color-preview" 
-                     style="background-color: <%= data.hexValue || data.value %>;"></div>
+                     style="--preview-color: <%= data.hexValue || data.value %>;"></div>
             </div>
             <input
                 type="text"

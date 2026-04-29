@@ -41,7 +41,7 @@ define([
                 if (self.isValidHex(value)) {
                     // Update trigger preview
                     var $trigger = $textInput.siblings('.bte-color-trigger');
-                    $trigger.find('.bte-color-preview').css('background-color', value);
+                    $trigger.find('.bte-color-preview').css('--preview-color', value);
                     
                     // 🆕 ALWAYS remove palette reference when user types manually
                     // This fixes the badge issue - without this, BaseHandler.getInputValue()
@@ -312,7 +312,7 @@ define([
                 $textInput.val(hex);
                 
                 // Update trigger preview
-                $trigger.find('.bte-color-preview').css('background-color', hex);
+                $trigger.find('.bte-color-preview').css('--preview-color', hex);
                 
                 // Check if this is a palette cascade update (from PaletteManager)
                 var isPaletteUpdate = $textInput.data('is-palette-update');
@@ -353,7 +353,7 @@ define([
             // On cancel button click — restore original colour and close popup
             pickr.on('cancel', function() {
                 $textInput.val(currentColor);
-                $trigger.find('.bte-color-preview').css('background-color', currentColor);
+                $trigger.find('.bte-color-preview').css('--preview-color', currentColor);
                 self._handleColorChange($textInput, callback);
                 self._closeAllPopups();
             });
@@ -372,7 +372,7 @@ define([
                 
                 // Update text input and trigger preview FIRST (before Pickr)
                 $textInput.val(hex);
-                $trigger.find('.bte-color-preview').css('background-color', hex);
+                $trigger.find('.bte-color-preview').css('--preview-color', hex);
                 
                 // 🆕 Store palette reference for future highlighting
                 $textInput.attr('data-palette-ref', property);
@@ -591,7 +591,7 @@ define([
             
             // Update preview boxes
             $preview.each(function() {
-                $(this).css('background-color', hexValue);
+                $(this).css('--preview-color', hexValue);
             });
             
             // Update Pickr instance if popup is open (popup-instance is stored on $trigger)
