@@ -261,7 +261,18 @@ define([
                 autoReposition: false,
                 
                 // Default color
-                default: currentColor,
+                // If alpha is below 0.15 (~38/255), boost to 0.15 for display so the
+                // palette is visible when the picker opens. The real value is preserved
+                // in currentColor and will be restored on cancel or used as-is on save.
+                default: (function() {
+                    if (currentColor && currentColor.length === 9) {
+                        var alpha = parseInt(currentColor.slice(7, 9), 16);
+                        if (alpha < 38) {
+                            return currentColor.slice(0, 7) + '26'; // 0x26 = 38 ≈ 0.15
+                        }
+                    }
+                    return currentColor;
+                }()),
                 
                 // Disable built-in swatches (we have our own)
                 swatches: null,
