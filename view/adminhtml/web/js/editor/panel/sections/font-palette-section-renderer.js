@@ -197,8 +197,8 @@ define([
             var html = '<div class="bte-font-role-row">';
 
             // Row label (e.g. "Primary")
-            html += '<label class="bte-font-role-label">' +
-                this._escapeHtml(role.label) + '</label>';
+            html += '<span class="bte-font-role-label">' +
+                this._escapeHtml(role.label) + '</span>';
 
             // Font picker widget — same visual structure as consumer field pickers
             // but without a hidden <select> (values flow directly through PanelState).

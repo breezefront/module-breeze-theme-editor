@@ -2,7 +2,7 @@
     <%= data.isModified ? 'bte-field-modified' : '' %> 
     <%= data.isDirty ? 'bte-field-dirty' : '' %>">
     <div class="bte-field-header">
-        <label class="bte-field-label">
+        <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.code %>">
             <%= data.label %>
             <% if (data.required) { %>
                 <span class="bte-required">*</span>
@@ -54,7 +54,8 @@
                             <div class="bte-repeater-item-content">
                                 <% data.fields.forEach(function(subField) { %>
                                     <div class="bte-repeater-field" data-field="<%= subField.code %>">
-                                        <label class="bte-repeater-field-label">
+                                        <% var subFieldId = 'field-' + data.sectionCode + '-' + data.code + '-' + index + '-' + subField.code; %>
+                                        <label class="bte-repeater-field-label" for="<%= subFieldId %>">
                                             <%= subField.label %>
                                             <% if (subField.required) { %>
                                                 <span class="bte-required">*</span>
@@ -64,6 +65,7 @@
                                         <% if (subField.type === 'text' || subField.type === 'url') { %>
                                             <input
                                                 type="<%= subField.type === 'url' ? 'url' : 'text' %>"
+                                                id="<%= subFieldId %>"
                                                 class="bte-text-input bte-repeater-field-input"
                                                 value="<%= item[subField.code] || '' %>"
                                                 placeholder="<%= subField.placeholder || '' %>"
@@ -71,6 +73,7 @@
                                             />
                                         <% } else if (subField.type === 'textarea') { %>
                                             <textarea
+                                                id="<%= subFieldId %>"
                                                 class="bte-textarea bte-repeater-field-input"
                                                 placeholder="<%= subField.placeholder || '' %>"
                                                 data-field="<%= subField.code %>"
@@ -78,13 +81,14 @@
                                         <% } else if (subField.type === 'number') { %>
                                             <input
                                                 type="number"
+                                                id="<%= subFieldId %>"
                                                 class="bte-number-input bte-repeater-field-input"
                                                 value="<%= item[subField.code] || '' %>"
                                                 placeholder="<%= subField.placeholder || '' %>"
                                                 data-field="<%= subField.code %>"
                                             />
                                         <% } else if (subField.type === 'select') { %>
-                                            <select class="bte-select bte-repeater-field-input" data-field="<%= subField.code %>">
+                                            <select id="<%= subFieldId %>" class="bte-select bte-repeater-field-input" data-field="<%= subField.code %>">
                                                 <% (subField.options || []).forEach(function(option) { %>
                                                     <option value="<%= option.value %>" <%= item[subField.code] === option.value ? 'selected' : '' %>>
                                                         <%= option.label %>
@@ -92,9 +96,10 @@
                                                 <% }); %>
                                             </select>
                                         <% } else if (subField.type === 'toggle') { %>
-                                            <label class="bte-toggle">
+                                            <label class="bte-toggle" for="<%= subFieldId %>">
                                                 <input
                                                     type="checkbox"
+                                                    id="<%= subFieldId %>"
                                                     class="bte-toggle-input bte-repeater-field-input"
                                                     <%= item[subField.code] ? 'checked' : '' %>
                                                     data-field="<%= subField.code %>"

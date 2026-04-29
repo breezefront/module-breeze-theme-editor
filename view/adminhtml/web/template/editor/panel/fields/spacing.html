@@ -2,7 +2,7 @@
     <%= data.isModified ? 'bte-field-modified' : '' %> 
     <%= data.isDirty ? 'bte-field-dirty' : '' %>">
     <div class="bte-field-header">
-        <label class="bte-field-label">
+        <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.code %>">
             <%= data.label %>
             <% if (data.required) { %>
                 <span class="bte-required">*</span>
@@ -29,7 +29,7 @@
                     <span class="bte-link-icon">🔗</span>
                 </button>
                 
-                <select class="bte-spacing-unit" data-current-unit="<%= data.spacing.unit %>">
+                <select class="bte-spacing-unit" aria-label="Unit" data-current-unit="<%= data.spacing.unit %>">
                     <% data.allowedUnits.forEach(function(unit) { %>
                         <option value="<%= unit %>" <%= unit === data.spacing.unit ? 'selected' : '' %>><%= unit %></option>
                     <% }); %>
@@ -40,9 +40,10 @@
             <div class="bte-spacing-inputs">
                 <!-- Top -->
                 <div class="bte-spacing-input-group bte-spacing-top">
-                    <label class="bte-spacing-label">Top</label>
+                    <label class="bte-spacing-label" for="field-<%= data.sectionCode %>-<%= data.code %>-top">Top</label>
                     <input
                         type="number"
+                        id="field-<%= data.sectionCode %>-<%= data.code %>-top"
                         class="bte-number-input bte-spacing-value"
                         data-side="top"
                         value="<%= data.spacing.top %>"
@@ -54,9 +55,10 @@
 
                 <!-- Right -->
                 <div class="bte-spacing-input-group bte-spacing-right">
-                    <label class="bte-spacing-label">Right</label>
+                    <label class="bte-spacing-label" for="field-<%= data.sectionCode %>-<%= data.code %>-right">Right</label>
                     <input
                         type="number"
+                        id="field-<%= data.sectionCode %>-<%= data.code %>-right"
                         class="bte-number-input bte-spacing-value"
                         data-side="right"
                         value="<%= data.spacing.right %>"
@@ -68,9 +70,10 @@
 
                 <!-- Bottom -->
                 <div class="bte-spacing-input-group bte-spacing-bottom">
-                    <label class="bte-spacing-label">Bottom</label>
+                    <label class="bte-spacing-label" for="field-<%= data.sectionCode %>-<%= data.code %>-bottom">Bottom</label>
                     <input
                         type="number"
+                        id="field-<%= data.sectionCode %>-<%= data.code %>-bottom"
                         class="bte-number-input bte-spacing-value"
                         data-side="bottom"
                         value="<%= data.spacing.bottom %>"
@@ -82,9 +85,10 @@
 
                 <!-- Left -->
                 <div class="bte-spacing-input-group bte-spacing-left">
-                    <label class="bte-spacing-label">Left</label>
+                    <label class="bte-spacing-label" for="field-<%= data.sectionCode %>-<%= data.code %>-left">Left</label>
                     <input
                         type="number"
+                        id="field-<%= data.sectionCode %>-<%= data.code %>-left"
                         class="bte-number-input bte-spacing-value"
                         data-side="left"
                         value="<%= data.spacing.left %>"
