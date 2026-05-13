@@ -58,7 +58,7 @@ class InvalidateCacheAfterMutation
 
     private function invalidateFpc(): void
     {
-        $this->fullPageCache->clean(\Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG, ['bte_theme_variables']);
+        $this->fullPageCache->clean('matchingAnyTag', ['bte_theme_variables']);
         $this->cacheTypeList->invalidate('full_page');
     }
 }

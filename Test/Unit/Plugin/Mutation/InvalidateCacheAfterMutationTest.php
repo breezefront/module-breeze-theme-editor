@@ -74,7 +74,7 @@ class InvalidateCacheAfterMutationTest extends TestCase
 
         $this->fullPageCache->expects($this->once())
             ->method('clean')
-            ->with(\Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG, ['bte_theme_variables']);
+            ->with('matchingAnyTag', ['bte_theme_variables']);
 
         $this->cacheTypeList->expects($this->once())
             ->method('invalidate')
@@ -98,7 +98,7 @@ class InvalidateCacheAfterMutationTest extends TestCase
 
         $this->fullPageCache->expects($this->once())
             ->method('clean')
-            ->with(\Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG, ['bte_theme_variables']);
+            ->with('matchingAnyTag', ['bte_theme_variables']);
 
         $this->cacheTypeList->expects($this->once())
             ->method('invalidate')
