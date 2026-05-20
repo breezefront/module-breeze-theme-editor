@@ -514,6 +514,32 @@ define([
         },
 
         /**
+         * Suggest a publication title based on the most recent publication.
+         *
+         * - No publications → ''
+         * - Title ending _vN → increment to _v(N+1)
+         * - Plain title → append _v1
+         * - Empty title → ''
+         *
+         * @param  {Array|null} publications
+         * @return {string}
+         */
+        suggestPublicationTitle: function (publications) {
+            if (!publications || !publications.length) {
+                return '';
+            }
+
+            var lastTitle = publications[0].title || '';
+            var match = lastTitle.match(/^(.*?)_v(\d+)$/);
+
+            if (match) {
+                return match[1] + '_v' + (parseInt(match[2], 10) + 1);
+            }
+
+            return lastTitle ? lastTitle + '_v1' : '';
+        },
+
+        /**
          * Extract an error message from either a GraphQL result object or a
          * caught JS Error.  Covers both call-sites:
          *   - .then()  → result may be  { success: false, message: '...' }
