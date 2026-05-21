@@ -211,6 +211,10 @@ define([
                 attrs.push('data-property="' + field.property + '"');
             }
 
+            if (field.selector && field.selector !== ':root') {
+                attrs.push('data-selector="' + field.selector + '"');
+            }
+
             if (field.default !== undefined) {
                 attrs.push('data-default="' + field.default + '"');
             }

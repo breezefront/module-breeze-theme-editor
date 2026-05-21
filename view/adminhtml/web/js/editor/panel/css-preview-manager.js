@@ -302,7 +302,10 @@ define([
                 return false;
             }
             var formattedValue = this._formatValue(value, fieldType, fieldData);
-            changes[varName] = formattedValue;
+            changes[varName] = {
+                value:    formattedValue,
+                selector: (fieldData && fieldData.selector) || ':root'
+            };
 
 
             // When the value is a palette reference (e.g. '--color-brand-amber-primary'),
@@ -323,11 +326,11 @@ define([
                     var hex = paletteColor.value || paletteColor.hex;
                     if (hex) {
                         if (!changes[value]) {
-                            changes[value] = hex;
+                            changes[value] = { value: hex, selector: ':root' };
                         }
                         var rgbVar = value + '-rgb';
                         if (!changes[rgbVar]) {
-                            changes[rgbVar] = ColorUtils.hexToRgb(hex);
+                            changes[rgbVar] = { value: ColorUtils.hexToRgb(hex), selector: ':root' };
                         }
                         // Track what was injected so cleanup can remove it later
                         _fieldPaletteVars[varName] = [value, rgbVar];
@@ -342,7 +345,7 @@ define([
                 var fontRole = FontPaletteManager.getRole(value);
                 if (fontRole) {
                     if (!changes[value]) {
-                        changes[value] = fontRole['default'];
+                        changes[value] = { value: fontRole['default'], selector: ':root' };
                     }
                     _fieldPaletteVars[varName] = [value];
                 }
@@ -548,7 +551,7 @@ define([
         },
 
         /**
-         * Update :root styles in iframe
+         * Update styles in iframe, grouped by CSS selector
          */
         _updateStyles: function() {
             if (!$styleElement) {
@@ -556,16 +559,26 @@ define([
                 return;
             }
 
-            var css = ':root {\n';
-            Object.keys(changes).forEach(function(varName) {
-                css += '    ' + varName + ': ' + changes[varName] + ';\n';
+            var blocks = {};
+            Object.keys(changes).forEach(function (varName) {
+                var entry    = changes[varName];
+                var value    = entry.value;
+                var selector = entry.selector || ':root';
+                if (!blocks[selector]) {
+                    blocks[selector] = [];
+                }
+                blocks[selector].push('    ' + varName + ': ' + value + ';');
             });
-            css += '}';
-            $styleElement.text(css);
-            
+
+            var css = Object.keys(blocks).map(function (selector) {
+                return selector + ' {\n' + blocks[selector].join('\n') + '\n}';
+            }).join('\n');
+
+            $styleElement.text(css || ':root {}');
+
             // Save to localStorage
             this._saveToLocalStorage();
-            
+
             log.debug('CSS Preview updated (' + Object.keys(changes).length + ' vars)');
         },
 
@@ -578,7 +591,14 @@ define([
             try {
                 var stored = StorageHelper.getLivePreviewChanges();
                 if (stored && Object.keys(stored).length > 0) {
-                    changes = stored;
+                    // Migrate old flat format: { '--var': 'value' } → { '--var': { value, selector } }
+                    changes = {};
+                    Object.keys(stored).forEach(function (key) {
+                        var entry = stored[key];
+                        changes[key] = (typeof entry === 'string')
+                            ? { value: entry, selector: ':root' }
+                            : entry;
+                    });
                     this._updateStyles();
                     log.info('Loaded live preview from localStorage: ' + Object.keys(changes).length + ' variables');
                     // Note: syncFieldsFromChanges() is called by panel.js after fields are rendered
@@ -629,7 +649,8 @@ define([
             
             // Iterate over all changes and update corresponding form fields
             Object.keys(changes).forEach(function(property) {
-                var value = changes[property];
+                var entry = changes[property];
+                var value = entry.value;
                 
                 // Find field with this CSS property
                 // Use [data-section][data-field] to match only real form fields,
