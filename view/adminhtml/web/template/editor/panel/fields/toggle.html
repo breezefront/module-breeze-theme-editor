@@ -24,6 +24,7 @@
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
                 data-property="<%= data.property %>"
+                 <%= data.selectorAttr %>
                 data-type="toggle"
                 data-default="<%= data.default %>"
                 <%= (data.value === 'true' || data.value === '1' || data.value === true) ? 'checked' : '' %>

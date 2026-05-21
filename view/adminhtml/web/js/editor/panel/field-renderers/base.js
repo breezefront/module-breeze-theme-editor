@@ -105,7 +105,10 @@ define([
                 validation: field.validation || {},
                 params: field.params || {},
                 fieldId: 'field-' + fieldCode,
-                dependsOn: field.dependsOn || null
+                dependsOn: field.dependsOn || null,
+                selectorAttr: (field.selector && field.selector !== ':root')
+                    ? 'data-selector="' + field.selector + '"'
+                    : ''
             };
         },
 
