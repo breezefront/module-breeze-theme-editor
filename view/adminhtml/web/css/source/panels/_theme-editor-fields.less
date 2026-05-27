@@ -408,6 +408,56 @@
 }
 
 // ============================================================================
+// NUMBER FIELD
+// ============================================================================
+
+.bte-number-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.bte-field-number {
+    .bte-number-input {
+        width: 100%;
+        padding: 8px 12px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid @bte-field-border-translucent;
+        border-radius: 4px;
+        color: @bte-toolbar-text;
+        font-size: 13px;
+
+        &:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        &:focus {
+            outline: none;
+            border-color: @action-primary;
+        }
+
+        &:invalid {
+            border-color: #ff5252;
+        }
+
+        &::-webkit-inner-spin-button,
+        &::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        -moz-appearance: textfield;
+    }
+
+    .bte-number-unit {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+}
+
+// ============================================================================
 // TEXTAREA
 // ============================================================================
 
