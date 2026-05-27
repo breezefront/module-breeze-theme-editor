@@ -33,8 +33,8 @@ class DropLegacyStoreForeignKeys implements SchemaPatchInterface
         $connection = $this->schemaSetup->getConnection();
 
         $fksToDrop = [
-            'breeze_theme_editor_value'       => self::FK_VALUE,
-            'breeze_theme_editor_publication' => self::FK_PUBLICATION,
+            $this->schemaSetup->getTable('breeze_theme_editor_value')       => self::FK_VALUE,
+            $this->schemaSetup->getTable('breeze_theme_editor_publication')  => self::FK_PUBLICATION,
         ];
 
         foreach ($fksToDrop as $table => $fkName) {

@@ -18,7 +18,7 @@ class InitThemeEditorStatus implements DataPatchInterface
     public function apply()
     {
         $connection = $this->resource->getConnection();
-        $table = $connection->getTableName('breeze_theme_editor_status');
+        $table = $this->resource->getTableName('breeze_theme_editor_status');
 
         $statuses = [
             ['code' => 'draft', 'label' => 'Draft', 'sort_order' => 10],

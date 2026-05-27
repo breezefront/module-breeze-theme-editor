@@ -27,7 +27,7 @@ class MigrateValueScope implements DataPatchInterface
         $connection = $this->resource->getConnection();
 
         // Values table: set scope = 'stores' where scope is empty/null (safety net)
-        $valueTable = $connection->getTableName('breeze_theme_editor_value');
+        $valueTable = $this->resource->getTableName('breeze_theme_editor_value');
         $connection->update(
             $valueTable,
             ['scope' => 'stores'],
@@ -35,7 +35,7 @@ class MigrateValueScope implements DataPatchInterface
         );
 
         // Publications table: set scope = 'stores' where scope is empty/null (safety net)
-        $publicationTable = $connection->getTableName('breeze_theme_editor_publication');
+        $publicationTable = $this->resource->getTableName('breeze_theme_editor_publication');
         $connection->update(
             $publicationTable,
             ['scope' => 'stores'],
