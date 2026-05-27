@@ -58,6 +58,6 @@ class MediaQueryResolver
      */
     public static function __set_state(array $array): static
     {
-        return new static();
+        return new self();
     }
 }
