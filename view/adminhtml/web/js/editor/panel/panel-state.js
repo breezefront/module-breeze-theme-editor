@@ -39,6 +39,12 @@ define([
         hiddenFields: {},
 
         /**
+         * Ref alias map: originalKey => [displaySectionCode, ...]
+         * Used to notify ref inputs when original value changes.
+         */
+        refAliases: {},
+
+        /**
          * Initialize state with config
          *
          * @param {Object} config - Theme config from GraphQL
@@ -48,13 +54,28 @@ define([
             this.values = {};
             this.fieldsMap = {};
             this.hiddenFields = {};
+            this.refAliases = {};
             // Don't reset listeners - they should persist across config reloads
 
             // Build values map and fields lookup
             if (config && config.sections) {
                 config.sections.forEach(function(section) {
                     section.fields.forEach(function(field) {
-                        var key = section.code + '.' + field.code;
+                        // For ref fields: state is stored under original section key
+                        var stateSectionCode = field.originalSectionCode || section.code;
+                        var key = stateSectionCode + '.' + field.code;
+
+                        // Register ref alias: originalKey => display section codes
+                        if (field.originalSectionCode && field.originalSectionCode !== section.code) {
+                            if (!this.refAliases[key]) {
+                                this.refAliases[key] = [];
+                            }
+                            this.refAliases[key].push(section.code);
+                            log.debug('Ref alias registered: ' + key + ' displayed in ' + section.code);
+                            // Don't create duplicate state — original section handles it
+                            return;
+                        }
+
                         var currentValue = field.value !== null && field.value !== undefined
                             ? field.value
                             : field.default;
@@ -84,7 +105,7 @@ define([
                 }.bind(this));
             }
 
-            log.info('State initialized: ' + Object.keys(this.values).length + ' values');
+            log.info('State initialized: ' + Object.keys(this.values).length + ' values, ' + Object.keys(this.refAliases).length + ' ref aliases');
         },
 
         /**
@@ -149,6 +170,19 @@ define([
             state.isDirty = (newValue !== state.savedValue);
 
             log.debug('Value updated: key=' + key + ' value=' + newValue + ' savedValue=' + state.savedValue + ' isDirty=' + state.isDirty + ' isModified=' + state.isModified);
+
+            // Notify ref inputs displayed in other sections that original value changed
+            if (this.refAliases[key] && this.refAliases[key].length) {
+                this.refAliases[key].forEach(function(displaySectionCode) {
+                    log.debug('Notifying ref alias: ' + displaySectionCode + '.' + fieldCode);
+                    $(document).trigger('bte:ref-value-changed', {
+                        originalSectionCode: sectionCode,
+                        displaySectionCode: displaySectionCode,
+                        fieldCode: fieldCode,
+                        value: newValue
+                    });
+                });
+            }
         },
 
         /**
@@ -411,6 +445,7 @@ define([
             this.values = {};
             this.fieldsMap = {};
             this.hiddenFields = {};
+            this.refAliases = {};
             this.listeners = [];
             log.info('State cleared');
         },
@@ -476,6 +511,30 @@ define([
             'hiddenFields updated: "' + data.fieldCode + '" → ' +
             (data.hidden ? 'hidden' : 'visible')
         );
+    });
+
+    // Sync ref inputs: when original value changes, update all inputs displayed via ref
+    $(document).on('bte:ref-value-changed', function (e, data) {
+        if (!data || !data.displaySectionCode || !data.fieldCode) {
+            return;
+        }
+
+        var $refInput = $('[data-section="' + data.displaySectionCode + '"]' +
+                         '[data-field="' + data.fieldCode + '"]' +
+                         '[data-original-section="' + data.originalSectionCode + '"]');
+
+        if (!$refInput.length) {
+            return;
+        }
+
+        // Update input value without triggering change event (avoid re-entry)
+        if ($refInput.attr('type') === 'checkbox') {
+            $refInput.prop('checked', data.value);
+        } else {
+            $refInput.val(data.value);
+        }
+
+        log.debug('Ref input synced: ' + data.displaySectionCode + '.' + data.fieldCode + ' = ' + data.value);
     });
 
     return PanelState;

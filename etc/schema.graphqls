@@ -244,6 +244,8 @@ type BreezeThemeEditorField {
     isModified: Boolean! @doc(description: "Is different from default")
     property: String @doc(description: "CSS property name (e.g., '--max-width' or 'max-width')")
     selector: String @doc(description: "CSS selector override (e.g., '.columns-container')")
+    media: String @doc(description: "CSS media query (alias or raw, e.g. 'mobile' resolves to '(max-width: 767px)')")
+    mediaAlias: String @doc(description: "Original media value from settings.json before alias resolution (e.g. 'mobile')")
     required: Boolean
     validation: BreezeThemeEditorFieldValidation
     placeholder: String
@@ -253,6 +255,7 @@ type BreezeThemeEditorField {
     format: String @doc(description: "Color format: 'hex' (Breeze 3.0) or 'rgb' (Breeze 2.0). Auto-detected from default value if not explicitly specified.")
     params: BreezeThemeEditorFieldParamsInterface @doc(description: "Type-specific parameters")
     dependsOn: BreezeThemeEditorFieldDependency @doc(description: "Show only if condition met")
+    originalSectionCode: String @doc(description: "Original section code when field is displayed via ref in another section")
 }
 
 type BreezeThemeEditorFieldValidation {

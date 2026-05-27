@@ -109,16 +109,35 @@ class CssGenerator
      *
      * Output order:
      *   1. @import rules for web fonts (if any), followed by a blank line
-     *   2. :root block — palette vars, then root-scoped field vars
-     *   3. Additional selector blocks in insertion order
+     *   2. :root block — palette vars, then root-scoped field vars (no media)
+     *   3. Additional no-media selector blocks in insertion order
+     *   4. @media blocks — each contains grouped selector blocks
+     *
+     * selectorBlocks keys:
+     *   - Plain selector (e.g. ':root', '.hero') → no media
+     *   - 'media||selector' (e.g. '(max-width: 767px)||:root') → inside @media
      *
      * @param array $paletteVarsToEmit  cssVar => rawHexValue
-     * @param array $selectorBlocks     selector => [lines]
+     * @param array $selectorBlocks     key => [lines] (plain or 'media||selector')
      * @param array $fontImports        External stylesheet URLs
      * @return string
      */
     private function renderCss(array $paletteVarsToEmit, array $selectorBlocks, array $fontImports = []): string
     {
+        // Separate no-media blocks from @media blocks
+        $noMediaBlocks = [];
+        $mediaBlocks   = [];  // media => [ selector => [lines] ]
+
+        foreach ($selectorBlocks as $key => $lines) {
+            if (str_contains($key, '||')) {
+                [$media, $selector] = explode('||', $key, 2);
+                $mediaBlocks[$media][$selector] = $lines;
+            } else {
+                $noMediaBlocks[$key] = $lines;
+            }
+        }
+
+        // Build :root lines (palette + no-media :root field vars)
         $rootLines = [];
 
         if (!empty($paletteVarsToEmit)) {
@@ -128,10 +147,11 @@ class CssGenerator
             $rootLines[] = "\n";
         }
 
-        foreach ($selectorBlocks[':root'] ?? [] as $line) {
+        foreach ($noMediaBlocks[':root'] ?? [] as $line) {
             $rootLines[] = $line;
         }
 
+        // Assemble CSS
         $css = '';
 
         foreach ($fontImports as $url) {
@@ -143,11 +163,21 @@ class CssGenerator
 
         $css .= ":root {\n" . implode('', $rootLines) . "}\n";
 
-        foreach ($selectorBlocks as $selector => $lines) {
+        // No-media non-root blocks
+        foreach ($noMediaBlocks as $selector => $lines) {
             if ($selector === ':root') {
                 continue;
             }
             $css .= "$selector {\n" . implode('', $lines) . "}\n";
+        }
+
+        // @media blocks — each query wraps all its selector blocks
+        foreach ($mediaBlocks as $media => $selectors) {
+            $inner = '';
+            foreach ($selectors as $selector => $lines) {
+                $inner .= "$selector {\n" . implode('', $lines) . "}\n";
+            }
+            $css .= "@media $media {\n$inner}\n";
         }
 
         return $css;

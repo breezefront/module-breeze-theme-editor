@@ -72,8 +72,11 @@ define([
 
             var fieldCode = field.code || 'unknown';
 
+            // For ref fields: state is stored under the original section, not the display section
+            var stateSectionCode = field.originalSectionCode || sectionCode;
+
             // ✅ Get runtime state from PanelState (if initialized)
-            var fieldState = PanelState.getFieldState(sectionCode, fieldCode);
+            var fieldState = PanelState.getFieldState(stateSectionCode, fieldCode);
 
             // Use runtime state if available, otherwise fallback to field data
             var currentValue = fieldState
@@ -90,6 +93,7 @@ define([
 
             return {
                 sectionCode: sectionCode,
+                originalSectionCode: field.originalSectionCode || null,
                 code: fieldCode,
                 label: field.label || 'Unnamed Field',
                 description: field.description || '',
@@ -101,14 +105,21 @@ define([
                 required: !!field.required,
                 isModified: isModified,
                 isDirty: isDirty,
-                badgesHtml: this.renderBadges(isDirty, isModified, sectionCode, fieldCode),
+                badgesHtml: this.renderBadges(isDirty, isModified, stateSectionCode, fieldCode),
                 validation: field.validation || {},
                 params: field.params || {},
                 fieldId: 'field-' + fieldCode,
                 dependsOn: field.dependsOn || null,
                 selectorAttr: (field.selector && field.selector !== ':root')
                     ? 'data-selector="' + field.selector + '"'
-                    : ''
+                    : '',
+                mediaAttr: field.media
+                    ? 'data-media="' + field.media + '"'
+                    : '',
+                mediaDeviceAttr: BadgeRenderer.isKnownMediaAlias(field.mediaAlias)
+                    ? 'data-media-device="' + field.mediaAlias + '"'
+                    : '',
+                mediaBadgeHtml: BadgeRenderer.renderMediaBadge(field.mediaAlias)
             };
         },
 
@@ -218,8 +229,21 @@ define([
                 attrs.push('data-selector="' + field.selector + '"');
             }
 
+            if (field.media) {
+                attrs.push('data-media="' + field.media + '"');
+            }
+
+            if (field.mediaAlias && BadgeRenderer.isKnownMediaAlias(field.mediaAlias)) {
+                attrs.push('data-media-device="' + field.mediaAlias + '"');
+            }
+
             if (field.default !== undefined) {
                 attrs.push('data-default="' + field.default + '"');
+            }
+
+            // For ref fields: store original section so handlers use correct DB key
+            if (field.originalSectionCode && field.originalSectionCode !== sectionCode) {
+                attrs.push('data-original-section="' + field.originalSectionCode + '"');
             }
 
             return attrs.join(' ');

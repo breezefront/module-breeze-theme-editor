@@ -838,6 +838,100 @@ class ConfigProviderTest extends TestCase
     }
 
     // =========================================================================
+    // Ref entries
+    // =========================================================================
+
+    /**
+     * Ref entry (has 'ref', no 'id') is always appended — never merged by id.
+     */
+    public function testMergeByIdAppendsRefEntryWithoutId(): void
+    {
+        $baseSettings = [
+            ['id' => 'primary_color', 'type' => 'color', 'default' => '#fff']
+        ];
+
+        $overrideSettings = [
+            ['ref' => 'general.primary_color', 'label' => 'Brand Color']
+        ];
+
+        $reflection = new \ReflectionClass($this->configProvider);
+        $method = $reflection->getMethod('mergeSettings');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->configProvider, $baseSettings, $overrideSettings);
+
+        $this->assertCount(2, $result);
+        $this->assertEquals('primary_color', $result[0]['id']);
+        $this->assertEquals('general.primary_color', $result[1]['ref']);
+        $this->assertEquals('Brand Color', $result[1]['label']);
+    }
+
+    /**
+     * getAllDefaults() skips ref entries — only original key gets a default.
+     */
+    public function testGetAllDefaultsSkipsRefEntries(): void
+    {
+        $config = [
+            'version' => '1.0',
+            'sections' => [
+                [
+                    'id' => 'general',
+                    'settings' => [
+                        ['id' => 'primary_color', 'type' => 'color', 'default' => '#1979c3']
+                    ]
+                ],
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        ['ref' => 'general.primary_color', 'label' => 'Brand Color']
+                    ]
+                ]
+            ]
+        ];
+
+        $reflection = new \ReflectionClass($this->configProvider);
+        $cacheProperty = $reflection->getProperty('configCache');
+        $cacheProperty->setAccessible(true);
+        $cacheProperty->setValue($this->configProvider, ['inherited_1' => $config]);
+
+        $defaults = $this->configProvider->getAllDefaults(1);
+
+        $this->assertArrayHasKey('general.primary_color', $defaults);
+        $this->assertEquals('#1979c3', $defaults['general.primary_color']);
+        $this->assertArrayNotHasKey('typography.primary_color', $defaults);
+        $this->assertCount(1, array_filter(array_keys($defaults), fn($k) => str_contains($k, 'primary_color')));
+    }
+
+    /**
+     * Normal settings merged by id + ref appended — both survive, no corruption.
+     */
+    public function testMergeByIdDoesNotCorruptWhenRefAndNormalSettingCoexist(): void
+    {
+        $baseSettings = [
+            ['id' => 'font_size', 'type' => 'range', 'default' => '16px']
+        ];
+
+        $overrideSettings = [
+            ['id' => 'font_size', 'default' => '18px'],
+            ['ref' => 'general.primary_color']
+        ];
+
+        $reflection = new \ReflectionClass($this->configProvider);
+        $method = $reflection->getMethod('mergeSettings');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->configProvider, $baseSettings, $overrideSettings);
+
+        $this->assertCount(2, $result);
+        // Normal setting merged by id
+        $this->assertEquals('font_size', $result[0]['id']);
+        $this->assertEquals('18px', $result[0]['default']);
+        $this->assertEquals('range', $result[0]['type']); // preserved from base
+        // Ref appended as-is
+        $this->assertEquals('general.primary_color', $result[1]['ref']);
+    }
+
+    // =========================================================================
     // getThemeIdsWithConfigFile
     // =========================================================================
 

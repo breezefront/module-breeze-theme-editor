@@ -124,6 +124,12 @@ class ConfigProvider
     {
         $merged = $base;
         foreach ($override as $overrideItem) {
+            // Ref entries have no 'id' — always append, never merge by id
+            if (isset($overrideItem['ref']) && !isset($overrideItem['id'])) {
+                $merged[] = $overrideItem;
+                continue;
+            }
+
             $found = false;
             foreach ($merged as $idx => &$baseItem) {
                 if ($baseItem['id'] === $overrideItem['id']) {
@@ -237,6 +243,10 @@ class ConfigProvider
         $defaults = [];
         foreach ($config['sections'] ?? [] as $section) {
             foreach ($section['settings'] ?? [] as $setting) {
+                // Ref entries have no own default — they resolve to the original setting's key
+                if (isset($setting['ref'])) {
+                    continue;
+                }
                 if (isset($setting['default'])) {
                     $defaults[$section['id'] . '.' . $setting['id']] = $setting['default'];
                 }

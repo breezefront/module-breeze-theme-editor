@@ -12,6 +12,7 @@
             <% } %>
         </label>
         <%= data.badgesHtml %>
+        <%= data.mediaBadgeHtml %>
     </div>
 
     <% if (data.description) { %>
@@ -28,6 +29,8 @@
             data-field="<%= data.code %>"
             data-property="<%= data.property %>"
                  <%= data.selectorAttr %>
+                 <%= data.mediaAttr %>
+                 <%= data.mediaDeviceAttr %>
             data-type="code"
             data-default="<%= data.default %>"
             data-language="<%= (data.params && data.params.language) || 'css' %>"

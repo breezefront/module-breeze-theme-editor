@@ -25,6 +25,14 @@ define([
             paletteChangedTemplate, paletteResetTemplate, paletteModifiedTemplate) {
     'use strict';
 
+    var MEDIA_DEVICE_ALIASES = ['mobile', 'tablet', 'desktop'];
+
+    var MEDIA_DEVICE_ICONS = {
+        desktop: require.toUrl('Swissup_BreezeThemeEditor/images/Desktop.svg'),
+        tablet:  require.toUrl('Swissup_BreezeThemeEditor/images/Tablet.svg'),
+        mobile:  require.toUrl('Swissup_BreezeThemeEditor/images/Phone.svg')
+    };
+
     return {
         /**
          * Compiled template cache
@@ -151,6 +159,34 @@ define([
             }
 
             return html;
+        },
+
+        /**
+         * Check if alias is a known device alias
+         *
+         * @param {String} alias
+         * @returns {Boolean}
+         */
+        isKnownMediaAlias: function(alias) {
+            return !!alias && MEDIA_DEVICE_ALIASES.indexOf(alias) !== -1;
+        },
+
+        /**
+         * Render media device badge with SVG icon
+         *
+         * @param {String} alias - 'mobile' | 'tablet' | 'desktop'
+         * @returns {String} HTML or empty string
+         */
+        renderMediaBadge: function(alias) {
+            if (!this.isKnownMediaAlias(alias)) {
+                return '';
+            }
+            var label = alias.charAt(0).toUpperCase() + alias.slice(1);
+            var icon  = MEDIA_DEVICE_ICONS[alias];
+            return '<span class="bte-badge bte-badge-media" title="' + label + '">'
+                 + '<img src="' + icon + '" width="12" height="12" alt="">'
+                 + ' ' + label
+                 + '</span>';
         },
 
         /**

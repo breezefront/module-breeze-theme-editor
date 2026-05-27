@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Service\Css;
 
+use Swissup\BreezeThemeEditor\Model\Utility\MediaQueryResolver;
+
 /**
  * Builds the data structures needed to render CSS blocks.
  *
@@ -14,17 +16,16 @@ namespace Swissup\BreezeThemeEditor\Model\Service\Css;
 class CssVariableBuilder
 {
     public function __construct(
-        private CssValueFormatter $formatter
+        private CssValueFormatter $formatter,
+        private MediaQueryResolver $mediaQueryResolver = new MediaQueryResolver()
     ) {}
 
     /**
      * Build a flat field lookup map from the sections config.
      *
-     * Returns [ 'sectionId.settingId' => fieldConfig ] where each entry
-     * has an additional '_selector' key with the resolved CSS selector:
-     * - Setting-level 'selector' takes priority over section-level 'selector'
-     * - Falls back to ':root' when neither is set
-     * - Array selectors are joined with ', '
+     * Returns [ 'sectionId.settingId' => fieldConfig ] where each entry has:
+     * - '_selector': resolved CSS selector (':root' default)
+     * - '_media': resolved media query string or null
      *
      * @param array $sections
      * @return array
@@ -40,6 +41,7 @@ class CssVariableBuilder
                 $setting['_selector'] = is_array($rawSelector)
                     ? implode(', ', $rawSelector)
                     : $rawSelector;
+                $setting['_media'] = $this->mediaQueryResolver->resolve($setting['media'] ?? null);
                 $fieldMap[$key] = $setting;
             }
         }
@@ -47,7 +49,7 @@ class CssVariableBuilder
     }
 
     /**
-     * Group CSS variable lines by their target selector.
+     * Group CSS variable lines by their target selector (and optional media query).
      *
      * Skips:
      * - Null / empty values
@@ -55,7 +57,9 @@ class CssVariableBuilder
      * - Values equal to their field default
      * - Fields without a 'property' key
      *
-     * Returns [ selector => [ 'line1', 'line2', ... ], ... ]
+     * Returns:
+     * - No media:  [ selector => [ 'line', ... ] ]
+     * - With media: [ 'media||selector' => [ 'line', ... ] ]
      *
      * @param array $values  Rows from the DB (section_code / setting_code / value)
      * @param array $fieldMap  Built by buildFieldMap()
@@ -101,7 +105,10 @@ class CssVariableBuilder
             $line .= "\n";
 
             $selector = $field['_selector'] ?? ':root';
-            $blocks[$selector][] = $line;
+            $media    = $field['_media']    ?? null;
+            $blockKey = $media !== null ? ($media . '||' . $selector) : $selector;
+
+            $blocks[$blockKey][] = $line;
         }
 
         return $blocks;

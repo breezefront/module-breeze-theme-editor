@@ -35,6 +35,8 @@ define([
                         isModified
                         property
                         selector
+                        media
+                        mediaAlias
                         required
                         placeholder
                         helpText

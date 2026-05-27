@@ -304,7 +304,8 @@ define([
             var formattedValue = this._formatValue(value, fieldType, fieldData);
             changes[varName] = {
                 value:    formattedValue,
-                selector: (fieldData && fieldData.selector) || ':root'
+                selector: (fieldData && fieldData.selector) || ':root',
+                media:    (fieldData && fieldData.media)    || null
             };
 
 
@@ -559,21 +560,44 @@ define([
                 return;
             }
 
-            var blocks = {};
+            var noMediaBlocks = {};
+            var mediaGroups   = {};  // media => { selector => [lines] }
+
             Object.keys(changes).forEach(function (varName) {
                 var entry    = changes[varName];
                 var value    = entry.value;
                 var selector = entry.selector || ':root';
-                if (!blocks[selector]) {
-                    blocks[selector] = [];
+                var media    = entry.media    || null;
+                var line     = '    ' + varName + ': ' + value + ';';
+
+                if (!media) {
+                    if (!noMediaBlocks[selector]) { noMediaBlocks[selector] = []; }
+                    noMediaBlocks[selector].push(line);
+                } else {
+                    if (!mediaGroups[media]) { mediaGroups[media] = {}; }
+                    if (!mediaGroups[media][selector]) { mediaGroups[media][selector] = []; }
+                    mediaGroups[media][selector].push(line);
                 }
-                blocks[selector].push('    ' + varName + ': ' + value + ';');
             });
 
-            var css = Object.keys(blocks).map(function (selector) {
-                return selector + ' {\n' + blocks[selector].join('\n') + '\n}';
-            }).join('\n');
+            var parts = [];
 
+            // No-media blocks
+            Object.keys(noMediaBlocks).forEach(function (selector) {
+                parts.push(selector + ' {\n' + noMediaBlocks[selector].join('\n') + '\n}');
+            });
+
+            // @media blocks
+            Object.keys(mediaGroups).forEach(function (media) {
+                var inner = Object.keys(mediaGroups[media]).map(function (selector) {
+                    return '    ' + selector + ' {\n' +
+                        mediaGroups[media][selector].map(function (l) { return '    ' + l; }).join('\n') +
+                        '\n    }';
+                }).join('\n');
+                parts.push('@media ' + media + ' {\n' + inner + '\n}');
+            });
+
+            var css = parts.join('\n');
             $styleElement.text(css || ':root {}');
 
             // Save to localStorage
@@ -596,8 +620,8 @@ define([
                     Object.keys(stored).forEach(function (key) {
                         var entry = stored[key];
                         changes[key] = (typeof entry === 'string')
-                            ? { value: entry, selector: ':root' }
-                            : entry;
+                            ? { value: entry, selector: ':root', media: null }
+                            : { value: entry.value, selector: entry.selector || ':root', media: entry.media || null };
                     });
                     this._updateStyles();
                     log.info('Loaded live preview from localStorage: ' + Object.keys(changes).length + ' variables');

@@ -9,6 +9,7 @@
             <% } %>
         </label>
         <%= data.badgesHtml %>
+        <%= data.mediaBadgeHtml %>
     </div>
 
     <% if (data.description) { %>
@@ -25,6 +26,8 @@
                 data-field="<%= data.code %>"
                 data-property="<%= data.property %>"
                  <%= data.selectorAttr %>
+                 <%= data.mediaAttr %>
+                 <%= data.mediaDeviceAttr %>
                 data-type="toggle"
                 data-default="<%= data.default %>"
                 <%= (data.value === 'true' || data.value === '1' || data.value === true) ? 'checked' : '' %>

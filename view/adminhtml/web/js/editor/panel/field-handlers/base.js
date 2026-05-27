@@ -89,11 +89,16 @@ define([
          * @returns {Object}
          */
         extractFieldData:  function($input) {
+            // For ref fields: data-original-section holds the real DB key section
+            var originalSection = $input.data('original-section');
+            var displaySection  = $input.data('section');
+
             return {
-                sectionCode: $input.data('section'),
+                sectionCode: originalSection || displaySection,
                 fieldCode: $input.data('field'),
                 property: $input.data('property') || $input.data('css-var'),
                 selector: $input.data('selector') || ':root',
+                media: $input.data('media') || null,
                 type: $input.data('type'),
                 value: this.getInputValue($input),
                 defaultValue: $input.data('default')

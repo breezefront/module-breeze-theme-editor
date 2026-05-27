@@ -9,6 +9,7 @@
             <% } %>
         </label>
         <%= data.badgesHtml %>
+        <%= data.mediaBadgeHtml %>
     </div>
 
     <% if (data.description) { %>
@@ -24,6 +25,8 @@
             data-field="<%= data.code %>"
             data-property="<%= data.property %>"
                  <%= data.selectorAttr %>
+                 <%= data.mediaAttr %>
+                 <%= data.mediaDeviceAttr %>
             data-type="font_picker"
             data-default="<%= data.default %>"
             data-font-stylesheets="<%- JSON.stringify(data.fontStylesheetMap || {}) %>"

@@ -9,6 +9,7 @@
             <% } %>
         </label>
         <%= data.badgesHtml %>
+        <%= data.mediaBadgeHtml %>
     </div>
 
     <% if (data.description) { %>
@@ -22,6 +23,8 @@
                  data-field="<%= data.code %>"
                  data-property="<%= data.property %>"
                  <%= data.selectorAttr %>
+                 <%= data.mediaAttr %>
+                 <%= data.mediaDeviceAttr %>
                  data-palette="<%= data.palette %>"
                  data-type="color"
                  data-default="<%= data.default %>"
@@ -42,6 +45,8 @@
                 data-field="<%= data.code %>"
                 data-property="<%= data.property %>"
                  <%= data.selectorAttr %>
+                 <%= data.mediaAttr %>
+                 <%= data.mediaDeviceAttr %>
                 data-default="<%= data.default %>"
                 data-type="color"
                 <% if (data.format) { %>data-format="<%= data.format %>"<% } %>

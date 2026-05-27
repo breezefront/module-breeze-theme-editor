@@ -37,7 +37,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state',
     'Swissup_BreezeThemeEditor/js/editor/panel/depends-evaluator',
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog',
-    'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
+    'Swissup_BreezeThemeEditor/js/editor/utils/bsync',
+    'Swissup_BreezeThemeEditor/js/editor/panel/ref-sync'
 ], function (
     $,
     widget,
@@ -63,7 +64,8 @@ define([
     PublicationState,
     _dependsEvaluator,
     Dialog,
-    Bsync
+    Bsync,
+    RefSync
 ) {
     'use strict';
 
@@ -114,6 +116,7 @@ define([
             this._bind();
             this._initPreview();
             this._initPanelTheme();
+            RefSync.init(this.element);
 
             this.options.status = PublicationState.get();
 
@@ -185,9 +188,10 @@ define([
                 self._updateChangesCount();
                 FieldHandlers.updateBadges(self.element, fieldData.sectionCode, fieldData.fieldCode);
                 $(document).trigger('bte:field-changed', [{
-                    element:   self.element,
-                    fieldCode: fieldData.fieldCode,
-                    value:     fieldData.value
+                    element:      self.element,
+                    sectionCode:  fieldData.sectionCode,
+                    fieldCode:    fieldData.fieldCode,
+                    value:        fieldData.value
                 }]);
             });
 
@@ -206,6 +210,11 @@ define([
             $(document).on('loadThemeEditorFromPublication', function (e, data) {
                 log.info('Loading config from publication: ' + data.publicationId);
                 self._loadConfigFromPublication(data.publicationId);
+            });
+
+            $(document).on('deviceChanged', function (e, device) {
+                log.info('Device changed to: ' + device);
+                self._applyDeviceToPanel(device);
             });
 
             $(document).on('scopeChanged', function (e, scope, scopeId) {
@@ -324,6 +333,11 @@ define([
         _renderSections: function (sections) {
             SectionRenderer.render(this, sections);
             $(document).trigger('bte:sections-rendered', [{ element: this.element }]);
+
+            var $switcher = $(Constants.SELECTORS.DEVICE_SWITCHER);
+            if ($switcher.length) {
+                this._applyDeviceToPanel($switcher.breezeDeviceSwitcher('getDevice'));
+            }
         },
 
         _updateFieldsEditability: function () {
@@ -584,10 +598,22 @@ define([
          *
          * @param {Object} data  - PanelState event data { sectionCode, fieldCode, value }
          */
+        _applyDeviceToPanel: function (activeDevice) {
+            this.element.find('[data-media-device]').each(function () {
+                var $input  = $(this);
+                var device  = $input.data('media-device');
+                var matches = (device === activeDevice);
+                $input.prop('disabled', !matches);
+                $input.closest('.bte-field').toggleClass('bte-field-media-inactive', !matches);
+            });
+        },
+
         _applyFieldResetToPreview: function (data) {
             var $field      = this.element.find('[data-section="' + data.sectionCode + '"][data-field="' + data.fieldCode + '"]').first();
             var fieldCssVar = $field.attr('data-property');
             var fieldType   = ($field.attr('data-type') || '').toLowerCase();
+            var selector    = $field.attr('data-selector') || ':root';
+            var media       = $field.attr('data-media')    || null;
 
             if (!fieldCssVar || data.value === undefined) {
                 return;
@@ -598,7 +624,9 @@ define([
             } else {
                 CssPreviewManager.setVariable(fieldCssVar, data.value, fieldType, {
                     format:       $field.attr('data-format'),
-                    defaultValue: $field.attr('data-default')
+                    defaultValue: $field.attr('data-default'),
+                    selector:     selector,
+                    media:        media
                 });
             }
         },

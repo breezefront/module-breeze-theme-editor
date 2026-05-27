@@ -78,6 +78,34 @@
     gap: 2px;
 }
 
+// Media device badge — shows which breakpoint (Mobile / Tablet / Desktop) the field targets
+.bte-badge-media {
+    background: transparent;
+    color: inherit;
+    border: none;
+    padding: 0 2px;
+    gap: 3px;
+    font-size: 9px;
+
+    img {
+        display: inline;
+        width: 12px;
+        height: 12px;
+        opacity: 0.5;
+        vertical-align: middle;
+    }
+}
+
+// Field dimmed when the active device does not match the field's media alias
+.bte-field-media-inactive {
+    opacity: 0.45;
+    pointer-events: none;
+
+    .bte-badge-media {
+        opacity: 0.6;
+    }
+}
+
 // Reset button (↺ — discard unsaved changes, appears inside .bte-badge-group after "Changed")
 .bte-field-reset-btn {
     background: transparent;
