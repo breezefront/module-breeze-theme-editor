@@ -454,21 +454,21 @@ define([
 
             // Assert — field var formatted correctly
             this.assertEquals(
-                changes[fieldVar],
+                changes[fieldVar] && changes[fieldVar].value !== undefined ? changes[fieldVar].value : changes[fieldVar],
                 'var(' + testVar + '-rgb)',
                 'Field var should be set to var(' + testVar + '-rgb)'
             );
 
             // Assert — palette HEX injected
             this.assertEquals(
-                changes[testVar],
+                changes[testVar] && changes[testVar].value !== undefined ? changes[testVar].value : changes[testVar],
                 expectedHex,
                 'Palette HEX var ' + testVar + ' should be injected as ' + expectedHex
             );
 
             // Assert — palette RGB injected
             this.assertEquals(
-                changes[testVar + '-rgb'],
+                changes[testVar + '-rgb'] && changes[testVar + '-rgb'].value !== undefined ? changes[testVar + '-rgb'].value : changes[testVar + '-rgb'],
                 expectedRgb,
                 'Palette RGB var ' + testVar + '-rgb should be injected as "' + expectedRgb + '"'
             );
