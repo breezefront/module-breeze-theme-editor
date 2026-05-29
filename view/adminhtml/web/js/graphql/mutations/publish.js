@@ -26,16 +26,14 @@ define([
      * @param {Number} scopeId
      * @param {String} title - Publication title
      * @param {String} description - Optional
-     * @param {Boolean} notifyUsers
      * @returns {Promise}
      */
-    return function publish(scope, scopeId, title, description, notifyUsers) {
+    return function publish(scope, scopeId, title, description) {
         return client.execute(mutation, {
             input:  {
                 scope:        { type: scope || 'stores', scopeId: scopeId },
                 title:        title,
-                description:  description || null,
-                notifyUsers:  notifyUsers || false
+                description:  description || null
             }
         }, 'PublishDraft');
     };
