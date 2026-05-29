@@ -12,6 +12,8 @@ define([
                     sectionCode
                     fieldCode
                     value
+                    isModified
+                    updatedAt
                 }
                 appliedCount
             }

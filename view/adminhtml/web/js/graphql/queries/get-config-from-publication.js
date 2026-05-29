@@ -25,6 +25,9 @@ define([
                         isModified
                         property
                         selector
+                        media
+                        mediaAlias
+                        fontPalette
                         required
                         validation {
                             minLength
@@ -110,6 +113,7 @@ define([
                     lastPublished
                     hasUnpublishedChanges
                     draftChangesCount
+                    modifiedCount
                 }
                 palettes {
                     id
