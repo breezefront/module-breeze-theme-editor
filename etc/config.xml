@@ -3,7 +3,7 @@
     <default>
         <breeze_theme_editor>
             <general>
-                <enabled>0</enabled>
+                <enabled>1</enabled>
             </general>
         </breeze_theme_editor>
     </default>
