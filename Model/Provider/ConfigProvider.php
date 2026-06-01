@@ -324,7 +324,7 @@ class ConfigProvider
     private function findConfigFile($theme): ?string
     {
         $themePath = $theme->getFullPath();
-        $appDesignPath = BP . '/app/design/' . $themePath . '/' . self::CONFIG_FILE;
+        $appDesignPath = (defined('BP') ? \BP : '') . '/app/design/' . $themePath . '/' . self::CONFIG_FILE;
         if (file_exists($appDesignPath)) {
             return $appDesignPath;
         }
