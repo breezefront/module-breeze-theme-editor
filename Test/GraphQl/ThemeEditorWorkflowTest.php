@@ -3,14 +3,6 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Test\GraphQl;
 
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Integration\Api\AdminTokenServiceInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\TestFramework\Helper\Bootstrap;
-use Magento\TestFramework\TestCase\GraphQlAbstract;
-use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
-use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
-
 /**
  * End-to-end GraphQL API tests for BreezeThemeEditor workflows.
  *
@@ -29,101 +21,14 @@ use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
  *     -c dev/tests/api-functional/phpunit_graphql.xml \
  *     vendor/swissup/module-breeze-theme-editor/Test/GraphQl/ThemeEditorWorkflowTest.php
  */
-class ThemeEditorWorkflowTest extends GraphQlAbstract
+class ThemeEditorWorkflowTest extends AbstractThemeEditorGraphQlTest
 {
-    /**
-     * Field types that cannot be saved with a plain string test value.
-     */
-    private const SKIP_TYPES = [
-        'HEADING',
-        'SOCIAL_LINKS',
-        'REPEATER',
-        'IMAGE_UPLOAD',
-        'CODE',
-        'SPACING',
-        'COLOR',
-        'COLOR_SCHEME',
-        'FONT_PICKER',
-        'ICON_SET_PICKER',
-        'SELECT',
-    ];
-
-    /**
-     * Preferred field types for discovery, in priority order.
-     * TOGGLE/CHECKBOX are safest — just a boolean flip.
-     */
-    private const PREFERRED_TYPES = ['TOGGLE', 'CHECKBOX', 'TEXT', 'NUMBER', 'RANGE'];
-
-    /** @var int|null First store ID that has a Breeze theme assigned. */
-    private static ?int $storeId = null;
-
-    /** @var int|null Theme ID for that store. */
-    private static ?int $themeId = null;
-
-    /** @var string|null Section code of the discovered test field. */
-    private static ?string $sectionCode = null;
-
-    /** @var string|null Field code of the discovered test field. */
-    private static ?string $fieldCode = null;
-
-    /** @var string|null A safe value to write that is different from the current value. */
-    private static ?string $testValue = null;
-
-    /** @var string|null An alternate test value — the opposite of $testValue. */
-    private static ?string $altTestValue = null;
-
-    /** @var bool Whether context discovery has been attempted (regardless of result). */
-    private static bool $contextDiscovered = false;
-
-    /** @var bool Whether a usable Breeze store was found. */
-    private static bool $breezeAvailable = false;
-
-    /** @var string|null Cached admin Bearer token. */
-    private static ?string $adminToken = null;
-
-    // -------------------------------------------------------------------------
-    // Lifecycle
-    // -------------------------------------------------------------------------
-
-    /**
-     * Discovery runs once — on the first test's setUp.
-     * All subsequent tests reuse static properties.
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        if (!self::$contextDiscovered) {
-            $this->discoverContext();
-        }
-
-        if (!self::$breezeAvailable) {
-            $this->markTestSkipped(
-                'No store with a Breeze Evolution theme was found. '
-                . 'Assign a Breeze theme to a store view and re-run.'
-            );
-        }
-    }
-
-    /**
-     * Discard any leftover draft after every test so the next test starts clean.
-     */
-    protected function tearDown(): void
-    {
-        $this->tryDiscardDraft();
-        parent::tearDown();
-    }
-
-    // -------------------------------------------------------------------------
-    // Test methods
-    // -------------------------------------------------------------------------
-
     /**
      * Load config for the discovered store and verify the basic response shape.
      */
     public function testGetConfigReturnsExpectedStructure(): void
     {
-        $storeId = self::$storeId;
+        $storeId = static::$storeId;
 
         $query = <<<GQL
         {
@@ -140,7 +45,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
 
         self::assertNotEmpty($config['sections'], 'sections should be non-empty');
         self::assertSame(
-            self::$themeId,
+            static::$themeId,
             $config['metadata']['themeId'],
             'metadata.themeId should match the discovered theme'
         );
@@ -155,10 +60,10 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
      */
     public function testSaveValuesToDraftSetsUnpublishedFlag(): void
     {
-        $storeId     = self::$storeId;
-        $sectionCode = self::$sectionCode;
-        $fieldCode   = self::$fieldCode;
-        $testValue   = self::$testValue;
+        $storeId     = static::$storeId;
+        $sectionCode = static::$sectionCode;
+        $fieldCode   = static::$fieldCode;
+        $testValue   = static::$testValue;
 
         $mutation = <<<GQL
         mutation {
@@ -180,7 +85,6 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         self::assertNotEmpty($output['values'], 'saved values array should not be empty');
         self::assertTrue($output['values'][0]['isModified'], 'saved field should be marked isModified: true');
 
-        // Re-fetch and check the unpublished-changes flag.
         $configQuery = <<<GQL
         {
             breezeThemeEditorConfig(scope: { type: stores, scopeId: {$storeId} }, status: DRAFT) {
@@ -204,12 +108,11 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
      */
     public function testDiscardDraftClearsUnpublishedFlag(): void
     {
-        $storeId     = self::$storeId;
-        $sectionCode = self::$sectionCode;
-        $fieldCode   = self::$fieldCode;
-        $testValue   = self::$testValue;
+        $storeId     = static::$storeId;
+        $sectionCode = static::$sectionCode;
+        $fieldCode   = static::$fieldCode;
+        $testValue   = static::$testValue;
 
-        // First create a draft entry to discard.
         $saveMutation = <<<GQL
         mutation {
             saveBreezeThemeEditorValues(input: {
@@ -222,7 +125,6 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
 
         $this->graphQlMutation($saveMutation, [], '', $this->getAdminHeaders());
 
-        // Discard the entire draft for this store.
         $discardMutation = <<<GQL
         mutation {
             discardBreezeThemeEditorDraft(scope: { type: stores, scopeId: {$storeId} }) {
@@ -238,7 +140,6 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         self::assertTrue($discard['success'], 'discard should succeed');
         self::assertGreaterThanOrEqual(1, $discard['discardedCount'], 'discardedCount should be >= 1');
 
-        // Verify clean state.
         $configQuery = <<<GQL
         {
             breezeThemeEditorConfig(scope: { type: stores, scopeId: {$storeId} }, status: DRAFT) {
@@ -266,10 +167,10 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
      */
     public function testPublishDraftCreatesPublication(): void
     {
-        $storeId     = self::$storeId;
-        $sectionCode = self::$sectionCode;
-        $fieldCode   = self::$fieldCode;
-        $testValue   = self::$testValue;
+        $storeId     = static::$storeId;
+        $sectionCode = static::$sectionCode;
+        $fieldCode   = static::$fieldCode;
+        $testValue   = static::$testValue;
 
         $saveMutation = <<<GQL
         mutation {
@@ -309,7 +210,6 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         self::assertGreaterThanOrEqual(1, $result['publication']['changesCount'], 'changesCount should be >= 1');
         self::assertFalse($result['publication']['isRollback'], 'isRollback should be false for a regular publish');
 
-        // Draft should be gone after publish.
         $configQuery = <<<GQL
         {
             breezeThemeEditorConfig(scope: { type: stores, scopeId: {$storeId} }, status: DRAFT) {
@@ -336,9 +236,9 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
      */
     public function testPublicationsListContainsNewPublication(): void
     {
-        $storeId     = self::$storeId;
-        $sectionCode = self::$sectionCode;
-        $fieldCode   = self::$fieldCode;
+        $storeId     = static::$storeId;
+        $sectionCode = static::$sectionCode;
+        $fieldCode   = static::$fieldCode;
         $testValue   = $this->valueForPublishing();
         $uniqueTitle = 'Integration Test ' . uniqid('pub_', true);
 
@@ -366,7 +266,7 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         }
         GQL;
 
-        $publishResult   = $this->graphQlMutation($publishMutation, [], '', $this->getAdminHeaders());
+        $publishResult    = $this->graphQlMutation($publishMutation, [], '', $this->getAdminHeaders());
         $newPublicationId = $publishResult['publishBreezeThemeEditor']['publication']['publicationId'];
 
         $listQuery = <<<GQL
@@ -418,9 +318,9 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
      */
     public function testFullWorkflow(): void
     {
-        $storeId     = self::$storeId;
-        $sectionCode = self::$sectionCode;
-        $fieldCode   = self::$fieldCode;
+        $storeId     = static::$storeId;
+        $sectionCode = static::$sectionCode;
+        $fieldCode   = static::$fieldCode;
         $testValue   = $this->valueForPublishing();
 
         $configQuery = <<<GQL
@@ -431,14 +331,12 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         }
         GQL;
 
-        // Step 0: verify clean initial state.
         $initial = $this->graphQlQuery($configQuery, [], '', $this->getAdminHeaders());
         self::assertFalse(
             $initial['breezeThemeEditorConfig']['metadata']['hasUnpublishedChanges'],
             'Step 0: clean state — hasUnpublishedChanges should be false'
         );
 
-        // Step 1: save to draft.
         $saveMutation = <<<GQL
         mutation {
             saveBreezeThemeEditorValues(input: {
@@ -455,7 +353,6 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
             'Step 1: save should succeed'
         );
 
-        // Step 2: verify draft flag is set.
         $afterSaveMeta = $this->graphQlQuery(
             $configQuery,
             [],
@@ -469,7 +366,6 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         );
         self::assertGreaterThanOrEqual(1, $afterSaveMeta['draftChangesCount'], 'Step 2: draftChangesCount >= 1');
 
-        // Step 3: publish.
         $publishMutation = <<<GQL
         mutation {
             publishBreezeThemeEditor(input: {
@@ -489,7 +385,6 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
         self::assertGreaterThan(0, $pub['publication']['publicationId'], 'Step 3: publicationId should be > 0');
         $publicationId = $pub['publication']['publicationId'];
 
-        // Step 4: verify draft is cleared after publish.
         $afterPublishMeta = $this->graphQlQuery(
             $configQuery,
             [],
@@ -502,7 +397,6 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
             'Step 4: hasUnpublishedChanges should be false after publish'
         );
 
-        // Step 5: new publication visible in the list.
         $listQuery = <<<GQL
         {
             breezeThemeEditorPublications(scope: { type: stores, scopeId: {$storeId} }, pageSize: 5, currentPage: 1) {
@@ -522,322 +416,5 @@ class ThemeEditorWorkflowTest extends GraphQlAbstract
             $ids,
             'Step 5: newly created publication should appear in the list'
         );
-    }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Return Authorization header with the cached admin Bearer token.
-     */
-    private function getAdminHeaders(): array
-    {
-        return ['Authorization' => 'Bearer ' . $this->getAdminToken()];
-    }
-
-    /**
-     * Create an admin token once and cache it for the lifetime of the test class.
-     */
-    private function getAdminToken(): string
-    {
-        if (self::$adminToken === null) {
-            /** @var AdminTokenServiceInterface $tokenService */
-            $tokenService = Bootstrap::getObjectManager()->get(AdminTokenServiceInterface::class);
-            self::$adminToken = $tokenService->createAdminAccessToken(
-                TESTS_WEBSERVICE_USER,
-                TESTS_WEBSERVICE_APIKEY
-            );
-        }
-
-        return self::$adminToken;
-    }
-
-    /**
-     * Find the first store with a Breeze theme and a testable field.
-     *
-     * Populates all self::$* static properties on success and sets
-     * self::$breezeAvailable = true.
-     */
-    private function discoverContext(): void
-    {
-        self::$contextDiscovered = true;
-
-        try {
-            $objectManager = Bootstrap::getObjectManager();
-
-            /** @var StoreManagerInterface $storeManager */
-            $storeManager = $objectManager->get(StoreManagerInterface::class);
-
-            /** @var ThemeResolver $themeResolver */
-            $themeResolver = $objectManager->get(ThemeResolver::class);
-
-            /** @var ScopeFactory $scopeFactory */
-            $scopeFactory = $objectManager->get(ScopeFactory::class);
-
-            foreach ($storeManager->getStores() as $store) {
-                $storeId = (int) $store->getId();
-
-                try {
-                    $scope   = $scopeFactory->create('stores', $storeId);
-                    $themeId = $themeResolver->getThemeIdByScope($scope);
-                } catch (LocalizedException) {
-                    continue;
-                }
-
-                if (!$themeId) {
-                    continue;
-                }
-
-                // Try to fetch config and locate a safe test field.
-                try {
-                    $field = $this->findTestableField($storeId);
-                } catch (\Throwable) {
-                    continue;
-                }
-
-                if ($field === null) {
-                    continue;
-                }
-
-                self::$storeId     = $storeId;
-                self::$themeId     = $themeId;
-                self::$sectionCode = $field['sectionCode'];
-                self::$fieldCode   = $field['fieldCode'];
-                self::$testValue   = $field['testValue'];
-                self::$altTestValue = $field['altTestValue'];
-                self::$breezeAvailable = true;
-
-                // Clean up any draft left by a previous crashed test run.
-                $this->tryDiscardDraft();
-
-                return;
-            }
-        } catch (\Throwable) {
-            // Discovery failed — tests will be skipped via self::$breezeAvailable = false.
-        }
-    }
-
-    /**
-     * Query breezeThemeEditorConfig and return the first field that can receive
-     * a safe plain-string test value, or null if none found.
-     *
-     * The chosen testValue is guaranteed to differ from the currently-published
-     * value (not just the draft value) so that every save produces a real diff.
-     *
-     * @return array{sectionCode: string, fieldCode: string, testValue: string, altTestValue: string}|null
-     */
-    private function findTestableField(int $storeId): ?array
-    {
-        // Query DRAFT to discover available fields (code, type, default value).
-        $draftQuery = <<<GQL
-        {
-            breezeThemeEditorConfig(scope: { type: stores, scopeId: {$storeId} }, status: DRAFT) {
-                sections {
-                    code
-                    fields { code type value default }
-                }
-            }
-        }
-        GQL;
-
-        $sections = $this->graphQlQuery(
-            $draftQuery,
-            [],
-            '',
-            $this->getAdminHeaders()
-        )['breezeThemeEditorConfig']['sections'] ?? [];
-
-        // Query PUBLISHED so testValue differs from what is already published.
-        $publishedValues = $this->fetchPublishedFieldValues($storeId);
-
-        // Build a result array for the given field, overriding 'value' with the
-        // published value so safeTestValue() picks the right opposite.
-        $buildResult = function (array $section, array $field) use ($publishedValues): array {
-            $publishedValue = $publishedValues[$section['code']][$field['code']] ?? null;
-            if ($publishedValue !== null) {
-                $field['value'] = $publishedValue;
-            }
-            $testValue = $this->safeTestValue($field);
-            return [
-                'sectionCode'  => $section['code'],
-                'fieldCode'    => $field['code'],
-                'testValue'    => $testValue,
-                'altTestValue' => $this->altTestValue($field['type'], $testValue),
-            ];
-        };
-
-        // First pass: preferred types in priority order.
-        foreach (self::PREFERRED_TYPES as $preferredType) {
-            foreach ($sections as $section) {
-                foreach ($section['fields'] as $field) {
-                    if ($field['type'] === $preferredType) {
-                        return $buildResult($section, $field);
-                    }
-                }
-            }
-        }
-
-        // Second pass: any non-skipped type.
-        foreach ($sections as $section) {
-            foreach ($section['fields'] as $field) {
-                if (!in_array($field['type'], self::SKIP_TYPES, true)) {
-                    return $buildResult($section, $field);
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Return a nested map [sectionCode => [fieldCode => value]] of published values.
-     * Returns an empty array on any error (e.g. no publications yet for this store).
-     */
-    private function fetchPublishedFieldValues(int $storeId): array
-    {
-        try {
-            $query = <<<GQL
-            {
-                breezeThemeEditorConfig(scope: { type: stores, scopeId: {$storeId} }, status: PUBLISHED) {
-                    sections {
-                        code
-                        fields { code value }
-                    }
-                }
-            }
-            GQL;
-
-            $sections = $this->graphQlQuery(
-                $query,
-                [],
-                '',
-                $this->getAdminHeaders()
-            )['breezeThemeEditorConfig']['sections'] ?? [];
-
-            $map = [];
-            foreach ($sections as $section) {
-                foreach ($section['fields'] as $field) {
-                    if ($field['value'] !== null) {
-                        $map[$section['code']][$field['code']] = $field['value'];
-                    }
-                }
-            }
-            return $map;
-        } catch (\Throwable) {
-            return [];
-        }
-    }
-
-    /**
-     * Return a test value that differs from the field's current value
-     * and is safe to write without breaking CSS output.
-     *
-     * @param array{type: string, value: string|null, default: string|null} $field
-     */
-    private function safeTestValue(array $field): string
-    {
-        $current = $field['value'] ?? $field['default'] ?? null;
-
-        return match ($field['type']) {
-            'TOGGLE', 'CHECKBOX' => ($current === '1') ? '0' : '1',
-            'NUMBER', 'RANGE'    => ($current === '10') ? '11' : '10',
-            default              => ($current === 'integration_test') ? 'integration_test_alt' : 'integration_test',
-        };
-    }
-
-    /**
-     * Return the alternate test value — the opposite of $testValue.
-     * Used to ensure we can always produce a change relative to the published state.
-     */
-    private function altTestValue(string $type, string $testValue): string
-    {
-        return match ($type) {
-            'TOGGLE', 'CHECKBOX' => $testValue === '1' ? '0' : '1',
-            'NUMBER', 'RANGE'    => $testValue === '10' ? '11' : '10',
-            default              => $testValue === 'integration_test' ? 'integration_test_alt' : 'integration_test',
-        };
-    }
-
-    /**
-     * Return a value that is guaranteed to differ from the currently-published value
-     * for the discovered field.
-     *
-     * If the published value equals self::$testValue we return self::$altTestValue,
-     * otherwise we return self::$testValue.  Falls back to self::$testValue on error.
-     */
-    private function valueForPublishing(): string
-    {
-        $storeId     = self::$storeId;
-        $sectionCode = self::$sectionCode;
-        $fieldCode   = self::$fieldCode;
-
-        try {
-            $query = <<<GQL
-            {
-                breezeThemeEditorConfig(scope: { type: stores, scopeId: {$storeId} }, status: PUBLISHED) {
-                    sections {
-                        code
-                        fields { code value }
-                    }
-                }
-            }
-            GQL;
-
-            $sections = $this->graphQlQuery(
-                $query,
-                [],
-                '',
-                $this->getAdminHeaders()
-            )['breezeThemeEditorConfig']['sections'] ?? [];
-
-            foreach ($sections as $section) {
-                if ($section['code'] !== $sectionCode) {
-                    continue;
-                }
-                foreach ($section['fields'] as $field) {
-                    if ($field['code'] !== $fieldCode) {
-                        continue;
-                    }
-                    $publishedValue = $field['value'] ?? null;
-                    if ($publishedValue === self::$testValue) {
-                        return self::$altTestValue ?? self::$testValue;
-                    }
-                    return self::$testValue;
-                }
-            }
-        } catch (\Throwable) {
-            // Fallback — use the primary test value.
-        }
-
-        return self::$testValue;
-    }
-
-    /**
-     * Discard the draft for the discovered store. Never throws — a missing
-     * draft is a normal condition at the start of a clean test.
-     */
-    private function tryDiscardDraft(): void
-    {
-        if (self::$storeId === null) {
-            return;
-        }
-
-        $storeId = self::$storeId;
-
-        try {
-            $mutation = <<<GQL
-            mutation {
-                discardBreezeThemeEditorDraft(scope: { type: stores, scopeId: {$storeId} }) {
-                    success
-                    discardedCount
-                }
-            }
-            GQL;
-
-            $this->graphQlMutation($mutation, [], '', $this->getAdminHeaders());
-        } catch (\Throwable) {
-            // Intentionally swallowed — a missing draft is not an error.
-        }
     }
 }

@@ -51,7 +51,7 @@ class InvalidateCacheAfterMutationTest extends TestCase
             ->with(['bte_theme_variables']);
 
         $this->cacheTypeList->expects($this->never())
-            ->method('invalidate');
+            ->method('cleanType');
 
         $this->fullPageCache->expects($this->never())
             ->method('clean');
@@ -77,7 +77,7 @@ class InvalidateCacheAfterMutationTest extends TestCase
             ->with('matchingAnyTag', ['bte_theme_variables']);
 
         $this->cacheTypeList->expects($this->once())
-            ->method('invalidate')
+            ->method('cleanType')
             ->with('full_page');
 
         $this->plugin->afterResolve($subject, $result);
@@ -101,7 +101,7 @@ class InvalidateCacheAfterMutationTest extends TestCase
             ->with('matchingAnyTag', ['bte_theme_variables']);
 
         $this->cacheTypeList->expects($this->once())
-            ->method('invalidate')
+            ->method('cleanType')
             ->with('full_page');
 
         $this->plugin->afterResolve($subject, $result);
@@ -118,7 +118,7 @@ class InvalidateCacheAfterMutationTest extends TestCase
 
         $this->cache->expects($this->never())->method('clean');
         $this->fullPageCache->expects($this->never())->method('clean');
-        $this->cacheTypeList->expects($this->never())->method('invalidate');
+        $this->cacheTypeList->expects($this->never())->method('cleanType');
 
         $this->plugin->afterResolve($subject, $result);
     }
@@ -129,7 +129,7 @@ class InvalidateCacheAfterMutationTest extends TestCase
 
         $this->cache->expects($this->never())->method('clean');
         $this->fullPageCache->expects($this->never())->method('clean');
-        $this->cacheTypeList->expects($this->never())->method('invalidate');
+        $this->cacheTypeList->expects($this->never())->method('cleanType');
 
         $this->plugin->afterResolve($subject, null);
         $this->plugin->afterResolve($subject, 'string');
@@ -143,7 +143,7 @@ class InvalidateCacheAfterMutationTest extends TestCase
 
         $this->cache->expects($this->never())->method('clean');
         $this->fullPageCache->expects($this->never())->method('clean');
-        $this->cacheTypeList->expects($this->never())->method('invalidate');
+        $this->cacheTypeList->expects($this->never())->method('cleanType');
 
         $this->plugin->afterResolve($subject, $result);
     }

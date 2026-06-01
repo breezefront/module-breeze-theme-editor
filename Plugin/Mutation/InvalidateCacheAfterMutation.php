@@ -58,7 +58,14 @@ class InvalidateCacheAfterMutation
 
     private function invalidateFpc(): void
     {
+        // Clean FPC storage by tag — works for Built-in FPC and Redis.
+        // String mode used instead of \Zend_Cache::CLEANING_MODE_MATCHING_ANY_TAG
+        // for Magento 2.4.9+ compatibility (Zend_Cache removed).
         $this->fullPageCache->clean('matchingAnyTag', ['bte_theme_variables']);
-        $this->cacheTypeList->invalidate('full_page');
+
+        // cleanType() flushes the cache type storage and resets the status flag.
+        // Unlike invalidate() which only marks it as "invalid" without flushing,
+        // cleanType() performs a real flush so frontend pages are immediately stale.
+        $this->cacheTypeList->cleanType('full_page');
     }
 }
