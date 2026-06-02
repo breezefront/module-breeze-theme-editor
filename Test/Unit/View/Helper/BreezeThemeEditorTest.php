@@ -192,6 +192,83 @@ class BreezeThemeEditorTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // get() — bte_php_preview cookie override (PHP live preview)
+    // -------------------------------------------------------------------------
+
+    /**
+     * @test
+     */
+    public function testGetReturnsCookieOverrideWithoutDbCall(): void
+    {
+        $_COOKIE['bte_php_preview'] = urlencode(json_encode(['php_test/toggle_flag' => 'true']));
+
+        // DB must NOT be called — cookie takes priority
+        $this->valueInheritanceResolver->expects($this->never())->method('resolveSingleValue');
+
+        $result = $this->helper->get('php_test/toggle_flag');
+
+        $this->assertSame('true', $result);
+
+        unset($_COOKIE['bte_php_preview']);
+    }
+
+    /**
+     * @test
+     */
+    public function testCookieOverrideIsCachedOnSecondCall(): void
+    {
+        $_COOKIE['bte_php_preview'] = urlencode(json_encode(['php_test/select_layout' => 'list']));
+
+        $this->valueInheritanceResolver->expects($this->never())->method('resolveSingleValue');
+
+        $this->helper->get('php_test/select_layout'); // warms cache
+        $result = $this->helper->get('php_test/select_layout'); // must hit in-memory cache
+
+        $this->assertSame('list', $result);
+
+        unset($_COOKIE['bte_php_preview']);
+    }
+
+    /**
+     * @test
+     */
+    public function testMalformedCookieFallsBackToDb(): void
+    {
+        $_COOKIE['bte_php_preview'] = 'not-valid-json!!!';
+
+        $this->setupStore(1, 42);
+        $this->statusProvider->method('getStatusId')->willReturn(2);
+        $this->valueInheritanceResolver->method('resolveSingleValue')
+            ->willReturn(['value' => 'grid', 'isInherited' => false, 'inheritedFrom' => null, 'inheritanceLevel' => 0]);
+
+        $result = $this->helper->get('php_test/select_layout');
+
+        $this->assertSame('grid', $result);
+
+        unset($_COOKIE['bte_php_preview']);
+    }
+
+    /**
+     * @test
+     */
+    public function testCookiePathNotInOverrideFallsBackToDb(): void
+    {
+        // Cookie exists but does not contain the requested path
+        $_COOKIE['bte_php_preview'] = urlencode(json_encode(['php_test/other_field' => 'foo']));
+
+        $this->setupStore(1, 42);
+        $this->statusProvider->method('getStatusId')->willReturn(2);
+        $this->valueInheritanceResolver->method('resolveSingleValue')
+            ->willReturn(['value' => 'hello', 'isInherited' => false, 'inheritedFrom' => null, 'inheritanceLevel' => 0]);
+
+        $result = $this->helper->get('php_test/text_value');
+
+        $this->assertSame('hello', $result);
+
+        unset($_COOKIE['bte_php_preview']);
+    }
+
+    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 

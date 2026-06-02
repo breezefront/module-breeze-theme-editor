@@ -48,12 +48,28 @@ class BreezeThemeEditor implements BreezeThemeEditorInterface
      * falling back to the default defined in settings.json.
      * Returns null if the setting does not exist at all.
      *
+     * During live preview (editor iframe requests), the `bte_php_preview`
+     * cookie written by PhpPreviewManager.js takes precedence so that
+     * PHP-only settings are reflected immediately without a publish.
+     *
      * @param string $path  'section_code/setting_code'
      */
     public function get(string $path): ?string
     {
         if (array_key_exists($path, $this->cache)) {
             return $this->cache[$path];
+        }
+
+        // Live-preview override: JS writes pending values into this cookie so
+        // that PHP renders the updated value on iframe reload (no publish needed).
+        $previewCookie = $_COOKIE['bte_php_preview'] ?? null;
+        if ($previewCookie !== null) {
+            $overrides = json_decode(urldecode($previewCookie), true);
+            if (is_array($overrides) && array_key_exists($path, $overrides)) {
+                $override = (string) $overrides[$path];
+                $this->cache[$path] = $override;
+                return $override;
+            }
         }
 
         $this->cache[$path] = $this->resolve($path);

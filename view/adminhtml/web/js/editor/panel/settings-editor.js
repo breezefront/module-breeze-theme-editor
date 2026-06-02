@@ -20,6 +20,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
+    'Swissup_BreezeThemeEditor/js/editor/panel/php-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/css-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers',
     'Swissup_BreezeThemeEditor/js/editor/panel/config-loader',
@@ -47,6 +48,7 @@ define([
     PanelState,
     PaletteManager,
     CssPreviewManager,
+    PhpPreviewManager,
     CssManager,
     FieldHandlers,
     ConfigLoader,
@@ -222,6 +224,7 @@ define([
                 // configManager already updated by scope-selector.js before this event fires.
                 StorageHelper.init(scopeId, null);
                 CssPreviewManager.reset();
+                PhpPreviewManager.reset();
                 self._loadConfig();
             });
 
@@ -235,12 +238,14 @@ define([
                 self._updateChangesCount();
                 self._refreshAllBadges();
                 CssPreviewManager.reset();
+                PhpPreviewManager.reset();
                 Bsync.delay(1000).then(function () { window.location.reload(); });
             });
 
             $(document).on('bte:publishedDiscarded', function (e, data) {
                 log.info('Published customizations discarded, refreshing preview...');
                 CssPreviewManager.reset();
+                PhpPreviewManager.reset();
                 CssManager.showPublished();
                 CssManager.refreshPublishedCss();
                 if (data && data.values && data.values.length >= 0) {
@@ -255,6 +260,7 @@ define([
                 PanelState.reset();
                 PaletteManager.revertDirtyChanges();
                 CssPreviewManager.reset();
+                PhpPreviewManager.reset();
                 CssManager.refreshDraftCss();
                 if (data && data.values && data.values.length >= 0) {
                     self._updatePanelFields(data.values);
@@ -465,6 +471,7 @@ define([
                 PanelState.reset();
                 PaletteManager.revertDirtyChanges();
                 CssPreviewManager.reset();
+                PhpPreviewManager.reset();
                 self._loadConfig();
             });
         },
@@ -673,6 +680,7 @@ define([
         _destroy: function () {
             FieldHandlers.destroy(this.element);
             CssPreviewManager.destroy();
+            PhpPreviewManager.reset();
             PanelState.clear();
             this._super();
         }

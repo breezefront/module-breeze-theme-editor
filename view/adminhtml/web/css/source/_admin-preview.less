@@ -42,3 +42,38 @@ body.bte-panel-active {
         }
     }
 }
+
+// ─── PHP Preview Reload Spinner ──────────────────────────────────────────────
+//
+// Shown by php-preview-manager.js while the iframe reloads to reflect a
+// PHP-only setting change (no CSS variable).  Positioned absolute over the
+// iframe; the parent .bte-preview already has position: relative.
+
+.bte-php-preview-spinner {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: fade(#fff, 55%);
+    z-index: 10;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+
+    &::after {
+        content: '';
+        width: 36px;
+        height: 36px;
+        border: 3px solid #ddd;
+        border-top-color: #1979c3;
+        border-radius: 50%;
+        animation: bte-spin .7s linear infinite;
+    }
+
+    &--visible {
+        display: flex;
+    }
+}
+
+@keyframes bte-spin {
+    to { transform: rotate(360deg); }
+}
