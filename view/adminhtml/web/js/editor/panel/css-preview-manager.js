@@ -15,6 +15,7 @@ define([
     var log = Logger.for('panel/css-preview-manager');
 
     var changes = {};
+    var rawCssBlocks = {};  // id → raw CSS string for 'code' fields without property
     var $styleElement = null;
     var iframeDocument = null;
 
@@ -598,6 +599,15 @@ define([
             });
 
             var css = parts.join('\n');
+
+            // Append raw CSS blocks from 'code' fields (no property)
+            var rawParts = Object.keys(rawCssBlocks).map(function (id) {
+                return '/* ' + id + ' */\n' + rawCssBlocks[id];
+            });
+            if (rawParts.length) {
+                css = (css ? css + '\n' : '') + rawParts.join('\n');
+            }
+
             $styleElement.text(css || ':root {}');
 
             // Save to localStorage
@@ -623,10 +633,19 @@ define([
                             ? { value: entry, selector: ':root', media: null }
                             : { value: entry.value, selector: entry.selector || ':root', media: entry.media || null };
                     });
-                    this._updateStyles();
                     log.info('Loaded live preview from localStorage: ' + Object.keys(changes).length + ' variables');
-                    // Note: syncFieldsFromChanges() is called by panel.js after fields are rendered
                 }
+
+                var storedRaw = StorageHelper.getRawCssBlocks();
+                if (storedRaw && Object.keys(storedRaw).length > 0) {
+                    rawCssBlocks = storedRaw;
+                    log.info('Loaded raw CSS blocks from localStorage: ' + Object.keys(rawCssBlocks).length + ' blocks');
+                }
+
+                if (Object.keys(changes).length > 0 || Object.keys(rawCssBlocks).length > 0) {
+                    this._updateStyles();
+                }
+                // Note: syncFieldsFromChanges() is called by panel.js after fields are rendered
             } catch (e) {
                 log.warn('Failed to load live preview from localStorage: ' + e);
             }
@@ -639,6 +658,7 @@ define([
         _saveToLocalStorage: function() {
             try {
                 StorageHelper.setLivePreviewChanges(changes);
+                StorageHelper.setRawCssBlocks(rawCssBlocks);
             } catch (e) {
                 log.warn('Failed to save live preview to localStorage: ' + e);
             }
@@ -816,6 +836,7 @@ define([
          */
         reset: function() {
             changes = {};
+            rawCssBlocks = {};
             _fieldPaletteVars = {};
             if ($styleElement) {
                 $styleElement.text(':root {}');
@@ -824,6 +845,7 @@ define([
             // Clear localStorage
             try {
                 StorageHelper.clearLivePreviewChanges();
+                StorageHelper.clearRawCssBlocks();
             } catch (e) {
                 log.warn('Failed to clear live preview from localStorage: ' + e);
             }
@@ -844,6 +866,37 @@ define([
                 return true;
             }
             return false;
+        },
+
+        /**
+         * Set a raw CSS block for a 'code' field (no CSS property).
+         * The block is injected after all CSS variable blocks in the live-preview
+         * <style> element.
+         *
+         * @param {String} id  Unique key, e.g. 'additional_styles_additional_css'
+         * @param {String} css Raw CSS string typed in the editor
+         */
+        setRawCss: function(id, css) {
+            if (!css || !css.trim()) {
+                delete rawCssBlocks[id];
+            } else {
+                rawCssBlocks[id] = css;
+            }
+            this._updateStyles();
+            log.debug('Raw CSS block updated: ' + id);
+        },
+
+        /**
+         * Remove a raw CSS block (e.g. on field reset).
+         *
+         * @param {String} id
+         */
+        resetRawCss: function(id) {
+            if (rawCssBlocks[id]) {
+                delete rawCssBlocks[id];
+                this._updateStyles();
+                log.debug('Raw CSS block reset: ' + id);
+            }
         },
 
         /**
@@ -902,9 +955,9 @@ define([
             this._createStyleElement();
 
             // Re-apply existing changes
-            if (Object.keys(changes).length > 0) {
+            if (Object.keys(changes).length > 0 || Object.keys(rawCssBlocks).length > 0) {
                 this._updateStyles();
-                log.info('Re-applied ' + Object.keys(changes).length + ' live preview changes after navigation');
+                log.info('Re-applied ' + Object.keys(changes).length + ' live preview changes and ' + Object.keys(rawCssBlocks).length + ' raw CSS blocks after navigation');
             }
 
             return true;

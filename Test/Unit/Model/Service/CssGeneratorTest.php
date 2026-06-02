@@ -2433,5 +2433,216 @@ class CssGeneratorTest extends TestCase
             'PUBLISHED CSS must contain a value inherited from a parent theme'
         );
     }
+
+    // -----------------------------------------------------------------------
+    // Raw CSS blocks (code fields without property)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Test: raw CSS from a 'code' field with no property is appended after :root {}
+     */
+    public function testRawCssBlockIsAppendedAfterRootBlock(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            [
+                'section_code' => 'additional_styles',
+                'setting_code' => 'additional_css',
+                'value'        => '.bte-test-hello { color: green; }',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'additional_styles',
+                    'settings' => [
+                        [
+                            'id'      => 'additional_css',
+                            'type'    => 'code',
+                            'default' => '',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringContainsString('.bte-test-hello { color: green; }', $css);
+        // Must appear after the :root {} block
+        $rootPos = strpos($css, ':root {');
+        $rawPos  = strpos($css, '.bte-test-hello');
+        $this->assertNotFalse($rootPos);
+        $this->assertNotFalse($rawPos);
+        $this->assertGreaterThan($rootPos, $rawPos, 'Raw CSS block must appear after :root {}');
+    }
+
+    /**
+     * Test: raw CSS block is wrapped with an id comment
+     */
+    public function testRawCssBlockHasIdComment(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            [
+                'section_code' => 'additional_styles',
+                'setting_code' => 'additional_css',
+                'value'        => '.hello { color: red; }',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'additional_styles',
+                    'settings' => [['id' => 'additional_css', 'type' => 'code', 'default' => '']],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringContainsString('/* additional_styles.additional_css */', $css);
+    }
+
+    /**
+     * Test: code field equal to default is NOT in output
+     */
+    public function testRawCssBlockEqualToDefaultIsOmitted(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            [
+                'section_code' => 'additional_styles',
+                'setting_code' => 'additional_css',
+                'value'        => '',  // same as default
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'additional_styles',
+                    'settings' => [['id' => 'additional_css', 'type' => 'code', 'default' => '']],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringNotContainsString('additional_styles.additional_css', $css);
+    }
+
+    /**
+     * Test: code field WITH a property is NOT treated as raw CSS (uses normal CSS var path)
+     */
+    public function testCodeFieldWithPropertyIsNotTreatedAsRawCss(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            [
+                'section_code' => 'extra',
+                'setting_code' => 'editor',
+                'value'        => 'my-value',
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'extra',
+                    'settings' => [
+                        ['id' => 'editor', 'type' => 'code', 'property' => '--my-var', 'default' => ''],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        // Must be output as a CSS variable, not as a raw block (no id comment)
+        $this->assertStringContainsString('--my-var: my-value;', $css);
+        $this->assertStringNotContainsString('/* extra.editor */', $css);
+    }
+
+    /**
+     * Test: multiple raw CSS blocks all appear in output
+     */
+    public function testMultipleRawCssBlocksAreAllAppended(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            ['section_code' => 'custom', 'setting_code' => 'header_css', 'value' => '.header { display: flex; }'],
+            ['section_code' => 'custom', 'setting_code' => 'footer_css', 'value' => '.footer { color: blue; }'],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'custom',
+                    'settings' => [
+                        ['id' => 'header_css', 'type' => 'code', 'default' => ''],
+                        ['id' => 'footer_css', 'type' => 'code', 'default' => ''],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringContainsString('.header { display: flex; }', $css);
+        $this->assertStringContainsString('.footer { color: blue; }', $css);
+    }
+
+    /**
+     * Test: raw CSS block coexists with CSS variables in same output
+     */
+    public function testRawCssBlockCoexistsWithCssVariables(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            ['section_code' => 'colors', 'setting_code' => 'bg', 'value' => '#ffffff'],
+            ['section_code' => 'extra',  'setting_code' => 'custom_css', 'value' => '.hero { padding: 0; }'],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'colors',
+                    'settings' => [
+                        ['id' => 'bg', 'type' => 'color', 'property' => '--bg-color', 'default' => '#000000'],
+                    ],
+                ],
+                [
+                    'id'       => 'extra',
+                    'settings' => [
+                        ['id' => 'custom_css', 'type' => 'code', 'default' => ''],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringContainsString('--bg-color:', $css);
+        $this->assertStringContainsString('.hero { padding: 0; }', $css);
+
+        // CSS var must be inside :root {}, raw CSS must be outside
+        $rootStart = strpos($css, ':root {');
+        $rootEnd   = strpos($css, '}', $rootStart);
+        $varPos    = strpos($css, '--bg-color:');
+        $rawPos    = strpos($css, '.hero');
+
+        $this->assertGreaterThan($rootStart, $varPos);
+        $this->assertLessThan($rootEnd, $varPos);
+        $this->assertGreaterThan($rootEnd, $rawPos, 'Raw CSS must be outside the :root {} block');
+    }
 }
 

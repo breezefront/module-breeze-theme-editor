@@ -238,4 +238,53 @@ class CssVariableBuilder
 
         return $stringValue;
     }
+
+    /**
+     * Collect raw CSS strings from 'code' fields (no 'property').
+     *
+     * These are emitted verbatim after the :root {} block in the published CSS.
+     * Only non-empty values that differ from the field default are included.
+     *
+     * Returns [ 'section.setting' => 'raw css string', ... ]
+     *
+     * @param array $values   DB rows (section_code / setting_code / value)
+     * @param array $fieldMap Built by buildFieldMap()
+     * @return array<string, string>
+     */
+    public function buildRawCssBlocks(array $values, array $fieldMap): array
+    {
+        $blocks = [];
+
+        foreach ($values as $value) {
+            $sectionCode = $value['section_code'] ?? '';
+            $settingCode = $value['setting_code'] ?? '';
+            $rawValue    = $value['value'] ?? null;
+
+            if ($rawValue === null || $rawValue === '' || $sectionCode === '_palette') {
+                continue;
+            }
+
+            $key   = $sectionCode . '.' . $settingCode;
+            $field = $fieldMap[$key] ?? null;
+            if (!$field) {
+                continue;
+            }
+
+            // Only 'code' fields without a CSS property
+            $type     = strtolower($field['type'] ?? '');
+            $property = $field['property'] ?? null;
+            if ($type !== 'code' || $property) {
+                continue;
+            }
+
+            $default = $field['default'] ?? null;
+            if ($default !== null && $this->valuesAreEqual($rawValue, $default)) {
+                continue;
+            }
+
+            $blocks[$key] = $rawValue;
+        }
+
+        return $blocks;
+    }
 }

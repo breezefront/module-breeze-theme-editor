@@ -2,9 +2,10 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state',
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
+    'Swissup_BreezeThemeEditor/js/editor/panel/php-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog'
-], function ($, PanelState, CssPreviewManager, Logger, Dialog) {
+], function ($, PanelState, CssPreviewManager, PhpPreviewManager, Logger, Dialog) {
     'use strict';
 
     var log = Logger.for('panel/field-handlers/base');
@@ -61,10 +62,25 @@ define([
             log.debug('PanelState.setValue completed');
 
             // Live preview
-            if (fieldData.property && ! options.skipPreview) {
-                // Merge fieldData with options (color-specific data like format, defaultValue)
-                var previewData = Object.assign({}, fieldData, options);
-                CssPreviewManager.setVariable(fieldData.property, fieldData.value, fieldData.type, previewData);
+            if (! options.skipPreview) {
+                if (fieldData.property) {
+                    // CSS-variable setting: inject directly into the live-preview <style>
+                    var previewData = Object.assign({}, fieldData, options);
+                    CssPreviewManager.setVariable(fieldData.property, fieldData.value, fieldData.type, previewData);
+                } else if (fieldData.type === 'code') {
+                    // Raw CSS inject: append verbatim after CSS variables block
+                    CssPreviewManager.setRawCss(
+                        fieldData.sectionCode + '_' + fieldData.fieldCode,
+                        fieldData.value
+                    );
+                } else {
+                    // PHP-only setting (no CSS variable): reload iframe with cookie override
+                    PhpPreviewManager.scheduleReload(
+                        fieldData.sectionCode,
+                        fieldData.fieldCode,
+                        fieldData.value
+                    );
+                }
             }
 
             // Callback

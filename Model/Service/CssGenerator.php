@@ -68,8 +68,9 @@ class CssGenerator
         $paletteVarsToEmit = $this->variableBuilder->buildPaletteVarsToEmit($values, $config, $fieldMap);
         $selectorBlocks    = empty($values) ? [] : $this->variableBuilder->buildSelectorBlocks($values, $fieldMap);
         $fontImports       = $this->fontImportBuilder->buildFontImports($values, $fieldMap, $config);
+        $rawCssBlocks      = $this->variableBuilder->buildRawCssBlocks($values, $fieldMap);
 
-        return $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports);
+        return $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports, $rawCssBlocks);
     }
 
     /**
@@ -100,8 +101,9 @@ class CssGenerator
         $paletteVarsToEmit = $this->variableBuilder->buildPaletteVarsToEmit($values, $config, $fieldMap);
         $selectorBlocks    = empty($values) ? [] : $this->variableBuilder->buildSelectorBlocks($values, $fieldMap);
         $fontImports       = $this->fontImportBuilder->buildFontImports($values, $fieldMap, $config);
+        $rawCssBlocks      = $this->variableBuilder->buildRawCssBlocks($values, $fieldMap);
 
-        return $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports);
+        return $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports, $rawCssBlocks);
     }
 
     /**
@@ -122,7 +124,7 @@ class CssGenerator
      * @param array $fontImports        External stylesheet URLs
      * @return string
      */
-    private function renderCss(array $paletteVarsToEmit, array $selectorBlocks, array $fontImports = []): string
+    private function renderCss(array $paletteVarsToEmit, array $selectorBlocks, array $fontImports = [], array $rawCssBlocks = []): string
     {
         // Separate no-media blocks from @media blocks
         $noMediaBlocks = [];
@@ -178,6 +180,11 @@ class CssGenerator
                 $inner .= "$selector {\n" . implode('', $lines) . "}\n";
             }
             $css .= "@media $media {\n$inner}\n";
+        }
+
+        // Raw CSS blocks from 'code' fields (no property) — appended verbatim
+        foreach ($rawCssBlocks as $id => $rawCss) {
+            $css .= "\n/* $id */\n" . trim($rawCss) . "\n";
         }
 
         return $css;

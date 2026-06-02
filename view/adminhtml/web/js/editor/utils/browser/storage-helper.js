@@ -436,6 +436,40 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logg
          */
         clearLivePreviewChanges: function () {
             this.removeItem('live_preview_changes');
+        },
+
+        // -----------------------------------------------------------------------
+        // Raw CSS blocks (code fields without CSS property)
+        // -----------------------------------------------------------------------
+
+        /**
+         * Get unsaved raw CSS blocks for live preview.
+         *
+         * @returns {Object} map of id → css string
+         */
+        getRawCssBlocks: function () {
+            try {
+                var value = this.getItem('raw_css_blocks');
+                return value ? JSON.parse(value) : {};
+            } catch (e) {
+                return {};
+            }
+        },
+
+        /**
+         * Set unsaved raw CSS blocks for live preview.
+         *
+         * @param {Object} blocks map of id → css string
+         */
+        setRawCssBlocks: function (blocks) {
+            this.setItem('raw_css_blocks', JSON.stringify(blocks));
+        },
+
+        /**
+         * Clear unsaved raw CSS blocks.
+         */
+        clearRawCssBlocks: function () {
+            this.removeItem('raw_css_blocks');
         }
     };
 });
