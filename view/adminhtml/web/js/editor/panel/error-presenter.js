@@ -169,6 +169,7 @@ define([
             var friendlyMessages = {
                 'Access token required': 'Your session has expired. Please refresh the page.',
                 'Invalid access token': 'Your session has expired. Please refresh the page.',
+                'Authentication required': 'Your session has expired. Please refresh the page.',
                 'Internal server error': 'The server encountered an error. Please try again later.'
             };
 
@@ -236,7 +237,8 @@ define([
             var isThemeConfigError = searchText.indexOf('configuration file not found') !== -1 ||
                                      searchText.indexOf('Theme editor configuration file not found') !== -1;
             var isInvalidToken = searchText.indexOf('Invalid access token') !== -1 ||
-                                 searchText.indexOf('Access token required') !== -1;
+                                 searchText.indexOf('Access token required') !== -1 ||
+                                 searchText.indexOf('Authentication required') !== -1;
 
             if (isThemeConfigError) {
                 var toastMessage = this._getNoSettingsToastMessage(

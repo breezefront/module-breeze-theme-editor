@@ -25,8 +25,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state',
-    'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
-], function($, getCss, previewManager, configManager, scopeManager, StorageHelper, Logger, Constants, PublicationState, Bsync) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/bsync',
+    'Swissup_BreezeThemeEditor/js/lib/toastify'
+], function($, getCss, previewManager, configManager, scopeManager, StorageHelper, Logger, Constants, PublicationState, Bsync, Toastify) {
     'use strict';
 
     var log = Logger.for('css-manager');
@@ -34,6 +35,26 @@ define([
     
     var currentPublicationId = null;
     var iframeId = null;
+
+    function isAuthError(error) {
+        var msg = (error && error.message) || '';
+        return msg.indexOf('Authentication required') !== -1 ||
+               msg.indexOf('Access token required') !== -1 ||
+               msg.indexOf('Invalid access token') !== -1;
+    }
+
+    function showAuthErrorToast() {
+        var adminUrl = configManager.getAdminUrl('/admin');
+        var message = 'Your session has expired. <a href="' + adminUrl +
+            '" target="_blank" style="color:#fff;text-decoration:underline;">Login to Admin</a> or refresh the page.';
+
+        Toastify.show('error', message, {
+            duration: 10000,
+            close: true,
+            gravity: 'top',
+            position: 'center'
+        });
+    }
     
     var manager = {
         /**
@@ -179,19 +200,35 @@ define([
 
             switch (status) {
                 case PUBLICATION_STATUS.PUBLISHED:
-                    this.switchTo(PUBLICATION_STATUS.PUBLISHED);
+                    this.switchTo(PUBLICATION_STATUS.PUBLISHED)
+                        .catch(function (error) {
+                            log.error('CSS Manager: Failed to restore PUBLISHED: ' + error);
+                            if (isAuthError(error)) { showAuthErrorToast(); }
+                        });
                     break;
                 case PUBLICATION_STATUS.PUBLICATION:
                     if (publicationId) {
-                        this.switchTo(PUBLICATION_STATUS.PUBLICATION, publicationId);
+                        this.switchTo(PUBLICATION_STATUS.PUBLICATION, publicationId)
+                            .catch(function (error) {
+                                log.error('CSS Manager: Failed to restore PUBLICATION: ' + error);
+                                if (isAuthError(error)) { showAuthErrorToast(); }
+                            });
                     } else {
                         log.warn('CSS Manager: PUBLICATION status but no ID, falling back to DRAFT');
-                        this.switchTo(PUBLICATION_STATUS.DRAFT);
+                        this.switchTo(PUBLICATION_STATUS.DRAFT)
+                            .catch(function (error) {
+                                log.error('CSS Manager: Failed to restore DRAFT (fallback): ' + error);
+                                if (isAuthError(error)) { showAuthErrorToast(); }
+                            });
                     }
                     break;
                 case PUBLICATION_STATUS.DRAFT:
                 default:
-                    this.switchTo(PUBLICATION_STATUS.DRAFT);
+                    this.switchTo(PUBLICATION_STATUS.DRAFT)
+                        .catch(function (error) {
+                            log.error('CSS Manager: Failed to restore DRAFT: ' + error);
+                            if (isAuthError(error)) { showAuthErrorToast(); }
+                        });
             }
         },
 

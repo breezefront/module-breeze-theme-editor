@@ -21,7 +21,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/scope-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state'
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/publication-state',
+    'Swissup_BreezeThemeEditor/js/lib/toastify',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager'
 ], function (
     $,
     cssManager,
@@ -31,12 +33,42 @@ define([
     scopeManager,
     Logger,
     Constants,
-    PublicationState
+    PublicationState,
+    Toastify,
+    configManager
 ) {
     'use strict';
 
     var log = Logger.for('toolbar/publication-selector/css-state-restorer');
     var PUBLICATION_STATUS = Constants.PUBLICATION_STATUS;
+
+    /**
+     * Detect auth errors by message string.
+     * @param {Error} error
+     * @returns {boolean}
+     */
+    function isAuthError(error) {
+        var msg = (error && error.message) || '';
+        return msg.indexOf('Authentication required') !== -1 ||
+               msg.indexOf('Access token required') !== -1 ||
+               msg.indexOf('Invalid access token') !== -1;
+    }
+
+    /**
+     * Show a Toastify error toast with admin login link.
+     */
+    function showAuthErrorToast() {
+        var adminUrl = configManager.getAdminUrl('/admin');
+        var message = 'Your session has expired. <a href="' + adminUrl +
+            '" target="_blank" style="color:#fff;text-decoration:underline;">Login to Admin</a> or refresh the page.';
+
+        Toastify.show('error', message, {
+            duration: 10000,
+            close: true,
+            gravity: 'top',
+            position: 'center'
+        });
+    }
 
     return {
 
@@ -109,6 +141,9 @@ define([
                     })
                     .catch(function (error) {
                         log.error('Failed to restore publication: ' + error);
+                        if (isAuthError(error)) {
+                            showAuthErrorToast();
+                        }
                         self.fallbackToDraft(ctx);
                     });
             } else if (mode.mode === PUBLICATION_STATUS.PUBLISHED) {
@@ -118,6 +153,9 @@ define([
                     })
                     .catch(function (error) {
                         log.error('Failed to restore published state: ' + error);
+                        if (isAuthError(error)) {
+                            showAuthErrorToast();
+                        }
                     });
             } else {
                 cssManager.switchTo(PUBLICATION_STATUS.DRAFT, null, scopeCtx)
@@ -126,6 +164,9 @@ define([
                     })
                     .catch(function (error) {
                         log.error('Failed to restore draft state: ' + error);
+                        if (isAuthError(error)) {
+                            showAuthErrorToast();
+                        }
                     });
             }
         },
