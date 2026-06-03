@@ -205,7 +205,7 @@ define([
                 $input.val(hexValue);
                 
                 // Update preview box background
-                $trigger.find('.bte-color-preview').css('background-color', hexValue);
+                $trigger.find('.bte-color-preview').css('--preview-color', hexValue);
                 
                 // Update Pickr instance if exists
                 var popupInstance = $trigger.data('popup-instance');
@@ -755,7 +755,7 @@ define([
                             $textInput.val(displayValue);
                         }
                         if ($preview.length) {
-                            $preview.css('background-color', displayValue);
+                            $preview.css('--preview-color', displayValue);
                         }
 
                     } else if ($field.attr('type') === 'checkbox') {
