@@ -210,6 +210,9 @@ define([
         _bind: function () {
             var self = this;
 
+            // Subscribe paletteColorChanged / themeEditorDraftSaved → _updateHeaderBadges
+            this._bindBadgeUpdates();
+
             // Toggle accordion
             this._bindAccordion(this.$header, this.$content, 'palette_open');
 
@@ -649,7 +652,7 @@ define([
             $(document).off('paletteColorChanged.paletteSection paletteChangesReverted.paletteSection');
             $(document).off('click.bte-palette-pickr');
             $(document).off('keydown.bte-palette-pickr');
-            
+            this._destroyBadgeUpdates();
             this._super();
         }
     });
