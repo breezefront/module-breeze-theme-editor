@@ -3,22 +3,22 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Provider\Stub;
 
-class ArrayObjectStub extends \ArrayObject  // phpcs:ignore Magento2.Legacy.RestrictedCode.ArrayObjectIsRestricted
+class ArrayObjectStub implements \IteratorAggregate, \Countable
 {
-    /**
-     * @return string
-     */
-    public function serialize(): string
+    private array $data;
+
+    public function __construct(array $data = [])
     {
-        return (string) json_encode($this->getArrayCopy());
+        $this->data = $data;
     }
 
-    /**
-     * @param string $data
-     * @return void
-     */
-    public function unserialize($data): void
+    public function getIterator(): \ArrayIterator
     {
-        $this->exchangeArray((array) json_decode($data, true));
+        return new \ArrayIterator($this->data);
+    }
+
+    public function count(): int
+    {
+        return count($this->data);
     }
 }
