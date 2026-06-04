@@ -822,6 +822,62 @@ define([
             if (syncedCount > 0) {
                 log.info('Synced ' + syncedCount + ' field values from live preview');
             }
+
+            // Restore palette swatch UI from draft changes (F5 / page reload)
+            this.syncPaletteSwatchesFromChanges();
+        },
+
+        /**
+         * Sync palette swatch visuals from persisted draft changes.
+         *
+         * On page reload, `changes` (loaded from localStorage) may contain
+         * palette CSS-var entries (e.g. '--color-brand-primary').
+         * syncFieldsFromChanges() intentionally skips palette swatches, so
+         * without this step the swatch squares would show stale saved colours
+         * while the CSS preview already reflects the draft values.
+         *
+         * For every palette var found in `changes`:
+         *  - update the swatch background-color in the DOM
+         *  - mark the swatch dirty (yellow border)
+         *  - call PaletteManager.restoreFromDraft() so dirty-state bookkeeping
+         *    (reset button, getDirtyChanges, etc.) is consistent
+         */
+        syncPaletteSwatchesFromChanges: function() {
+            var self = this;
+            var restoredCount = 0;
+
+            Object.keys(changes).forEach(function(property) {
+                var color = self._paletteManager && self._paletteManager.getColor(property);
+                if (!color) {
+                    return; // not a palette var
+                }
+
+                var hexValue = changes[property].value;
+                if (!hexValue || typeof hexValue !== 'string') {
+                    return;
+                }
+
+                // Convert RGB → HEX if stored in old format
+                if (ColorUtils.isRgbColor(hexValue)) {
+                    hexValue = ColorUtils.rgbToHex(hexValue);
+                }
+
+                // Update DOM swatch
+                var $swatch = $('[data-property="' + property + '"].bte-palette-swatch');
+                if ($swatch.length) {
+                    $swatch.find('.bte-swatch-visual').css('background-color', hexValue);
+                    $swatch.addClass('bte-swatch-dirty');
+                }
+
+                // Restore PaletteManager dirty state without triggering CSS notify
+                self._paletteManager.restoreFromDraft(property, hexValue);
+                restoredCount++;
+            });
+
+            if (restoredCount > 0) {
+                log.info('Restored ' + restoredCount + ' palette swatch(es) from draft');
+                $(document).trigger('paletteColorChanged');
+            }
         },
 
         /**

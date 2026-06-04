@@ -280,6 +280,34 @@ define([
         },
 
         /**
+         * Restore a dirty color from persisted draft (e.g. localStorage) without
+         * triggering live-preview notify.  Called by CssPreviewManager on page
+         * load to re-sync palette swatch UI with saved draft changes.
+         *
+         * @param {String} property - CSS var, e.g. '--color-brand-primary'
+         * @param {String} hexValue - Draft HEX value, e.g. '#ff0000'
+         */
+        restoreFromDraft: function(property, hexValue) {
+            var color = this.getColor(property);
+            if (!color) {
+                return;
+            }
+            if (!this.dirtyColors[property]) {
+                this.dirtyColors[property] = {
+                    original: { hex: color.hex, value: color.value },
+                    hex: hexValue,
+                    value: hexValue
+                };
+            } else {
+                this.dirtyColors[property].hex = hexValue;
+                this.dirtyColors[property].value = hexValue;
+            }
+            color.hex   = hexValue;
+            color.value = hexValue;
+            log.debug('Restored palette draft: ' + property + ' = ' + hexValue);
+        },
+
+        /**
          * Clear dirty state after successful save
          */
         markAsSaved: function() {
