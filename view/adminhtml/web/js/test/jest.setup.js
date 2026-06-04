@@ -52,6 +52,23 @@ if (!$.widget) {
                 const el = this;
                 const $el = $(el);
 
+                // Method call: $el.widgetName('methodName', ...args)
+                if (typeof options === 'string') {
+                    const instance = $el.data(dataKey);
+                    if (!instance) { return; }
+                    const method = options;
+                    if (method === 'destroy') {
+                        // Call _destroy() chain, then clean up
+                        if (typeof instance._destroy === 'function') {
+                            instance._destroy();
+                        }
+                        $el.removeData(dataKey);
+                    } else if (typeof instance[method] === 'function') {
+                        instance[method].apply(instance, Array.prototype.slice.call(arguments, 1));
+                    }
+                    return;
+                }
+
                 // Якщо вже ініціалізовано — повертаємо
                 if ($el.data(dataKey)) { return; }
 
