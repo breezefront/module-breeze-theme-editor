@@ -112,7 +112,8 @@ define([
                         self._handleError({
                             status: xhr.status,
                             statusText: xhr.statusText,
-                            responseText: xhr.responseText
+                            responseText: xhr.responseText,
+                            wwwAuthenticate: xhr.getResponseHeader('WWW-Authenticate') || ''
                         });
                     } catch (e) {
                         deferred.reject(e);
@@ -229,13 +230,29 @@ define([
                 response: responseText
             });
 
-            // Check for 401 Unauthorized - invalid/expired token
+            // Check for 401 Unauthorized - invalid/expired token or htaccess blocking
             if (statusCode === 401) {
                 console.warn('[BTE GraphQL] 401 Unauthorized - clearing invalid token from localStorage');
                 StorageHelper.removeGlobalItem('admin_token');
-                
-                var authError = new Error('Authentication failed: Invalid or expired Bearer token. Please reload the page.');
-                authError.extensions = { category: 'authentication' };
+
+                var wwwAuth = (xhr.wwwAuthenticate || '').toLowerCase();
+                var authError;
+
+                if (wwwAuth.indexOf('basic') !== -1) {
+                    authError = new Error(
+                        'GraphQL request blocked by HTTP Basic Auth (.htaccess). ' +
+                        'Add the following rule to your .htaccess to allow Bearer token requests:\n' +
+                        '<If "%{HTTP:Authorization} =~ /^Bearer /">\n' +
+                        '    Satisfy Any\n' +
+                        '    Allow from all\n' +
+                        '</If>'
+                    );
+                    authError.extensions = { category: 'authentication', cause: 'htaccess' };
+                } else {
+                    authError = new Error('Authentication failed: Invalid or expired Bearer token. Please reload the page.');
+                    authError.extensions = { category: 'authentication' };
+                }
+
                 authError.graphqlErrors = [];
                 throw authError;
             }
