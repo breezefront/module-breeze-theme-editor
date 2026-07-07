@@ -8,7 +8,7 @@ use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\Api\SortOrder;
 use Magento\Framework\Api\SortOrderBuilder;
 use Magento\Framework\GraphQl\Config\Element\Field;
-use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\GraphQl\Model\Query\ContextInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -47,9 +47,7 @@ class PublicationsTest extends TestCase
         $this->scopeMock             = $this->createMock(ScopeInterface::class);
         $this->scopeFactory->method('create')->willReturn($this->scopeMock);
         $this->field                 = $this->createMock(Field::class);
-        $this->context               = $this->getMockBuilder(ContextInterface::class)
-            ->addMethods(['getUserId', 'getUserType'])
-            ->getMock();
+        $this->context = $this->createMock(ContextInterface::class);
         $this->resolveInfo           = $this->createMock(ResolveInfo::class);
 
         // SortOrder mock

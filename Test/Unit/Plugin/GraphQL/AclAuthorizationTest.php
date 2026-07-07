@@ -6,6 +6,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Plugin\GraphQL;
 use Magento\Authorization\Model\UserContextInterface;
 use Magento\Framework\Authorization;
 use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
+use Magento\GraphQl\Model\Query\ContextInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -29,9 +30,7 @@ class AclAuthorizationTest extends TestCase
         $this->plugin        = new AclAuthorization($this->authorization, $this->logger);
         $this->resolver      = $this->createMock(ResolverInterface::class);
 
-        $this->context = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(['getUserType', 'getUserId'])
-            ->getMock();
+        $this->context = $this->createMock(ContextInterface::class);
         $this->field = $this->createMock(\Magento\Framework\GraphQl\Config\Element\Field::class);
         $this->info  = $this->createMock(\Magento\Framework\GraphQl\Schema\Type\ResolveInfo::class);
     }

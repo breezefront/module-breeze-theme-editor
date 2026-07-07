@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Test\Unit\ViewModel;
 
 use Magento\Framework\App\RequestInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Model\Provider\PageUrlProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider;
@@ -94,6 +95,7 @@ class AdminToolbarTest extends TestCase
      * @test
      * @dataProvider validScopeSessionProvider
      */
+    #[DataProvider('validScopeSessionProvider')]
     public function testSessionValueIsReturned(string $sessionScope): void
     {
         $this->backendSession->method('getScopeType')

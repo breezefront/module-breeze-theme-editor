@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Test\Unit\Plugin\GraphQL;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Api\GraphQL\ResolverInterface as BreezeResolverInterface;
 use Magento\Framework\GraphQl\Query\ResolverInterface as MagentoResolverInterface;
@@ -44,6 +45,7 @@ class ResolverAclGuardrailTest extends TestCase
     /**
      * @dataProvider resolverClassProvider
      */
+    #[DataProvider('resolverClassProvider')]
     public function testResolverImplementsBreezeResolverInterface(string $class): void
     {
         $this->assertInstanceOf(
@@ -59,9 +61,9 @@ class ResolverAclGuardrailTest extends TestCase
         );
     }
 
-    public function resolverClassProvider(): array
+    public static function resolverClassProvider(): array
     {
-        $classes = $this->findConcreteResolverClasses();
+        $classes = self::findConcreteResolverClasses();
         return array_map(fn (string $c) => [$c], $classes);
     }
 
@@ -73,7 +75,7 @@ class ResolverAclGuardrailTest extends TestCase
      *
      * @return string[]
      */
-    private function findConcreteResolverClasses(): array
+    private static function findConcreteResolverClasses(): array
     {
         $moduleRoot = dirname(__DIR__, 4); // Test/Unit/Plugin/GraphQL → module root
         $resolverDir = $moduleRoot . '/Model/Resolver';
@@ -88,7 +90,7 @@ class ResolverAclGuardrailTest extends TestCase
                 continue;
             }
 
-            $class = $this->classFromFile($file->getPathname(), $moduleRoot);
+            $class = self::classFromFile($file->getPathname(), $moduleRoot);
             if ($class === null) {
                 continue;
             }
@@ -110,14 +112,14 @@ class ResolverAclGuardrailTest extends TestCase
             $classes[] = $class;
         }
 
-        $this->assertNotEmpty($classes, 'No concrete resolver classes found — check the path.');
+        self::assertNotEmpty($classes, 'No concrete resolver classes found — check the path.');
         return $classes;
     }
 
     /**
      * Derive fully-qualified class name from a file path.
      */
-    private function classFromFile(string $filePath, string $moduleRoot): ?string
+    private static function classFromFile(string $filePath, string $moduleRoot): ?string
     {
         $content = file_get_contents($filePath);
         if (!preg_match('/^namespace\s+([\w\\\\]+);/m', $content, $nsMatch)) {

@@ -15,7 +15,7 @@ use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Publication;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\GraphQl\Model\Query\ContextInterface;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 
 class RollbackTest extends TestCase
@@ -48,9 +48,7 @@ class RollbackTest extends TestCase
         $this->statusProviderMock->method('getStatusId')->willReturn(2);
         $this->valueServiceMock->method('getValuesByTheme')->willReturn([]);
         $this->fieldMock = $this->createMock(Field::class);
-        $this->contextMock = $this->getMockBuilder(ContextInterface::class)
-            ->addMethods(['getUserId', 'getUserType'])
-            ->getMock();
+        $this->contextMock = $this->createMock(ContextInterface::class);
         $this->contextMock->method('getUserId')->willReturn(1);
         $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->resolveInfoMock = $this->createMock(ResolveInfo::class);

@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\ViewModel\Toolbar;
 
 use Magento\Framework\App\RequestInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Model\Session\BackendSession;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarScopeProvider;
@@ -63,6 +64,7 @@ class ToolbarScopeProviderTest extends TestCase
      * @test
      * @dataProvider validScopeProvider
      */
+    #[DataProvider('validScopeProvider')]
     public function testGetScopeReturnsValidSessionValue(string $scope): void
     {
         $this->backendSession->method('getScopeType')->willReturn($scope);

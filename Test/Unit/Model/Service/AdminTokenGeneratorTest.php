@@ -17,6 +17,20 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator;
 
+/**
+ * BackendSession double: getUser/setData/unsetData are magic __call methods
+ * on the real class, so they are declared here to make them mockable
+ * (PHPUnit 12 removed MockBuilder::addMethods()).
+ */
+abstract class BackendSessionStub extends BackendSession
+{
+    abstract public function getUser();
+
+    abstract public function setData($key, $value = null);
+
+    abstract public function unsetData($key = null);
+}
+
 class AdminTokenGeneratorTest extends TestCase
 {
     private AdminTokenGenerator $adminTokenGenerator;
@@ -30,15 +44,7 @@ class AdminTokenGeneratorTest extends TestCase
 
     protected function setUp(): void
     {
-        // BackendSession: getData exists, but getUser/setData/unsetData are via __call()
-        $this->backendSession = $this->getMockBuilder(BackendSession::class)
-            ->disableOriginalConstructor()
-            ->disableAutoReturnValueGeneration()
-            ->disableArgumentCloning()
-            ->disallowMockingUnknownTypes()
-            ->onlyMethods(['getData']) // Exists in SessionManager
-            ->addMethods(['getUser', 'setData', 'unsetData']) // Magic methods via __call()
-            ->getMock();
+        $this->backendSession = $this->createMock(BackendSessionStub::class);
             
         $this->tokenIssuer = $this->createMock(UserTokenIssuerInterface::class);
         $this->tokenParamsFactory = $this->createMock(UserTokenParametersFactory::class);

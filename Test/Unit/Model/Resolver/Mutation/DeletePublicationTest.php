@@ -9,7 +9,7 @@ use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\DeletePublication;
 use Swissup\BreezeThemeEditor\Model\Service\DeletePublicationService;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\GraphQl\Model\Query\ContextInterface;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\LocalizedException;
@@ -26,9 +26,7 @@ class DeletePublicationTest extends TestCase
     {
         $this->deleteServiceMock = $this->createMock(DeletePublicationService::class);
         $this->fieldMock = $this->createMock(Field::class);
-        $this->contextMock = $this->getMockBuilder(ContextInterface::class)
-            ->addMethods(['getUserId', 'getUserType'])
-            ->getMock();
+        $this->contextMock = $this->createMock(ContextInterface::class);
         $this->resolveInfoMock = $this->createMock(ResolveInfo::class);
 
         $this->resolver = new DeletePublication($this->deleteServiceMock);

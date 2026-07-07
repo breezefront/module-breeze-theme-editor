@@ -13,7 +13,7 @@ use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\GraphQl\Model\Query\ContextInterface;
 
 class DiscardPublishedTest extends TestCase
 {
@@ -38,9 +38,7 @@ class DiscardPublishedTest extends TestCase
             fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
         );
         $this->fieldMock = $this->createMock(Field::class);
-        $this->contextMock = $this->getMockBuilder(ContextInterface::class)
-            ->addMethods(['getUserId', 'getUserType'])
-            ->getMock();
+        $this->contextMock = $this->createMock(ContextInterface::class);
         $this->contextMock->method('getUserId')->willReturn(1);
         $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->resolveInfoMock = $this->createMock(ResolveInfo::class);

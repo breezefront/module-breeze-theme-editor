@@ -5,7 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Utility;
 
 use Magento\Authorization\Model\UserContextInterface;
 use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
-use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\GraphQl\Model\Query\ContextInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -21,9 +21,7 @@ class UserResolverTest extends TestCase
     {
         $this->logger   = $this->createMock(LoggerInterface::class);
         $this->resolver = new UserResolver($this->logger);
-        $this->context  = $this->getMockBuilder(ContextInterface::class)
-            ->addMethods(['getUserId', 'getUserType'])
-            ->getMock();
+        $this->context = $this->createMock(ContextInterface::class);
     }
 
     // =========================================================================

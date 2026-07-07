@@ -5,7 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Resolver\Mutation;
 use PHPUnit\Framework\TestCase;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\GraphQl\Model\Query\ContextInterface;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Swissup\BreezeThemeEditor\Model\Service\ImportExportService;
 use Swissup\BreezeThemeEditor\Model\Utility\UserResolver;
@@ -51,9 +51,7 @@ class ExportSettingsTest extends TestCase
         
         // Create GraphQL mocks
         $this->fieldMock = $this->createMock(Field::class);
-        $this->contextMock = $this->getMockBuilder(ContextInterface::class)
-            ->addMethods(['getUserId', 'getUserType'])
-            ->getMock();
+        $this->contextMock = $this->createMock(ContextInterface::class);
         $this->contextMock->method('getUserId')->willReturn(1);
         $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->infoMock = $this->createMock(ResolveInfo::class);

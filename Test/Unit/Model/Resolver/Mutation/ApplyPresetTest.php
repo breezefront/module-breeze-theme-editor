@@ -5,7 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
-use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\GraphQl\Model\Query\ContextInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -53,9 +53,7 @@ class ApplyPresetTest extends TestCase
             fn(string $type, int $scopeId) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($type, $scopeId)
         );
         $this->field           = $this->createMock(Field::class);
-        $this->context         = $this->getMockBuilder(ContextInterface::class)
-            ->addMethods(['getUserId', 'getUserType'])
-            ->getMock();
+        $this->context = $this->createMock(ContextInterface::class);
         $this->resolveInfo     = $this->createMock(ResolveInfo::class);
 
         $this->valueModel = $this->createMock(ValueInterface::class);

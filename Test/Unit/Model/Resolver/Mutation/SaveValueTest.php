@@ -5,7 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
+use Magento\GraphQl\Model\Query\ContextInterface;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
@@ -50,9 +50,7 @@ class SaveValueTest extends TestCase
             fn(array $data) => new \Swissup\BreezeThemeEditor\Model\Data\Scope($data['type'] ?? 'stores', (int)($data['scopeId'] ?? 0))
         );
         $this->field = $this->createMock(Field::class);
-        $this->contextMock = $this->getMockBuilder(ContextInterface::class)
-            ->addMethods(['getUserId', 'getUserType'])
-            ->getMock();
+        $this->contextMock = $this->createMock(ContextInterface::class);
         $this->contextMock->method('getUserId')->willReturn(1);
         $this->contextMock->method('getUserType')->willReturn(2); // USER_TYPE_ADMIN
         $this->resolveInfo = $this->createMock(ResolveInfo::class);

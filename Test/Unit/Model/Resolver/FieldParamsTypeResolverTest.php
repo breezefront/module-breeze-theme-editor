@@ -2,6 +2,7 @@
 
 namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Resolver;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Model\Resolver\FieldParamsTypeResolver;
 
@@ -29,6 +30,7 @@ class FieldParamsTypeResolverTest extends TestCase
     /**
      * @dataProvider numericTypeProvider
      */
+    #[DataProvider('numericTypeProvider')]
     public function testNumericFieldTypesResolveToNumericParams(string $fieldType): void
     {
         $result = $this->resolver->resolveType(['_fieldType' => $fieldType]);
@@ -51,6 +53,7 @@ class FieldParamsTypeResolverTest extends TestCase
     /**
      * @dataProvider selectTypeProvider
      */
+    #[DataProvider('selectTypeProvider')]
     public function testSelectFieldTypesResolveToSelectParams(string $fieldType): void
     {
         $result = $this->resolver->resolveType(['_fieldType' => $fieldType]);

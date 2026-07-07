@@ -9,6 +9,16 @@ use Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarAuthProvider;
 
 /**
+ * AuthSession double: getUser() is a magic __call method on the real class,
+ * so it is declared here to make it mockable
+ * (PHPUnit 12 removed MockBuilder::addMethods()).
+ */
+abstract class AuthSessionStub extends AuthSession
+{
+    abstract public function getUser();
+}
+
+/**
  * Unit tests for ToolbarAuthProvider
  *
  * Covers: canShow(), getAdminUsername(), getUserId(), getToken()
@@ -21,13 +31,7 @@ class ToolbarAuthProviderTest extends TestCase
 
     protected function setUp(): void
     {
-        // AuthSession: isLoggedIn() is a real method → onlyMethods()
-        //              getUser() is a magic __call method → addMethods()
-        $this->authSession = $this->getMockBuilder(AuthSession::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['isLoggedIn'])
-            ->addMethods(['getUser'])
-            ->getMock();
+        $this->authSession = $this->createMock(AuthSessionStub::class);
         $this->tokenGenerator = $this->createMock(AdminTokenGenerator::class);
 
         $this->provider = new ToolbarAuthProvider(

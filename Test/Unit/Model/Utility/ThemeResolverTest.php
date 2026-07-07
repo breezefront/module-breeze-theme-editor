@@ -16,6 +16,39 @@ use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Model\Data\Scope;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 
+/**
+ * Theme entity double. The theme model exposes these getters magically,
+ * so they are declared on a stub class to make them mockable
+ * (PHPUnit 12 removed MockBuilder::addMethods()).
+ */
+class ThemeStub
+{
+    public function getId()
+    {
+        return null;
+    }
+
+    public function getCode()
+    {
+        return null;
+    }
+
+    public function getThemeTitle()
+    {
+        return null;
+    }
+
+    public function getThemePath()
+    {
+        return null;
+    }
+
+    public function getParentId()
+    {
+        return null;
+    }
+}
+
 class ThemeResolverTest extends TestCase
 {
     private ThemeResolver $resolver;
@@ -83,9 +116,7 @@ class ThemeResolverTest extends TestCase
         $this->cache->expects($this->once())->method('save');
         $this->serializer->method('serialize')->willReturn('[]');
 
-        $themeMock = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(['getId', 'getCode', 'getThemeTitle', 'getThemePath', 'getParentId'])
-            ->getMock();
+        $themeMock = $this->createMock(ThemeStub::class);
         $themeMock->method('getId')->willReturn(5);
         $themeMock->method('getCode')->willReturn('Vendor/theme');
         $themeMock->method('getThemeTitle')->willReturn('My Theme');
@@ -123,9 +154,7 @@ class ThemeResolverTest extends TestCase
 
     public function testReturnsThemeInfoWhenFound(): void
     {
-        $themeMock = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(['getId', 'getCode', 'getThemeTitle', 'getThemePath', 'getParentId'])
-            ->getMock();
+        $themeMock = $this->createMock(ThemeStub::class);
         $themeMock->method('getId')->willReturn(5);
         $themeMock->method('getCode')->willReturn('Vendor/theme');
         $themeMock->method('getThemeTitle')->willReturn('My Theme');
@@ -215,9 +244,7 @@ class ThemeResolverTest extends TestCase
 
     public function testHasParentThemeReturnsTrueWhenParentExists(): void
     {
-        $themeMock = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(['getId', 'getParentId'])
-            ->getMock();
+        $themeMock = $this->createMock(ThemeStub::class);
         $themeMock->method('getId')->willReturn(5);
         $themeMock->method('getParentId')->willReturn(3);
 

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Utility;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorFormatResolver;
 use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
@@ -26,6 +27,7 @@ class ColorFormatResolverTest extends TestCase
      */
     
     /** @test */
+    #[Test]
     public function it_respects_explicit_rgb_format()
     {
         $result = $this->resolver->resolve('rgb', '#111827');
@@ -33,6 +35,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_respects_explicit_hex_format()
     {
         $result = $this->resolver->resolve('hex', 'rgb(17, 24, 39)');
@@ -40,6 +43,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_normalizes_uppercase_format()
     {
         $result = $this->resolver->resolve('RGB', '#111827');
@@ -50,6 +54,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_auto_detects_rgb_from_default()
     {
         $result = $this->resolver->resolve(null, 'rgb(17, 24, 39)');
@@ -63,6 +68,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_auto_detects_hex_from_default()
     {
         $result = $this->resolver->resolve(null, '#111827');
@@ -76,6 +82,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_defaults_to_hex_for_palette_references()
     {
         $result = $this->resolver->resolve(null, '--color-brand-primary');
@@ -86,6 +93,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_defaults_to_hex_when_no_default_provided()
     {
         $result = $this->resolver->resolve(null, null);
@@ -93,6 +101,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_resolves_auto_format_with_rgb_default()
     {
         $result = $this->resolver->resolve('auto', 'rgb(17, 24, 39)');
@@ -100,6 +109,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_resolves_auto_format_with_hex_default()
     {
         $result = $this->resolver->resolve('auto', '#111827');
@@ -107,6 +117,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_resolves_auto_format_with_palette_reference()
     {
         $result = $this->resolver->resolve('auto', '--color-brand-primary');
@@ -114,6 +125,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_resolves_auto_format_without_default_to_hex()
     {
         $result = $this->resolver->resolve('auto', null);
@@ -125,6 +137,7 @@ class ColorFormatResolverTest extends TestCase
      */
     
     /** @test */
+    #[Test]
     public function it_detects_rgb_as_auto_detectable()
     {
         $this->assertTrue($this->resolver->isAutoDetectable('rgb(17, 24, 39)'));
@@ -133,6 +146,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_detects_hex_as_auto_detectable()
     {
         $this->assertTrue($this->resolver->isAutoDetectable('#111827'));
@@ -141,6 +155,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_detects_palette_reference_as_auto_detectable()
     {
         $this->assertTrue($this->resolver->isAutoDetectable('--color-brand-primary'));
@@ -148,6 +163,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_returns_false_for_null_or_empty()
     {
         $this->assertFalse($this->resolver->isAutoDetectable(null));
@@ -156,6 +172,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_returns_false_for_invalid_values()
     {
         $this->assertFalse($this->resolver->isAutoDetectable('invalid'));
@@ -168,6 +185,7 @@ class ColorFormatResolverTest extends TestCase
      */
     
     /** @test */
+    #[Test]
     public function it_detects_rgb_format_from_value()
     {
         $this->assertEquals('rgb', $this->resolver->getFormatFromValue('rgb(17, 24, 39)'));
@@ -176,6 +194,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_detects_hex_format_from_value()
     {
         $this->assertEquals('hex', $this->resolver->getFormatFromValue('#111827'));
@@ -184,6 +203,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_detects_palette_format_from_value()
     {
         $this->assertEquals('palette', $this->resolver->getFormatFromValue('--color-brand-primary'));
@@ -192,6 +212,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_returns_unknown_for_invalid_values()
     {
         $this->assertEquals('unknown', $this->resolver->getFormatFromValue('invalid'));
@@ -204,6 +225,7 @@ class ColorFormatResolverTest extends TestCase
      */
     
     /** @test */
+    #[Test]
     public function it_handles_complex_workflow_rgb_field()
     {
         // Scenario: Field with RGB default, no explicit format
@@ -222,6 +244,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_handles_complex_workflow_palette_field()
     {
         // Scenario: Field with palette reference, explicit RGB format
@@ -241,6 +264,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_handles_edge_case_empty_string_default()
     {
         $result = $this->resolver->resolve(null, '');
@@ -248,6 +272,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_handles_edge_case_whitespace_default()
     {
         $result = $this->resolver->resolve(null, '   ');
@@ -255,6 +280,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_handles_mixed_case_format()
     {
         $this->assertEquals('rgb', $this->resolver->resolve('RgB', null));
@@ -267,6 +293,7 @@ class ColorFormatResolverTest extends TestCase
      */
 
     /** @test */
+    #[Test]
     public function it_detects_hex8_as_auto_detectable()
     {
         $this->assertTrue($this->resolver->isAutoDetectable('#1979c380'));
@@ -276,6 +303,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_detects_hex8_format_as_hex()
     {
         $this->assertEquals('hex', $this->resolver->getFormatFromValue('#1979c380'));
@@ -284,6 +312,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_auto_detects_hex_from_hex8_default()
     {
         $result = $this->resolver->resolve(null, '#1979c380');
@@ -294,6 +323,7 @@ class ColorFormatResolverTest extends TestCase
     }
 
     /** @test */
+    #[Test]
     public function it_respects_explicit_rgb_format_for_hex8_value()
     {
         // Even if value is hex8, explicit format wins

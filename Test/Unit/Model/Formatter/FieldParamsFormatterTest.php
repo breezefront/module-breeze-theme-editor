@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Formatter;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Model\Formatter\FieldParamsFormatter;
 
@@ -240,6 +241,7 @@ class FieldParamsFormatterTest extends TestCase
     /**
      * @dataProvider nullParamsTypeProvider
      */
+    #[DataProvider('nullParamsTypeProvider')]
     public function testFieldTypesWithoutParamsReturnNull(string $type): void
     {
         $params = $this->formatter->formatParams([

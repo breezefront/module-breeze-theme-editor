@@ -155,7 +155,7 @@ class StatusProviderTest extends TestCase
         $this->cache->expects($this->once())
             ->method('save')
             ->with(
-                $this->isType('string'),
+                $this->callback('is_string'),
                 'breeze_theme_editor_status_map',
                 ['breeze_theme_editor'],
                 86400
