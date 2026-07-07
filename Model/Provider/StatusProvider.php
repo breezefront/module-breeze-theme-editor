@@ -46,23 +46,29 @@ class StatusProvider
             return $this->statusMap;
         }
 
-        // Try from cache
+        // Try from cache; an empty map means the table was empty when cached —
+        // treat it as a miss so recovery does not have to wait out the lifetime
         $cached = $this->cache->load(self::CACHE_KEY);
         if ($cached) {
-            $this->statusMap = $this->serializer->unserialize($cached);
-            return $this->statusMap;
+            $map = $this->serializer->unserialize($cached);
+            if (!empty($map)) {
+                $this->statusMap = $map;
+                return $this->statusMap;
+            }
         }
 
         // Load from database
         $this->statusMap = $this->loadFromDatabase();
 
-        // Save to cache
-        $this->cache->save(
-            $this->serializer->serialize($this->statusMap),
-            self::CACHE_KEY,
-            [self::CACHE_TAG],
-            self::CACHE_LIFETIME
-        );
+        // Cache only a non-empty map
+        if (!empty($this->statusMap)) {
+            $this->cache->save(
+                $this->serializer->serialize($this->statusMap),
+                self::CACHE_KEY,
+                [self::CACHE_TAG],
+                self::CACHE_LIFETIME
+            );
+        }
 
         return $this->statusMap;
     }
