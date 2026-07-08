@@ -2,7 +2,7 @@
     "name": "swissup/module-breeze-theme-editor",
     "description": "Breeze Theme Editor module for Magento 2",
     "type": "magento2-module",
-    "version": "1.0.9",
+    "version": "1.0.10",
     "license": "OSL-3.0",
     "require": {
         "php": "^8.1",
