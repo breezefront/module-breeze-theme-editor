@@ -16,20 +16,7 @@ use Magento\JwtUserToken\Api\ConfigReaderInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator;
-
-/**
- * BackendSession double: getUser/setData/unsetData are magic __call methods
- * on the real class, so they are declared here to make them mockable
- * (PHPUnit 12 removed MockBuilder::addMethods()).
- */
-abstract class BackendSessionStub extends BackendSession
-{
-    abstract public function getUser();
-
-    abstract public function setData($key, $value = null);
-
-    abstract public function unsetData($key = null);
-}
+use Swissup\BreezeThemeEditor\Test\Unit\Model\Service\Stub\BackendSessionStub;
 
 class AdminTokenGeneratorTest extends TestCase
 {
