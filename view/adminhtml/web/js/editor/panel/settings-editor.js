@@ -22,6 +22,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/css-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/php-preview-manager',
     'Swissup_BreezeThemeEditor/js/editor/css-manager',
+    'Swissup_BreezeThemeEditor/js/editor/panel/highlight-overlay',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers',
     'Swissup_BreezeThemeEditor/js/editor/panel/config-loader',
     'Swissup_BreezeThemeEditor/js/editor/panel/section-renderer',
@@ -50,6 +51,7 @@ define([
     CssPreviewManager,
     PhpPreviewManager,
     CssManager,
+    HighlightOverlay,
     FieldHandlers,
     ConfigLoader,
     SectionRenderer,
@@ -119,6 +121,7 @@ define([
             this._initPreview();
             this._initPanelTheme();
             RefSync.init(this.element);
+            HighlightOverlay.init();
 
             this.options.status = PublicationState.get();
 
@@ -679,6 +682,7 @@ define([
 
         _destroy: function () {
             FieldHandlers.destroy(this.element);
+            HighlightOverlay.destroy();
             CssPreviewManager.destroy();
             PhpPreviewManager.reset();
             PanelState.clear();

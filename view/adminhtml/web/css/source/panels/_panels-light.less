@@ -261,6 +261,29 @@
         }
     }
 
+    .bte-field-highlight-icon {
+        color: @bte-panel-text-muted;
+
+        &:hover {
+            color: @bte-panel-text;
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        &:focus {
+            outline-color: @bte-panel-input-border;
+        }
+
+        &--active {
+            color: #1979c3;
+            background: rgba(25, 121, 195, 0.12);
+
+            &:hover {
+                color: #1979c3;
+                background: rgba(25, 121, 195, 0.2);
+            }
+        }
+    }
+
     // ============================================================================
     // COLOR PICKER FIELD
     // ============================================================================

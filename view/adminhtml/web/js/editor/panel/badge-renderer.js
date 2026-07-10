@@ -18,10 +18,12 @@ define([
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/modified.html',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/reset-button.html',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/restore-button.html',
+    'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/highlight-icon.html',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/palette-changed.html',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/palette-reset-button.html',
     'text!Swissup_BreezeThemeEditor/template/editor/panel/badges/palette-modified.html'
 ], function($, mageTemplate, dirtyTemplate, modifiedTemplate, resetButtonTemplate, restoreButtonTemplate,
+            highlightIconTemplate,
             paletteChangedTemplate, paletteResetTemplate, paletteModifiedTemplate) {
     'use strict';
 
@@ -115,6 +117,34 @@ define([
             var template = this._getTemplate('restore', restoreButtonTemplate);
             return template({
                 data: {
+                    sectionCode: sectionCode,
+                    fieldCode: fieldCode
+                }
+            });
+        },
+
+        /**
+         * Render the per-field "highlight" icon button.
+         *
+         * Clicking it marks the live-preview elements affected by this
+         * field's CSS variable (panel/highlight-overlay.js). Rendered once
+         * at initial field template compile (not part of renderFieldBadges,
+         * which gets fully regenerated on every value change from
+         * PanelState data that has no `property`).
+         *
+         * @param {String} property - Field's CSS variable (e.g. '--base-color')
+         * @param {String} sectionCode
+         * @param {String} fieldCode
+         * @returns {String} HTML for the highlight icon, or '' when the field has no CSS variable
+         */
+        renderHighlightIcon: function(property, sectionCode, fieldCode) {
+            if (!property) {
+                return '';
+            }
+            var template = this._getTemplate('highlightIcon', highlightIconTemplate);
+            return template({
+                data: {
+                    property: property,
                     sectionCode: sectionCode,
                     fieldCode: fieldCode
                 }

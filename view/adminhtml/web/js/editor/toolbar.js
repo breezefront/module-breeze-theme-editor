@@ -3,7 +3,7 @@
  * 
  * Ініціалізує всі toolbar компоненти для admin area.
  * Координує роботу navigation, device switcher, admin link,
- * publication selector, scope selector, page selector, highlight toggle, and exit button.
+ * publication selector, scope selector, page selector, and exit button.
  */
 define([
     'jquery',
@@ -15,7 +15,6 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/toolbar/publication-selector',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/scope-selector',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/page-selector',
-    'Swissup_BreezeThemeEditor/js/editor/toolbar/highlight-toggle',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/toolbar-toggle',
     'Swissup_BreezeThemeEditor/js/editor/toolbar/exit-button',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
@@ -30,9 +29,9 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
     'Swissup_BreezeThemeEditor/js/editor/constants',
     'Swissup_BreezeThemeEditor/js/editor/utils/bsync'
-], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation, 
-             publicationSelector, scopeSelector, pageSelector, highlightToggle, 
-             toolbarToggle, exitButton, configManager, scopeManager, urlBuilder, graphQLClient, 
+], function ($, mageTemplate, toolbarTemplate, adminLink, deviceSwitcher, navigation,
+             publicationSelector, scopeSelector, pageSelector,
+             toolbarToggle, exitButton, configManager, scopeManager, urlBuilder, graphQLClient,
              previewManager, cssManager, settingsEditor, iframeHelper, StorageHelper, Logger, Constants, Bsync) {
     'use strict';
 
@@ -180,15 +179,6 @@ define([
                 themeId: config.themeId || null
             });
             log.info('Page selector initialized');
-        }
-        
-        // Initialize highlight toggle widget
-        if ($(Constants.SELECTORS.HIGHLIGHT_TOGGLE).length) {
-            $(Constants.SELECTORS.HIGHLIGHT_TOGGLE).breezeHighlightToggle({
-                enabled: false,
-                iframeSelector: config.iframeSelector || Constants.SELECTORS.IFRAME
-            });
-            log.info('Highlight toggle initialized');
         }
         
         // Initialize toolbar toggle widget

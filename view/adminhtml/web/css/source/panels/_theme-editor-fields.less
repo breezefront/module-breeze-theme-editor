@@ -135,6 +135,47 @@
     }
 }
 
+// Highlight icon (⌖ — panel/highlight-overlay.js: click marks the preview
+// elements affected by this field's CSS variable). Rendered next to every
+// field that has a `property`, independent of dirty/modified state so it
+// stays put across badge re-renders.
+.bte-field-highlight-icon {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 13px;
+    line-height: 1;
+    padding: 2px 5px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+
+    &:hover {
+        color: rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    &:focus {
+        outline: 1px solid rgba(255, 255, 255, 0.3);
+        outline-offset: 2px;
+    }
+
+    &--active {
+        color: #1979c3;
+        background: rgba(25, 121, 195, 0.18);
+
+        &:hover {
+            color: #1979c3;
+            background: rgba(25, 121, 195, 0.28);
+        }
+    }
+}
+
 // Restore button (× — remove customization, appears inside .bte-badge-group after "Modified")
 .bte-field-restore-btn {
     background: transparent;

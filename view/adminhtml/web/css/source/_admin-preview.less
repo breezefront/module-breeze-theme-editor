@@ -77,3 +77,40 @@ body.bte-panel-active {
 @keyframes bte-spin {
     to { transform: rotate(360deg); }
 }
+
+// ─── Highlight Overlay ────────────────────────────────────────────────────────
+//
+// panel/highlight-overlay.js marks affected preview elements by toggling a
+// class *inside* the iframe document (outline rule injected there — see
+// STYLE_ID/TARGET_CLASS in that module), the same technique
+// swissup/module-theme-editor's theme-editor-highlighter.js uses. The only
+// admin-side DOM is the empty-state corner badge below, shown as a sibling
+// of #bte-iframe when nothing on the current page is affected; the parent
+// .bte-preview already has position: relative.
+
+.bte-highlight-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    pointer-events: none;
+}
+
+// Matches the toastify notice card (components/_toastify.less): white card,
+// colored left border, drop shadow, same font/radius tokens as the rest of
+// the toolbar — instead of a one-off dark tooltip style.
+.bte-highlight-empty {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    max-width: calc(100% - 24px);
+    padding: 12px 14px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    border-left: 4px solid @bte-badge-modified-primary;
+    border-radius: @bte-toolbar-border-radius;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.08);
+    font-family: @bte-toolbar-font-family;
+    font-size: @bte-toolbar-font-size-small;
+    line-height: 1.4;
+    pointer-events: none;
+}

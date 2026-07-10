@@ -106,6 +106,7 @@ define([
                 isModified: isModified,
                 isDirty: isDirty,
                 badgesHtml: this.renderBadges(isDirty, isModified, stateSectionCode, fieldCode),
+                highlightIconHtml: BadgeRenderer.renderHighlightIcon(field.property, stateSectionCode, fieldCode),
                 validation: field.validation || {},
                 params: field.params || {},
                 fieldId: 'field-' + fieldCode,

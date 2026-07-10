@@ -25,7 +25,7 @@ define([], function() {
             PUBLICATION_SELECTOR: '#bte-publication-selector',
             SCOPE_SELECTOR: '#bte-scope-selector',
             PAGE_SELECTOR: '#bte-page-selector',
-            HIGHLIGHT_TOGGLE: '#bte-highlight-toggle',
+            HIGHLIGHT_OVERLAY: '#bte-highlight-overlay',
             TOOLBAR_TOGGLE: '#bte-toolbar-toggle',
             EXIT_BUTTON: '#bte-exit',
             
@@ -123,7 +123,6 @@ define([], function() {
             PAGE_CHANGED: 'pageChanged',
             DEVICE_CHANGED: 'deviceChanged',
             PUBLICATION_CHANGED: 'publicationChanged',
-            HIGHLIGHT_TOGGLED: 'highlightToggled',
             TOOLBAR_TOGGLED: 'toolbarToggled'
         },
         
@@ -161,6 +160,15 @@ define([], function() {
         CSS_VAR_PREFIXES: {
             COLOR: '--color-',
             COLOR_BRAND: '--color-brand-'
+        },
+
+        /**
+         * Highlight feature (panel/highlight-overlay.js) configuration
+         */
+        HIGHLIGHT: {
+            // Above this many resolved elements, showing a mark on every one
+            // gets cluttered — show a count message instead.
+            MAX_MARKED_ELEMENTS: 5
         }
     };
 });
