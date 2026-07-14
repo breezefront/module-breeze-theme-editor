@@ -8,6 +8,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Swissup\BreezeThemeEditor\Model\Provider\StoreDataProvider;
 use Swissup\BreezeThemeEditor\Model\Provider\ThemeAvailabilityProvider;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\UrlInterface;
 
 class StoreDataProviderTest extends TestCase
@@ -217,5 +218,62 @@ class StoreDataProviderTest extends TestCase
         $this->assertTrue($result[0]['hasSettings'],  'default scope hasSettings should be true');
         $this->assertFalse($result[1]['hasSettings'], 'website scope hasSettings should be false');
         $this->assertTrue($result[1]['groups'][0]['stores'][0]['hasSettings'], 'store scope hasSettings should be true');
+    }
+
+    /**
+     * Regression test: when the store resolver can't determine a current
+     * store/website (e.g. Commerce admin website-scope restrictions throw
+     * NoSuchEntityException from getStore()/getWebsite()), the provider must
+     * degrade gracefully instead of letting the exception bubble up and
+     * crash the Theme Editor page with a fatal error.
+     */
+    public function testGetHierarchicalStores_toleratesUnresolvableCurrentStore(): void
+    {
+        $store   = $this->makeStore(1, 'Default Store', 'default');
+        $group   = $this->makeGroup(1, 'Main Group', [$store]);
+        $website = $this->makeWebsite(1, 'Main Website', 'base', [$group]);
+
+        $this->storeManagerMock->method('getStore')
+            ->willThrowException(new NoSuchEntityException(__('Requested store is not found')));
+        $this->storeManagerMock->method('getWebsites')->willReturn([$website]);
+        $this->storeManagerMock->method('getWebsite')->willReturnMap([
+            [true, $website],
+            [1,    $website],
+        ]);
+        $this->themeAvailabilityMock->method('hasSettings')->willReturn(true);
+
+        $result = $this->provider->getHierarchicalStores();
+
+        $this->assertFalse(
+            $result[1]['groups'][0]['stores'][0]['active'],
+            'no store should be marked active when current store cannot be resolved'
+        );
+    }
+
+    /**
+     * Regression test: getAvailableStores() must not crash when both
+     * getStore() and getWebsite() (current, no-arg) fail to resolve.
+     */
+    public function testGetAvailableStores_toleratesUnresolvableCurrentStoreAndWebsite(): void
+    {
+        $store   = $this->makeStore(1, 'Default Store', 'default');
+        $website = $this->makeWebsite(1, 'Main Website', 'base', []);
+        $website->method('getStores')->willReturn([$store]);
+
+        $this->storeManagerMock->method('getStore')
+            ->willThrowException(new NoSuchEntityException(__('Requested store is not found')));
+        $this->storeManagerMock->method('getWebsite')->willReturnCallback(
+            function ($websiteId = null) use ($website) {
+                if ($websiteId === true) {
+                    return $website;
+                }
+                throw new NoSuchEntityException(__('Requested website is not found'));
+            }
+        );
+
+        $result = $this->provider->getAvailableStores();
+
+        $this->assertCount(1, $result);
+        $this->assertFalse($result[0]['active']);
     }
 }

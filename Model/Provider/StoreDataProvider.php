@@ -44,8 +44,8 @@ class StoreDataProvider
      */
     public function getAvailableStores()
     {
-        $currentStoreId = $this->storeManager->getStore()->getId();
-        $currentWebsite = $this->storeManager->getWebsite();
+        $currentStoreId = $this->getSafeCurrentStoreId();
+        $currentWebsite = $this->getSafeCurrentWebsite();
         $stores = [];
 
         foreach ($currentWebsite->getStores() as $store) {
@@ -77,8 +77,8 @@ class StoreDataProvider
      */
     public function getAvailableGroups()
     {
-        $currentGroupId = $this->storeManager->getStore()->getGroupId();
-        $currentWebsite = $this->storeManager->getWebsite();
+        $currentGroupId = $this->getSafeCurrentGroupId();
+        $currentWebsite = $this->getSafeCurrentWebsite();
         $groups = [];
 
         foreach ($currentWebsite->getGroups() as $group) {
@@ -159,7 +159,7 @@ class StoreDataProvider
     public function getHierarchicalStores()
     {
         $result = [];
-        $currentStoreId = $this->storeManager->getStore()->getId();
+        $currentStoreId = $this->getSafeCurrentStoreId();
 
         // Get all websites except admin
         $websites = $this->storeManager->getWebsites(false, false);
@@ -283,4 +283,47 @@ class StoreDataProvider
         return $fallback;
     }
 
+    /**
+     * Get current store ID, tolerating store resolution failures
+     * (e.g. Commerce admin website-scope restrictions).
+     *
+     * @return int
+     */
+    private function getSafeCurrentStoreId(): int
+    {
+        try {
+            return (int)$this->storeManager->getStore()->getId();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Get current store's group ID, tolerating store resolution failures.
+     *
+     * @return int
+     */
+    private function getSafeCurrentGroupId(): int
+    {
+        try {
+            return (int)$this->storeManager->getStore()->getGroupId();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Get current website, falling back to the default website when
+     * current-store/website resolution fails.
+     *
+     * @return \Magento\Store\Api\Data\WebsiteInterface
+     */
+    private function getSafeCurrentWebsite()
+    {
+        try {
+            return $this->storeManager->getWebsite();
+        } catch (\Exception $e) {
+            return $this->storeManager->getWebsite(true);
+        }
+    }
 }
