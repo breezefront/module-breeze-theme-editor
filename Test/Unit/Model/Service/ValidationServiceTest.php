@@ -101,6 +101,73 @@ class ValidationServiceTest extends TestCase
     }
 
     // =========================================================================
+    // validateValue — color_background (solid or gradient)
+    // =========================================================================
+
+    public function testColorBackgroundValidSolidHexReturnsNull(): void
+    {
+        $this->configProvider
+            ->method('getField')
+            ->willReturn(['type' => 'color_background']);
+
+        $this->assertNull($this->service->validateValue(1, 'footer', 'bg', '#FF0000'));
+    }
+
+    public function testColorBackgroundValidLinearGradientReturnsNull(): void
+    {
+        $this->configProvider
+            ->method('getField')
+            ->willReturn(['type' => 'color_background']);
+
+        $this->assertNull(
+            $this->service->validateValue(1, 'footer', 'bg', 'linear-gradient(135deg, #3485ec 0%, #1fd980 100%)')
+        );
+    }
+
+    public function testColorBackgroundValidRadialGradientReturnsNull(): void
+    {
+        $this->configProvider
+            ->method('getField')
+            ->willReturn(['type' => 'color_background']);
+
+        $this->assertNull(
+            $this->service->validateValue(1, 'footer', 'bg', 'radial-gradient(circle, #982ce5 0%, #1d6799 100%)')
+        );
+    }
+
+    public function testColorBackgroundGradientWithVarStopReturnsNull(): void
+    {
+        $this->configProvider
+            ->method('getField')
+            ->willReturn(['type' => 'color_background']);
+
+        $this->assertNull(
+            $this->service->validateValue(1, 'footer', 'bg', 'linear-gradient(90deg, var(--color-brand-primary) 0%, #1fd980 100%)')
+        );
+    }
+
+    public function testColorBackgroundSolidPaletteRefReturnsNull(): void
+    {
+        $this->configProvider
+            ->method('getField')
+            ->willReturn(['type' => 'color_background']);
+
+        $this->assertNull($this->service->validateValue(1, 'footer', 'bg', '--color-brand-primary'));
+    }
+
+    public function testColorBackgroundInvalidValueReturnsError(): void
+    {
+        $this->configProvider
+            ->method('getField')
+            ->willReturn(['type' => 'color_background']);
+
+        $result = $this->service->validateValue(1, 'footer', 'bg', 'not-a-color');
+
+        $this->assertNotNull($result);
+        $this->assertStringContainsString('HEX', $result);
+    }
+
+    // =========================================================================
     // validateValue — number / range
     // =========================================================================
 

@@ -1,6 +1,7 @@
 define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/base',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/color',
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/color-background',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/text',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/number',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/range',
@@ -21,6 +22,7 @@ define([
 ], function(
     BaseFieldRenderer,
     ColorRenderer,
+    ColorBackgroundRenderer,
     TextRenderer,
     NumberRenderer,
     RangeRenderer,
@@ -53,6 +55,7 @@ define([
          */
         renderers: {
             'COLOR': ColorRenderer,
+            'COLOR_BACKGROUND': ColorBackgroundRenderer,
             'TEXT': TextRenderer,
             'NUMBER': NumberRenderer,
             'RANGE': RangeRenderer,

@@ -42,6 +42,14 @@ class CssValueFormatter
                 ),
                 $field['default'] ?? null
             ),
+            'color_background' => $this->formatColorBackground(
+                (string)$value,
+                $this->colorFormatResolver->resolve(
+                    $field['format'] ?? null,
+                    $field['default'] ?? null
+                ),
+                $field['default'] ?? null
+            ),
             'font_picker' => $this->formatFont($value),
             'toggle', 'checkbox' => ($value === true || $value === '1' || $value === 1) ? '1' : '0',
             'number', 'range' => (string)$value,
@@ -114,6 +122,43 @@ class CssValueFormatter
 
         // Fallback: return as-is
         return $value;
+    }
+
+    /**
+     * Format a color_background field value.
+     *
+     * Accepts either a solid color (HEX / RGB / palette reference) or a raw CSS
+     * gradient string. Solid values are delegated to formatColor() so they behave
+     * exactly like a 'color' field. Gradient values (linear/radial/conic, optionally
+     * repeating) are passed through untouched — only CSS comment delimiters are
+     * escaped — so var() palette stops and stop positions survive verbatim.
+     *
+     * @param string $value Solid color or CSS gradient string
+     * @param string $format Output format for solid values: 'hex' or 'rgb'
+     * @param string|null $defaultValue Default value (optional)
+     * @return string
+     */
+    public function formatColorBackground(string $value, string $format, ?string $defaultValue = null): string
+    {
+        if ($this->isGradient($value)) {
+            return $this->escapeValue($value);
+        }
+
+        return $this->formatColor($value, $format, $defaultValue);
+    }
+
+    /**
+     * Detect a CSS gradient function at the start of the value.
+     *
+     * Matches linear-gradient(), radial-gradient(), conic-gradient() and their
+     * repeating-* variants, case-insensitively, ignoring leading whitespace.
+     *
+     * @param string $value
+     * @return bool
+     */
+    private function isGradient(string $value): bool
+    {
+        return (bool)preg_match('/^\s*(repeating-)?(linear|radial|conic)-gradient\s*\(/i', $value);
     }
 
     /**
@@ -256,7 +301,7 @@ class CssValueFormatter
         }
 
         return match (strtolower($fieldType)) {
-            'color' => str_starts_with((string)$value, '#') ? (string)$value : null,
+            'color', 'color_background' => str_starts_with((string)$value, '#') ? (string)$value : null,
             'spacing' => 'JSON: ' . (is_string($value) ? $value : json_encode($value)),
             default => null
         };

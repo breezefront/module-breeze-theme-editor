@@ -169,6 +169,45 @@ class SectionFormatterColorTest extends TestCase
         $this->assertEquals('--color-primary', $field['value'], 'Palette references should NEVER be converted');
     }
 
+    public function testColorBackgroundGradientPassesThrough(): void
+    {
+        $colorConverter = new ColorConverter();
+        $colorPipeline  = new ColorPipeline(new ColorFormatResolver($colorConverter), new ColorFormatter($colorConverter));
+        $serializer = $this->createMock(SerializerInterface::class);
+        $configProvider = $this->createMock(ConfigProvider::class);
+        $configProvider->method('getAllDefaults')->willReturn(['footer.bg' => '#000000']);
+        $configProvider->method('getConfigurationWithInheritance')->willReturn([]);
+
+        $formatter = new SectionFormatter($configProvider, $colorPipeline, $serializer);
+        $sections  = [[
+            'id' => 'footer', 'name' => 'Footer',
+            'settings' => [['id' => 'bg', 'label' => 'Background', 'type' => 'color_background', 'format' => 'rgb', 'default' => '#000000']],
+        ]];
+        $gradient = 'linear-gradient(135deg, #3485ec 0%, #1fd980 100%)';
+        $field = $formatter->mergeSectionsWithValues($sections, ['footer.bg' => $gradient], 1)[0]['fields'][0];
+
+        $this->assertEquals($gradient, $field['value'], 'Gradient values must never be converted');
+    }
+
+    public function testColorBackgroundSolidConvertsHexToRgb(): void
+    {
+        $colorConverter = new ColorConverter();
+        $colorPipeline  = new ColorPipeline(new ColorFormatResolver($colorConverter), new ColorFormatter($colorConverter));
+        $serializer = $this->createMock(SerializerInterface::class);
+        $configProvider = $this->createMock(ConfigProvider::class);
+        $configProvider->method('getAllDefaults')->willReturn(['footer.bg' => '#000000']);
+        $configProvider->method('getConfigurationWithInheritance')->willReturn([]);
+
+        $formatter = new SectionFormatter($configProvider, $colorPipeline, $serializer);
+        $sections  = [[
+            'id' => 'footer', 'name' => 'Footer',
+            'settings' => [['id' => 'bg', 'label' => 'Background', 'type' => 'color_background', 'format' => 'rgb', 'default' => '#000000']],
+        ]];
+        $field = $formatter->mergeSectionsWithValues($sections, ['footer.bg' => '#000000'], 1)[0]['fields'][0];
+
+        $this->assertEquals('0, 0, 0', $field['value'], 'Solid color_background values convert like a color field');
+    }
+
     public function testHandlesNullValues(): void
     {
         $colorConverter = new ColorConverter();

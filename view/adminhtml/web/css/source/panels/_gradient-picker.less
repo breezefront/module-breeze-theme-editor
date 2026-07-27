@@ -1,0 +1,283 @@
+//
+//  Gradient Picker (COLOR_BACKGROUND field)
+//  _____________________________________________
+//
+//  Two-tab popup (Solid / Gradient) with preset swatches and a custom
+//  multi-stop gradient editor. Shares the Pickr nano theme with _color-picker.
+//
+
+// ============================================================================
+// POPUP CONTAINER
+// ============================================================================
+
+.bte-cbg-popup {
+    position: absolute;
+    background: @bte-toolbar-bg;
+    border: 1px solid @bte-field-border-translucent;
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+    // Extra top padding reserves a strip for the close button so it never
+    // overlaps the Solid/Gradient tabs.
+    padding: 34px 16px 16px;
+    width: 320px;
+    z-index: @bte-color-picker-z-index;
+    max-height: 90vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+
+    .bte-popup-close {
+        position: absolute;
+        top: 6px;
+        right: 10px;
+        width: 22px;
+        height: 22px;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 22px;
+        line-height: 20px;
+        cursor: pointer;
+
+        &:hover {
+            color: #fff;
+        }
+    }
+}
+
+// Small section caption used throughout the editor.
+.bte-cbg-section-label {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 14px 0 6px;
+
+    &:first-child {
+        margin-top: 0;
+    }
+}
+
+.bte-cbg-hint {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    margin: -8px 0 12px;
+    line-height: 1.4;
+}
+
+// ============================================================================
+// TABS (segmented control)
+// ============================================================================
+
+.bte-cbg-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    margin: 0 0 14px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+
+    .bte-cbg-tab {
+        flex: 1;
+        padding: 7px 8px;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+
+        &:hover {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        &.active {
+            background: @action-primary;
+            color: #fff;
+        }
+    }
+}
+
+.bte-cbg-pane {
+    display: none;
+
+    &.active {
+        display: block;
+    }
+}
+
+// ============================================================================
+// GRADIENT: PRESETS
+// ============================================================================
+
+.bte-cbg-presets {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 6px;
+
+    .bte-cbg-preset {
+        aspect-ratio: 1;
+        width: 100%;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        cursor: pointer;
+        padding: 0;
+        transition: transform 0.12s, box-shadow 0.12s;
+
+        &:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 2px @action-primary;
+        }
+    }
+}
+
+// ============================================================================
+// GRADIENT: EDITOR
+// ============================================================================
+
+.bte-cbg-editor {
+    .bte-cbg-bar {
+        position: relative;
+        height: 24px;
+        border-radius: 6px;
+        border: 1px solid @bte-field-border-translucent;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+        // Inset so the 0% / 100% grips stay inside the popup (no h-scroll).
+        margin: 0 10px 8px;
+        cursor: copy;
+
+        // Round grip handles that sit on the bar.
+        .bte-cbg-handle {
+            position: absolute;
+            top: 50%;
+            width: 16px;
+            height: 16px;
+            margin-left: -8px;
+            transform: translateY(-50%);
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+            cursor: grab;
+            transition: transform 0.1s;
+
+            &:active {
+                cursor: grabbing;
+            }
+
+            &.active {
+                width: 20px;
+                height: 20px;
+                margin-left: -10px;
+                border-color: @action-primary;
+                box-shadow: 0 0 0 2px @action-primary, 0 1px 3px rgba(0, 0, 0, 0.6);
+            }
+        }
+    }
+
+    .bte-cbg-stop-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+
+        .bte-cbg-add-stop,
+        .bte-cbg-remove-stop {
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid @bte-field-border-translucent;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            line-height: 1;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.16);
+            }
+        }
+
+        .bte-cbg-stop-pos-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bte-cbg-stop-pos-input {
+            width: 52px;
+            padding: 4px 6px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid @bte-field-border-translucent;
+            border-radius: 4px;
+            color: #fff;
+            text-align: right;
+
+            &:focus {
+                outline: none;
+                border-color: @action-primary;
+            }
+        }
+    }
+
+    .bte-cbg-type {
+        display: flex;
+        gap: 16px;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 12px;
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+    }
+
+    .bte-cbg-angle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 12px;
+
+        .bte-cbg-angle-cap {
+            flex-shrink: 0;
+        }
+
+        .bte-cbg-angle-range {
+            flex: 1;
+        }
+
+        .bte-cbg-angle-val {
+            flex-shrink: 0;
+            min-width: 34px;
+            text-align: right;
+            color: rgba(255, 255, 255, 0.6);
+        }
+    }
+
+    // Tighten the embedded Pickr so it doesn't dominate the popup.
+    .bte-cbg-stop-pickr .pcr-app {
+        box-shadow: none;
+        padding: 0;
+    }
+}
+
+// Gradient swatch preview in the field trigger: the gradient is painted on the
+// element itself (inline background). Hide the checkerboard ::before overlay so
+// it isn't covered, and drop the ::after solid-color layer (gradients aren't a
+// background-color).
+.bte-field-color-background.bte-field-gradient .bte-color-preview {
+    background-size: cover;
+
+    &::before,
+    &::after {
+        display: none;
+    }
+}

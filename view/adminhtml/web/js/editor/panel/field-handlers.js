@@ -1,6 +1,7 @@
 define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/base',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/color',
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/color-background',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/range',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/number',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/radio',
@@ -10,7 +11,7 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/repeater',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/base',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function (BaseHandler, ColorHandler, RangeHandler, NumberHandler, RadioHandler, SimpleHandler, ImageUploadHandler, SpacingHandler, RepeaterHandler, BaseRenderer, Logger) {
+], function (BaseHandler, ColorHandler, ColorBackgroundHandler, RangeHandler, NumberHandler, RadioHandler, SimpleHandler, ImageUploadHandler, SpacingHandler, RepeaterHandler, BaseRenderer, Logger) {
     'use strict';
 
     var log = Logger.for('panel/field-handlers');
@@ -27,6 +28,7 @@ define([
          */
         handlersByType: {
             'COLOR': ColorHandler,
+            'COLOR_BACKGROUND': ColorBackgroundHandler,
             'RANGE': RangeHandler,
             'NUMBER': NumberHandler,
             'RADIO': RadioHandler,
@@ -55,6 +57,7 @@ define([
             log.debug('Initializing field change handlers');
 
             ColorHandler.init($element, callback);
+            ColorBackgroundHandler.init($element, callback);
             RangeHandler.init($element, callback);
             NumberHandler.init($element, callback);
             RadioHandler.init($element, callback);
@@ -76,6 +79,7 @@ define([
          */
         destroy: function($element) {
             ColorHandler.destroy($element);
+            ColorBackgroundHandler.destroy($element);
             RangeHandler.destroy($element);
             NumberHandler.destroy($element);
             RadioHandler.destroy($element);
