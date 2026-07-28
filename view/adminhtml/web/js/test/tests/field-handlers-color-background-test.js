@@ -43,7 +43,7 @@ define([
                 '</div>' +
                 '<input type="text" class="bte-cbg-input" data-section="footer" data-field="bg"' +
                     ' data-property="--footer-bg" data-default="#1a1a1a" data-type="color_background"' +
-                    ' value="#1a1a1a" />' +
+                    ' value="#1a1a1a">' +
             '</div>'
         );
         $('body').append($field);
