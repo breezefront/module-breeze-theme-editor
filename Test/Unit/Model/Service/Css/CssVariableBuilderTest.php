@@ -357,6 +357,38 @@ class CssVariableBuilderTest extends TestCase
         $this->assertSame('#aabbcc', $result['--color-brand-primary']);
     }
 
+    public function testBuildPaletteVarsToEmitAddsConfigDefaultForColorBackgroundRef(): void
+    {
+        $config = [
+            'palettes' => [
+                [
+                    'groups' => [
+                        [
+                            'colors' => [
+                                ['property' => '--color-brand-primary', 'default' => '#aabbcc'],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        // A solid color_background referencing a palette var must emit that var,
+        // exactly like a color field.
+        $fieldMap = [
+            'footer.bg' => ['type' => 'color_background', '_selector' => ':root'],
+        ];
+
+        $values = [
+            ['section_code' => 'footer', 'setting_code' => 'bg', 'value' => '--color-brand-primary'],
+        ];
+
+        $result = $this->builder->buildPaletteVarsToEmit($values, $config, $fieldMap);
+
+        $this->assertArrayHasKey('--color-brand-primary', $result);
+        $this->assertSame('#aabbcc', $result['--color-brand-primary']);
+    }
+
     public function testBuildPaletteVarsToEmitDoesNotOverwriteDbValueWithDefault(): void
     {
         $config = [

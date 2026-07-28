@@ -68,6 +68,8 @@ class ValidationService
         switch ($type) {
             case 'color':
                 return $this->validateColor($value);
+            case 'color_background':
+                return $this->validateColorBackground($value);
             case 'number':
             case 'range':
                 return $this->validateNumber($value, $field);
@@ -91,6 +93,27 @@ class ValidationService
         }
 
         return null;
+    }
+
+    /**
+     * Validate a color_background value — solid color or CSS gradient.
+     *
+     * Accepts:
+     * - CSS gradients (linear/radial/conic, optionally repeating) — passed as-is
+     * - Palette references (--color-* or var(...)) — resolved downstream
+     * - Solid HEX colors — same rule as validateColor()
+     */
+    private function validateColorBackground(string $value): ?string
+    {
+        if (preg_match('/^\s*(repeating-)?(linear|radial|conic)-gradient\s*\(/i', $value)) {
+            return null;
+        }
+
+        if (str_starts_with($value, '--') || str_starts_with($value, 'var(')) {
+            return null;
+        }
+
+        return $this->validateColor($value);
     }
 
     /**

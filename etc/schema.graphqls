@@ -11,6 +11,7 @@ enum BreezeThemeEditorCssStatusCode {
 
 enum BreezeThemeEditorFieldType {
     COLOR
+    COLOR_BACKGROUND @doc(description: "Solid color or CSS gradient background")
     TEXT
     TEXTAREA
     NUMBER

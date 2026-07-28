@@ -4,6 +4,7 @@
 // _____________________________________________
 
 @import '_color-picker.less';
+@import '_gradient-picker.less';
 @import '_font-picker.less';
 
 // ============================================================================
@@ -238,7 +239,8 @@
 
 .bte-field-color {
     // Clickable color trigger (replaces native input)
-    .bte-color-trigger {
+    .bte-color-trigger,
+    .bte-cbg-trigger {
         width: 60px;
         height: 40px;
         border: 1px solid @bte-field-border-translucent;
@@ -286,7 +288,8 @@
         }
     }
 
-    .bte-color-input {
+    .bte-color-input,
+    .bte-cbg-input {
         flex: 1;
         padding: 8px 12px;
         background: rgba(0, 0, 0, 0.3);

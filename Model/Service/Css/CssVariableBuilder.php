@@ -160,7 +160,7 @@ class CssVariableBuilder
             }
             $key       = ($value['section_code'] ?? '') . '.' . ($value['setting_code'] ?? '');
             $fieldType = strtolower($fieldMap[$key]['type'] ?? '');
-            if ($fieldType !== 'color') {
+            if ($fieldType !== 'color' && $fieldType !== 'color_background') {
                 continue;
             }
             $cssVar = $rawValue;

@@ -103,9 +103,11 @@ class SectionFormatter
                 $currentValue = $valuesMap[$key] ?? null;
                 $defaultValue = $defaults[$key] ?? ($setting['default'] ?? null);
 
-                // Resolve format early for color fields (needed for value conversion)
+                // Resolve format early for color fields (needed for value conversion).
+                // color_background reuses the same pipeline — solid values convert like a
+                // color field, gradient strings fall through ColorFormatter unchanged.
                 $colorFormat = null;
-                if ($type === 'color') {
+                if ($type === 'color' || $type === 'color_background') {
                     $colorFormat = $this->colorPipeline->resolveFormat(
                         $setting['format'] ?? null,
                         $setting['default'] ?? null

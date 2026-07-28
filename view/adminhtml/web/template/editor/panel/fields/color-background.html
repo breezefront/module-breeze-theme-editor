@@ -1,0 +1,61 @@
+<div class="bte-field bte-field-color bte-field-color-background
+    <%= data.isGradient ? 'bte-field-gradient' : '' %>
+    <%= data.isModified ? 'bte-field-modified' : '' %>
+    <%= data.isDirty ? 'bte-field-dirty' : '' %>">
+    <div class="bte-field-header">
+        <label class="bte-field-label" for="field-<%= data.sectionCode %>-<%= data.code %>">
+            <%= data.label %>
+            <% if (data.required) { %>
+                <span class="bte-required">*</span>
+            <% } %>
+        </label>
+        <%= data.badgesHtml %>
+        <%= data.mediaBadgeHtml %>
+        <%= data.highlightIconHtml %>
+    </div>
+
+    <% if (data.description) { %>
+        <div class="bte-field-description"><%= data.description %></div>
+    <% } %>
+
+    <div class="bte-field-control">
+        <div class="bte-color-picker-wrapper">
+            <div class="bte-cbg-trigger"
+                 data-section="<%= data.sectionCode %>"
+                 data-field="<%= data.code %>"
+                 data-property="<%= data.property %>"
+                 <%= data.selectorAttr %>
+                 <%= data.mediaAttr %>
+                 <%= data.mediaDeviceAttr %>
+                 data-palette="<%= data.palette %>"
+                 data-type="color_background"
+                 data-default="<%= data.default %>"
+                 <% if (data.format) { %>data-format="<%= data.format %>"<% } %>
+                 <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>
+                 <%= data.required ? 'data-required="true"' : '' %>>
+                <div class="bte-color-preview" style="<%= data.previewStyle %>"></div>
+            </div>
+            <input
+                type="text"
+                id="field-<%= data.sectionCode %>-<%= data.code %>"
+                class="bte-cbg-input"
+                value="<%= data.value %>"
+                placeholder="<%= data.placeholder || '#000000' %>"
+                data-section="<%= data.sectionCode %>"
+                data-field="<%= data.code %>"
+                data-property="<%= data.property %>"
+                 <%= data.selectorAttr %>
+                 <%= data.mediaAttr %>
+                 <%= data.mediaDeviceAttr %>
+                data-default="<%= data.default %>"
+                data-type="color_background"
+                <% if (data.format) { %>data-format="<%= data.format %>"<% } %>
+                <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>
+            >
+        </div>
+    </div>
+
+    <% if (data.helpText) { %>
+        <div class="bte-field-help"><%= data.helpText %></div>
+    <% } %>
+</div>

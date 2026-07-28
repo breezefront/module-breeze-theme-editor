@@ -357,4 +357,110 @@ class CssValueFormatterTest extends TestCase
     {
         $this->assertNull($this->formatter->getComment('anything', null));
     }
+
+    // -----------------------------------------------------------------------
+    // formatValue — color_background type (solid or gradient)
+    // -----------------------------------------------------------------------
+
+    public function testFormatValueColorBackgroundSolidHex(): void
+    {
+        $field = ['type' => 'color_background', 'default' => '#000000'];
+        $this->assertSame('#1979c3', $this->formatter->formatValue('#1979C3', $field));
+    }
+
+    public function testFormatValueColorBackgroundSolidRgbDefault(): void
+    {
+        $field = ['type' => 'color_background', 'default' => 'rgb(17, 24, 39)'];
+        $this->assertSame('25, 121, 195', $this->formatter->formatValue('#1979c3', $field));
+    }
+
+    public function testFormatValueColorBackgroundSolidPaletteRef(): void
+    {
+        $field = ['type' => 'color_background', 'default' => '#000000'];
+        $this->assertSame(
+            'var(--color-brand-primary)',
+            $this->formatter->formatValue('--color-brand-primary', $field)
+        );
+    }
+
+    public function testFormatValueColorBackgroundLinearGradientPassesThrough(): void
+    {
+        $field = ['type' => 'color_background', 'default' => '#000000'];
+        $gradient = 'linear-gradient(135deg, #3485ec 0%, #1fd980 100%)';
+        $this->assertSame($gradient, $this->formatter->formatValue($gradient, $field));
+    }
+
+    public function testFormatValueColorBackgroundRadialGradientPassesThrough(): void
+    {
+        $field = ['type' => 'color_background', 'default' => '#000000'];
+        $gradient = 'radial-gradient(circle, #982ce5 0%, #1d6799 100%)';
+        $this->assertSame($gradient, $this->formatter->formatValue($gradient, $field));
+    }
+
+    public function testFormatValueColorBackgroundRepeatingGradientPassesThrough(): void
+    {
+        $field = ['type' => 'color_background', 'default' => '#000000'];
+        $gradient = 'repeating-linear-gradient(45deg, #000 0, #000 10px, #fff 10px, #fff 20px)';
+        $this->assertSame($gradient, $this->formatter->formatValue($gradient, $field));
+    }
+
+    public function testFormatValueColorBackgroundGradientKeepsVarStops(): void
+    {
+        // Palette references inside stops are written as var() by the editor and
+        // must survive untouched.
+        $field = ['type' => 'color_background', 'default' => '#000000'];
+        $gradient = 'linear-gradient(90deg, var(--color-brand-primary) 0%, #1fd980 100%)';
+        $this->assertSame($gradient, $this->formatter->formatValue($gradient, $field));
+    }
+
+    public function testFormatValueColorBackgroundGradientDetectionIsCaseInsensitive(): void
+    {
+        $field = ['type' => 'color_background', 'default' => '#000000'];
+        $gradient = 'LINEAR-GRADIENT(135deg, #3485ec, #1fd980)';
+        $this->assertSame($gradient, $this->formatter->formatValue($gradient, $field));
+    }
+
+    public function testFormatValueColorBackgroundGradientLeadingWhitespaceDetected(): void
+    {
+        $field = ['type' => 'color_background', 'default' => '#000000'];
+        $gradient = '  linear-gradient(135deg, #3485ec, #1fd980)';
+        $this->assertSame($gradient, $this->formatter->formatValue($gradient, $field));
+    }
+
+    public function testFormatValueColorBackgroundGradientEscapesCommentInjection(): void
+    {
+        $field = ['type' => 'color_background', 'default' => '#000000'];
+        $evil = 'linear-gradient(0deg, #000 0%, #fff 100%) /* x */';
+        $this->assertSame(
+            'linear-gradient(0deg, #000 0%, #fff 100%) / * x * /',
+            $this->formatter->formatValue($evil, $field)
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // formatColorBackground — direct
+    // -----------------------------------------------------------------------
+
+    public function testFormatColorBackgroundSolidNormalizesHex(): void
+    {
+        $this->assertSame('#ffffff', $this->formatter->formatColorBackground('#fff', 'hex', null));
+    }
+
+    public function testFormatColorBackgroundGradientPassThrough(): void
+    {
+        $gradient = 'linear-gradient(135deg, #3485ec 0%, #1fd980 100%)';
+        $this->assertSame($gradient, $this->formatter->formatColorBackground($gradient, 'rgb', null));
+    }
+
+    public function testGetCommentColorBackgroundSolidHexReturnsHex(): void
+    {
+        $this->assertSame('#1979c3', $this->formatter->getComment('#1979c3', 'color_background'));
+    }
+
+    public function testGetCommentColorBackgroundGradientReturnsNull(): void
+    {
+        $this->assertNull(
+            $this->formatter->getComment('linear-gradient(0deg, #000, #fff)', 'color_background')
+        );
+    }
 }
