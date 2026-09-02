@@ -28,6 +28,23 @@ define([
         },
 
         /**
+         * Path of the GraphQL endpoint, as the web server sees it.
+         *
+         * The endpoint is built from the store base URL, so a subdirectory
+         * install answers on e.g. /shop/graphql. Server-side workarounds have
+         * to match that path, not a hardcoded /graphql.
+         *
+         * @returns {String}
+         */
+        _getEndpointPath: function() {
+            try {
+                return new URL(this._getEndpoint(), window.location.href).pathname;
+            } catch (e) {
+                return '/graphql';
+            }
+        },
+
+        /**
          * Get Bearer token from StorageHelper (bte.global.admin_token) or config
          *
          * @returns {String|null}
@@ -253,6 +270,8 @@ define([
                             'not help, check that the web server still accepts those credentials.'
                         );
                     } else {
+                        var endpointPath = this._getEndpointPath();
+
                         authError = new Error(
                             'GraphQL request blocked by HTTP Basic Auth. The web server consumes the ' +
                             'Authorization header before Magento is reached.\n' +
@@ -262,8 +281,8 @@ define([
                             'Fix B (Apache .htaccess or vhost): let Bearer requests through Basic Auth ' +
                             'for the GraphQL endpoint ONLY — an unscoped rule lets any request carrying ' +
                             'a "Bearer" value bypass Basic Auth on every route, and Magento, not the ' +
-                            'web server, is what authenticates /graphql:\n' +
-                            '<If "%{REQUEST_URI} =~ m#^/graphql#">\n' +
+                            'web server, is what authenticates ' + endpointPath + ':\n' +
+                            '<If "%{REQUEST_URI} =~ m#^' + endpointPath + '#">\n' +
                             '    SetEnvIf Authorization "^Bearer " BTE_BEARER\n' +
                             '    <RequireAny>\n' +
                             '        Require env BTE_BEARER\n' +

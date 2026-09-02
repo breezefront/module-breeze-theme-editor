@@ -324,12 +324,32 @@ Auth — **for the GraphQL endpoint only**.
 > ⚠️ Do not apply these rules site-wide. The web server can only check that the
 > header *starts with* `Bearer`, not that the token is valid, so an unscoped rule
 > lets anyone bypass Basic Auth on every route by sending an arbitrary `Bearer`
-> value. Scoped to `/graphql`, the exception is limited to an endpoint Magento
-> authenticates itself — but note that `/graphql` is a public API in Magento, so
-> its unauthenticated queries (catalog data and the like) become reachable on the
-> staging site.
+> value. Scoped to the GraphQL endpoint, the exception is limited to a path
+> Magento authenticates itself — but note that `/graphql` is a public API in
+> Magento, so its unauthenticated queries (catalog data and the like) become
+> reachable on the staging site.
 
-Apache (`.htaccess` or vhost):
+> 📍 **Substitute your actual endpoint path.** The module builds the endpoint from
+> the store base URL, so a subdirectory install answers on `/shop/graphql`, not
+> `/graphql`. Every `/graphql` below must be replaced with your real path — the
+> 401 message the Theme Editor shows prints the path it is actually calling.
+
+Apache — in the vhost, where `<Location>` matches the URL as it arrived, before
+any rewriting:
+
+```apache
+<Location "/graphql">
+    SetEnvIf Authorization "^Bearer " BTE_BEARER
+    <RequireAny>
+        Require env BTE_BEARER
+        Require valid-user
+    </RequireAny>
+</Location>
+```
+
+`<Location>` is not allowed in `.htaccess`. There, use `<If>` — but verify it
+with the curl check below, because per-directory configuration is merged after
+Magento's rewrite to `index.php` on some setups:
 
 ```apache
 <If "%{REQUEST_URI} =~ m#^/graphql#">
@@ -341,28 +361,32 @@ Apache (`.htaccess` or vhost):
 </If>
 ```
 
-In a vhost you can use `<Location "/graphql">` instead of `<If>`; `<Location>` is
-not allowed in `.htaccess`.
-
-nginx — keep `auth_basic` on the server block and relax it in one location:
+nginx — the exception has to be decided at server level, not inside a
+`location`. Magento's routing internally redirects `/graphql` to `index.php`,
+and the redirected request re-enters the PHP location, which inherits the
+server-level `auth_basic` and challenges again. `$request_uri` keeps the
+original URI across that redirect, so key the realm on it:
 
 ```nginx
 # http { } block
-map $http_authorization $bte_realm {
-    default      "restricted";
-    "~*^Bearer " off;
+map $request_uri $bte_uri_ok {
+    default        0;
+    "~*^/graphql"  1;
 }
 
-# server { } block — Basic Auth stays on for everything else
-auth_basic           "restricted";
+map $http_authorization $bte_bearer_ok {
+    default       0;
+    "~*^Bearer "  1;
+}
+
+map "$bte_uri_ok$bte_bearer_ok" $bte_realm {
+    default  "restricted";
+    "11"     off;
+}
+
+# server { } block — applies to every location, PHP included
+auth_basic           $bte_realm;
 auth_basic_user_file /path/to/.htpasswd;
-
-location = /graphql {
-    auth_basic           $bte_realm;
-    auth_basic_user_file /path/to/.htpasswd;
-
-    try_files $uri $uri/ /index.php$is_args$args;
-}
 ```
 
 Verify with:
@@ -375,9 +399,22 @@ curl -s -o /dev/null -D - -X POST https://your-store.com/graphql \
 ```
 
 A `401` with `www-authenticate: Basic` means Basic Auth is still intercepting;
-anything else means the request reaches Magento. Check that a normal page still
-asks for the password afterwards — if it does not, the rule was applied too
-broadly.
+anything else means the request reaches Magento.
+
+Then check that a normal page still asks for the password:
+
+```bash
+curl -s -o /dev/null -D - https://your-store.com/ -H 'Authorization: Bearer test'
+```
+
+This must still return `401`. If it returns `200`, the rule was applied too
+broadly and the whole site is now reachable with an arbitrary Bearer header.
+
+The nginx recipe above was verified against nginx 1.24 with Magento at the web
+root: `/graphql` with a Bearer header reaches Magento, while the site root with
+the same header, and `/graphql` without it, both still get the Basic challenge.
+The Apache variants follow the same idea but were not tested here — run both
+curl checks after applying them.
 
 ## 📦 Installation
 
