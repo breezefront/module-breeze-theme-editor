@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\ViewModel\Toolbar;
 
 use Magento\Backend\Model\Auth\Session as AuthSession;
+use Swissup\BreezeThemeEditor\Helper\Data as ConfigHelper;
 use Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator;
 
 /**
@@ -13,6 +14,7 @@ use Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator;
  * - Check if the admin user is currently authenticated
  * - Expose admin username and user ID
  * - Generate / cache the admin integration token for GraphQL
+ * - Expose the HTTP header the token must be sent in
  */
 class ToolbarAuthProvider
 {
@@ -27,15 +29,23 @@ class ToolbarAuthProvider
     private $tokenGenerator;
 
     /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
+
+    /**
      * @param AuthSession $authSession
      * @param AdminTokenGenerator $tokenGenerator
+     * @param ConfigHelper $configHelper
      */
     public function __construct(
         AuthSession $authSession,
-        AdminTokenGenerator $tokenGenerator
+        AdminTokenGenerator $tokenGenerator,
+        ConfigHelper $configHelper
     ) {
         $this->authSession    = $authSession;
         $this->tokenGenerator = $tokenGenerator;
+        $this->configHelper   = $configHelper;
     }
 
     /**
@@ -85,5 +95,18 @@ class ToolbarAuthProvider
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * Get the HTTP header the Bearer token must be sent in.
+     *
+     * Defaults to 'Authorization'. Sites behind HTTP Basic Auth can configure a
+     * custom header — see Plugin\GraphQL\AuthHeaderFallback for the reason.
+     *
+     * @return string
+     */
+    public function getAuthHeaderName(): string
+    {
+        return $this->configHelper->getAuthHeaderName();
     }
 }

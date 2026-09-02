@@ -26,6 +26,22 @@
                 disabled="false"/>
     </type>
 
+    <!--
+        Plugin: custom Authorization header fallback
+
+        Makes getHeader('Authorization') fall back to the header configured in
+        breeze_theme_editor/general/auth_header, so Magento's TokenUserContext
+        finds the admin Bearer token there.
+
+        Needed on sites behind HTTP Basic Auth, where Apache/nginx swallows the
+        standard Authorization header and answers 401 before Magento runs.
+    -->
+    <type name="Magento\Webapi\Model\Authorization\TokenUserContext">
+        <plugin name="breeze_theme_editor_auth_header_fallback"
+                type="Swissup\BreezeThemeEditor\Plugin\GraphQL\AuthHeaderFallback"
+                sortOrder="10"/>
+    </type>
+
     <!-- Cache invalidation plugins (must live in graphql/di.xml, not frontend/di.xml,
          because GraphQL requests run in the "graphql" area, not "frontend") -->
 

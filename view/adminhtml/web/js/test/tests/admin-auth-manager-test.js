@@ -40,16 +40,19 @@ define([
          */
         'GraphQL client should use Bearer token in headers': function() {
             var headers = GraphQLClient._getHeaders();
-            
+            // The header carrying the token is configurable — sites behind HTTP
+            // Basic Auth move it off Authorization. Ask ConfigManager which one.
+            var authHeader = ConfigManager.getAuthHeader();
+
             this.assertNotNull(headers, 'Headers should exist');
-            this.assertNotNull(headers['Authorization'], 'Authorization header should exist');
+            this.assertNotNull(headers[authHeader], authHeader + ' header should exist');
             this.assertStringContains(
-                headers['Authorization'], 
-                'Bearer', 
-                'Authorization header should use Bearer scheme'
+                headers[authHeader],
+                'Bearer',
+                authHeader + ' header should use Bearer scheme'
             );
-            
-            console.log('✅ Authorization header:', headers['Authorization'].substring(0, 30) + '...');
+
+            console.log('✅ ' + authHeader + ' header:', headers[authHeader].substring(0, 30) + '...');
         },
         
         /**

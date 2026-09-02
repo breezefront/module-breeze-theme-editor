@@ -4,6 +4,7 @@
         <breeze_theme_editor>
             <general>
                 <enabled>1</enabled>
+                <auth_header>Authorization</auth_header>
             </general>
         </breeze_theme_editor>
     </default>

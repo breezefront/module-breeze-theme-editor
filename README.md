@@ -290,6 +290,148 @@ If `format` is not specified, the Theme Editor automatically detects the format 
    - Edit values with live preview
    - Click **Save Draft** or **Publish**
 
+## 🔐 Sites Behind HTTP Basic Auth
+
+On staging sites protected by HTTP Basic Auth (`.htaccess`), the browser keeps
+asking for the password over and over as soon as the Theme Editor opens.
+
+**Why:** the admin UI authenticates its GraphQL calls with
+`Authorization: Bearer <token>`. Apache/nginx consumes that header first, tries
+to read it as Basic credentials, fails, and answers `401 WWW-Authenticate: Basic`
+before Magento is ever reached. Every XHR then triggers a native password
+prompt, and no correct password can clear it.
+
+**Fix (no server access needed):** move the token to another header.
+
+Go to **Stores > Configuration > Swissup > Breeze Theme Editor > General Settings**
+and set **GraphQL Authorization Header** to `X-Bte-Authorization`.
+
+The admin JS then sends the token there, Basic Auth ignores the unknown header,
+and the module copies the value into `Authorization` server-side, right before
+Magento validates the token. Authentication itself is unchanged — the same JWT,
+the same core validator, the same ACL checks.
+
+Same thing from the CLI:
+
+```bash
+php bin/magento config:set breeze_theme_editor/general/auth_header X-Bte-Authorization
+php bin/magento cache:flush
+```
+
+**Alternative fix (requires server access):** let Bearer requests through Basic
+Auth — **for the GraphQL endpoint only**.
+
+> ⚠️ Do not apply these rules site-wide. The web server can only check that the
+> header *starts with* `Bearer`, not that the token is valid, so an unscoped rule
+> lets anyone bypass Basic Auth on every route by sending an arbitrary `Bearer`
+> value. Scoped to the GraphQL endpoint, the exception is limited to a path
+> Magento authenticates itself — but note that `/graphql` is a public API in
+> Magento, so its unauthenticated queries (catalog data and the like) become
+> reachable on the staging site.
+
+> 📍 **Substitute your actual endpoint path.** The module builds the endpoint from
+> the store base URL, so a subdirectory install answers on `/shop/graphql`, not
+> `/graphql`. Every `/graphql` below must be replaced with your real path — the
+> 401 message the Theme Editor shows prints the path it is actually calling.
+> Keep the patterns anchored, and escape regex metacharacters if your base path
+> contains any (`/shop.v2/graphql` → `^/shop\.v2/graphql$`).
+
+Apache — in the vhost, where `<LocationMatch>` matches the URL as it arrived,
+before any rewriting. Use `<LocationMatch>` with an anchored pattern rather than
+`<Location>`: `<Location>` matches by prefix, so `/graphql` would also cover
+unrelated routes such as `/graphql-admin`.
+
+```apache
+<LocationMatch "^/graphql$">
+    SetEnvIf Authorization "^Bearer " BTE_BEARER
+    <RequireAny>
+        Require env BTE_BEARER
+        Require valid-user
+    </RequireAny>
+</LocationMatch>
+```
+
+`<LocationMatch>` is not allowed in `.htaccess`. There, use `<If>` — but verify it
+with the curl check below, because per-directory configuration is merged after
+Magento's rewrite to `index.php` on some setups:
+
+```apache
+<If "%{REQUEST_URI} =~ m#^/graphql$#">
+    SetEnvIf Authorization "^Bearer " BTE_BEARER
+    <RequireAny>
+        Require env BTE_BEARER
+        Require valid-user
+    </RequireAny>
+</If>
+```
+
+nginx — the exception has to be decided at server level, not inside a
+`location`. Magento's routing internally redirects `/graphql` to `index.php`,
+and the redirected request re-enters the PHP location, which inherits the
+server-level `auth_basic` and challenges again. `$request_uri` keeps the
+original URI across that redirect, so key the realm on it:
+
+```nginx
+# http { } block
+# $request_uri carries the query string, so match the bare path or the path
+# followed by "?" — and anchor it, or /graphql-admin would opt out too.
+map $request_uri $bte_uri_ok {
+    default          0;
+    "~^/graphql$"    1;
+    "~^/graphql\?"   1;
+}
+
+map $http_authorization $bte_bearer_ok {
+    default       0;
+    "~*^Bearer "  1;
+}
+
+map "$bte_uri_ok$bte_bearer_ok" $bte_realm {
+    default  "restricted";
+    "11"     off;
+}
+
+# server { } block — applies to every location, PHP included
+auth_basic           $bte_realm;
+auth_basic_user_file /path/to/.htpasswd;
+```
+
+Verify with:
+
+```bash
+curl -s -o /dev/null -D - -X POST https://your-store.com/graphql \
+  -H 'Authorization: Bearer test' \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{__typename}"}'
+```
+
+A `401` with `www-authenticate: Basic` means Basic Auth is still intercepting;
+anything else means the request reaches Magento.
+
+Then check that a normal page still asks for the password:
+
+```bash
+curl -s -o /dev/null -D - https://your-store.com/ -H 'Authorization: Bearer test'
+```
+
+This must still return `401`. If it returns `200`, the rule was applied too
+broadly and the whole site is now reachable with an arbitrary Bearer header.
+
+The nginx recipe above was verified against nginx 1.24 with Basic Auth enabled
+and Magento at the web root:
+
+| request | result |
+|---|---|
+| `/graphql` with a valid Bearer token | reaches Magento, authenticated |
+| `/graphql?x=1` with a valid Bearer token | reaches Magento, authenticated |
+| `/graphql-admin` with a Bearer header | Basic challenge — not bypassed |
+| `/GraphQL` with a Bearer header | Basic challenge — not bypassed |
+| `/` with a Bearer header | Basic challenge — not bypassed |
+| `/graphql` with no auth header | Basic challenge — not bypassed |
+
+The Apache variants follow the same idea but were not tested here — run both
+curl checks after applying them.
+
 ## 📦 Installation
 
 ### Via Composer (Recommended)

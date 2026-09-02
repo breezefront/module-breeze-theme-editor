@@ -242,6 +242,16 @@ class AdminToolbar implements ArgumentInterface
         return $this->urlProvider->getGraphqlEndpoint();
     }
 
+    /**
+     * Get the HTTP header the Bearer token must be sent in.
+     *
+     * @return string
+     */
+    public function getAuthHeaderName()
+    {
+        return $this->authProvider->getAuthHeaderName();
+    }
+
     // =========================================================================
     // Theme delegation — ToolbarThemeProvider
     // =========================================================================
@@ -349,6 +359,7 @@ class AdminToolbar implements ArgumentInterface
             'storeId'         => $this->getStoreId(),
             'storeCode'       => $this->scopeProvider->getStoreCode(),
             'token'           => $this->getToken(),
+            'authHeader'      => $this->getAuthHeaderName(),
             'themeId'         => $this->getThemeId(),
             'jstest'          => $this->isJstestMode(),
             'username'        => $this->getAdminUsername(),
