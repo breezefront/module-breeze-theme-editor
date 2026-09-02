@@ -333,26 +333,30 @@ Auth — **for the GraphQL endpoint only**.
 > the store base URL, so a subdirectory install answers on `/shop/graphql`, not
 > `/graphql`. Every `/graphql` below must be replaced with your real path — the
 > 401 message the Theme Editor shows prints the path it is actually calling.
+> Keep the patterns anchored, and escape regex metacharacters if your base path
+> contains any (`/shop.v2/graphql` → `^/shop\.v2/graphql$`).
 
-Apache — in the vhost, where `<Location>` matches the URL as it arrived, before
-any rewriting:
+Apache — in the vhost, where `<LocationMatch>` matches the URL as it arrived,
+before any rewriting. Use `<LocationMatch>` with an anchored pattern rather than
+`<Location>`: `<Location>` matches by prefix, so `/graphql` would also cover
+unrelated routes such as `/graphql-admin`.
 
 ```apache
-<Location "/graphql">
+<LocationMatch "^/graphql$">
     SetEnvIf Authorization "^Bearer " BTE_BEARER
     <RequireAny>
         Require env BTE_BEARER
         Require valid-user
     </RequireAny>
-</Location>
+</LocationMatch>
 ```
 
-`<Location>` is not allowed in `.htaccess`. There, use `<If>` — but verify it
+`<LocationMatch>` is not allowed in `.htaccess`. There, use `<If>` — but verify it
 with the curl check below, because per-directory configuration is merged after
 Magento's rewrite to `index.php` on some setups:
 
 ```apache
-<If "%{REQUEST_URI} =~ m#^/graphql#">
+<If "%{REQUEST_URI} =~ m#^/graphql$#">
     SetEnvIf Authorization "^Bearer " BTE_BEARER
     <RequireAny>
         Require env BTE_BEARER
@@ -369,9 +373,12 @@ original URI across that redirect, so key the realm on it:
 
 ```nginx
 # http { } block
+# $request_uri carries the query string, so match the bare path or the path
+# followed by "?" — and anchor it, or /graphql-admin would opt out too.
 map $request_uri $bte_uri_ok {
-    default        0;
-    "~*^/graphql"  1;
+    default          0;
+    "~^/graphql$"    1;
+    "~^/graphql\?"   1;
 }
 
 map $http_authorization $bte_bearer_ok {
@@ -410,9 +417,18 @@ curl -s -o /dev/null -D - https://your-store.com/ -H 'Authorization: Bearer test
 This must still return `401`. If it returns `200`, the rule was applied too
 broadly and the whole site is now reachable with an arbitrary Bearer header.
 
-The nginx recipe above was verified against nginx 1.24 with Magento at the web
-root: `/graphql` with a Bearer header reaches Magento, while the site root with
-the same header, and `/graphql` without it, both still get the Basic challenge.
+The nginx recipe above was verified against nginx 1.24 with Basic Auth enabled
+and Magento at the web root:
+
+| request | result |
+|---|---|
+| `/graphql` with a valid Bearer token | reaches Magento, authenticated |
+| `/graphql?x=1` with a valid Bearer token | reaches Magento, authenticated |
+| `/graphql-admin` with a Bearer header | Basic challenge — not bypassed |
+| `/GraphQL` with a Bearer header | Basic challenge — not bypassed |
+| `/` with a Bearer header | Basic challenge — not bypassed |
+| `/graphql` with no auth header | Basic challenge — not bypassed |
+
 The Apache variants follow the same idea but were not tested here — run both
 curl checks after applying them.
 

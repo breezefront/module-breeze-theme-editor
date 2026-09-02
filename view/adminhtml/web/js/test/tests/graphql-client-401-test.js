@@ -62,9 +62,66 @@ define([
                 'no valid Basic credentials',
                 'With a custom header already configured, the token cannot be the cause'
             );
+            this.assertStringContains(
+                thrown.message,
+                'X-Bte-Authorization',
+                'The message must name the header that is actually configured'
+            );
             this.assertFalse(
                 thrown.message.indexOf('Fix A') !== -1,
                 'Suggesting the header switch again would misdiagnose the failure'
+            );
+        },
+
+        '_handleError 401 Basic names a non-default custom header verbatim': function () {
+            var thrown;
+
+            ConfigManager.clear();
+            ConfigManager.set({ authHeader: 'X-Custom-Token' });
+
+            try {
+                GraphQLClient._handleError({
+                    status: 401,
+                    statusText: 'Unauthorized',
+                    responseText: '',
+                    wwwAuthenticate: 'Basic realm="restricted"'
+                });
+            } catch (e) {
+                thrown = e;
+            }
+
+            ConfigManager.clear();
+
+            this.assertStringContains(
+                thrown.message,
+                'X-Custom-Token',
+                'Any configured header name must be reported, not a hardcoded one'
+            );
+        },
+
+        '_handleError 401 Basic anchors and escapes the endpoint path': function () {
+            var thrown;
+
+            ConfigManager.clear();
+            ConfigManager.set({ graphqlEndpoint: 'https://example.com/shop.v2/graphql' });
+
+            try {
+                GraphQLClient._handleError({
+                    status: 401,
+                    statusText: 'Unauthorized',
+                    responseText: '',
+                    wwwAuthenticate: 'Basic realm="restricted"'
+                });
+            } catch (e) {
+                thrown = e;
+            }
+
+            ConfigManager.clear();
+
+            this.assertStringContains(
+                thrown.message,
+                'm#^\\/shop\\.v2\\/graphql$#',
+                'The rule must be anchored and its metacharacters escaped, or it widens the bypass'
             );
         },
 

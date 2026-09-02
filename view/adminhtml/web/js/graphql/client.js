@@ -45,6 +45,20 @@ define([
         },
 
         /**
+         * The endpoint path escaped for use inside an Apache m#...# regex.
+         *
+         * A base path can legitimately contain regex metacharacters (e.g.
+         * /shop.v2/graphql), which would otherwise widen the rule beyond the
+         * endpoint it is meant to scope. '#' is escaped as well because it
+         * delimits the pattern.
+         *
+         * @returns {String}
+         */
+        _getEndpointPathPattern: function() {
+            return this._getEndpointPath().replace(/[.*+?^${}()|[\]\\#\/-]/g, '\\$&');
+        },
+
+        /**
          * Get Bearer token from StorageHelper (bte.global.admin_token) or config
          *
          * @returns {String|null}
@@ -264,13 +278,14 @@ define([
                         // sent no valid HTTP Basic credentials for this request.
                         authError = new Error(
                             'HTTP Basic Auth rejected this request. The admin token is sent in the ' +
-                            'X-Bte-Authorization header, so it is not the cause: the browser supplied ' +
-                            'no valid Basic credentials.\n' +
+                            ConfigManager.getAuthHeader() + ' header, so it is not the cause: the ' +
+                            'browser supplied no valid Basic credentials.\n' +
                             'Reload the page and enter the site password when prompted. If that does ' +
                             'not help, check that the web server still accepts those credentials.'
                         );
                     } else {
                         var endpointPath = this._getEndpointPath();
+                        var endpointPattern = this._getEndpointPathPattern();
 
                         authError = new Error(
                             'GraphQL request blocked by HTTP Basic Auth. The web server consumes the ' +
@@ -282,7 +297,7 @@ define([
                             'for the GraphQL endpoint ONLY — an unscoped rule lets any request carrying ' +
                             'a "Bearer" value bypass Basic Auth on every route, and Magento, not the ' +
                             'web server, is what authenticates ' + endpointPath + ':\n' +
-                            '<If "%{REQUEST_URI} =~ m#^' + endpointPath + '#">\n' +
+                            '<If "%{REQUEST_URI} =~ m#^' + endpointPattern + '$#">\n' +
                             '    SetEnvIf Authorization "^Bearer " BTE_BEARER\n' +
                             '    <RequireAny>\n' +
                             '        Require env BTE_BEARER\n' +
