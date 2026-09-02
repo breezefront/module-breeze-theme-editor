@@ -17,6 +17,44 @@ class Data extends AbstractHelper
     const DEFAULT_AUTH_HEADER = 'Authorization';
 
     /**
+     * Header names a custom value must never take.
+     *
+     * Two groups, both of which would silently break authentication:
+     * - headers the admin GraphQL client sets itself, whose value it would
+     *   overwrite with the token (Content-Type, X-Requested-With, Store);
+     * - headers browsers refuse to let scripts set (the fetch spec's forbidden
+     *   request headers), which would simply never leave the browser.
+     *
+     * @var string[]
+     */
+    private const RESERVED_AUTH_HEADERS = [
+        'content-type',
+        'x-requested-with',
+        'store',
+        'accept-charset',
+        'accept-encoding',
+        'access-control-request-headers',
+        'access-control-request-method',
+        'connection',
+        'content-length',
+        'cookie',
+        'cookie2',
+        'date',
+        'dnt',
+        'expect',
+        'host',
+        'keep-alive',
+        'origin',
+        'referer',
+        'set-cookie',
+        'te',
+        'trailer',
+        'transfer-encoding',
+        'upgrade',
+        'via',
+    ];
+
+    /**
      * @param  int  $store
      * @param  string $key
      * @return boolean
@@ -43,9 +81,11 @@ class Data extends AbstractHelper
      * (e.g. X-Bte-Authorization), because Apache/nginx intercepts the standard
      * Authorization header and answers 401 before Magento is reached.
      *
-     * Falls back to the default when the configured value is empty or contains
+     * Falls back to the default when the configured value is empty, contains
      * characters that are not valid in an HTTP field name (RFC 7230 token,
-     * narrowed here to letters, digits and hyphen).
+     * narrowed here to letters, digits and hyphen), or names a header that
+     * cannot actually carry the token — see self::RESERVED_AUTH_HEADERS and
+     * the Proxy-/Sec- prefixes browsers also refuse to set.
      *
      * @param  int|null $store
      * @return string
@@ -59,6 +99,16 @@ class Data extends AbstractHelper
         ));
 
         if ($header === '' || !preg_match('/^[A-Za-z0-9-]+$/', $header)) {
+            return self::DEFAULT_AUTH_HEADER;
+        }
+
+        $normalized = strtolower($header);
+
+        if (in_array($normalized, self::RESERVED_AUTH_HEADERS, true)) {
+            return self::DEFAULT_AUTH_HEADER;
+        }
+
+        if (strpos($normalized, 'proxy-') === 0 || strpos($normalized, 'sec-') === 0) {
             return self::DEFAULT_AUTH_HEADER;
         }
 

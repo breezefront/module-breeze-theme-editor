@@ -54,6 +54,20 @@ class DataTest extends TestCase
             'colon injection'      => ["X-Bte:evil", 'Authorization'],
             'crlf injection'       => ["X-Bte\r\nEvil: 1", 'Authorization'],
             'underscore rejected'  => ['X_Bte_Authorization', 'Authorization'],
+
+            // Names the client sets itself — the token would overwrite their value
+            'client content type'  => ['Content-Type', 'Authorization'],
+            'client requested with' => ['X-Requested-With', 'Authorization'],
+            'client store header'  => ['Store', 'Authorization'],
+            'reserved any case'    => ['CONTENT-TYPE', 'Authorization'],
+
+            // Names browsers refuse to let scripts set
+            'forbidden cookie'     => ['Cookie', 'Authorization'],
+            'forbidden host'       => ['Host', 'Authorization'],
+            'forbidden origin'     => ['Origin', 'Authorization'],
+            'forbidden referer'    => ['Referer', 'Authorization'],
+            'forbidden proxy prefix' => ['Proxy-Whatever', 'Authorization'],
+            'forbidden sec prefix' => ['Sec-Whatever', 'Authorization'],
         ];
     }
 
@@ -79,6 +93,8 @@ class DataTest extends TestCase
             'default any case' => ['AUTHORIZATION', false],
             'empty falls back' => ['', false],
             'invalid falls back' => ['X Bte', false],
+            'reserved falls back' => ['Content-Type', false],
+            'forbidden falls back' => ['Cookie', false],
             'custom'           => ['X-Bte-Authorization', true],
         ];
     }

@@ -241,19 +241,37 @@ define([
                 var authError;
 
                 if (wwwAuth.indexOf('basic') !== -1) {
-                    authError = new Error(
-                        'GraphQL request blocked by HTTP Basic Auth. The web server consumes the ' +
-                        'Authorization header before Magento is reached.\n' +
-                        'Fix A (no server access needed): Stores > Configuration > Swissup > ' +
-                        'Breeze Theme Editor > General Settings > GraphQL Authorization Header — ' +
-                        'set it to X-Bte-Authorization.\n' +
-                        'Fix B (Apache .htaccess or vhost): let Bearer requests through Basic Auth:\n' +
-                        'SetEnvIf Authorization "^Bearer " BTE_BEARER\n' +
-                        '<RequireAny>\n' +
-                        '    Require env BTE_BEARER\n' +
-                        '    Require valid-user\n' +
-                        '</RequireAny>'
-                    );
+                    if (ConfigManager.getAuthHeader().toLowerCase() !== 'authorization') {
+                        // A custom header is already configured, so the token is not what
+                        // the server rejected — it never looked at it. The browser simply
+                        // sent no valid HTTP Basic credentials for this request.
+                        authError = new Error(
+                            'HTTP Basic Auth rejected this request. The admin token is sent in the ' +
+                            'X-Bte-Authorization header, so it is not the cause: the browser supplied ' +
+                            'no valid Basic credentials.\n' +
+                            'Reload the page and enter the site password when prompted. If that does ' +
+                            'not help, check that the web server still accepts those credentials.'
+                        );
+                    } else {
+                        authError = new Error(
+                            'GraphQL request blocked by HTTP Basic Auth. The web server consumes the ' +
+                            'Authorization header before Magento is reached.\n' +
+                            'Fix A (no server access needed): Stores > Configuration > Swissup > ' +
+                            'Breeze Theme Editor > General Settings > GraphQL Authorization Header — ' +
+                            'set it to X-Bte-Authorization.\n' +
+                            'Fix B (Apache .htaccess or vhost): let Bearer requests through Basic Auth ' +
+                            'for the GraphQL endpoint ONLY — an unscoped rule lets any request carrying ' +
+                            'a "Bearer" value bypass Basic Auth on every route, and Magento, not the ' +
+                            'web server, is what authenticates /graphql:\n' +
+                            '<If "%{REQUEST_URI} =~ m#^/graphql#">\n' +
+                            '    SetEnvIf Authorization "^Bearer " BTE_BEARER\n' +
+                            '    <RequireAny>\n' +
+                            '        Require env BTE_BEARER\n' +
+                            '        Require valid-user\n' +
+                            '    </RequireAny>\n' +
+                            '</If>'
+                        );
+                    }
                     authError.extensions = { category: 'authentication', cause: 'htaccess' };
                 } else {
                     authError = new Error('Authentication failed: Invalid or expired Bearer token. Please reload the page.');

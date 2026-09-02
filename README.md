@@ -319,21 +319,32 @@ php bin/magento cache:flush
 ```
 
 **Alternative fix (requires server access):** let Bearer requests through Basic
-Auth. Apache:
+Auth — **for the GraphQL endpoint only**.
+
+> ⚠️ Do not apply these rules site-wide. The web server can only check that the
+> header *starts with* `Bearer`, not that the token is valid, so an unscoped rule
+> lets anyone bypass Basic Auth on every route by sending an arbitrary `Bearer`
+> value. Scoped to `/graphql`, the exception is limited to an endpoint Magento
+> authenticates itself — but note that `/graphql` is a public API in Magento, so
+> its unauthenticated queries (catalog data and the like) become reachable on the
+> staging site.
+
+Apache (`.htaccess` or vhost):
 
 ```apache
-SetEnvIf Authorization "^Bearer " BTE_BEARER
-
-AuthType Basic
-AuthName "restricted"
-AuthUserFile /path/to/.htpasswd
-<RequireAny>
-    Require env BTE_BEARER
-    Require valid-user
-</RequireAny>
+<If "%{REQUEST_URI} =~ m#^/graphql#">
+    SetEnvIf Authorization "^Bearer " BTE_BEARER
+    <RequireAny>
+        Require env BTE_BEARER
+        Require valid-user
+    </RequireAny>
+</If>
 ```
 
-nginx (`auth_basic` accepts a variable; `off` disables it):
+In a vhost you can use `<Location "/graphql">` instead of `<If>`; `<Location>` is
+not allowed in `.htaccess`.
+
+nginx — keep `auth_basic` on the server block and relax it in one location:
 
 ```nginx
 # http { } block
@@ -342,9 +353,16 @@ map $http_authorization $bte_realm {
     "~*^Bearer " off;
 }
 
-# server { } block
-auth_basic           $bte_realm;
+# server { } block — Basic Auth stays on for everything else
+auth_basic           "restricted";
 auth_basic_user_file /path/to/.htpasswd;
+
+location = /graphql {
+    auth_basic           $bte_realm;
+    auth_basic_user_file /path/to/.htpasswd;
+
+    try_files $uri $uri/ /index.php$is_args$args;
+}
 ```
 
 Verify with:
@@ -357,7 +375,9 @@ curl -s -o /dev/null -D - -X POST https://your-store.com/graphql \
 ```
 
 A `401` with `www-authenticate: Basic` means Basic Auth is still intercepting;
-anything else means the request reaches Magento.
+anything else means the request reaches Magento. Check that a normal page still
+asks for the password afterwards — if it does not, the rule was applied too
+broadly.
 
 ## 📦 Installation
 

@@ -8,14 +8,17 @@
 define([
     'Swissup_BreezeThemeEditor/js/test/test-framework',
     'Swissup_BreezeThemeEditor/js/graphql/client',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/browser/storage-helper'
-], function (TestFramework, GraphQLClient, StorageHelper) {
+], function (TestFramework, GraphQLClient, ConfigManager, StorageHelper) {
     'use strict';
 
     return TestFramework.suite('GraphQL Client — 401 handling', {
 
         '_handleError 401 with WWW-Authenticate Basic sets cause htaccess': function () {
             var thrown;
+
+            ConfigManager.clear();
 
             try {
                 GraphQLClient._handleError({
@@ -34,8 +37,41 @@ define([
             this.assertStringContains(thrown.message, '.htaccess', 'message should mention .htaccess');
         },
 
+        '_handleError 401 Basic with a custom header blames the Basic credentials': function () {
+            var thrown;
+
+            ConfigManager.clear();
+            ConfigManager.set({ authHeader: 'X-Bte-Authorization' });
+
+            try {
+                GraphQLClient._handleError({
+                    status: 401,
+                    statusText: 'Unauthorized',
+                    responseText: '',
+                    wwwAuthenticate: 'Basic realm="restricted"'
+                });
+            } catch (e) {
+                thrown = e;
+            }
+
+            ConfigManager.clear();
+
+            this.assertNotNull(thrown, 'Should throw on 401');
+            this.assertStringContains(
+                thrown.message,
+                'no valid Basic credentials',
+                'With a custom header already configured, the token cannot be the cause'
+            );
+            this.assertFalse(
+                thrown.message.indexOf('Fix A') !== -1,
+                'Suggesting the header switch again would misdiagnose the failure'
+            );
+        },
+
         '_handleError 401 with WWW-Authenticate Basic mixed-case detected': function () {
             var thrown;
+
+            ConfigManager.clear();
 
             try {
                 GraphQLClient._handleError({
