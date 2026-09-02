@@ -290,6 +290,75 @@ If `format` is not specified, the Theme Editor automatically detects the format 
    - Edit values with live preview
    - Click **Save Draft** or **Publish**
 
+## 🔐 Sites Behind HTTP Basic Auth
+
+On staging sites protected by HTTP Basic Auth (`.htaccess`), the browser keeps
+asking for the password over and over as soon as the Theme Editor opens.
+
+**Why:** the admin UI authenticates its GraphQL calls with
+`Authorization: Bearer <token>`. Apache/nginx consumes that header first, tries
+to read it as Basic credentials, fails, and answers `401 WWW-Authenticate: Basic`
+before Magento is ever reached. Every XHR then triggers a native password
+prompt, and no correct password can clear it.
+
+**Fix (no server access needed):** move the token to another header.
+
+Go to **Stores > Configuration > Swissup > Breeze Theme Editor > General Settings**
+and set **GraphQL Authorization Header** to `X-Bte-Authorization`.
+
+The admin JS then sends the token there, Basic Auth ignores the unknown header,
+and the module copies the value into `Authorization` server-side, right before
+Magento validates the token. Authentication itself is unchanged — the same JWT,
+the same core validator, the same ACL checks.
+
+Same thing from the CLI:
+
+```bash
+php bin/magento config:set breeze_theme_editor/general/auth_header X-Bte-Authorization
+php bin/magento cache:flush
+```
+
+**Alternative fix (requires server access):** let Bearer requests through Basic
+Auth. Apache:
+
+```apache
+SetEnvIf Authorization "^Bearer " BTE_BEARER
+
+AuthType Basic
+AuthName "restricted"
+AuthUserFile /path/to/.htpasswd
+<RequireAny>
+    Require env BTE_BEARER
+    Require valid-user
+</RequireAny>
+```
+
+nginx (`auth_basic` accepts a variable; `off` disables it):
+
+```nginx
+# http { } block
+map $http_authorization $bte_realm {
+    default      "restricted";
+    "~*^Bearer " off;
+}
+
+# server { } block
+auth_basic           $bte_realm;
+auth_basic_user_file /path/to/.htpasswd;
+```
+
+Verify with:
+
+```bash
+curl -s -o /dev/null -D - -X POST https://your-store.com/graphql \
+  -H 'Authorization: Bearer test' \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{__typename}"}'
+```
+
+A `401` with `www-authenticate: Basic` means Basic Auth is still intercepting;
+anything else means the request reaches Magento.
+
 ## 📦 Installation
 
 ### Via Composer (Recommended)

@@ -34,18 +34,26 @@ class AdminToolbarTest extends TestCase
 {
     private RequestInterface $request;
     private BackendSession $backendSession;
+    private ToolbarAuthProvider $authProvider;
+    private PageUrlProvider $pageUrlProvider;
+    private StoreDataProvider $storeDataProvider;
     private AdminToolbar $viewModel;
 
     protected function setUp(): void
     {
-        $this->request        = $this->createMock(RequestInterface::class);
+        $this->request        = $this->createMock(\Magento\Framework\App\Request\Http::class);
         $this->backendSession = $this->createMock(BackendSession::class);
 
         $defaultStore = $this->createMock(\Magento\Store\Api\Data\StoreInterface::class);
         $defaultStore->method('getId')->willReturn(0);
+        $defaultStore->method('getCode')->willReturn('admin');
 
         $storeManager = $this->createMock(\Magento\Store\Model\StoreManagerInterface::class);
         $storeManager->method('getStore')->willReturn($defaultStore);
+
+        $this->authProvider = $this->createMock(ToolbarAuthProvider::class);
+        $this->pageUrlProvider = $this->createMock(PageUrlProvider::class);
+        $this->storeDataProvider = $this->createMock(StoreDataProvider::class);
 
         $scopeProvider = new ToolbarScopeProvider(
             $this->backendSession,
@@ -55,10 +63,10 @@ class AdminToolbarTest extends TestCase
 
         $this->viewModel = new AdminToolbar(
             $this->request,
-            $this->createMock(PageUrlProvider::class),
-            $this->createMock(StoreDataProvider::class),
+            $this->pageUrlProvider,
+            $this->storeDataProvider,
             $scopeProvider,
-            $this->createMock(ToolbarAuthProvider::class),
+            $this->authProvider,
             $this->createMock(ToolbarPermissionsProvider::class),
             $this->createMock(ToolbarUrlProvider::class),
             $this->createMock(ToolbarThemeProvider::class)
@@ -137,5 +145,28 @@ class AdminToolbarTest extends TestCase
             ->willReturn('bogus_scope');
 
         $this->assertSame('default', $this->viewModel->getScope());
+    }
+
+    // -------------------------------------------------------------------------
+    // getToolbarConfig() — auth header passed to JS
+    // -------------------------------------------------------------------------
+
+    /**
+     * @test
+     *
+     * The JS client sends the Bearer token in the header named here, so a
+     * custom value configured for Basic Auth sites must reach the frontend.
+     */
+    public function testToolbarConfigCarriesTheConfiguredAuthHeader(): void
+    {
+        $this->authProvider->method('getAuthHeaderName')->willReturn('X-Bte-Authorization');
+        $this->pageUrlProvider->method('getAvailablePages')->willReturn([]);
+        $this->storeDataProvider->method('getSwitchMode')->willReturn('flat');
+        $this->storeDataProvider->method('getAvailableStores')->willReturn([]);
+
+        $config = $this->viewModel->getToolbarConfig();
+
+        $this->assertArrayHasKey('authHeader', $config);
+        $this->assertSame('X-Bte-Authorization', $config['authHeader']);
     }
 }

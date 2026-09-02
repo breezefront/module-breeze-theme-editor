@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\ViewModel\Toolbar;
 
 use Magento\Backend\Model\Auth\Session as AuthSession;
 use PHPUnit\Framework\TestCase;
+use Swissup\BreezeThemeEditor\Helper\Data as ConfigHelper;
 use Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator;
 use Swissup\BreezeThemeEditor\Test\Unit\ViewModel\Toolbar\Stub\AuthSessionStub;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarAuthProvider;
@@ -12,22 +13,25 @@ use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarAuthProvider;
 /**
  * Unit tests for ToolbarAuthProvider
  *
- * Covers: canShow(), getAdminUsername(), getUserId(), getToken()
+ * Covers: canShow(), getAdminUsername(), getUserId(), getToken(), getAuthHeaderName()
  */
 class ToolbarAuthProviderTest extends TestCase
 {
     private AuthSession $authSession;
     private AdminTokenGenerator $tokenGenerator;
+    private ConfigHelper $configHelper;
     private ToolbarAuthProvider $provider;
 
     protected function setUp(): void
     {
         $this->authSession = $this->createMock(AuthSessionStub::class);
         $this->tokenGenerator = $this->createMock(AdminTokenGenerator::class);
+        $this->configHelper = $this->createMock(ConfigHelper::class);
 
         $this->provider = new ToolbarAuthProvider(
             $this->authSession,
-            $this->tokenGenerator
+            $this->tokenGenerator,
+            $this->configHelper
         );
     }
 
@@ -110,5 +114,16 @@ class ToolbarAuthProviderTest extends TestCase
             ->willThrowException(new \Exception('No admin logged in'));
 
         $this->assertNull($this->provider->getToken());
+    }
+
+    // =========================================================================
+    // getAuthHeaderName()
+    // =========================================================================
+
+    /** @test */
+    public function testGetAuthHeaderNameDelegatesToConfigHelper(): void
+    {
+        $this->configHelper->method('getAuthHeaderName')->willReturn('X-Bte-Authorization');
+        $this->assertSame('X-Bte-Authorization', $this->provider->getAuthHeaderName());
     }
 }

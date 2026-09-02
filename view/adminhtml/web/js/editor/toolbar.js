@@ -50,6 +50,7 @@ define([
         // Initialize static config (readonly, set once at bootstrap)
         configManager.set({
             graphqlEndpoint: config.graphqlEndpoint,
+            authHeader:      config.authHeader      || 'Authorization',
             adminUrl:        config.adminUrl        || '/admin',
             adminBasePath:   config.adminBasePath   || '/admin/',
             permissions:     config.permissions     || {},

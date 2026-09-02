@@ -26,6 +26,7 @@ define([
      */
     var DEFAULTS = {
         graphqlEndpoint: '/graphql',
+        authHeader:      'Authorization',
         adminUrl:        '/admin',
         adminBasePath:   '/admin/',
         permissions:     {},
@@ -45,6 +46,7 @@ define([
          *
          * @param {Object} config
          * @param {string} config.graphqlEndpoint
+         * @param {string} config.authHeader
          * @param {string} config.adminUrl
          * @param {string} config.adminBasePath
          * @param {Object} config.permissions
@@ -98,6 +100,20 @@ define([
          */
         getGraphqlEndpoint: function (fallback) {
             return _config.graphqlEndpoint || fallback || DEFAULTS.graphqlEndpoint;
+        },
+
+        /**
+         * Get the HTTP header carrying the admin Bearer token.
+         *
+         * Defaults to 'Authorization'. Sites behind HTTP Basic Auth configure a
+         * custom header (e.g. 'X-Bte-Authorization'), because Apache/nginx
+         * intercepts the standard one and answers 401 before Magento runs.
+         *
+         * @param {string} [fallback]
+         * @returns {string}
+         */
+        getAuthHeader: function (fallback) {
+            return _config.authHeader || fallback || DEFAULTS.authHeader;
         },
 
         /**
