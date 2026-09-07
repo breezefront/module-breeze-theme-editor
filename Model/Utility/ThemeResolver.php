@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace Swissup\BreezeThemeEditor\Model\Utility;
 
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Phrase;
 use Magento\Framework\View\DesignInterface;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory as ThemeCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Serialize\SerializerInterface;
 use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface as BreezeThemeScopeInterface;
@@ -22,7 +24,8 @@ class ThemeResolver
         private ScopeConfigInterface $scopeConfig,
         private ThemeCollectionFactory $themeCollectionFactory,
         private CacheInterface $cache,
-        private SerializerInterface $serializer
+        private SerializerInterface $serializer,
+        private StoreManagerInterface $storeManager
     ) {}
 
     /**
@@ -38,7 +41,13 @@ class ThemeResolver
         );
 
         if (!$themeId) {
-            throw new LocalizedException(__('Unable to determine theme for store %1', $storeId));
+            throw new LocalizedException(
+                __(
+                    'No theme is assigned to store view ID %1, nor to the Default Config scope. '
+                    . 'Assign a theme in Content > Design > Configuration, then flush the configuration cache.',
+                    $storeId
+                )
+            );
         }
 
         return (int)$themeId;
@@ -50,6 +59,13 @@ class ThemeResolver
      * type='default'  → reads from default scope (scopeId ignored)
      * type='websites' → reads from website scope
      * type='stores'   → reads from store scope
+     *
+     * Website and store scopes inherit the default-scope value through
+     * ScopeConfig. The default scope has nothing above it, so when
+     * design/theme/theme_id was never saved for Default Config — themes
+     * assigned per store view only — the lookup comes back empty. In that
+     * case the theme of the default store view is used, which is the theme
+     * the editor previews for the Default scope anyway.
      */
     public function getThemeIdByScope(BreezeThemeScopeInterface $scope): int
     {
@@ -82,12 +98,94 @@ class ThemeResolver
         }
 
         if (!$themeId) {
-            throw new LocalizedException(
-                __('Unable to determine theme for scope %1 / scopeId %2', $type, $scopeId)
-            );
+            $themeId = $this->getFallbackThemeId($type, $scopeId);
+        }
+
+        if (!$themeId) {
+            throw new LocalizedException($this->getUnresolvedThemeMessage($type, $scopeId));
         }
 
         return (int)$themeId;
+    }
+
+    /**
+     * Theme of a store view to use when the requested scope has no theme of its own.
+     *
+     * default  → default store view, then any other store view
+     * websites → store views of that website
+     * stores   → nothing to fall back to
+     *
+     * Returns null when no store view has a theme assigned either.
+     */
+    private function getFallbackThemeId(string $type, int $scopeId): ?int
+    {
+        try {
+            switch ($type) {
+                case ValueInterface::SCOPE_DEFAULT:
+                    // Default store view first, then any other one.
+                    $stores = array_merge(
+                        array_filter([$this->storeManager->getDefaultStoreView()]),
+                        $this->storeManager->getStores()
+                    );
+                    break;
+
+                case ValueInterface::SCOPE_WEBSITES:
+                    $stores = array_filter(
+                        $this->storeManager->getStores(),
+                        fn ($store) => (int)$store->getWebsiteId() === $scopeId
+                    );
+                    break;
+
+                default:
+                    return null;
+            }
+        } catch (\Exception $e) {
+            // Broken or incomplete store setup — no fallback available.
+            return null;
+        }
+
+        foreach ($stores as $store) {
+            $themeId = $this->scopeConfig->getValue(
+                DesignInterface::XML_PATH_THEME_ID,
+                ScopeInterface::SCOPE_STORE,
+                (int)$store->getId()
+            );
+
+            if ($themeId) {
+                return (int)$themeId;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Message naming both the missing configuration and the way to fix it.
+     */
+    private function getUnresolvedThemeMessage(string $type, int $scopeId): Phrase
+    {
+        switch ($type) {
+            case ValueInterface::SCOPE_DEFAULT:
+                return __(
+                    'No theme is assigned to the Default Config scope, and no store view has one either. '
+                    . 'Assign a theme in Content > Design > Configuration, then flush the configuration cache.'
+                );
+
+            case ValueInterface::SCOPE_WEBSITES:
+                return __(
+                    'No theme is assigned to website ID %1, to the Default Config scope, or to any of its '
+                    . 'store views. Assign a theme in Content > Design > Configuration, then flush the '
+                    . 'configuration cache.',
+                    $scopeId
+                );
+
+            default:
+                return __(
+                    'No theme is assigned to store view ID %1, nor to the Default Config scope. '
+                    . 'Assign a theme in Content > Design > Configuration, then flush the configuration cache.',
+                    $scopeId
+                );
+        }
     }
 
     /**
