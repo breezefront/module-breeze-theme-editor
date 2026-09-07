@@ -259,6 +259,37 @@ class ThemeResolverTest extends TestCase
     }
 
     /**
+     * The scope's default store view is switched off — the selector previews
+     * the first active view instead, and so does the resolver.
+     */
+    public function testGetThemeIdByScopeSkipsInactiveDefaultStoreView(): void
+    {
+        $this->stubStoreThemes([1 => '24', 2 => '7']);
+        $this->stubStores([
+            $this->createStore(1, isActive: false),
+            $this->createStore(2),
+        ]);
+        $this->stubDefaultStore(websiteId: 1, groupId: 1, storeId: 1);
+
+        $this->assertSame(7, $this->resolver->getThemeIdByScope(new Scope('default', 0)));
+    }
+
+    /**
+     * A website whose store views are all switched off has nothing to preview
+     * and nothing to fall back to.
+     */
+    public function testGetThemeIdByScopeForWebsiteWithoutActiveStoresThrows(): void
+    {
+        $this->stubStoreThemes([4 => '20']);
+        $this->stubStores([$this->createStore(4, websiteId: 2, isActive: false)]);
+        $this->stubDefaultStore(websiteId: 2, groupId: 2, storeId: 4);
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('No theme is assigned to website ID 2');
+        $this->resolver->getThemeIdByScope(new Scope('websites', 2));
+    }
+
+    /**
      * Website scope inherits nothing (no default row) — the website's own
      * default store view provides the theme, and store views of other websites
      * are out of scope.
