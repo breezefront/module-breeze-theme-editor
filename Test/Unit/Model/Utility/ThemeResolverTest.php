@@ -9,13 +9,16 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Framework\View\DesignInterface;
+use Magento\Store\Api\Data\GroupInterface;
 use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Api\Data\WebsiteInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Theme\Model\ResourceModel\Theme\Collection as ThemeCollection;
 use Magento\Theme\Model\ResourceModel\Theme\CollectionFactory as ThemeCollectionFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Swissup\BreezeThemeEditor\Model\Data\Scope;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
 use Swissup\BreezeThemeEditor\Test\Unit\Model\Utility\Stub\ThemeStub;
@@ -28,6 +31,7 @@ class ThemeResolverTest extends TestCase
     private CacheInterface|MockObject $cache;
     private SerializerInterface|MockObject $serializer;
     private StoreManagerInterface|MockObject $storeManager;
+    private LoggerInterface|MockObject $logger;
 
     protected function setUp(): void
     {
@@ -36,13 +40,15 @@ class ThemeResolverTest extends TestCase
         $this->cache                  = $this->createMock(CacheInterface::class);
         $this->serializer             = $this->createMock(SerializerInterface::class);
         $this->storeManager           = $this->createMock(StoreManagerInterface::class);
+        $this->logger                 = $this->createMock(LoggerInterface::class);
 
         $this->resolver = new ThemeResolver(
             $this->scopeConfig,
             $this->themeCollectionFactory,
             $this->cache,
             $this->serializer,
-            $this->storeManager
+            $this->storeManager,
+            $this->logger
         );
     }
 
@@ -218,44 +224,54 @@ class ThemeResolverTest extends TestCase
 
     /**
      * Default scope has no design/theme/theme_id row (theme assigned per store
-     * view only) — the default store view's theme wins over other store views
-     * instead of failing.
+     * view only). The theme comes from the store view the editor previews for
+     * that scope — the default website's default store — and not from whichever
+     * store view happens to come first.
      */
-    public function testGetThemeIdByScopeForDefaultScopeFallsBackToDefaultStoreView(): void
+    public function testGetThemeIdByScopeForDefaultScopeUsesPreviewedStoreTheme(): void
     {
-        $this->stubStoreThemes([1 => '5', 2 => '9']);
-        $this->storeManager->method('getDefaultStoreView')->willReturn($this->createStore(1));
-        $this->storeManager->method('getStores')
-            ->willReturn([$this->createStore(1), $this->createStore(2)]);
+        $this->stubStoreThemes([1 => '9', 2 => '5']);
+        $this->stubStores([
+            $this->createStore(1),
+            $this->createStore(2),
+        ]);
+        $this->stubDefaultStore(websiteId: 1, groupId: 1, storeId: 2);
 
         $this->assertSame(5, $this->resolver->getThemeIdByScope(new Scope('default', 0)));
     }
 
     /**
-     * No default store view is flagged — any store view with a theme will do.
+     * The previewed store view has no theme either — any other active store
+     * view will do, but a disabled one must never be taken: its theme is not
+     * rendered anywhere.
      */
-    public function testGetThemeIdByScopeForDefaultScopeFallsBackToAnyStoreView(): void
+    public function testGetThemeIdByScopeForDefaultScopeSkipsInactiveStoreViews(): void
     {
-        $this->stubStoreThemes([3 => '9']);
-        $this->storeManager->method('getDefaultStoreView')->willReturn(null);
-        $this->storeManager->method('getStores')
-            ->willReturn([$this->createStore(2), $this->createStore(3)]);
+        $this->stubStoreThemes([2 => '24', 3 => '7']);
+        $this->stubStores([
+            $this->createStore(1),
+            $this->createStore(2, isActive: false),
+            $this->createStore(3),
+        ]);
+        $this->stubDefaultStore(websiteId: 1, groupId: 1, storeId: 1);
 
-        $this->assertSame(9, $this->resolver->getThemeIdByScope(new Scope('default', 0)));
+        $this->assertSame(7, $this->resolver->getThemeIdByScope(new Scope('default', 0)));
     }
 
     /**
-     * Website scope inherits nothing (no default row) — a store view of that
-     * website provides the theme.
+     * Website scope inherits nothing (no default row) — the website's own
+     * default store view provides the theme, and store views of other websites
+     * are out of scope.
      */
-    public function testGetThemeIdByScopeForWebsiteScopeFallsBackToItsStoreView(): void
+    public function testGetThemeIdByScopeForWebsiteScopeUsesItsDefaultStoreTheme(): void
     {
-        $this->stubStoreThemes([5 => '7', 6 => '11']);
-        $this->storeManager->method('getStores')->willReturn([
-            $this->createStore(4, 2),
-            $this->createStore(5, 2),
-            $this->createStore(6, 3),
+        $this->stubStoreThemes([4 => '20', 5 => '7', 6 => '11']);
+        $this->stubStores([
+            $this->createStore(4, websiteId: 2),
+            $this->createStore(5, websiteId: 2),
+            $this->createStore(6, websiteId: 3),
         ]);
+        $this->stubDefaultStore(websiteId: 2, groupId: 2, storeId: 5);
 
         $this->assertSame(7, $this->resolver->getThemeIdByScope(new Scope('websites', 2)));
     }
@@ -267,8 +283,8 @@ class ThemeResolverTest extends TestCase
     public function testGetThemeIdByScopeForDefaultScopeThrowsActionableMessage(): void
     {
         $this->scopeConfig->method('getValue')->willReturn(null);
-        $this->storeManager->method('getDefaultStoreView')->willReturn(null);
-        $this->storeManager->method('getStores')->willReturn([$this->createStore(1)]);
+        $this->stubStores([$this->createStore(1)]);
+        $this->stubDefaultStore(websiteId: 1, groupId: 1, storeId: 1);
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage(
@@ -279,11 +295,13 @@ class ThemeResolverTest extends TestCase
     }
 
     /**
-     * Store scope failure names the store view and the fix.
+     * Store scope has no fallback — it inherits the default scope already — and
+     * its failure names the store view and the fix.
      */
     public function testGetThemeIdByScopeForStoreScopeThrowsActionableMessage(): void
     {
         $this->scopeConfig->method('getValue')->willReturn(null);
+        $this->storeManager->expects($this->never())->method('getStores');
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage(
@@ -294,18 +312,58 @@ class ThemeResolverTest extends TestCase
     }
 
     /**
-     * A broken store setup must not leak a StoreManager exception through the
-     * fallback — it degrades to the actionable message.
+     * A scope pointing at a website that no longer exists is an expected input,
+     * not an infrastructure fault — no log entry, just the message.
      */
-    public function testGetThemeIdByScopeSurvivesStoreManagerFailure(): void
+    public function testGetThemeIdByScopeForMissingWebsiteDoesNotLog(): void
     {
         $this->scopeConfig->method('getValue')->willReturn(null);
-        $this->storeManager->method('getDefaultStoreView')
+        $this->stubStores([$this->createStore(1)]);
+        $this->storeManager->method('getWebsite')
             ->willThrowException(new NoSuchEntityException(__('No such entity.')));
+        $this->logger->expects($this->never())->method('warning');
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('No theme is assigned to website ID 7');
+        $this->resolver->getThemeIdByScope(new Scope('websites', 7));
+    }
+
+    /**
+     * An infrastructure failure must not be silently reported as a missing
+     * theme assignment: the real cause is logged.
+     */
+    public function testGetThemeIdByScopeLogsStoreLookupFailure(): void
+    {
+        $this->scopeConfig->method('getValue')->willReturn(null);
+        $this->stubDefaultStore(websiteId: 1, groupId: 1, storeId: 1);
+        $this->storeManager->method('getStores')
+            ->willThrowException(new \RuntimeException('SQLSTATE[HY000]: connection lost'));
+        $this->logger->expects($this->once())
+            ->method('warning')
+            ->with($this->stringContains('connection lost'), $this->anything());
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Assign a theme in Content > Design > Configuration');
         $this->resolver->getThemeIdByScope(new Scope('default', 0));
+    }
+
+    // =========================================================================
+    // hasParentTheme / getParentThemeId
+    // =========================================================================
+
+    public function testHasParentThemeReturnsTrueWhenParentExists(): void
+    {
+        $themeMock = $this->createMock(ThemeStub::class);
+        $themeMock->method('getId')->willReturn(5);
+        $themeMock->method('getParentId')->willReturn(3);
+
+        $collection = $this->getMockBuilder(ThemeCollection::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $collection->method('getItemById')->willReturn($themeMock);
+        $this->themeCollectionFactory->method('create')->willReturn($collection);
+
+        $this->assertTrue($this->resolver->hasParentTheme(5));
     }
 
     /**
@@ -330,31 +388,40 @@ class ThemeResolverTest extends TestCase
             );
     }
 
-    private function createStore(int $storeId, int $websiteId = 1): StoreInterface|MockObject
+    /**
+     * @param array<int, StoreInterface|MockObject> $stores
+     */
+    private function stubStores(array $stores): void
     {
+        $this->storeManager->method('getStores')->willReturn($stores);
+    }
+
+    /**
+     * The website's default group points at $storeId — the store view the
+     * scope selector previews for that scope.
+     */
+    private function stubDefaultStore(int $websiteId, int $groupId, int $storeId): void
+    {
+        $website = $this->createMock(WebsiteInterface::class);
+        $website->method('getId')->willReturn($websiteId);
+        $website->method('getDefaultGroupId')->willReturn($groupId);
+        $this->storeManager->method('getWebsite')->willReturn($website);
+
+        $group = $this->createMock(GroupInterface::class);
+        $group->method('getDefaultStoreId')->willReturn($storeId);
+        $this->storeManager->method('getGroups')->willReturn([$groupId => $group]);
+    }
+
+    private function createStore(
+        int $storeId,
+        int $websiteId = 1,
+        bool $isActive = true
+    ): StoreInterface|MockObject {
         $store = $this->createMock(StoreInterface::class);
         $store->method('getId')->willReturn($storeId);
         $store->method('getWebsiteId')->willReturn($websiteId);
+        $store->method('getIsActive')->willReturn($isActive);
 
         return $store;
-    }
-
-    // =========================================================================
-    // hasParentTheme / getParentThemeId
-    // =========================================================================
-
-    public function testHasParentThemeReturnsTrueWhenParentExists(): void
-    {
-        $themeMock = $this->createMock(ThemeStub::class);
-        $themeMock->method('getId')->willReturn(5);
-        $themeMock->method('getParentId')->willReturn(3);
-
-        $collection = $this->getMockBuilder(ThemeCollection::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $collection->method('getItemById')->willReturn($themeMock);
-        $this->themeCollectionFactory->method('create')->willReturn($collection);
-
-        $this->assertTrue($this->resolver->hasParentTheme(5));
     }
 }
