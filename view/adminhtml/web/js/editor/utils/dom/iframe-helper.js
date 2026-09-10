@@ -156,8 +156,21 @@ define([
 
         /**
          * Extract clean path from iframe URL (remove system parameters)
-         * Removes ___store, preview_theme, jstest parameters
-         * 
+         *
+         * Removes ___store, preview_theme and jstest, and every editor preview
+         * param of the two builders (bcb_*, blb_*) — the whole prefix rather
+         * than a list of names, because Content Builder keeps adding params
+         * that pin one previewed value (blb_header_layout, blb_header_overlay_*)
+         * and a remembered URL must not pin any of them: the panel rebuilds
+         * them from the draft when it reactivates, so a stale one would reopen
+         * the preview showing a state nobody chose.
+         *
+         * The separator is captured and put back rather than swallowed. Taken
+         * out, the `?` of a first-position param goes with it and what is left
+         * is `/path/&next=...` — no `?` at all, which the frontend answers with
+         * a 404. The old `^\?&` guard could not catch that: this string starts
+         * with the path, so the `?&` it looked for is never at position 0.
+         *
          * @param {String} url - Full path with query
          * @returns {String}
          */
@@ -168,16 +181,11 @@ define([
             
             // Remove system parameters
             var cleanUrl = url
-                .replace(/[?&]___store=[^&]*/g, '')
-                .replace(/[?&]preview_theme=[^&]*/g, '')
-                .replace(/[?&]jstest=[^&]*/g, '')
-                .replace(/[?&]bcb_preview=[^&]*/g, '')
-                .replace(/[?&]bcb_page_id=[^&]*/g, '')
-                .replace(/[?&]blb_preview=[^&]*/g, '')
-                .replace(/[?&]blb_page_type=[^&]*/g, '')
-                .replace(/^\?&/, '?')  // Fix leftover &
-                .replace(/\?$/, '')    // Remove trailing ?
-                .replace(/&$/, '');    // Remove trailing &
+                .replace(/([?&])(?:___store|preview_theme|jstest)=[^&]*/g, '$1')
+                .replace(/([?&])(?:bcb|blb)_[^=&]*=[^&]*/g, '$1')
+                .replace(/&{2,}/g, '&')
+                .replace(/\?&/, '?')
+                .replace(/[?&]$/, '');
             
             return cleanUrl || '/';
         },
