@@ -21,7 +21,7 @@
         <div class="bte-image-upload-wrapper">
             <% if (data.hasImage) { %>
                 <div class="bte-image-preview">
-                    <img src="<%= data.value %>" alt="<%= data.label %>" class="bte-preview-image" />
+                    <img src="<%- data.value %>" alt="<%= data.label %>" class="bte-preview-image" />
                     <button type="button" class="bte-button bte-button-secondary bte-image-remove" 
                         data-section="<%= data.sectionCode %>" 
                         data-field="<%= data.code %>">
@@ -67,7 +67,7 @@
                 type="hidden"
                 id="field-<%= data.sectionCode %>-<%= data.code %>"
                 class="bte-image-value"
-                value="<%= data.value %>"
+                value="<%- data.value %>"
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
                 data-property="<%= data.property %>"
@@ -75,7 +75,7 @@
                  <%= data.mediaAttr %>
                  <%= data.mediaDeviceAttr %>
                 data-type="image_upload"
-                data-default="<%= data.default %>"
+                data-default="<%- data.default %>"
                 <%= data.required ? 'required' : '' %>
             />
         </div>

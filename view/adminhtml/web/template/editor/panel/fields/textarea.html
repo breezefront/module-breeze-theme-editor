@@ -22,7 +22,7 @@
             id="field-<%= data.sectionCode %>-<%= data.code %>"
             class="bte-textarea"
             rows="5"
-            placeholder="<%= data.placeholder %>"
+            placeholder="<%- data.placeholder %>"
             data-section="<%= data.sectionCode %>"
             data-field="<%= data.code %>"
             data-property="<%= data.property %>"
@@ -30,7 +30,7 @@
                  <%= data.mediaAttr %>
                  <%= data.mediaDeviceAttr %>
             data-type="textarea"
-            data-default="<%= data.default %>"
+            data-default="<%- data.default %>"
             <% if (data.validation && data.validation.minLength) { %>
                 minlength="<%= data.validation.minLength %>"
             <% } %>
@@ -38,7 +38,7 @@
                 maxlength="<%= data.validation.maxLength %>"
             <% } %>
             <%= data.required ? 'required' : '' %>
-        ><%= data.value %></textarea>
+        ><%- data.value %></textarea>
     </div>
 
     <% if (data.helpText) { %>

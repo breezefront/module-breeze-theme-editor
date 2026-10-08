@@ -21,7 +21,10 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/repeater',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/social-links',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/heading',
-    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderer'
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderer',
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/text',
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/textarea',
+    'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/color'
 ], function (
     TestFramework,
     BaseRenderer,
@@ -38,7 +41,10 @@ define([
     RepeaterRenderer,
     SocialLinksRenderer,
     HeadingRenderer,
-    FieldRenderer
+    FieldRenderer,
+    TextRenderer,
+    TextareaRenderer,
+    ColorRenderer
 ) {
     'use strict';
 
@@ -709,6 +715,29 @@ define([
             );
             this.assertEquals(data.label, 'Colors', 'label');
             this.assertEquals(data.description, 'Color settings', 'description');
+        },
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Stored values must be escaped (they are editable by other admins)
+        // ─────────────────────────────────────────────────────────────────────
+
+        'Render: text input escapes a stored value': function () {
+            var payload = '"><img src=x onerror=alert(1)>';
+            var html = TextRenderer.render(field({ value: payload, default: payload }), 'general');
+            this.assertFalse(html.indexOf('<img') !== -1, 'value must not inject markup: ' + html);
+            this.assertTrue(html.indexOf('&lt;img') !== -1, 'value should be HTML-escaped');
+        },
+
+        'Render: textarea escapes a stored value': function () {
+            var payload = '</textarea><script>alert(1)</script>';
+            var html = TextareaRenderer.render(field({ value: payload }), 'general');
+            this.assertFalse(html.indexOf('<script>') !== -1, 'value must not inject markup: ' + html);
+        },
+
+        'Render: color input escapes a stored value': function () {
+            var payload = '"><svg onload=alert(1)>';
+            var html = ColorRenderer.render(field({ value: payload }), 'general');
+            this.assertFalse(html.indexOf('<svg') !== -1, 'value must not inject markup: ' + html);
         },
 
         'HeadingRenderer: description defaults to empty string when absent': function () {

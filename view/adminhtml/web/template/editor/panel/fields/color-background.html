@@ -29,7 +29,7 @@
                  <%= data.mediaDeviceAttr %>
                  data-palette="<%= data.palette %>"
                  data-type="color_background"
-                 data-default="<%= data.default %>"
+                 data-default="<%- data.default %>"
                  <% if (data.format) { %>data-format="<%= data.format %>"<% } %>
                  <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>
                  <%= data.required ? 'data-required="true"' : '' %>>
@@ -39,15 +39,15 @@
                 type="text"
                 id="field-<%= data.sectionCode %>-<%= data.code %>"
                 class="bte-cbg-input"
-                value="<%= data.value %>"
-                placeholder="<%= data.placeholder || '#000000' %>"
+                value="<%- data.value %>"
+                placeholder="<%- data.placeholder || '#000000' %>"
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
                 data-property="<%= data.property %>"
                  <%= data.selectorAttr %>
                  <%= data.mediaAttr %>
                  <%= data.mediaDeviceAttr %>
-                data-default="<%= data.default %>"
+                data-default="<%- data.default %>"
                 data-type="color_background"
                 <% if (data.format) { %>data-format="<%= data.format %>"<% } %>
                 <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>

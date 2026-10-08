@@ -8,6 +8,21 @@ define([
     var log = Logger.for('panel/field-handlers/repeater');
 
     /**
+     * Escape a value for use inside a double-quoted HTML attribute.
+     *
+     * @param {*} value
+     * @returns {String}
+     */
+    function escapeAttr(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    /**
      * Repeater Field Handler
      *
      * Handles repeater field with add/remove/sort items
@@ -275,13 +290,13 @@ define([
                 if (field.type === 'text' || field.type === 'url') {
                     html += '<input type="' + (field.type === 'url' ? 'url' : 'text') + '" ';
                     html += 'class="bte-text-input bte-repeater-field-input" ';
-                    html += 'value="' + value + '" ';
-                    html += 'placeholder="' + (field.placeholder || '') + '" ';
+                    html += 'value="' + escapeAttr(value) + '" ';
+                    html += 'placeholder="' + escapeAttr(field.placeholder || '') + '" ';
                     html += 'data-field="' + field.code + '">';
                 } else if (field.type === 'number') {
                     html += '<input type="number" ';
                     html += 'class="bte-number-input bte-repeater-field-input" ';
-                    html += 'value="' + value + '" ';
+                    html += 'value="' + escapeAttr(value) + '" ';
                     html += 'data-field="' + field.code + '">';
                 }
                 

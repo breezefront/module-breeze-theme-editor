@@ -30,7 +30,7 @@
                  <%= data.mediaAttr %>
                  <%= data.mediaDeviceAttr %>
                 data-type="toggle"
-                data-default="<%= data.default %>"
+                data-default="<%- data.default %>"
                 <%= (data.value === 'true' || data.value === '1' || data.value === true) ? 'checked' : '' %>
                 <%= data.required ? 'required' : '' %>
             />

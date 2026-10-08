@@ -28,19 +28,19 @@
                  <%= data.mediaDeviceAttr %>
                  data-palette="<%= data.palette %>"
                  data-type="color"
-                 data-default="<%= data.default %>"
+                 data-default="<%- data.default %>"
                  <% if (data.format) { %>data-format="<%= data.format %>"<% } %>
                  <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>
                  <%= data.required ? 'data-required="true"' : '' %>>
                 <div class="bte-color-preview" 
-                     style="--preview-color: <%= data.hexValue || data.value %>;"></div>
+                     style="--preview-color: <%- data.hexValue || data.value %>;"></div>
             </div>
             <input
                 type="text"
                 id="field-<%= data.sectionCode %>-<%= data.code %>"
                 class="bte-color-input"
-                value="<%= data.hexValue || data.value %>"
-                placeholder="<%= data.placeholder || '#000000' %>"
+                value="<%- data.hexValue || data.value %>"
+                placeholder="<%- data.placeholder || '#000000' %>"
                 pattern="<%= data.validation && data.validation.pattern || '^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$' %>"
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
@@ -48,7 +48,7 @@
                  <%= data.selectorAttr %>
                  <%= data.mediaAttr %>
                  <%= data.mediaDeviceAttr %>
-                data-default="<%= data.default %>"
+                data-default="<%- data.default %>"
                 data-type="color"
                 <% if (data.format) { %>data-format="<%= data.format %>"<% } %>
                 <% if (data.paletteRef) { %>data-palette-ref="<%= data.paletteRef %>"<% } %>

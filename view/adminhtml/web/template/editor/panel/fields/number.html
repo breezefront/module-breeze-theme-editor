@@ -23,8 +23,8 @@
                 type="number"
                 id="field-<%= data.sectionCode %>-<%= data.code %>"
                 class="bte-number-input"
-                value="<%= data.value %>"
-                placeholder="<%= data.placeholder %>"
+                value="<%- data.value %>"
+                placeholder="<%- data.placeholder %>"
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
                 data-property="<%= data.property %>"
@@ -32,7 +32,7 @@
                  <%= data.mediaAttr %>
                  <%= data.mediaDeviceAttr %>
                 data-type="number"
-                data-default="<%= data.default %>"
+                data-default="<%- data.default %>"
                 <% if (data.params && data.params.min !== null && data.params.min !== undefined) { %>
                     min="<%= data.params.min %>"
                 <% } %>
@@ -47,7 +47,7 @@
                 <%= data.required ? 'required' : '' %>
             />
             <% if (data.params && data.params.unit) { %>
-                <span class="bte-number-unit"><%= data.params.unit %></span>
+                <span class="bte-number-unit"><%- data.params.unit %></span>
             <% } %>
         </div>
     </div>
