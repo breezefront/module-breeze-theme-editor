@@ -6,6 +6,7 @@ namespace Swissup\BreezeThemeEditor\ViewModel;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Psr\Log\LoggerInterface;
 use Swissup\BreezeThemeEditor\Model\Service\CssGenerator;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Utility\ThemeResolver;
@@ -20,7 +21,8 @@ class ThemeCssVariables implements ArgumentInterface
         private StoreManagerInterface $storeManager,
         private RequestInterface $request,
         private HelperData $helper,
-        private ScopeFactory $scopeFactory
+        private ScopeFactory $scopeFactory,
+        private LoggerInterface $logger
     ) {}
 
     /**
@@ -41,7 +43,10 @@ class ThemeCssVariables implements ArgumentInterface
             $scope = $this->scopeFactory->create('stores', $storeId);
             return $this->cssGenerator->generate($themeId, $scope, StatusCode::PUBLISHED);
         } catch (\Exception $e) {
-            return "/* Breeze Theme Editor: Error generating CSS - {$e->getMessage()} */";
+            // The page is public: keep the details in the log only.
+            $this->logger->error('[BTE] Failed to generate storefront CSS: ' . $e->getMessage());
+
+            return '/* Breeze Theme Editor: CSS could not be generated */';
         }
     }
 

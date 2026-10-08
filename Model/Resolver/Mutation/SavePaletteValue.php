@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Psr\Log\LoggerInterface;
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteResolver;
@@ -31,7 +32,8 @@ class SavePaletteValue extends AbstractMutationResolver
         private ThemeResolver $themeResolver,
         private UserResolver $userResolver,
         private ScopeFactory $scopeFactory,
-        private StatusProvider $statusProvider
+        private StatusProvider $statusProvider,
+        private LoggerInterface $logger
     ) {}
 
     /**
@@ -104,9 +106,11 @@ class SavePaletteValue extends AbstractMutationResolver
             // Use saveMultiple() which uses insertOnDuplicate() - handles both INSERT and UPDATE
             $this->valueRepository->saveMultiple([$valueModel]);
         } catch (\Exception $e) {
+            $this->logger->error('[BTE] Failed to save palette value: ' . $e->getMessage());
+
             return [
                 'success' => false,
-                'message' => __('Failed to save palette value: %1', $e->getMessage()),
+                'message' => __('Failed to save palette value.'),
                 'affectedFields' => 0,
                 'values' => []
             ];

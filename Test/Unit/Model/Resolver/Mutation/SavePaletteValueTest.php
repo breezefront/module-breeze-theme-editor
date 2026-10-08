@@ -62,7 +62,8 @@ class SavePaletteValueTest extends TestCase
             $this->themeResolverMock,
             $this->userResolverMock,
             $this->scopeFactory,
-            $this->statusProviderMock
+            $this->statusProviderMock,
+            $this->createMock(\Psr\Log\LoggerInterface::class)
         );
     }
 
@@ -495,7 +496,7 @@ class SavePaletteValueTest extends TestCase
 
         $this->assertFalse($result['success']);
         $this->assertStringContainsString('Failed to save palette value', (string)$result['message']);
-        $this->assertStringContainsString('Database connection error', (string)$result['message']);
+        $this->assertStringNotContainsString('Database connection error', (string)$result['message']);
         $this->assertEquals(0, $result['affectedFields']);
     }
 
