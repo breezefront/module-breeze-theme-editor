@@ -68,30 +68,30 @@
                                                 type="<%= subField.type === 'url' ? 'url' : 'text' %>"
                                                 id="<%= subFieldId %>"
                                                 class="bte-text-input bte-repeater-field-input"
-                                                value="<%= item[subField.code] || '' %>"
-                                                placeholder="<%= subField.placeholder || '' %>"
+                                                value="<%- item[subField.code] || '' %>"
+                                                placeholder="<%- subField.placeholder || '' %>"
                                                 data-field="<%= subField.code %>"
                                             />
                                         <% } else if (subField.type === 'textarea') { %>
                                             <textarea
                                                 id="<%= subFieldId %>"
                                                 class="bte-textarea bte-repeater-field-input"
-                                                placeholder="<%= subField.placeholder || '' %>"
+                                                placeholder="<%- subField.placeholder || '' %>"
                                                 data-field="<%= subField.code %>"
-                                            ><%= item[subField.code] || '' %></textarea>
+                                            ><%- item[subField.code] || '' %></textarea>
                                         <% } else if (subField.type === 'number') { %>
                                             <input
                                                 type="number"
                                                 id="<%= subFieldId %>"
                                                 class="bte-number-input bte-repeater-field-input"
-                                                value="<%= item[subField.code] || '' %>"
-                                                placeholder="<%= subField.placeholder || '' %>"
+                                                value="<%- item[subField.code] || '' %>"
+                                                placeholder="<%- subField.placeholder || '' %>"
                                                 data-field="<%= subField.code %>"
                                             />
                                         <% } else if (subField.type === 'select') { %>
                                             <select id="<%= subFieldId %>" class="bte-select bte-repeater-field-input" data-field="<%= subField.code %>">
                                                 <% (subField.options || []).forEach(function(option) { %>
-                                                    <option value="<%= option.value %>" <%= item[subField.code] === option.value ? 'selected' : '' %>>
+                                                    <option value="<%- option.value %>" <%= item[subField.code] === option.value ? 'selected' : '' %>>
                                                         <%= option.label %>
                                                     </option>
                                                 <% }); %>
@@ -141,15 +141,15 @@
                 type="hidden"
                 id="field-<%= data.sectionCode %>-<%= data.code %>"
                 class="bte-repeater-hidden"
-                value="<%= JSON.stringify(data.items) %>"
+                value="<%- JSON.stringify(data.items) %>"
                 data-section="<%= data.sectionCode %>"
                 data-field="<%= data.code %>"
                 data-property="<%= data.property %>"
                             <%= data.selectorAttr %>
                  <%= data.mediaAttr %>
                 data-type="repeater"
-                data-default="<%= data.default %>"
-                data-fields="<%= JSON.stringify(data.fields) %>"
+                data-default="<%- data.default %>"
+                data-fields="<%- JSON.stringify(data.fields) %>"
                 <%= data.required ? 'required' : '' %>
             />
         </div>

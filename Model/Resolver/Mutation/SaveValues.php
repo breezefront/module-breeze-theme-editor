@@ -23,6 +23,10 @@ class SaveValues extends AbstractSaveMutation
         $values = $input['values'];
 
         // Build array of ValueInterface models
+        foreach ($values as $val) {
+            $this->assertNoMarkup($val['sectionCode'], $val['fieldCode'], $val['value']);
+        }
+
         $valueModels = [];
         foreach ($values as $val) {
             /** @var ValueInterface $valueModel */

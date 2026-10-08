@@ -24,6 +24,7 @@ class SaveValue extends AbstractSaveMutation
         $sectionCode = $input['sectionCode'];
         $fieldCode = $input['fieldCode'];
         $newValue = $input['value'];
+        $this->assertNoMarkup($sectionCode, $fieldCode, $newValue);
 
         // Modern approach: create model and call save()
         /** @var ValueInterface $valueModel */

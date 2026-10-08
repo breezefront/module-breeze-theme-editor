@@ -28,19 +28,19 @@
                  <%= data.mediaAttr %>
                  <%= data.mediaDeviceAttr %>
             data-type="select"
-            data-default="<%= data.default %>"
+            data-default="<%- data.default %>"
             <%= data.required ? 'required' : '' %>
         >
             <% if (data.placeholder) { %>
                 <option value="" disabled <%= !data.value ? 'selected' : '' %>>
-                    <%= data.placeholder %>
+                    <%- data.placeholder %>
                 </option>
             <% } %>
 
             <% if (data.hasOptions) { %>
                 <% _.each(data.options, function(option) { %>
                     <option
-                        value="<%= option.value %>"
+                        value="<%- option.value %>"
                         <%= String(option.value) === String(data.value) ? 'selected' : '' %>
                     >
                         <%= option.label %>

@@ -33,10 +33,10 @@
                  <%= data.mediaAttr %>
                  <%= data.mediaDeviceAttr %>
             data-type="code"
-            data-default="<%= data.default %>"
+            data-default="<%- data.default %>"
             data-language="<%= (data.params && data.params.language) || 'css' %>"
             <%= data.required ? 'required' : '' %>
-        ><%= data.value %></textarea>
+        ><%- data.value %></textarea>
     </div>
 
     <% if (data.helpText) { %>

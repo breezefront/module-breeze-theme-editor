@@ -227,6 +227,13 @@ public function get(string $path): ?string
 > They never write to the database and are ignored during publish. The cookie
 > has no `HttpOnly` flag so JS can manage it, and `SameSite=Lax` prevents
 > cross-site submission.
+>
+> The overrides are honoured only together with the `bte_php_preview_token`
+> cookie: an HMAC-signed, 4 hour token issued to a logged-in admin when the
+> editor page is rendered (`Model/Service/PreviewToken.php`). Without a valid
+> token the cookie is ignored, so a visitor cannot change what a template
+> renders. A response rendered with overrides is sent with no-cache headers
+> and never lands in the full page cache.
 
 ---
 

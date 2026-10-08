@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Publish;
 use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Rollback;
+use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\SavePaletteValue;
 use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\SaveValues;
 use Swissup\BreezeThemeEditor\Plugin\Mutation\InvalidateCacheAfterMutation;
 
@@ -105,6 +106,21 @@ class InvalidateCacheAfterMutationTest extends TestCase
             ->with('full_page');
 
         $this->plugin->afterResolve($subject, $result);
+    }
+
+    // =========================================================================
+    // SavePaletteValue — written to the published state, so block cache + FPC
+    // =========================================================================
+
+    public function testSavePaletteValueSuccessInvalidatesBlockCacheAndFpc(): void
+    {
+        $subject = $this->createMock(SavePaletteValue::class);
+
+        $this->cache->expects($this->once())->method('clean')->with(['bte_theme_variables']);
+        $this->fullPageCache->expects($this->once())->method('clean');
+        $this->cacheTypeList->expects($this->once())->method('cleanType')->with('full_page');
+
+        $this->plugin->afterResolve($subject, ['success' => true]);
     }
 
     // =========================================================================

@@ -26,13 +26,15 @@ define([
     'jquery',
     'Swissup_BreezeThemeEditor/js/editor/utils/dom/iframe-helper',
     'Swissup_BreezeThemeEditor/js/editor/utils/bsync',
-    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger'
-], function ($, IframeHelper, Bsync, Logger) {
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/config-manager'
+], function ($, IframeHelper, Bsync, Logger, ConfigManager) {
     'use strict';
 
     var log = Logger.for('panel/php-preview-manager');
 
     var COOKIE_NAME   = 'bte_php_preview';
+    var TOKEN_COOKIE  = 'bte_php_preview_token';
     var DEBOUNCE_MS   = 800;
     var SPINNER_ID    = 'bte-php-preview-spinner';
     var IFRAME_SEL    = '#bte-iframe';
@@ -52,6 +54,12 @@ define([
         document.cookie =
             COOKIE_NAME + '=' + encodeURIComponent(json) +
             '; path=/; SameSite=Lax';
+
+        // The storefront ignores the overrides without this signed token (issued by PHP to the admin).
+        var token = ConfigManager.get().phpPreviewToken;
+        if (token) {
+            document.cookie = TOKEN_COOKIE + '=' + encodeURIComponent(token) + '; path=/; SameSite=Lax';
+        }
         log.debug('bte_php_preview cookie written: ' + json);
     }
 
@@ -61,6 +69,7 @@ define([
      */
     function clearCookie() {
         document.cookie = COOKIE_NAME + '=; path=/; max-age=0; SameSite=Lax';
+        document.cookie = TOKEN_COOKIE + '=; path=/; max-age=0; SameSite=Lax';
         log.debug('bte_php_preview cookie cleared');
     }
 

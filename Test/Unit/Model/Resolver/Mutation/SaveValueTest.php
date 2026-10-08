@@ -6,6 +6,8 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Resolver\Mutation;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\GraphQl\Model\Query\ContextInterface;
+use Magento\Framework\GraphQl\Exception\GraphQlInputException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
@@ -148,6 +150,34 @@ class SaveValueTest extends TestCase
 
         // Assert
         $this->assertTrue($result['success']);
+    }
+
+    public static function markupValueProvider(): array
+    {
+        return [
+            'closing style tag' => ['1px; } </style><script>alert(1)</script>'],
+            'script tag'        => ['<script>alert(1)</script>'],
+            'html comment'      => ['<!-- x'],
+        ];
+    }
+
+    #[DataProvider('markupValueProvider')]
+    public function testRejectsValueContainingHtmlMarkup(string $payload): void
+    {
+        $this->userResolver->method('getCurrentUserId')->willReturn(1);
+        $this->statusProvider->method('getStatusId')->willReturn(1);
+        $this->valueRepository->expects($this->never())->method('save');
+
+        $input = [
+            'scope' => ['type' => 'stores', 'scopeId' => 2],
+            'status' => 'DRAFT',
+            'sectionCode' => 'typography',
+            'fieldCode' => 'font-size',
+            'value' => $payload
+        ];
+
+        $this->expectException(GraphQlInputException::class);
+        $this->mutation->resolve($this->field, $this->contextMock, $this->resolveInfo, null, ['input' => $input]);
     }
 
     public function testResolvesThemeIdFromStoreIdWhenNotProvided(): void

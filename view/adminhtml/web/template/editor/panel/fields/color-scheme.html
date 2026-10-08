@@ -24,7 +24,7 @@
                         <input
                             type="radio"
                             name="field-<%= data.sectionCode %>-<%= data.code %>"
-                            value="<%= scheme.value %>"
+                            value="<%- scheme.value %>"
                             class="bte-scheme-input"
                             data-section="<%= data.sectionCode %>"
                             data-field="<%= data.code %>"
@@ -32,7 +32,7 @@
                             <%= data.selectorAttr %>
                  <%= data.mediaAttr %>
                             data-type="color_scheme"
-                            data-default="<%= data.default %>"
+                            data-default="<%- data.default %>"
                             <%= scheme.checked ? 'checked' : '' %>
                             <%= data.required ? 'required' : '' %>
                         />

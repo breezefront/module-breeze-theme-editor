@@ -29,7 +29,7 @@
                  <%= data.mediaAttr %>
                  <%= data.mediaDeviceAttr %>
             data-type="font_picker"
-            data-default="<%= data.default %>"
+            data-default="<%- data.default %>"
             data-font-stylesheets="<%- JSON.stringify(data.fontStylesheetMap || {}) %>"
             <%= data.required ? 'required' : '' %>
             hidden

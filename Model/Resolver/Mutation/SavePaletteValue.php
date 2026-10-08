@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Model\Resolver\Mutation;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Psr\Log\LoggerInterface;
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Api\ValueRepositoryInterface;
 use Swissup\BreezeThemeEditor\Model\Config\PaletteResolver;
@@ -15,6 +16,7 @@ use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 use Swissup\BreezeThemeEditor\Model\StatusCode;
+use Swissup\BreezeThemeEditor\Model\Utility\CssSafety;
 
 /**
  * Save palette color value mutation
@@ -30,8 +32,17 @@ class SavePaletteValue extends AbstractMutationResolver
         private ThemeResolver $themeResolver,
         private UserResolver $userResolver,
         private ScopeFactory $scopeFactory,
-        private StatusProvider $statusProvider
+        private StatusProvider $statusProvider,
+        private LoggerInterface $logger
     ) {}
+
+    /**
+     * Palette changes are written straight to the published state, so they need the publish permission.
+     */
+    public function getAclResource(): string
+    {
+        return 'Swissup_BreezeThemeEditor::editor_publish';
+    }
 
     public function resolve(
         Field $field,
@@ -51,10 +62,10 @@ class SavePaletteValue extends AbstractMutationResolver
         $colorValue = $input['value'];
 
         // Validate CSS variable name
-        if (!str_starts_with($cssVar, '--color-')) {
+        if (!str_starts_with($cssVar, '--color-') || !CssSafety::isValidCssVariableName($cssVar)) {
             return [
                 'success' => false,
-                'message' => __('Invalid CSS variable name. Must start with "--color-"'),
+                'message' => __('Invalid CSS variable name. Must start with "--color-" and contain only letters, digits, "-" and "_"'),
                 'affectedFields' => 0,
                 'values' => []
             ];
@@ -95,9 +106,11 @@ class SavePaletteValue extends AbstractMutationResolver
             // Use saveMultiple() which uses insertOnDuplicate() - handles both INSERT and UPDATE
             $this->valueRepository->saveMultiple([$valueModel]);
         } catch (\Exception $e) {
+            $this->logger->error('[BTE] Failed to save palette value: ' . $e->getMessage());
+
             return [
                 'success' => false,
-                'message' => __('Failed to save palette value: %1', $e->getMessage()),
+                'message' => __('Failed to save palette value.'),
                 'affectedFields' => 0,
                 'values' => []
             ];

@@ -22,8 +22,8 @@
             type="text"
             id="field-<%= data.sectionCode %>-<%= data.code %>"
             class="bte-text-input"
-            value="<%= data.value %>"
-            placeholder="<%= data.placeholder %>"
+            value="<%- data.value %>"
+            placeholder="<%- data.placeholder %>"
             data-section="<%= data.sectionCode %>"
             data-field="<%= data.code %>"
             data-property="<%= data.property %>"
@@ -31,7 +31,7 @@
                  <%= data.mediaAttr %>
                  <%= data.mediaDeviceAttr %>
             data-type="text"
-            data-default="<%= data.default %>"
+            data-default="<%- data.default %>"
             <% if (data.validation && data.validation.pattern) { %>
                 pattern="<%= data.validation.pattern %>"
             <% } %>

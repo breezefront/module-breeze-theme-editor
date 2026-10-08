@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Swissup\BreezeThemeEditor\Model\Service\Css;
 
+use Swissup\BreezeThemeEditor\Model\Utility\CssSafety;
 use Swissup\BreezeThemeEditor\Model\Utility\MediaQueryResolver;
 
 /**
@@ -95,6 +96,12 @@ class CssVariableBuilder
             }
 
             $formattedValue = $this->formatter->formatValue($rawValue, $field);
+
+            // A value must not be able to leave its declaration (";", "{", "}") or the <style> element.
+            $type = strtolower($field['type'] ?? '');
+            if ($type !== 'repeater' && !CssSafety::isSafeDeclarationValue($formattedValue)) {
+                continue;
+            }
             $comment        = $this->formatter->getComment($rawValue, $field['type'] ?? null);
             $important      = $field['important'] ?? false;
 
@@ -140,7 +147,10 @@ class CssVariableBuilder
             }
             $cssVar   = $value['setting_code'] ?? '';
             $rawValue = $value['value'] ?? null;
-            if ($cssVar && $rawValue !== null && $rawValue !== '') {
+            if ($cssVar && $rawValue !== null && $rawValue !== ''
+                && CssSafety::isValidCssVariableName($cssVar)
+                && CssSafety::isValidPaletteValue((string) $rawValue)
+            ) {
                 $paletteVarsToEmit[$cssVar] = $rawValue;
             }
         }

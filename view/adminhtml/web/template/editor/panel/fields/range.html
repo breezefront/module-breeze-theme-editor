@@ -23,7 +23,7 @@
                 type="range"
                 id="field-<%= data.sectionCode %>-<%= data.code %>"
                 class="bte-range-slider"
-                value="<%= data.value %>"
+                value="<%- data.value %>"
                 min="<%= data.params && data.params.min !== undefined ? data.params.min : 0 %>"
                 max="<%= data.params && data.params.max !== undefined ? data.params.max : 100 %>"
                 step="<%= data.params && data.params.step || 1 %>"
@@ -34,11 +34,11 @@
                  <%= data.mediaAttr %>
                  <%= data.mediaDeviceAttr %>
                 data-type="range"
-                data-default="<%= data.default %>"
+                data-default="<%- data.default %>"
                 <%= data.required ? 'required' : '' %>
             />
             <output class="bte-range-value">
-                <%= data.value %><% if (data.params && data.params.unit) { %><%= data.params.unit %><% } %>
+                <%- data.value %><% if (data.params && data.params.unit) { %><%- data.params.unit %><% } %>
             </output>
         </div>
     </div>

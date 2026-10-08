@@ -62,7 +62,8 @@ class SavePaletteValueTest extends TestCase
             $this->themeResolverMock,
             $this->userResolverMock,
             $this->scopeFactory,
-            $this->statusProviderMock
+            $this->statusProviderMock,
+            $this->createMock(\Psr\Log\LoggerInterface::class)
         );
     }
 
@@ -273,6 +274,39 @@ class SavePaletteValueTest extends TestCase
         $this->assertEquals(0, $result['affectedFields']);
     }
 
+    public function testRequiresThePublishPermission(): void
+    {
+        $this->assertSame(
+            'Swissup_BreezeThemeEditor::editor_publish',
+            $this->savePaletteValueResolver->getAclResource()
+        );
+    }
+
+    public function testRejectsCssVariableNameThatCanBreakOutOfTheStylesheet(): void
+    {
+        $this->valueRepositoryMock->expects($this->never())->method('saveMultiple');
+
+        $args = [
+            'input' => [
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
+                'themeId' => 10,
+                'property' => '--color-x: red; } </style><script>alert(1)</script><style>a{',
+                'value' => '#1979c3'
+            ]
+        ];
+
+        $result = $this->savePaletteValueResolver->resolve(
+            $this->fieldMock,
+            $this->contextMock,
+            $this->resolveInfoMock,
+            null,
+            $args
+        );
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('Invalid CSS variable name', (string)$result['message']);
+    }
+
     /**
      * Test 6: Returns error for invalid CSS variable name (no dashes)
      */
@@ -462,7 +496,7 @@ class SavePaletteValueTest extends TestCase
 
         $this->assertFalse($result['success']);
         $this->assertStringContainsString('Failed to save palette value', (string)$result['message']);
-        $this->assertStringContainsString('Database connection error', (string)$result['message']);
+        $this->assertStringNotContainsString('Database connection error', (string)$result['message']);
         $this->assertEquals(0, $result['affectedFields']);
     }
 

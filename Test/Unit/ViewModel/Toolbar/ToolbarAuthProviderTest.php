@@ -7,6 +7,7 @@ use Magento\Backend\Model\Auth\Session as AuthSession;
 use PHPUnit\Framework\TestCase;
 use Swissup\BreezeThemeEditor\Helper\Data as ConfigHelper;
 use Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator;
+use Swissup\BreezeThemeEditor\Model\Service\PreviewToken;
 use Swissup\BreezeThemeEditor\Test\Unit\ViewModel\Toolbar\Stub\AuthSessionStub;
 use Swissup\BreezeThemeEditor\ViewModel\Toolbar\ToolbarAuthProvider;
 
@@ -20,6 +21,7 @@ class ToolbarAuthProviderTest extends TestCase
     private AuthSession $authSession;
     private AdminTokenGenerator $tokenGenerator;
     private ConfigHelper $configHelper;
+    private PreviewToken $previewToken;
     private ToolbarAuthProvider $provider;
 
     protected function setUp(): void
@@ -28,10 +30,13 @@ class ToolbarAuthProviderTest extends TestCase
         $this->tokenGenerator = $this->createMock(AdminTokenGenerator::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
 
+        $this->previewToken = $this->createMock(PreviewToken::class);
+
         $this->provider = new ToolbarAuthProvider(
             $this->authSession,
             $this->tokenGenerator,
-            $this->configHelper
+            $this->configHelper,
+            $this->previewToken
         );
     }
 
@@ -73,6 +78,30 @@ class ToolbarAuthProviderTest extends TestCase
         $this->authSession->method('getUser')->willReturn(null);
         // Falls back to __('Admin') which casts to string 'Admin'
         $this->assertSame('Admin', $this->provider->getAdminUsername());
+    }
+
+    // =========================================================================
+    // getPreviewToken()
+    // =========================================================================
+
+    /** @test */
+    public function testGetPreviewTokenIsIssuedForTheLoggedInAdmin(): void
+    {
+        $user = $this->createMock(\Magento\User\Model\User::class);
+        $user->method('getId')->willReturn(42);
+        $this->authSession->method('getUser')->willReturn($user);
+        $this->previewToken->expects($this->once())->method('generate')->with(42)->willReturn('signed');
+
+        $this->assertSame('signed', $this->provider->getPreviewToken());
+    }
+
+    /** @test */
+    public function testGetPreviewTokenIsNullWithoutUser(): void
+    {
+        $this->authSession->method('getUser')->willReturn(null);
+        $this->previewToken->expects($this->never())->method('generate');
+
+        $this->assertNull($this->provider->getPreviewToken());
     }
 
     // =========================================================================
