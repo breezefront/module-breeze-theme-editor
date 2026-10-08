@@ -65,4 +65,11 @@
                 type="Swissup\BreezeThemeEditor\Plugin\Mutation\InvalidateCacheAfterMutation"
                 sortOrder="100"/>
     </type>
+
+    <!-- Invalidate block cache + FPC after a palette color is saved (it is written to the published state) -->
+    <type name="Swissup\BreezeThemeEditor\Model\Resolver\Mutation\SavePaletteValue">
+        <plugin name="swissup_bte_invalidate_cache_after_palette_save"
+                type="Swissup\BreezeThemeEditor\Plugin\Mutation\InvalidateCacheAfterMutation"
+                sortOrder="100"/>
+    </type>
 </config>

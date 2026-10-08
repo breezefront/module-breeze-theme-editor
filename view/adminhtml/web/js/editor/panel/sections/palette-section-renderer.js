@@ -9,7 +9,8 @@ define([
     'Swissup_BreezeThemeEditor/js/editor/panel/sections/base-palette-renderer',
     'Swissup_BreezeThemeEditor/js/editor/utils/ui/dialog',
     'Swissup_BreezeThemeEditor/js/editor/utils/bsync',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
+    'Swissup_BreezeThemeEditor/js/editor/constants',
+    'Swissup_BreezeThemeEditor/js/editor/utils/ui/permissions'
 ], function (
     $,
     widget,
@@ -21,7 +22,8 @@ define([
     _basePaletteRenderer,
     Dialog,
     Bsync,
-    Constants
+    Constants,
+    Permissions
 ) {
     'use strict';
 
@@ -40,6 +42,16 @@ define([
             scope: 'stores',
             scopeId: null,
             themeId: null
+        },
+
+        /**
+         * Palette colors are saved straight to the published state, which the
+         * server only allows with the publish permission.
+         *
+         * @param {Boolean} isEditable
+         */
+        _setEditable: function (isEditable) {
+            this._super(isEditable && Permissions.canPublish());
         },
 
         _create: function () {

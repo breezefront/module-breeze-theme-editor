@@ -9,6 +9,7 @@ use Magento\PageCache\Model\Cache\Type as FullPageCache;
 use Psr\Log\LoggerInterface;
 use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Publish;
 use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\Rollback;
+use Swissup\BreezeThemeEditor\Model\Resolver\Mutation\SavePaletteValue;
 
 /**
  * Invalidate cache after successful mutation.
@@ -35,7 +36,9 @@ class InvalidateCacheAfterMutation
 
         $this->invalidateBlockCache();
 
-        if ($subject instanceof Publish || $subject instanceof Rollback) {
+        if ($subject instanceof Publish
+            || $subject instanceof Rollback
+            || $subject instanceof SavePaletteValue) {
             $this->invalidateFpc();
         }
 

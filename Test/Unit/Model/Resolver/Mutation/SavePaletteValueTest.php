@@ -273,6 +273,14 @@ class SavePaletteValueTest extends TestCase
         $this->assertEquals(0, $result['affectedFields']);
     }
 
+    public function testRequiresThePublishPermission(): void
+    {
+        $this->assertSame(
+            'Swissup_BreezeThemeEditor::editor_publish',
+            $this->savePaletteValueResolver->getAclResource()
+        );
+    }
+
     public function testRejectsCssVariableNameThatCanBreakOutOfTheStylesheet(): void
     {
         $this->valueRepositoryMock->expects($this->never())->method('saveMultiple');

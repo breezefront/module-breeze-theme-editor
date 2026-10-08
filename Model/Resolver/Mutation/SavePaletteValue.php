@@ -34,6 +34,14 @@ class SavePaletteValue extends AbstractMutationResolver
         private StatusProvider $statusProvider
     ) {}
 
+    /**
+     * Palette changes are written straight to the published state, so they need the publish permission.
+     */
+    public function getAclResource(): string
+    {
+        return 'Swissup_BreezeThemeEditor::editor_publish';
+    }
+
     public function resolve(
         Field $field,
         $context,
