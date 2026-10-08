@@ -15,6 +15,7 @@ use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Provider\StatusProvider;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 use Swissup\BreezeThemeEditor\Model\StatusCode;
+use Swissup\BreezeThemeEditor\Model\Utility\CssSafety;
 
 /**
  * Save palette color value mutation
@@ -51,10 +52,10 @@ class SavePaletteValue extends AbstractMutationResolver
         $colorValue = $input['value'];
 
         // Validate CSS variable name
-        if (!str_starts_with($cssVar, '--color-')) {
+        if (!str_starts_with($cssVar, '--color-') || !CssSafety::isValidCssVariableName($cssVar)) {
             return [
                 'success' => false,
-                'message' => __('Invalid CSS variable name. Must start with "--color-"'),
+                'message' => __('Invalid CSS variable name. Must start with "--color-" and contain only letters, digits, "-" and "_"'),
                 'affectedFields' => 0,
                 'values' => []
             ];

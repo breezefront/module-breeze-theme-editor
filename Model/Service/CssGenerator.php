@@ -11,6 +11,7 @@ use Swissup\BreezeThemeEditor\Model\Service\Css\CssVariableBuilder;
 use Swissup\BreezeThemeEditor\Model\Service\Css\CssFontImportBuilder;
 use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\StatusCode;
+use Swissup\BreezeThemeEditor\Model\Utility\CssSafety;
 
 /**
  * Orchestrates CSS generation from saved theme values.
@@ -70,7 +71,9 @@ class CssGenerator
         $fontImports       = $this->fontImportBuilder->buildFontImports($values, $fieldMap, $config);
         $rawCssBlocks      = $this->variableBuilder->buildRawCssBlocks($values, $fieldMap);
 
-        return $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports, $rawCssBlocks);
+        return CssSafety::neutralizeMarkup(
+            $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports, $rawCssBlocks)
+        );
     }
 
     /**
@@ -103,7 +106,9 @@ class CssGenerator
         $fontImports       = $this->fontImportBuilder->buildFontImports($values, $fieldMap, $config);
         $rawCssBlocks      = $this->variableBuilder->buildRawCssBlocks($values, $fieldMap);
 
-        return $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports, $rawCssBlocks);
+        return CssSafety::neutralizeMarkup(
+            $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports, $rawCssBlocks)
+        );
     }
 
     /**

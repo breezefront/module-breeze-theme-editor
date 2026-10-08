@@ -273,6 +273,31 @@ class SavePaletteValueTest extends TestCase
         $this->assertEquals(0, $result['affectedFields']);
     }
 
+    public function testRejectsCssVariableNameThatCanBreakOutOfTheStylesheet(): void
+    {
+        $this->valueRepositoryMock->expects($this->never())->method('saveMultiple');
+
+        $args = [
+            'input' => [
+                'scope' => ['type' => 'stores', 'scopeId' => 1],
+                'themeId' => 10,
+                'property' => '--color-x: red; } </style><script>alert(1)</script><style>a{',
+                'value' => '#1979c3'
+            ]
+        ];
+
+        $result = $this->savePaletteValueResolver->resolve(
+            $this->fieldMock,
+            $this->contextMock,
+            $this->resolveInfoMock,
+            null,
+            $args
+        );
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('Invalid CSS variable name', (string)$result['message']);
+    }
+
     /**
      * Test 6: Returns error for invalid CSS variable name (no dashes)
      */

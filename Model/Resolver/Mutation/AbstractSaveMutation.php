@@ -13,6 +13,8 @@ use Swissup\BreezeThemeEditor\Api\Data\ScopeInterface;
 use Swissup\BreezeThemeEditor\Model\Data\ScopeFactory;
 use Swissup\BreezeThemeEditor\Model\Resolver\AbstractMutationResolver;
 use Swissup\BreezeThemeEditor\Model\StatusCode;
+use Swissup\BreezeThemeEditor\Model\Utility\CssSafety;
+use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 
 /**
  * Abstract base class for Save mutations
@@ -77,5 +79,19 @@ abstract class AbstractSaveMutation extends AbstractMutationResolver
             ];
         }
         return $result;
+    }
+
+    /**
+     * Values are written into the storefront stylesheet; HTML markup has no place in them.
+     *
+     * @throws GraphQlInputException
+     */
+    protected function assertNoMarkup(string $sectionCode, string $fieldCode, string $value): void
+    {
+        if (CssSafety::containsMarkup($value)) {
+            throw new GraphQlInputException(
+                __('Value of %1.%2 must not contain HTML markup.', $sectionCode, $fieldCode)
+            );
+        }
     }
 }

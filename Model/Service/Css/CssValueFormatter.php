@@ -300,11 +300,14 @@ class CssValueFormatter
             return null;
         }
 
-        return match (strtolower($fieldType)) {
+        $comment = match (strtolower($fieldType)) {
             'color', 'color_background' => str_starts_with((string)$value, '#') ? (string)$value : null,
             'spacing' => 'JSON: ' . (is_string($value) ? $value : json_encode($value)),
             default => null
         };
+
+        // The comment is printed inside "/* ... */": it must not be able to close itself.
+        return $comment === null ? null : $this->escapeValue($comment);
     }
 
     /**

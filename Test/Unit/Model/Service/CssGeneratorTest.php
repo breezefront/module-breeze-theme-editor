@@ -201,6 +201,90 @@ class CssGeneratorTest extends TestCase
     }
     
     /**
+     * Values and palette names must not be able to break out of the inline <style> element.
+     */
+    public function testBreakoutPayloadsNeverReachTheStylesheet(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-x: red; } </style><script>alert(1)</script><style>a{',
+                'value' => '#ff0000'
+            ],
+            [
+                'section_code' => '_palette',
+                'setting_code' => '--color-brand-primary',
+                'value' => '#fff; } </style><script>alert(2)</script>'
+            ],
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'font-size',
+                'value' => '1px; } </style><script>alert(3)</script><style>a{'
+            ],
+            [
+                'section_code' => 'typography',
+                'setting_code' => 'custom-css',
+                'value' => 'a { color: red } </style><script>alert(4)</script>'
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'typography',
+                    'settings' => [
+                        ['id' => 'font-size', 'property' => '--font-size', 'type' => 'text', 'default' => '14px'],
+                        ['id' => 'custom-css', 'type' => 'code', 'default' => ''],
+                    ]
+                ]
+            ]
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringNotContainsString('</style', $css);
+        $this->assertStringNotContainsString('<script', $css);
+        $this->assertStringNotContainsString('--color-x', $css);
+        $this->assertStringNotContainsString('--font-size', $css);
+        $this->assertStringNotContainsString('alert(2)', $css);
+    }
+
+    /**
+     * The value is echoed into a trailing comment; it must not be able to close that comment.
+     */
+    public function testSpacingValueCannotCloseTheTrailingComment(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            [
+                'section_code' => 'layout',
+                'setting_code' => 'padding',
+                'value' => '{"top":1,"right":1,"bottom":1,"left":1,"unit":"px","x":"*/ } a { color: red } /*"}'
+            ],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id' => 'layout',
+                    'settings' => [
+                        ['id' => 'padding', 'property' => '--padding', 'type' => 'spacing', 'default' => '0px'],
+                    ]
+                ]
+            ]
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringContainsString('--padding: 1px;', $css);
+        // Only the closing delimiter of our own comment may remain.
+        $this->assertSame(1, substr_count($css, '*/'));
+    }
+
+    /**
      * Test 4: Should handle field with format: "hex" referencing palette (smart mapping)
      */
     public function testSmartMappingForHexFormatFields(): void

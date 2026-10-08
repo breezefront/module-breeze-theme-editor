@@ -6,6 +6,8 @@ namespace Swissup\BreezeThemeEditor\Test\Unit\Model\Resolver\Mutation;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\GraphQl\Model\Query\ContextInterface;
+use Magento\Framework\GraphQl\Exception\GraphQlInputException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
@@ -125,6 +127,31 @@ class SaveValuesTest extends TestCase
 
         $this->assertTrue($result['success']);
         $this->assertCount(2, $result['values']);
+    }
+
+    public static function markupValueProvider(): array
+    {
+        return [
+            'closing style tag' => ['1px; } </style><script>alert(1)</script>'],
+            'script tag'        => ['<script>alert(1)</script>'],
+            'html comment'      => ['<!-- x'],
+        ];
+    }
+
+    #[DataProvider('markupValueProvider')]
+    public function testRejectsBatchWhenAnyValueContainsHtmlMarkup(string $payload): void
+    {
+        $this->userResolver->method('getCurrentUserId')->willReturn(1);
+        $this->statusProvider->method('getStatusId')->willReturn(1);
+        $this->valueRepository->expects($this->never())->method('saveMultiple');
+
+        $input = $this->buildInput([
+            ['sectionCode' => 'a', 'fieldCode' => 'x', 'value' => '1'],
+            ['sectionCode' => 'typography', 'fieldCode' => 'font-size', 'value' => $payload],
+        ]);
+
+        $this->expectException(GraphQlInputException::class);
+        $this->mutation->resolve($this->field, $this->context, $this->resolveInfo, null, ['input' => $input]);
     }
 
     public function testSuccessMessageContainsSavedCount(): void
