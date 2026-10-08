@@ -6,6 +6,7 @@ namespace Swissup\BreezeThemeEditor\ViewModel\Toolbar;
 use Magento\Backend\Model\Auth\Session as AuthSession;
 use Swissup\BreezeThemeEditor\Helper\Data as ConfigHelper;
 use Swissup\BreezeThemeEditor\Model\Service\AdminTokenGenerator;
+use Swissup\BreezeThemeEditor\Model\Service\PreviewToken;
 
 /**
  * Provides authentication and user identity data for the admin toolbar.
@@ -34,18 +35,26 @@ class ToolbarAuthProvider
     private $configHelper;
 
     /**
+     * @var PreviewToken
+     */
+    private $previewToken;
+
+    /**
      * @param AuthSession $authSession
      * @param AdminTokenGenerator $tokenGenerator
      * @param ConfigHelper $configHelper
+     * @param PreviewToken $previewToken
      */
     public function __construct(
         AuthSession $authSession,
         AdminTokenGenerator $tokenGenerator,
-        ConfigHelper $configHelper
+        ConfigHelper $configHelper,
+        PreviewToken $previewToken
     ) {
         $this->authSession    = $authSession;
         $this->tokenGenerator = $tokenGenerator;
         $this->configHelper   = $configHelper;
+        $this->previewToken   = $previewToken;
     }
 
     /**
@@ -105,6 +114,16 @@ class ToolbarAuthProvider
      *
      * @return string
      */
+    /**
+     * Signed token that lets the storefront accept the live-preview cookie of this browser.
+     */
+    public function getPreviewToken(): ?string
+    {
+        $userId = $this->getUserId();
+
+        return $userId ? $this->previewToken->generate($userId) : null;
+    }
+
     public function getAuthHeaderName(): string
     {
         return $this->configHelper->getAuthHeaderName();

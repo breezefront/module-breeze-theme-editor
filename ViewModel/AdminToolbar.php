@@ -149,6 +149,11 @@ class AdminToolbar implements ArgumentInterface
      *
      * @return bool
      */
+    public function getPhpPreviewToken(): ?string
+    {
+        return $this->authProvider->getPreviewToken();
+    }
+
     public function canEdit(): bool
     {
         return $this->permissionsProvider->canEdit();
@@ -359,6 +364,7 @@ class AdminToolbar implements ArgumentInterface
             'storeId'         => $this->getStoreId(),
             'storeCode'       => $this->scopeProvider->getStoreCode(),
             'token'           => $this->getToken(),
+            'phpPreviewToken' => $this->getPhpPreviewToken(),
             'authHeader'      => $this->getAuthHeaderName(),
             'themeId'         => $this->getThemeId(),
             'jstest'          => $this->isJstestMode(),

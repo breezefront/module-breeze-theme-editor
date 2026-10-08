@@ -54,7 +54,8 @@ define([
             adminUrl:        config.adminUrl        || '/admin',
             adminBasePath:   config.adminBasePath   || '/admin/',
             permissions:     config.permissions     || {},
-            activatePanel:   config.activatePanel   || null
+            activatePanel:   config.activatePanel   || null,
+            phpPreviewToken: config.phpPreviewToken || null
         });
 
         // Initialize runtime scope/theme state
