@@ -186,6 +186,9 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/palette-pickr-test',
             // Field Renderers Tests (64 tests) - prepareData() coverage + property rename + selectedLabel + fontStylesheetMap
             'Swissup_BreezeThemeEditor/js/test/tests/field-renderers-test',
+            'Swissup_BreezeThemeEditor/js/test/tests/field-renderers-color-test',
+            'Swissup_BreezeThemeEditor/js/test/tests/field-renderers-color-background-test',
+            'Swissup_BreezeThemeEditor/js/test/tests/field-handlers-color-background-test',
             // Font Picker Dropdown Handler Tests (14 tests) - open/close/select/outside-click/Escape
             'Swissup_BreezeThemeEditor/js/test/tests/font-picker-test',
             // Font Palette Manager Tests (25 tests) - all public API incl. setCurrentValue/getCurrentValue
