@@ -226,8 +226,6 @@ class TestRunner extends Template
             'Swissup_BreezeThemeEditor/js/test/tests/device-switcher-test',
             // Toolbar Toggle Widget Tests (10 tests) - _hideToolbar/_showToolbar/_saveState/_restoreState
             'Swissup_BreezeThemeEditor/js/test/tests/toolbar-toggle-test',
-            // Highlight Toggle Widget Tests (7 tests) - _toggleHighlight/active-class/event
-            'Swissup_BreezeThemeEditor/js/test/tests/highlight-toggle-test',
             // ActionExecutor Pure Logic Tests (step 3.4 pre-work) — suggestTitle/mutationCheck/guards/transitions
             'Swissup_BreezeThemeEditor/js/test/tests/action-executor-test',
             // CssStateRestorer Pure Logic Tests (step 3.4 pre-work) — determineCssMode/fallback/switchGuards
