@@ -11,9 +11,10 @@ define([
     'Swissup_BreezeThemeEditor/js/test/test-framework',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/color-background',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-handlers/base',
+    'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/gradient-utils',
     'jquery'
-], function (TestFramework, Handler, BaseHandler, GradientUtils, $) {
+], function (TestFramework, Handler, BaseHandler, PaletteManager, GradientUtils, $) {
     'use strict';
 
     var originalHandleChange = BaseHandler.handleChange;
@@ -185,6 +186,32 @@ define([
 
             this.assertEquals($field.find('.bte-cbg-input').val(), gradient);
             this.assertStringContains($field.find('.bte-color-preview').attr('style'), 'background:');
+
+            cleanup($field);
+        },
+
+        'updateFieldUIAfterReset resolves palette properties without --color- prefix': function () {
+            var $field = buildField();
+            $field.attr('data-field', 'bg');
+            PaletteManager.palettes = {
+                '--subtle-color': { value: '#1e29391a', hex: '#1e29391a' }
+            };
+
+            Handler.updateFieldUIAfterReset(
+                'footer',
+                'bg',
+                '--subtle-color',
+                $field.find('.bte-cbg-trigger')
+            );
+
+            this.assertEquals(
+                $field.find('.bte-cbg-input').attr('data-palette-ref'),
+                '--subtle-color'
+            );
+            this.assertStringContains(
+                $field.find('.bte-color-preview').attr('style'),
+                '#1e29391a'
+            );
 
             cleanup($field);
         }

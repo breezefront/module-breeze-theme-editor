@@ -185,6 +185,10 @@ define([
             return this.palettes[property] || null;
         },
 
+        isPaletteReference: function(value) {
+            return typeof value === 'string' && this.getColor(value) !== null;
+        },
+
         /**
          * Update color value
          * 

@@ -549,7 +549,7 @@ define([
             var $preview = $wrapper.find('.bte-color-preview');
             
             // Check if value is palette reference
-            var isPaletteRef = typeof value === 'string' && value.startsWith(Constants.CSS_VAR_PREFIXES.COLOR);
+            var isPaletteRef = PaletteManager.isPaletteReference(value);
             var hexValue;
             
             log.debug('Reset: value=' + value + ' isPaletteRef=' + isPaletteRef);

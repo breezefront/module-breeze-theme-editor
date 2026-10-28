@@ -629,7 +629,7 @@ define([
                 return;
             }
 
-            if (typeof data.value === 'string' && data.value.startsWith(Constants.CSS_VAR_PREFIXES.COLOR)) {
+            if (PaletteManager.isPaletteReference(data.value)) {
                 CssPreviewManager.removeVariable(fieldCssVar);
             } else {
                 CssPreviewManager.setVariable(fieldCssVar, data.value, fieldType, {

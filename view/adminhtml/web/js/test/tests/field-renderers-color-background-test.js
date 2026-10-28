@@ -8,8 +8,9 @@
 define([
     'Swissup_BreezeThemeEditor/js/test/test-framework',
     'Swissup_BreezeThemeEditor/js/editor/panel/field-renderers/color-background',
+    'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
     'Swissup_BreezeThemeEditor/js/editor/panel/panel-state'
-], function (TestFramework, ColorBackgroundRenderer, PanelState) {
+], function (TestFramework, ColorBackgroundRenderer, PaletteManager, PanelState) {
     'use strict';
 
     function makeField(overrides) {
@@ -74,10 +75,28 @@ define([
 
         'solid palette reference: isGradient false, paletteRef captured': function () {
             PanelState.clear();
+            PaletteManager.palettes = {
+                '--color-primary': { value: '#1979c3', hex: '#1979c3' }
+            };
             var data = ColorBackgroundRenderer.prepareData(makeField({ value: '--color-primary' }), 'footer');
 
             this.assertEquals(data.isGradient, false);
             this.assertEquals(data.paletteRef, '--color-primary');
+        },
+
+        'palette default without --color- prefix is resolved': function () {
+            PanelState.clear();
+            PaletteManager.palettes = {
+                '--subtle-color': { value: '#1e29391a', hex: '#1e29391a' }
+            };
+            var data = ColorBackgroundRenderer.prepareData(makeField({
+                value: null,
+                default: '--subtle-color'
+            }), 'footer');
+
+            this.assertEquals(data.isGradient, false);
+            this.assertEquals(data.value, '#1e29391a');
+            this.assertEquals(data.paletteRef, '--subtle-color');
         },
 
         'no value: falls back to default without erroring': function () {

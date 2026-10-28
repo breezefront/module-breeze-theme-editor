@@ -3,9 +3,8 @@ define([
     'text!Swissup_BreezeThemeEditor/template/editor/panel/fields/color.html',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/color-utils',
     'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
-    'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager',
-    'Swissup_BreezeThemeEditor/js/editor/constants'
-], function(BaseFieldRenderer, template, ColorUtils, Logger, PaletteManager, Constants) {
+    'Swissup_BreezeThemeEditor/js/editor/panel/palette-manager'
+], function(BaseFieldRenderer, template, ColorUtils, Logger, PaletteManager) {
     'use strict';
 
     var log = Logger.for('panel/field-renderers/color');
@@ -16,10 +15,9 @@ define([
     ColorRenderer.prepareData = function(field, sectionCode) {
         var data = BaseFieldRenderer.prepareData.call(this, field, sectionCode);
 
-        var value = field.value;
+        var value = data.value;
         
-        // Check if value is a palette reference (--color-brand-*)
-        if (typeof value === 'string' && value.startsWith(Constants.CSS_VAR_PREFIXES.COLOR)) {
+        if (PaletteManager.isPaletteReference(value)) {
             // This is a palette reference - resolve via PaletteManager mapping
             data.paletteRef = value;
             data.value = this._getPaletteHexFromMapping(value, data.default);
