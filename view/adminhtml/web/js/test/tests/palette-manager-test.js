@@ -47,6 +47,15 @@ define([
 
     return TestFramework.suite('PaletteManager.isColorModified', {
 
+        'isPaletteReference recognizes indexed properties regardless of prefix': function () {
+            var m = Object.create(PaletteManager);
+            m.palettes = { '--subtle-color': { value: '#1e29391a' } };
+
+            this.assertTrue(m.isPaletteReference('--subtle-color'));
+            this.assertFalse(m.isPaletteReference('--unknown-color'));
+            this.assertFalse(m.isPaletteReference(null));
+        },
+
         // ─── isColorModified: edge cases ─────────────────────────────────────
 
         'unknown property returns false': function () {

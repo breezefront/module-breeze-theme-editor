@@ -603,10 +603,11 @@ define([
                 $input.removeAttr('data-palette-ref');
                 $trigger.removeAttr('data-palette-ref');
                 $preview.attr('style', 'background: ' + value + ';');
-            } else if (typeof value === 'string' && value.startsWith(Constants.CSS_VAR_PREFIXES.COLOR)) {
+            } else if (PaletteManager.isPaletteReference(value)) {
+                var color = PaletteManager.getColor(value);
                 $input.attr('data-palette-ref', value);
                 $trigger.attr('data-palette-ref', value);
-                $preview.attr('style', '--preview-color: ' + value + ';');
+                $preview.attr('style', '--preview-color: ' + (color.hex || color.value) + ';');
             } else {
                 $input.removeAttr('data-palette-ref');
                 $trigger.removeAttr('data-palette-ref');
