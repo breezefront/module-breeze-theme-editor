@@ -6,7 +6,8 @@ namespace Swissup\BreezeThemeEditor\Model\Utility;
 /**
  * Color format converter utility
  * 
- * Provides conversion methods between HEX and RGB color formats.
+ * Provides conversion methods between HEX and RGB color formats,
+ * and from CSS oklch() to HEX.
  * Used throughout the theme editor for color value transformations.
  */
 class ColorConverter
@@ -223,5 +224,110 @@ class ColorConverter
         
         // Check if it's valid RGB format (with optional alpha)
         return (bool) preg_match('/^\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(\s*,\s*[\d.]+)?$/', $normalized);
+    }
+
+    /**
+     * Check if string is a valid CSS oklch() color
+     *
+     * Examples:
+     * - "oklch(53% 0.15 150)" → true
+     * - "oklch(0.268 0.007 34.298)" → true
+     * - "oklch(70% 0.1 250deg / 50%)" → true
+     * - "#1979c3" → false
+     *
+     * @param string $value Value to check
+     * @return bool True if valid oklch() format
+     */
+    public static function isOklch(string $value): bool
+    {
+        return self::parseOklch($value) !== null;
+    }
+
+    /**
+     * Convert a CSS oklch() color to HEX
+     *
+     * Colors outside the sRGB gamut are clipped per channel. A non-opaque
+     * alpha produces 8-digit HEX (#rrggbbaa).
+     *
+     * Examples:
+     * - "oklch(53% 0.15 150)" → "#008238"
+     * - "oklch(100% 0 0)" → "#ffffff"
+     * - "oklch(0% 0 0 / 50%)" → "#00000080"
+     *
+     * @param string $oklch oklch() color
+     * @return string HEX color, "#000000" if the value is not valid oklch()
+     */
+    public static function oklchToHex(string $oklch): string
+    {
+        $parsed = self::parseOklch($oklch);
+        if ($parsed === null) {
+            return '#000000';
+        }
+
+        [$lightness, $chroma, $hue, $alpha] = $parsed;
+
+        // OKLCH → OKLab
+        $a = $chroma * cos(deg2rad($hue));
+        $b = $chroma * sin(deg2rad($hue));
+
+        // OKLab → LMS (cubed)
+        $l = ($lightness + 0.3963377774 * $a + 0.2158037573 * $b) ** 3;
+        $m = ($lightness - 0.1055613458 * $a - 0.0638541728 * $b) ** 3;
+        $s = ($lightness - 0.0894841775 * $a - 1.2914855480 * $b) ** 3;
+
+        // LMS → linear sRGB → 0-255
+        $toByte = static function (float $linear): int {
+            $linear = max(0.0, min(1.0, $linear));
+            $srgb = $linear <= 0.0031308 ? 12.92 * $linear : 1.055 * $linear ** (1 / 2.4) - 0.055;
+            return (int) round($srgb * 255);
+        };
+
+        $hex = self::rgbArrayToHex(
+            $toByte(4.0767416621 * $l - 3.3077115913 * $m + 0.2309699292 * $s),
+            $toByte(-1.2684380046 * $l + 2.6097574011 * $m - 0.3413193965 * $s),
+            $toByte(-0.0041960863 * $l - 0.7034186147 * $m + 1.7076147010 * $s)
+        );
+
+        return $alpha < 1 ? $hex . sprintf('%02x', (int) round($alpha * 255)) : $hex;
+    }
+
+    /**
+     * Parse oklch() into [lightness 0-1, chroma, hue in degrees, alpha 0-1]
+     *
+     * Lightness and alpha accept numbers or percentages, chroma accepts a
+     * number or a percentage of 0.4, hue accepts a number or "deg" angle.
+     * Any component may be "none", which counts as 0.
+     *
+     * @param string $value Value to parse
+     * @return array{float, float, float, float}|null Null if not valid oklch()
+     */
+    private static function parseOklch(string $value): ?array
+    {
+        $number = '[+-]?(?:\d+(?:\.\d*)?|\.\d+)';
+        $pattern = '~^oklch\(\s*(' . $number . '%?|none)\s+(' . $number . '%?|none)\s+('
+            . $number . '(?:deg)?|none)\s*(?:/\s*(' . $number . '%?|none)\s*)?\)$~i';
+
+        if (!preg_match($pattern, trim($value), $matches)) {
+            return null;
+        }
+
+        $component = static function (string $raw, float $percentScale): float {
+            if (strtolower($raw) === 'none') {
+                return 0.0;
+            }
+            if (str_ends_with($raw, '%')) {
+                return (float) rtrim($raw, '%') / 100 * $percentScale;
+            }
+            return (float) preg_replace('~deg$~i', '', $raw);
+        };
+
+        $alpha = isset($matches[4]) && $matches[4] !== '' ? $component($matches[4], 1.0) : 1.0;
+
+        return [
+            $component($matches[1], 1.0),
+            $component($matches[2], 0.4),
+            $component($matches[3], 1.0),
+            max(0.0, min(1.0, $alpha)),
+        ];
     }
 }

@@ -72,6 +72,9 @@ class CssSafetyTest extends TestCase
             ['25, 121, 195', true],
             ['#fff; } </style>', false],
             ['red', false],
+            ['oklch(53% 0.15 150)', true],
+            ['oklch(53% 0.15 150 / 50%)', true],
+            ['oklch(53% 0.15 150); } </style>', false],
         ];
     }
 

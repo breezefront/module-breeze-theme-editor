@@ -5,6 +5,7 @@ namespace Swissup\BreezeThemeEditor\Model\Service;
 
 use Swissup\BreezeThemeEditor\Api\Data\ValueInterface;
 use Swissup\BreezeThemeEditor\Model\Provider\ConfigProvider;
+use Swissup\BreezeThemeEditor\Model\Utility\ColorConverter;
 
 class ValidationService
 {
@@ -87,9 +88,9 @@ class ValidationService
      */
     private function validateColor(string $value): ?string
     {
-        // HEX color validation
-        if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
-            return 'Invalid color format. Expected HEX color (e.g.  #FF0000)';
+        // HEX or oklch() color validation
+        if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $value) && !ColorConverter::isOklch($value)) {
+            return 'Invalid color format. Expected HEX color (e.g.  #FF0000) or oklch() color';
         }
 
         return null;

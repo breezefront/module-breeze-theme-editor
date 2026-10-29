@@ -76,7 +76,7 @@ class ColorPipeline
      * Detect format of an actual color value.
      *
      * Delegates to ColorFormatResolver::getFormatFromValue().
-     * Returns 'rgb', 'hex', 'palette', or 'unknown'.
+     * Returns 'rgb', 'hex', 'oklch', 'palette', or 'unknown'.
      *
      * @param string $value Color value to analyze
      * @return string Detected format

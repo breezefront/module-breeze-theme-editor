@@ -214,6 +214,12 @@ define([
                 '255, 255, 255',
                 'Should convert white hex6'
             );
+        },
+
+        'isOklchColor() and oklchToHex() are available': function () {
+            this.assertEquals(ColorUtils.isOklchColor('oklch(53% 0.15 150)'), true);
+            this.assertEquals(ColorUtils.isOklchColor('#008238'), false);
+            this.assertEquals(ColorUtils.oklchToHex('oklch(53% 0.15 150)'), '#008238');
         }
     });
 });

@@ -2730,6 +2730,74 @@ class CssGeneratorTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // oklch() colors
+    // -------------------------------------------------------------------------
+
+    /**
+     * oklch() palette default is emitted as-is, its -rgb variant converted
+     */
+    public function testOklchPaletteDefaultIsEmittedWithRgbVariant(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            ['section_code' => 'colors', 'setting_code' => 'link', 'value' => '--color-secondary'],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'colors',
+                    'settings' => [
+                        ['id' => 'link', 'type' => 'color', 'property' => '--link-color', 'default' => '#000000'],
+                    ],
+                ],
+            ],
+            'palettes' => [
+                ['groups' => [['colors' => [
+                    ['property' => '--color-secondary', 'default' => 'oklch(53% 0.15 150)'],
+                ]]]],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringContainsString('--color-secondary: oklch(53% 0.15 150);', $css);
+        $this->assertStringContainsString('--color-secondary-rgb: 0, 130, 56;', $css);
+        $this->assertStringContainsString('--link-color: var(--color-secondary);', $css);
+    }
+
+    /**
+     * oklch() field value is kept for hex fields and converted for rgb fields
+     */
+    public function testOklchFieldValueFollowsFieldFormat(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            ['section_code' => 'colors', 'setting_code' => 'hex_field', 'value' => 'oklch(53% 0.15 150)'],
+            ['section_code' => 'colors', 'setting_code' => 'rgb_field', 'value' => 'oklch(53% 0.15 150)'],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')->willReturn([
+            'sections' => [
+                [
+                    'id'       => 'colors',
+                    'settings' => [
+                        ['id' => 'hex_field', 'type' => 'color', 'property' => '--hex-color', 'default' => '#000000'],
+                        ['id' => 'rgb_field', 'type' => 'color', 'property' => '--rgb-color', 'default' => '0, 0, 0'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringContainsString('--hex-color: oklch(53% 0.15 150);', $css);
+        $this->assertStringContainsString('--rgb-color: 0, 130, 56;', $css);
+    }
+
+    // -------------------------------------------------------------------------
     // Font palette roles (_font_palette section)
     // -------------------------------------------------------------------------
 

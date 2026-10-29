@@ -499,6 +499,10 @@ define([
                     // Normalize: "rgb(255, 0, 0)" → "255, 0, 0"
                     return ColorUtils.hexToRgb(value);  // hexToRgb handles rgb() wrapper
                 }
+                if (ColorUtils.isOklchColor(value)) {
+                    var oklchHex = ColorUtils.oklchToHex(value);
+                    return ColorUtils.hex8ToRgba(oklchHex) || ColorUtils.hexToRgb(oklchHex);
+                }
             } else {
                 // Breeze 3.0: Output HEX format (#ffffff or #rrggbbaa)
                 if (ColorUtils.isHexColor(value)) {
@@ -730,6 +734,8 @@ define([
                         // Convert RGB back to HEX only if value is in RGB format.
                         // Values from localStorage may already be in HEX format.
                         displayValue = ColorUtils.rgbToHex(value);
+                    } else if (ColorUtils.isOklchColor(value)) {
+                        displayValue = ColorUtils.oklchToHex(value);
                     }
                 }
 
@@ -857,9 +863,11 @@ define([
                     return;
                 }
 
-                // Convert RGB → HEX if stored in old format
+                // Convert RGB → HEX if stored in old format, oklch() → HEX for Pickr
                 if (ColorUtils.isRgbColor(hexValue)) {
                     hexValue = ColorUtils.rgbToHex(hexValue);
+                } else if (ColorUtils.isOklchColor(hexValue)) {
+                    hexValue = ColorUtils.oklchToHex(hexValue);
                 }
 
                 // Update DOM swatch

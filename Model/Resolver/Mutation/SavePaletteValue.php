@@ -134,9 +134,10 @@ class SavePaletteValue extends AbstractMutationResolver
      * Accepts:
      * - HEX format: "#1979c3" or "1979c3" → "#1979c3"
      * - RGB format: "25, 121, 195" → "#1979c3" (auto-converted for backward compatibility)
-     * 
+     * - oklch() format: "oklch(53% 0.15 150)" → kept as-is (exact CSS color)
+     *
      * @param string $value Color value from input
-     * @return string|null Normalized HEX color or null if invalid
+     * @return string|null Normalized HEX color, oklch() color or null if invalid
      */
     private function normalizeColorValue(string $value): ?string
     {
@@ -153,7 +154,11 @@ class SavePaletteValue extends AbstractMutationResolver
             // Convert RGB to HEX using ColorConverter
             return ColorConverter::rgbToHex($value);
         }
-        
+
+        if (ColorConverter::isOklch($value)) {
+            return $value;
+        }
+
         return null;
     }
 }

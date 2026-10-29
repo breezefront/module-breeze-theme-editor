@@ -47,9 +47,13 @@ define([
                 var dirty = this.dirtyColors[property];
                 if (dirty.original && dirty.original.value && ColorUtils.isRgbColor(dirty.original.value)) {
                     dirty.original.value = ColorUtils.rgbToHex(dirty.original.value);
+                } else if (dirty.original && ColorUtils.isOklchColor(dirty.original.value)) {
+                    dirty.original.value = ColorUtils.oklchToHex(dirty.original.value);
                 }
                 if (dirty.value && ColorUtils.isRgbColor(dirty.value)) {
                     dirty.value = ColorUtils.rgbToHex(dirty.value);
+                } else if (ColorUtils.isOklchColor(dirty.value)) {
+                    dirty.value = ColorUtils.oklchToHex(dirty.value);
                 }
             }
 
@@ -73,15 +77,22 @@ define([
                         var hexValue = color.value;
                         if (ColorUtils.isRgbColor(color.value)) {
                             hexValue = ColorUtils.rgbToHex(color.value);
+                        } else if (ColorUtils.isOklchColor(color.value)) {
+                            hexValue = ColorUtils.oklchToHex(color.value);
                         }
-                        
+
+                        // oklch() theme defaults are compared and shown as HEX too
+                        var defaultValue = ColorUtils.isOklchColor(color.default)
+                            ? ColorUtils.oklchToHex(color.default)
+                            : color.default;
+
                         // Store with full context (all values in HEX format)
                         index[color.property] = {
                             id: color.id,
                             label: color.label,
                             property: color.property,
                             value: hexValue,  // HEX format (Breeze 3.0)
-                            default: color.default,
+                            default: defaultValue,
                             usageCount: color.usageCount || 0,
                             hex: hexValue,  // Same as value, kept for backward compatibility
                             paletteId: palette.id,
@@ -403,6 +414,10 @@ define([
             // Check if RGB format
             if (color.includes(',')) {
                 return ColorUtils.rgbToHex(color);
+            }
+
+            if (ColorUtils.isOklchColor(color)) {
+                return ColorUtils.oklchToHex(color);
             }
 
             // Check if rgb() or rgba() format

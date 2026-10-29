@@ -332,8 +332,35 @@ define([
                 'Default RGB with wrapper should be detected');
             
             var defaultHex = ColorUtils.rgbToHex(defaultValue);
-            this.assertEquals(defaultHex, '#111827', 
+            this.assertEquals(defaultHex, '#111827',
                 'Default rgb(17, 24, 39) should convert to #111827');
+        },
+
+        'should detect oklch() colors': function() {
+            this.assertEquals(ColorUtils.isOklchColor('oklch(53% 0.15 150)'), true, 'percent lightness');
+            this.assertEquals(ColorUtils.isOklchColor('oklch(0.268 0.007 34.298)'), true, 'number lightness');
+            this.assertEquals(ColorUtils.isOklchColor('oklch(53% .15 150deg / 50%)'), true, 'deg hue and alpha');
+            this.assertEquals(ColorUtils.isOklchColor('oklch(0% 0 none)'), true, 'none component');
+            this.assertEquals(ColorUtils.isOklchColor('oklch(53% 0.15)'), false, 'missing hue');
+            this.assertEquals(ColorUtils.isOklchColor('ooklch(53% 0.15 150)'), false, 'typo in function name');
+            this.assertEquals(ColorUtils.isOklchColor('#1979c3'), false, 'HEX');
+            this.assertEquals(ColorUtils.isOklchColor('25, 121, 195'), false, 'RGB');
+            this.assertEquals(ColorUtils.isOklchColor(null), false, 'null');
+        },
+
+        'should convert oklch() to HEX': function() {
+            this.assertEquals(ColorUtils.oklchToHex('oklch(53% 0.15 150)'), '#008238', 'percent lightness');
+            this.assertEquals(ColorUtils.oklchToHex('oklch(0.53 0.15 150)'), '#008238', 'number lightness');
+            this.assertEquals(ColorUtils.oklchToHex('oklch(53% 37.5% 150)'), '#008238', 'percent chroma');
+            this.assertEquals(ColorUtils.oklchToHex('oklch(12.9% 0.042 264.695)'), '#020618', 'dark slate');
+            this.assertEquals(ColorUtils.oklchToHex('oklch(100% 0 0)'), '#ffffff', 'white');
+            this.assertEquals(ColorUtils.oklchToHex('oklch(0% 0 0 / 50%)'), '#00000080', 'translucent');
+            this.assertEquals(
+                /^#[0-9a-f]{6}$/.test(ColorUtils.oklchToHex('oklch(70% 0.4 30)')),
+                true,
+                'out-of-gamut color is clipped to valid HEX'
+            );
+            this.assertEquals(ColorUtils.oklchToHex('not a color'), '#000000', 'invalid input');
         }
     });
 });

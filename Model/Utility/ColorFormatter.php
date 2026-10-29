@@ -51,7 +51,9 @@ class ColorFormatter
      * - formatColorValue("#FFF", "rgb") → "255, 255, 255" (normalized and converted)
      * - formatColorValue("#6b21a8", "hex") → "#6b21a8" (no conversion needed)
      * - formatColorValue("#6b21a8ff", "hex") → "#6b21a8ff" (hex8 preserved as-is)
-     * 
+     * - formatColorValue("oklch(53% 0.15 150)", "hex") → "oklch(53% 0.15 150)" (preserved)
+     * - formatColorValue("oklch(53% 0.15 150)", "rgb") → "0, 130, 56"
+     *
      * Edge cases handled:
      * - null/empty → returns null
      * - Palette references (--color-*) → preserved unchanged
@@ -91,6 +93,16 @@ class ColorFormatter
 
         // Normalize format parameter to lowercase
         $format = strtolower($format);
+
+        // oklch() is a valid CSS color: keep it as-is for HEX output (it is
+        // exact, HEX would be rounded/clipped), convert it for RGB output
+        if ($this->colorConverter::isOklch($value)) {
+            if ($format !== 'rgb') {
+                return $value;
+            }
+            $hex = $this->colorConverter::oklchToHex($value);
+            return $this->colorConverter::hex8ToRgba($hex) ?? $this->colorConverter::hexToRgb($hex);
+        }
 
         // Detect current format of the value
         $isHex = $this->colorConverter::isHex($value);

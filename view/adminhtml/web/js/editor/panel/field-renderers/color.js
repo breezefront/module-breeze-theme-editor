@@ -30,6 +30,9 @@ define([
                 if (ColorUtils.isRgbColor(value)) {
                     data.value = ColorUtils.rgbToHex(value);
                     log.debug('Converted RGB to HEX: ' + value + ' \u2192 ' + data.value);
+                } else if (ColorUtils.isOklchColor(value)) {
+                    data.value = ColorUtils.oklchToHex(value);
+                    log.debug('Converted oklch to HEX: ' + value + ' \u2192 ' + data.value);
                 } else if (typeof data.default === 'string' && /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(data.default)) {
                     // Try default as HEX
                     data.value = data.default;
@@ -37,6 +40,10 @@ define([
                     // Try default as RGB
                     data.value = ColorUtils.rgbToHex(data.default);
                     log.debug('Using default RGB as HEX: ' + data.default + ' \u2192 ' + data.value);
+                } else if (ColorUtils.isOklchColor(data.default)) {
+                    // Try default as oklch()
+                    data.value = ColorUtils.oklchToHex(data.default);
+                    log.debug('Using default oklch as HEX: ' + data.default + ' \u2192 ' + data.value);
                 } else {
                     // Ultimate fallback
                     data.value = '#000000';

@@ -1,4 +1,7 @@
-define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logger) {
+define([
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/logger',
+    'Swissup_BreezeThemeEditor/js/editor/utils/core/color-utils'
+], function (Logger, CoreColorUtils) {
     'use strict';
 
     var log = Logger.for('utils/dom/color-utils');
@@ -267,6 +270,28 @@ define(['Swissup_BreezeThemeEditor/js/editor/utils/core/logger'], function (Logg
             
             // Check if it's valid RGB format (optionally with alpha)
             return /^\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*[\d.]+)?\s*$/.test(normalized);
+        },
+
+        /**
+         * Check if string is a CSS oklch() color
+         *
+         * @see Swissup_BreezeThemeEditor/js/editor/utils/core/color-utils
+         * @param {String} value - Color string to check
+         * @returns {Boolean} true if oklch() format
+         */
+        isOklchColor: function(value) {
+            return CoreColorUtils.isOklchColor(value);
+        },
+
+        /**
+         * Convert CSS oklch() color to HEX ("#rrggbb", or "#rrggbbaa" when translucent)
+         *
+         * @see Swissup_BreezeThemeEditor/js/editor/utils/core/color-utils
+         * @param {String} oklch - oklch() color
+         * @returns {String} HEX color
+         */
+        oklchToHex: function(oklch) {
+            return CoreColorUtils.oklchToHex(oklch);
         }
     };
 });

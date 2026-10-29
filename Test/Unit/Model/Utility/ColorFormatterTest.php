@@ -557,4 +557,22 @@ class ColorFormatterTest extends TestCase
             'Should return fully transparent black hex8 unchanged'
         );
     }
+
+    public function testOklchIsPreservedForHexFormat(): void
+    {
+        $this->assertSame(
+            'oklch(53% 0.15 150)',
+            $this->formatter->formatColorValue('oklch(53% 0.15 150)', 'hex')
+        );
+    }
+
+    public function testOklchIsConvertedForRgbFormat(): void
+    {
+        $this->assertSame('0, 130, 56', $this->formatter->formatColorValue('oklch(53% 0.15 150)', 'rgb'));
+        $this->assertSame(
+            'rgba(0, 0, 0, 0.502)',
+            $this->formatter->formatColorValue('oklch(0% 0 0 / 50%)', 'rgb'),
+            'Translucent oklch() should become rgba() like hex8 does'
+        );
+    }
 }

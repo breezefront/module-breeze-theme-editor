@@ -330,4 +330,13 @@ class ColorFormatResolverTest extends TestCase
         $result = $this->resolver->resolve('rgb', '#1979c380');
         $this->assertEquals('rgb', $result);
     }
+
+    /** @test */
+    #[Test]
+    public function it_handles_oklch_values()
+    {
+        $this->assertTrue($this->resolver->isAutoDetectable('oklch(53% 0.15 150)'));
+        $this->assertEquals('oklch', $this->resolver->getFormatFromValue('oklch(53% 0.15 150)'));
+        $this->assertEquals('hex', $this->resolver->resolve(null, 'oklch(53% 0.15 150)'));
+    }
 }

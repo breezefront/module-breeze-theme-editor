@@ -34,11 +34,13 @@ class CssSafety
     }
 
     /**
-     * Palette value as stored by the palette mutation: "#rrggbb" or "r, g, b".
+     * Palette value as stored by the palette mutation or set as a theme default:
+     * "#rrggbb", "r, g, b" or "oklch(...)".
      */
     public static function isValidPaletteValue(string $value): bool
     {
-        return (bool) preg_match('~^(#[0-9a-fA-F]{3,8}|\d{1,3},\s*\d{1,3},\s*\d{1,3})$~', $value);
+        return (bool) preg_match('~^(#[0-9a-fA-F]{3,8}|\d{1,3},\s*\d{1,3},\s*\d{1,3})$~', $value)
+            || ColorConverter::isOklch($value);
     }
 
     /**

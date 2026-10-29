@@ -574,11 +574,14 @@ define([
                 
                 log.info('Color reset with palette ref: ' + value + ' -> ' + hexValue);
             } else {
-                // Regular HEX or RGB color — normalize to HEX for display
+                // Regular HEX, RGB or oklch() color — normalize to HEX for display
                 hexValue = value;
                 if (ColorUtils.isRgbColor(hexValue)) {
                     hexValue = ColorUtils.rgbToHex(hexValue);
                     log.debug('Color reset: converted RGB to HEX: ' + value + ' -> ' + hexValue);
+                } else if (ColorUtils.isOklchColor(hexValue)) {
+                    hexValue = ColorUtils.oklchToHex(hexValue);
+                    log.debug('Color reset: converted oklch to HEX: ' + value + ' -> ' + hexValue);
                 }
 
                 // Update input and remove palette ref from BOTH input and trigger

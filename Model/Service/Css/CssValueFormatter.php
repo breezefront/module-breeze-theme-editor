@@ -76,8 +76,9 @@ class CssValueFormatter
      * - Already wrapped: var(--color-test) → var(--color-test)
      * - HEX colors: #ffffff → formatted per $format
      * - RGB colors: 255, 255, 255 → formatted per $format
+     * - oklch() colors: kept as-is for 'hex', converted for 'rgb'
      *
-     * @param string $value Color value (HEX, RGB, or palette reference)
+     * @param string $value Color value (HEX, RGB, oklch(), or palette reference)
      * @param string $format Output format: 'hex' or 'rgb' (resolved, never 'auto' or null)
      * @param string|null $defaultValue Default value (optional, for backward compatibility)
      * @return string
@@ -109,6 +110,10 @@ class CssValueFormatter
             }
             if (ColorConverter::isRgb($value)) {
                 return $value;
+            }
+            if (ColorConverter::isOklch($value)) {
+                $hex = ColorConverter::oklchToHex($value);
+                return ColorConverter::hex8ToRgba($hex) ?? ColorConverter::hexToRgb($hex);
             }
         } else {
             // Breeze 3.0: output HEX format

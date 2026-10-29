@@ -104,9 +104,10 @@ class ColorFormatResolver
             return true;
         }
         
-        // Check if it's valid RGB or HEX format
-        return $this->colorConverter->isRgb($defaultValue) 
-            || $this->colorConverter->isHex($defaultValue);
+        // Check if it's valid RGB, HEX or oklch() format
+        return $this->colorConverter->isRgb($defaultValue)
+            || $this->colorConverter->isHex($defaultValue)
+            || $this->colorConverter->isOklch($defaultValue);
     }
 
     /**
@@ -120,12 +121,13 @@ class ColorFormatResolver
      * - getFormatFromValue('rgb(17, 24, 39)') → 'rgb'
      * - getFormatFromValue('17, 24, 39') → 'rgb'
      * - getFormatFromValue('#111827') → 'hex'
+     * - getFormatFromValue('oklch(53% 0.15 150)') → 'oklch'
      * - getFormatFromValue('--color-brand-primary') → 'palette'
      * - getFormatFromValue('var(--color-brand-primary)') → 'palette'
      * - getFormatFromValue('invalid') → 'unknown'
      * 
      * @param string $value Color value to analyze
-     * @return string Detected format: 'rgb', 'hex', 'palette', or 'unknown'
+     * @return string Detected format: 'rgb', 'hex', 'oklch', 'palette', or 'unknown'
      */
     public function getFormatFromValue(string $value): string
     {
@@ -145,7 +147,12 @@ class ColorFormatResolver
         if ($this->colorConverter->isHex($value)) {
             return 'hex';
         }
-        
+
+        // Check for oklch() format
+        if ($this->colorConverter->isOklch($value)) {
+            return 'oklch';
+        }
+
         // Unknown/invalid format
         return 'unknown';
     }

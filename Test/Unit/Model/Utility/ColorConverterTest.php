@@ -436,4 +436,62 @@ class ColorConverterTest extends TestCase
             'hexToRgb should strip alpha from semi-transparent red'
         );
     }
+
+    public static function oklchToHexProvider(): array
+    {
+        return [
+            'percent lightness'       => ['oklch(53% 0.15 150)', '#008238'],
+            'number lightness'        => ['oklch(0.53 0.15 150)', '#008238'],
+            'tailwind short decimals' => ['oklch(53% .15 150)', '#008238'],
+            'deg hue'                 => ['oklch(53% 0.15 150deg)', '#008238'],
+            'percent chroma'          => ['oklch(53% 37.5% 150)', '#008238'],
+            'uppercase function'      => ['OKLCH(53% 0.15 150)', '#008238'],
+            'dark slate'              => ['oklch(12.9% 0.042 264.695)', '#020618'],
+            'light gray'              => ['oklch(92.8% 0.006 264.531)', '#e5e7eb'],
+            'white'                   => ['oklch(100% 0 0)', '#ffffff'],
+            'black with none hue'     => ['oklch(0% 0 none)', '#000000'],
+            'opaque alpha'            => ['oklch(100% 0 0 / 1)', '#ffffff'],
+            'half alpha'              => ['oklch(0% 0 0 / 50%)', '#00000080'],
+            'number alpha'            => ['oklch(100% 0 0 / 0.5)', '#ffffff80'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('oklchToHexProvider')]
+    public function testOklchToHex(string $oklch, string $expected): void
+    {
+        $this->assertTrue(ColorConverter::isOklch($oklch));
+        $this->assertSame($expected, ColorConverter::oklchToHex($oklch));
+    }
+
+    public function testOklchToHexClipsOutOfGamutColors(): void
+    {
+        // Very high chroma red is outside sRGB — channels are clipped, not wrapped
+        $this->assertMatchesRegularExpression('/^#[0-9a-f]{6}$/', ColorConverter::oklchToHex('oklch(70% 0.4 30)'));
+    }
+
+    public function testOklchToHexReturnsBlackForInvalidInput(): void
+    {
+        $this->assertSame('#000000', ColorConverter::oklchToHex('#1979c3'));
+    }
+
+    public static function invalidOklchProvider(): array
+    {
+        return [
+            ['oklch(53% 0.15)'],
+            ['oklch()'],
+            ['oklch(53% 0.15 150'],
+            ['oklch(53% 0.15 150); } </style>'],
+            ['oklch(a b c)'],
+            ['#1979c3'],
+            ['rgb(25, 121, 195)'],
+            ['25, 121, 195'],
+            ['ooklch(53% 0.15 150)'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('invalidOklchProvider')]
+    public function testIsOklchRejectsInvalidValues(string $value): void
+    {
+        $this->assertFalse(ColorConverter::isOklch($value));
+    }
 }

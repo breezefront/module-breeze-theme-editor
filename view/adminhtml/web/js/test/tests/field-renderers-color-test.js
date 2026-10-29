@@ -72,6 +72,31 @@ define([
             this.assertEquals(data.value, '#1e29391a');
             this.assertEquals(data.paletteRef, '--subtle-color');
             PanelState.clear();
+        },
+
+        'converts an oklch() default to HEX for the color picker': function () {
+            PanelState.clear();
+            setPalette();
+
+            var data = ColorRenderer.prepareData(
+                makeField({ value: null, default: 'oklch(53% 0.15 150)' }),
+                'navigation'
+            );
+
+            this.assertEquals(data.value, '#008238');
+            this.assertEquals(data.hexValue, '#008238');
+        },
+
+        'converts an oklch() value to HEX for the color picker': function () {
+            PanelState.clear();
+            setPalette();
+
+            var data = ColorRenderer.prepareData(
+                makeField({ value: 'oklch(53% 0.15 150)', default: '#ffffff' }),
+                'navigation'
+            );
+
+            this.assertEquals(data.value, '#008238');
         }
     });
 });
