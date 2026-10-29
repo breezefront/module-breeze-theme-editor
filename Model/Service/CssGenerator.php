@@ -64,7 +64,7 @@ class CssGenerator
         }
 
         $config   = $this->configProvider->getConfigurationWithInheritance($themeId);
-        $fieldMap = $this->variableBuilder->buildFieldMap($config['sections'] ?? []);
+        $fieldMap = $this->buildFieldMap($config);
 
         $paletteVarsToEmit = $this->variableBuilder->buildPaletteVarsToEmit($values, $config, $fieldMap);
         $selectorBlocks    = empty($values) ? [] : $this->variableBuilder->buildSelectorBlocks($values, $fieldMap);
@@ -86,7 +86,7 @@ class CssGenerator
     public function generateFromValuesMap(int $themeId, array $valuesMap): string
     {
         $config   = $this->configProvider->getConfigurationWithInheritance($themeId);
-        $fieldMap = $this->variableBuilder->buildFieldMap($config['sections'] ?? []);
+        $fieldMap = $this->buildFieldMap($config);
 
         // Convert valuesMap to the same row format used by generate()
         $values = [];
@@ -109,6 +109,18 @@ class CssGenerator
         return CssSafety::neutralizeMarkup(
             $this->renderCss($paletteVarsToEmit, $selectorBlocks, $fontImports, $rawCssBlocks)
         );
+    }
+
+    /**
+     * Field lookup map for section settings and font palette roles.
+     *
+     * Font palette roles are saved under '_font_palette' rather than a config
+     * section, so they need their own entries to be emitted.
+     */
+    private function buildFieldMap(array $config): array
+    {
+        return $this->variableBuilder->buildFieldMap($config['sections'] ?? [])
+            + $this->variableBuilder->buildFontPaletteFieldMap($config['font_palettes'] ?? []);
     }
 
     /**

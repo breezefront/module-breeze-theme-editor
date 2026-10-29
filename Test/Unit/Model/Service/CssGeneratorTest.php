@@ -2728,5 +2728,92 @@ class CssGeneratorTest extends TestCase
         $this->assertLessThan($rootEnd, $varPos);
         $this->assertGreaterThan($rootEnd, $rawPos, 'Raw CSS must be outside the :root {} block');
     }
+
+    // -------------------------------------------------------------------------
+    // Font palette roles (_font_palette section)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Helper: config with one font palette role and no sections.
+     */
+    private function makeFontPaletteRoleConfig(): array
+    {
+        return [
+            'sections'      => [],
+            'font_palettes' => [
+                'default' => [
+                    'id'      => 'default',
+                    'options' => [
+                        ['value' => 'Arial, sans-serif', 'label' => 'Arial'],
+                        [
+                            'value' => "'Roboto', sans-serif",
+                            'label' => 'Roboto',
+                            'url'   => 'https://fonts.googleapis.com/css2?family=Roboto',
+                        ],
+                    ],
+                    'fonts' => [
+                        ['id' => 'primary', 'property' => '--primary-font', 'default' => 'Arial, sans-serif'],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Saved font role value is emitted in :root together with its @import
+     */
+    public function testFontPaletteRoleValueIsEmitted(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            ['section_code' => '_font_palette', 'setting_code' => 'primary-font', 'value' => "'Roboto', sans-serif"],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')
+            ->willReturn($this->makeFontPaletteRoleConfig());
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertStringContainsString("--primary-font: 'Roboto', sans-serif;", $css);
+        $this->assertStringContainsString(
+            "@import url('https://fonts.googleapis.com/css2?family=Roboto');",
+            $css
+        );
+    }
+
+    /**
+     * Font role value equal to the role default is not emitted
+     */
+    public function testFontPaletteRoleAtDefaultIsNotEmitted(): void
+    {
+        $this->statusProviderMock->method('getStatusId')->willReturn(1);
+
+        $this->valueInheritanceResolverMock->method('resolveAllValues')->willReturn([
+            ['section_code' => '_font_palette', 'setting_code' => 'primary-font', 'value' => 'Arial, sans-serif'],
+        ]);
+
+        $this->configProviderMock->method('getConfigurationWithInheritance')
+            ->willReturn($this->makeFontPaletteRoleConfig());
+
+        $css = $this->cssGenerator->generate(1, $this->scope, 'PUBLISHED');
+
+        $this->assertSame(CssGenerator::EMPTY_CSS_OUTPUT, $css);
+    }
+
+    /**
+     * generateFromValuesMap() (publication flows) emits font role values too
+     */
+    public function testGenerateFromValuesMapEmitsFontPaletteRole(): void
+    {
+        $this->configProviderMock->method('getConfigurationWithInheritance')
+            ->willReturn($this->makeFontPaletteRoleConfig());
+
+        $css = $this->cssGenerator->generateFromValuesMap(1, [
+            '_font_palette.primary-font' => "'Roboto', sans-serif",
+        ]);
+
+        $this->assertStringContainsString("--primary-font: 'Roboto', sans-serif;", $css);
+    }
 }
 

@@ -124,6 +124,45 @@ class CssVariableBuilderTest extends TestCase
     }
 
     // -----------------------------------------------------------------------
+    // buildFontPaletteFieldMap
+    // -----------------------------------------------------------------------
+
+    public function testBuildFontPaletteFieldMapKeysRolesByStrippedProperty(): void
+    {
+        $fontPalettes = [
+            'default' => [
+                'id'    => 'default',
+                'fonts' => [
+                    ['id' => 'primary', 'property' => '--primary-font', 'default' => 'Arial'],
+                    ['id' => 'secondary', 'property' => '--secondary-font', 'default' => 'Georgia'],
+                ],
+            ],
+        ];
+
+        $map = $this->builder->buildFontPaletteFieldMap($fontPalettes);
+
+        $this->assertSame(['_font_palette.primary-font', '_font_palette.secondary-font'], array_keys($map));
+        $this->assertSame([
+            'id'           => 'primary-font',
+            'type'         => 'font_picker',
+            'property'     => '--primary-font',
+            'default'      => 'Arial',
+            'font_palette' => 'default',
+            '_selector'    => ':root',
+            '_media'       => null,
+        ], $map['_font_palette.primary-font']);
+    }
+
+    public function testBuildFontPaletteFieldMapSkipsRolesWithoutProperty(): void
+    {
+        $map = $this->builder->buildFontPaletteFieldMap([
+            'default' => ['fonts' => [['id' => 'broken', 'default' => 'Arial']]],
+        ]);
+
+        $this->assertSame([], $map);
+    }
+
+    // -----------------------------------------------------------------------
     // buildSelectorBlocks
     // -----------------------------------------------------------------------
 

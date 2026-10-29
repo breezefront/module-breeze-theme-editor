@@ -50,6 +50,41 @@ class CssVariableBuilder
     }
 
     /**
+     * Build field lookup entries for font palette roles (font_palettes[].fonts[]).
+     *
+     * Role values are saved under the synthetic '_font_palette' section with the
+     * role property stripped of its leading dashes as the setting code
+     * ('--primary-font' → '_font_palette.primary-font'), matching
+     * SectionFormatter::mergeFontPaletteRolesAsFields().
+     *
+     * @param array $fontPalettes config['font_palettes'], keyed by palette id
+     * @return array
+     */
+    public function buildFontPaletteFieldMap(array $fontPalettes): array
+    {
+        $fieldMap = [];
+        foreach ($fontPalettes as $paletteId => $palette) {
+            foreach ($palette['fonts'] ?? [] as $role) {
+                $property  = $role['property'] ?? '';
+                $fieldCode = ltrim($property, '-');
+                if ($fieldCode === '') {
+                    continue;
+                }
+                $fieldMap['_font_palette.' . $fieldCode] = [
+                    'id'           => $fieldCode,
+                    'type'         => 'font_picker',
+                    'property'     => $property,
+                    'default'      => $role['default'] ?? null,
+                    'font_palette' => $paletteId,
+                    '_selector'    => ':root',
+                    '_media'       => null,
+                ];
+            }
+        }
+        return $fieldMap;
+    }
+
+    /**
      * Group CSS variable lines by their target selector (and optional media query).
      *
      * Skips:
